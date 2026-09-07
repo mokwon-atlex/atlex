@@ -6,8 +6,8 @@
     "dev": "next dev",
     "test": "vitest run --passWithNoTests",
     "build": "next build",
-    "format": "prettier --write --ignore-unknown",
-    "format:check": "prettier --check --ignore-unknown",
+    "format": "prettier --write --ignore-unknown .",
+    "format:check": "prettier --check --ignore-unknown .",
     "start": "next start",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

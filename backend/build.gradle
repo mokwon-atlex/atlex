@@ -67,8 +67,6 @@ tasks.named('test') {
 }
 
 spotless {
-    ratchetFrom 'origin/develop'
-
     java {
         eclipse().configFile('config/naver-eclipse-formatter.xml')
         trimTrailingWhitespace()
