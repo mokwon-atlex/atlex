@@ -1,0 +1,97 @@
+name: 기술 작업
+description: 리팩터링, 테스트, 문서, CI 또는 기타 유지보수 작업을 제안합니다.
+title: "[type] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        하나의 이슈는 하나의 PR로 완료하는 것을 원칙으로 합니다.
+        작업 규모가 크다면 독립적으로 완료할 수 있는 이슈로 나눌 수 있는지 먼저 검토해 주세요.
+
+  - type: dropdown
+    id: task-type
+    attributes:
+      label: 작업 타입
+      description: 작업의 대표 목적을 선택해 주세요.
+      options:
+        - refactor
+        - test
+        - docs
+        - ci
+        - chore
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: title-prefix
+    attributes:
+      label: 제목 확인
+      description: 제목의 접두사가 선택한 작업 타입과 일치해야 합니다.
+      options:
+        - label: 제목의 `[type]`을 선택한 작업 타입으로 변경했습니다.
+          required: true
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 작업 목적
+      description: 이 작업이 필요한 이유를 작성해 주세요.
+      placeholder: 중복된 인증 처리 코드를 줄여 변경 범위를 명확하게 합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: 작업 내용
+      description: 변경할 기술적 내용을 작성해 주세요.
+      placeholder: 컨트롤러에 흩어진 인증 검증 로직을 공통 서비스로 분리합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: completion-criteria
+    attributes:
+      label: 완료 조건
+      description: 어떤 상태가 되면 이 작업이 완료되는지 작성해 주세요.
+      placeholder: 기존 동작과 테스트 결과를 유지하면서 중복 인증 코드가 제거됩니다.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 중요도
+      description: 작업이 다른 기능과 일정에 미치는 영향을 선택해 주세요.
+      options:
+        - 높음 — 핵심 기능 또는 후속 작업에 직접 영향
+        - 보통 — 일반적인 기능 개발 및 개선
+        - 낮음 — 일정에 여유가 있는 정리 작업
+    validations:
+      required: true
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: 작업 규모
+      description: 예상되는 변경 범위를 선택해 주세요.
+      options:
+        - 큼 — 영향을 주는 요소가 많은 작업 (이슈 분할 가능한지 검토)
+        - 보통 — 여러 구성요소가 함께 변경되는 작업
+        - 작음 — 단순하고 독립적인 작업
+    validations:
+      required: true
+
+  - type: input
+    id: related-issues
+    attributes:
+      label: 연관 이슈
+      description: 관련된 이슈가 있다면 번호를 작성해 주세요.
+      placeholder: "#123, #124"
+
+  - type: textarea
+    id: references
+    attributes:
+      label: 참고 사항
+      description: 설계 문서, 논의 내용 등 참고할 자료를 작성해 주세요.
+      placeholder: 관련 설계 문서나 검토가 필요한 내용을 작성해 주세요.

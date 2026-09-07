@@ -1,0 +1,74 @@
+name: 기능 개발
+description: 새로운 기능 또는 기존 기능의 확장을 제안합니다.
+title: "[feat] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        하나의 이슈는 하나의 PR로 완료하는 것을 원칙으로 합니다.
+        작업 규모가 크다면 독립적으로 완료할 수 있는 이슈로 나눌 수 있는지 먼저 검토해 주세요.
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 작업 목적
+      description: 이 기능이 필요한 이유를 작성해 주세요.
+      placeholder: 사용자가 매번 비밀번호를 입력하지 않고 소셜 계정으로 로그인할 수 있도록 합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: 작업 내용
+      description: 구현하거나 변경할 내용을 작성해 주세요.
+      placeholder: 카카오 OAuth 로그인 화면, 인증 API, 신규 회원 등록 흐름을 구현합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: completion-criteria
+    attributes:
+      label: 완료 조건
+      description: 어떤 상태가 되면 이 작업이 완료되는지 작성해 주세요.
+      placeholder: 카카오 계정으로 로그인할 수 있고, 최초 로그인 시 회원 정보가 생성됩니다.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 중요도
+      description: 작업이 다른 기능과 일정에 미치는 영향을 선택해 주세요.
+      options:
+        - 높음 — 핵심 기능 또는 후속 작업에 직접 영향
+        - 보통 — 일반적인 기능 개발 및 개선
+        - 낮음 — 일정에 여유가 있는 정리 작업
+    validations:
+      required: true
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: 작업 규모
+      description: 예상되는 변경 범위를 선택해 주세요.
+      options:
+        - 큼 — 영향을 주는 요소가 많은 작업 (이슈 분할 가능한지 검토)
+        - 보통 — 여러 구성요소가 함께 변경되는 작업
+        - 작음 — 단순하고 독립적인 작업
+    validations:
+      required: true
+
+  - type: input
+    id: related-issues
+    attributes:
+      label: 연관 이슈
+      description: 관련된 이슈가 있다면 번호를 작성해 주세요.
+      placeholder: "#123, #124"
+
+  - type: textarea
+    id: references
+    attributes:
+      label: 참고 사항
+      description: 디자인, API 명세, 논의 내용 등 참고할 자료를 작성해 주세요.
+      placeholder: 관련 문서나 링크, 구현 시 참고할 내용을 작성해 주세요.

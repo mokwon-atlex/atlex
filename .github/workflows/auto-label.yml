@@ -1,67 +1,35 @@
-name: AutoLabel
+name: Validate PR Title and AutoLabel
 
 on:
   pull_request_target:
-    types: [opened, synchronize]
+    types: [opened, edited, reopened, synchronize]
 
 jobs:
-  label:
+  validate-title-and-label:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
       issues: write
     steps:
-      - name: Label by commit prefix
+      - name: Validate PR title and apply label
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
 
           # This job intentionally uses GitHub's API only. Never check out or
           # execute files from the pull request, including fork pull requests.
-          if ! COMMIT_TYPES=$(gh pr view "$PR_NUMBER" \
-            --repo "$REPO" \
-            --json commits \
-            --jq '.commits[].messageHeadline | split(":")[0] | split("(")[0] | split("!")[0] | split("/")[0]'); then
-            echo "Failed to retrieve pull request commits" >&2
+          TYPE=$(printf '%s\n' "$PR_TITLE" | sed -nE \
+            's/^\[(feat|fix|refactor|test|docs|ci|chore)\][[:space:]]+.+$/\1/p')
+
+          if [ -z "$TYPE" ]; then
+            echo "PR 제목은 '[타입] 작업 제목' 형식이어야 합니다." >&2
+            echo "지원 타입: feat, fix, refactor, test, docs, ci, chore" >&2
             exit 1
-          fi
-
-          LABELS=()
-          while IFS= read -r TYPE; do
-            LABEL=""
-            case "$TYPE" in
-              feat|feature) LABEL="feat" ;;
-              fix) LABEL="fix" ;;
-              chore) LABEL="chore" ;;
-              docs) LABEL="docs" ;;
-              refactor) LABEL="refactor" ;;
-              style) LABEL="style" ;;
-              ci) LABEL="ci" ;;
-              test) LABEL="test" ;;
-              build) LABEL="build" ;;
-            esac
-            if [ -n "$LABEL" ]; then
-              already_selected=false
-              if [ "${#LABELS[@]}" -gt 0 ]; then
-                for SELECTED_LABEL in "${LABELS[@]}"; do
-                  if [ "$SELECTED_LABEL" = "$LABEL" ]; then
-                    already_selected=true
-                    break
-                  fi
-                done
-              fi
-              if [ "$already_selected" = false ]; then
-                LABELS+=("$LABEL")
-              fi
-            fi
-          done <<< "$COMMIT_TYPES"
-
-          if [ "${#LABELS[@]}" -eq 0 ]; then
-            exit 0
           fi
 
           if ! EXISTING_LABELS=$(gh label list \
@@ -73,17 +41,30 @@ jobs:
             exit 1
           fi
 
-          for LABEL in "${LABELS[@]}"; do
-            if ! grep -Fqx "$LABEL" <<< "$EXISTING_LABELS"; then
-              gh label create "$LABEL" \
+          if ! grep -Fqx "$TYPE" <<< "$EXISTING_LABELS"; then
+            gh label create "$TYPE" \
                 --repo "$REPO" \
                 --color "#1d76db" \
-                --description "Conventional Commit: $LABEL" \
+                --description "PR type: $TYPE" \
                 --force
+          fi
+
+          if ! CURRENT_LABELS=$(gh pr view "$PR_NUMBER" \
+            --repo "$REPO" \
+            --json labels \
+            --jq '.labels[].name'); then
+            echo "Failed to retrieve pull request labels" >&2
+            exit 1
+          fi
+
+          for LABEL in feat fix refactor test docs ci chore; do
+            if [ "$LABEL" != "$TYPE" ] && grep -Fqx "$LABEL" <<< "$CURRENT_LABELS"; then
+              gh pr edit "$PR_NUMBER" \
+                --repo "$REPO" \
+                --remove-label "$LABEL"
             fi
           done
 
-          LABEL_ARGUMENT=$(IFS=,; echo "${LABELS[*]}")
           gh pr edit "$PR_NUMBER" \
             --repo "$REPO" \
-            --add-label "$LABEL_ARGUMENT"
+            --add-label "$TYPE"

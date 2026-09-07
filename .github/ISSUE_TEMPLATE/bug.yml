@@ -1,0 +1,95 @@
+name: 버그 수정
+description: 재현 가능한 문제와 기대 동작을 공유합니다.
+title: "[fix] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        하나의 이슈는 하나의 PR로 완료하는 것을 원칙으로 합니다.
+        작업 규모가 크다면 독립적으로 완료할 수 있는 이슈로 나눌 수 있는지 먼저 검토해 주세요.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 문제 설명
+      description: 발생한 문제를 간단히 설명해 주세요.
+      placeholder: 로그인 세션이 만료된 후 메인 화면이 반복해서 새로고침됩니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 재현 방법
+      description: 문제를 재현할 수 있는 순서를 작성해 주세요.
+      placeholder: |
+        1. 로그인합니다.
+        2. 세션을 만료시킵니다.
+        3. 메인 화면에 접근합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: 현재 동작
+      description: 현재 어떤 동작이 발생하는지 작성해 주세요.
+      placeholder: 메인 화면과 로그인 화면 사이에서 리다이렉트가 반복됩니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: 기대 동작
+      description: 정상적으로 기대하는 동작을 작성해 주세요.
+      placeholder: 세션이 만료되면 로그인 화면으로 한 번만 이동해야 합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: completion-criteria
+    attributes:
+      label: 완료 조건
+      description: 어떤 상태가 되면 수정이 완료되는지 작성해 주세요.
+      placeholder: 세션 만료 후 리다이렉트 반복이 발생하지 않고 로그인 화면이 표시됩니다.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 중요도
+      description: 문제가 다른 기능과 일정에 미치는 영향을 선택해 주세요.
+      options:
+        - 높음 — 핵심 기능 또는 후속 작업에 직접 영향
+        - 보통 — 일반적인 기능 개발 및 개선
+        - 낮음 — 일정에 여유가 있는 정리 작업
+    validations:
+      required: true
+
+  - type: dropdown
+    id: size
+    attributes:
+      label: 작업 규모
+      description: 예상되는 변경 범위를 선택해 주세요.
+      options:
+        - 큼 — 영향을 주는 요소가 많은 작업 (이슈 분할 가능한지 검토)
+        - 보통 — 여러 구성요소가 함께 변경되는 작업
+        - 작음 — 단순하고 독립적인 작업
+    validations:
+      required: true
+
+  - type: input
+    id: related-issues
+    attributes:
+      label: 연관 이슈
+      description: 관련된 이슈가 있다면 번호를 작성해 주세요.
+      placeholder: "#123, #124"
+
+  - type: textarea
+    id: references
+    attributes:
+      label: 참고 사항
+      description: 로그, 화면 이미지, 관련 문서 등 참고할 자료를 작성해 주세요.
+      placeholder: 오류 로그나 화면 이미지, 관련 링크를 작성해 주세요.
