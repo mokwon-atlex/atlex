@@ -2,11 +2,36 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  buildSingleSelectFieldMap,
   extractFormSelection,
   parseIssueReferences,
   renderRelatedPullRequests,
   selectStatus,
 } = require("./project-automation.cjs");
+
+test("프로젝트 필드 응답에서 단일 선택 필드만 변환한다", () => {
+  const fields = buildSingleSelectFieldMap([
+    {},
+    {
+      id: "status-field-id",
+      name: "Status",
+      options: [
+        { id: "todo-option-id", name: "시작 전" },
+        { id: "done-option-id", name: "완료" },
+      ],
+    },
+  ]);
+
+  assert.deepEqual(fields.get("Status"), {
+    id: "status-field-id",
+    name: "Status",
+    options: new Map([
+      ["시작 전", "todo-option-id"],
+      ["완료", "done-option-id"],
+    ]),
+  });
+  assert.equal(fields.size, 1);
+});
 
 test("이슈 양식의 선택값에서 설명을 제외한 값만 읽는다", () => {
   const body = [
