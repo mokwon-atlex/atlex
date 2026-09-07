@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# IDEs and editors
+.idea/
+**/.idea/
+.vscode/
+**/.vscode/
+*.iml
+
+# Environment files
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Local Superpowers planning artifacts from the former backend repository
+backend/docs/superpowers/

@@ -1,0 +1,31 @@
+# EC2 배포용 구성. mysql + app + nginx 세 컨테이너.
+# 실행: docker compose up -d   (같은 디렉터리의 .env 자동 로드)
+services:
+  app:
+    image: ghcr.io/mokwon-atlex/atlex:latest   # GitHub Actions가 push, EC2는 pull
+    restart: unless-stopped
+    mem_limit: 600m          # JVM의 MaxRAMPercentage(60%) 기준 → 힙 최대 ~360MB
+    memswap_limit: 1600m     # mem_limit(600m) + swap 1G 까지 허용 (피크 흡수)
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: ${DB_HOST}                     # RDS 엔드포인트
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    expose:
+      - "8080"                                # 내부 네트워크에만 노출 (외부 X)
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certbot/conf:/etc/letsencrypt:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+

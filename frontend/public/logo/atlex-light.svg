@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="260" viewBox="0 0 800 260">
+<g transform="translate(40,20)">
+<line x1="120" y1="30" x2="60" y2="170" stroke="#3B82F6" stroke-width="16" stroke-linecap="round"/>
+<line x1="120" y1="30" x2="180" y2="170" stroke="#3B82F6" stroke-width="16" stroke-linecap="round"/>
+<line x1="90" y1="110" x2="150" y2="110" stroke="#3B82F6" stroke-width="14" stroke-linecap="round"/>
+<line x1="60" y1="170" x2="150" y2="110" stroke="#3B82F6" stroke-width="10" stroke-linecap="round"/>
+<line x1="180" y1="170" x2="90" y2="110" stroke="#3B82F6" stroke-width="10" stroke-linecap="round"/>
+<circle cx="120" cy="30" r="18" fill="#3B82F6"/>
+<circle cx="60" cy="170" r="18" fill="#3B82F6"/>
+<circle cx="180" cy="170" r="18" fill="#3B82F6"/>
+<circle cx="90" cy="110" r="16" fill="#3B82F6"/>
+<circle cx="150" cy="110" r="16" fill="#3B82F6"/>
+</g>
+<text x="300" y="155" font-family="Arial, Helvetica, sans-serif" font-size="88" font-weight="800" letter-spacing="6" fill="#111827">ATLEX</text>
+</svg>

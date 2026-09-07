@@ -1,0 +1,49 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "../styles/theme.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ===== password 기본 눈 아이콘 제거 ===== */
+
+/* password 기본 눈 아이콘 제거 */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+}
+
+input[type="password"]::-webkit-textfield-decoration-container {
+  display: none;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-nanum-gothic-coding), "Apple SD Gothic Neo", "Malgun Gothic", monospace;
+  }
+
+  html {
+    font-family: var(--font-nanum-gothic-coding), "Apple SD Gothic Neo", "Malgun Gothic", monospace;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

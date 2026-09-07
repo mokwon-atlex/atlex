@@ -1,0 +1,11 @@
+### GET request to example server
+POST http://localhost:8080/api/v1/auth/signup
+
+{
+  "userId": "tester061",
+  "email": "tester03421@example.com",
+  "password": "Test1234!!!",
+  "name": "tester"
+}
+
+###
