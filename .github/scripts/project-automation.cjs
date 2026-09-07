@@ -108,6 +108,26 @@ function selectStatus(currentStatus, issueState, pullRequests) {
   return "시작 전";
 }
 
+/**
+ * 프로젝트 필드 응답에서 단일 선택 필드만 이름으로 조회할 수 있게 변환합니다.
+ *
+ * @param {Array<object>} fields 프로젝트 필드 응답
+ * @returns {Map<string, object>} 이름을 키로 사용하는 단일 선택 필드
+ */
+function buildSingleSelectFieldMap(fields) {
+  return new Map(
+    fields
+      .filter((field) => Array.isArray(field?.options))
+      .map((field) => [
+        field.name,
+        {
+          ...field,
+          options: new Map(field.options.map((option) => [option.name, option.id])),
+        },
+      ]),
+  );
+}
+
 async function loadProject(github, owner, projectNumber) {
   const result = await github.graphql(
     `query($owner: String!, $projectNumber: Int!) {
@@ -135,11 +155,7 @@ async function loadProject(github, owner, projectNumber) {
 
   return {
     id: project.id,
-    fields: new Map(
-      project.fields.nodes
-        .filter(Boolean)
-        .map((field) => [field.name, { ...field, options: new Map(field.options.map((option) => [option.name, option.id])) }]),
-    ),
+    fields: buildSingleSelectFieldMap(project.fields.nodes),
   };
 }
 
@@ -346,6 +362,7 @@ async function run({ github, context, projectOwner, projectNumber }) {
 }
 
 module.exports = {
+  buildSingleSelectFieldMap,
   extractFormSelection,
   parseIssueReferences,
   renderRelatedPullRequests,
