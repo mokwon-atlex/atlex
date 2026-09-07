@@ -4,10 +4,10 @@
 // (환경별로 다르고, 운영 주소를 레포에 남기지 않기 위함. 백엔드 HTTPS 전환 시 .env 만 교체)
 // 누락 시 destination 이 "undefined/..." 가 되어 조용히 깨지므로 명시적으로 실패시킨다.
 // 값 끝의 슬래시는 제거해 destination 이 "origin//api/v1/..." 로 이중 슬래시가 되지 않게 한다.
-const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN?.replace(/\/+$/, "");
+const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN?.replace(/\/+$/, '');
 if (!BACKEND_ORIGIN) {
   throw new Error(
-    "BACKEND_ORIGIN 환경변수가 설정되지 않았습니다. .env(.env.example 참고)에 BACKEND_ORIGIN 을 지정하세요.",
+    'BACKEND_ORIGIN 환경변수가 설정되지 않았습니다. .env(.env.example 참고)에 BACKEND_ORIGIN 을 지정하세요.',
   );
 }
 
@@ -23,7 +23,7 @@ const nextConfig = {
     return {
       beforeFiles: [
         {
-          source: "/api/v1/:path*",
+          source: '/api/v1/:path*',
           destination: `${BACKEND_ORIGIN}/api/v1/:path*`,
         },
       ],

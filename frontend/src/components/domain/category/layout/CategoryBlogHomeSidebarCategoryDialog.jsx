@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import CategoryPicker from "@/components/domain/category/feature/CategoryPicker";
-import BlogHomeSidebarCategoryDialog from "@/components/domain/blog-home/layout/BlogHomeSidebarCategoryDialog";
+import CategoryPicker from '@/components/domain/category/feature/CategoryPicker';
+import BlogHomeSidebarCategoryDialog from '@/components/domain/blog-home/layout/BlogHomeSidebarCategoryDialog';
 
 export default function CategoryBlogHomeSidebarCategoryDialog({
-  actionId = "category",
+  actionId = 'category',
   ariaLabel,
   categories = [],
   label,

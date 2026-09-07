@@ -1,20 +1,20 @@
-import { OptionContent } from "@/components/domain/option/layout/OptionContent"
+import { OptionContent } from '@/components/domain/option/layout/OptionContent';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof OptionContent> } */
 const meta = {
-  title: "Domain/Option/Layout/OptionContent",
+  title: 'Domain/Option/Layout/OptionContent',
   component: OptionContent,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
   argTypes: {
     activeMenu: {
-      control: "select",
-      options: ["profile", "password", "notification", "policy", "delete"],
+      control: 'select',
+      options: ['profile', 'password', 'notification', 'policy', 'delete'],
     },
   },
-}
+};
 
-export default meta
+export default meta;
 
 export const Profile = {
   render: (args) => (
@@ -23,9 +23,9 @@ export const Profile = {
     </div>
   ),
   args: {
-    activeMenu: "profile",
+    activeMenu: 'profile',
   },
-}
+};
 
 export const Password = {
   render: (args) => (
@@ -34,9 +34,9 @@ export const Password = {
     </div>
   ),
   args: {
-    activeMenu: "password",
+    activeMenu: 'password',
   },
-}
+};
 
 export const Notification = {
   render: (args) => (
@@ -45,9 +45,9 @@ export const Notification = {
     </div>
   ),
   args: {
-    activeMenu: "notification",
+    activeMenu: 'notification',
   },
-}
+};
 
 export const Policy = {
   render: (args) => (
@@ -56,9 +56,9 @@ export const Policy = {
     </div>
   ),
   args: {
-    activeMenu: "policy",
+    activeMenu: 'policy',
   },
-}
+};
 
 export const DeleteAccount = {
   render: (args) => (
@@ -67,6 +67,6 @@ export const DeleteAccount = {
     </div>
   ),
   args: {
-    activeMenu: "delete",
+    activeMenu: 'delete',
   },
-}
+};

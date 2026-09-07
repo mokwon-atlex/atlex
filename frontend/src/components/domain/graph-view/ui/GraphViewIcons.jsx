@@ -1,4 +1,4 @@
-export function NodeDocIcon({ color = "#66C0DC", cx, cy, r }) {
+export function NodeDocIcon({ color = '#66C0DC', cx, cy, r }) {
   const size = r * 0.42;
   const x = cx - size * 0.75;
   const y = cy - size;
@@ -7,15 +7,7 @@ export function NodeDocIcon({ color = "#66C0DC", cx, cy, r }) {
 
   return (
     <g>
-      <rect
-        fill={color}
-        height={height}
-        opacity="0.14"
-        rx={size * 0.18}
-        width={width}
-        x={x}
-        y={y}
-      />
+      <rect fill={color} height={height} opacity="0.14" rx={size * 0.18} width={width} x={x} y={y} />
       {[0.28, 0.5, 0.72].map((factor, index) => (
         <line
           key={factor}
@@ -62,13 +54,7 @@ export function MiniConnectionIcon({ dashed = false }) {
   return (
     <svg height="13" viewBox="0 0 13 13" width="13">
       {dashed ? (
-        <path
-          d="M2 7 Q6.5 3 11 7"
-          fill="none"
-          stroke="#888"
-          strokeDasharray="2,1.5"
-          strokeWidth="1.2"
-        />
+        <path d="M2 7 Q6.5 3 11 7" fill="none" stroke="#888" strokeDasharray="2,1.5" strokeWidth="1.2" />
       ) : (
         <>
           <circle cx="2.5" cy="6.5" fill="none" r="1.8" stroke="#888" strokeWidth="1.1" />

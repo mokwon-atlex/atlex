@@ -18,10 +18,9 @@ class KeywordExtractorTest {
     @DisplayName("제목, 본문, 태그에서 정규화된 키워드 등장 횟수를 계산한다")
     void extractsKeywordOccurrences() {
         Map<String, KeywordOccurrence> result = extractor.extract(
-                "Spring Boot Graph",
-                "Spring boot graph graph and JPA.",
-                List.of("#Spring", "JPA")
-        );
+            "Spring Boot Graph",
+            "Spring boot graph graph and JPA.",
+            List.of("#Spring", "JPA"));
 
         assertEquals(1, result.get("spring").titleCount());
         assertEquals(1, result.get("spring").contentCount());
@@ -38,10 +37,9 @@ class KeywordExtractorTest {
     @DisplayName("한 글자 토큰과 빈 태그는 제외한다")
     void excludesShortAndBlankTokens() {
         Map<String, KeywordOccurrence> result = extractor.extract(
-                "A Go",
-                "x y go",
-                List.of(" ", "#")
-        );
+            "A Go",
+            "x y go",
+            List.of(" ", "#"));
 
         assertEquals(List.of("go"), result.keySet().stream().toList());
     }

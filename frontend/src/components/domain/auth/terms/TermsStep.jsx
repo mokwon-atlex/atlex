@@ -1,35 +1,31 @@
-"use client"
+'use client';
 
-import { useState } from "react"
+import { useState } from 'react';
 
-import { Button } from "@/components/common/ui/button"
-import { Checkbox } from "@/components/common/ui/checkbox"
-import { Textfield } from "@/components/common/ui/textfield"
+import { Button } from '@/components/common/ui/button';
+import { Checkbox } from '@/components/common/ui/checkbox';
+import { Textfield } from '@/components/common/ui/textfield';
 
 function TermsStep({ onNext, onBack }) {
-  const [terms, setTerms] = useState(false)
-  const [privacy, setPrivacy] = useState(false)
-  const [marketing, setMarketing] = useState(false)
+  const [terms, setTerms] = useState(false);
+  const [privacy, setPrivacy] = useState(false);
+  const [marketing, setMarketing] = useState(false);
 
-  const allChecked = terms && privacy && marketing
-  const requiredChecked = terms && privacy
+  const allChecked = terms && privacy && marketing;
+  const requiredChecked = terms && privacy;
 
   function handleAllChange() {
-    const next = !allChecked
-    setTerms(next)
-    setPrivacy(next)
-    setMarketing(next)
+    const next = !allChecked;
+    setTerms(next);
+    setPrivacy(next);
+    setMarketing(next);
   }
 
   return (
     <div className="mt-6 flex flex-col gap-3">
       <div className="max-h-80 overflow-y-auto space-y-3 pr-1">
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-4">
-          <Checkbox
-            className="mt-0.5"
-            checked={allChecked}
-            onCheckedChange={handleAllChange}
-          />
+          <Checkbox className="mt-0.5" checked={allChecked} onCheckedChange={handleAllChange} />
           <div>
             <Textfield weight="bold">모두 동의합니다.</Textfield>
             <Textfield variant="muted" size="sm" className="mt-1 leading-5">
@@ -71,12 +67,7 @@ function TermsStep({ onNext, onBack }) {
       </div>
 
       <div className="flex gap-3 pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onBack}
-          className="h-10 flex-1 rounded-lg text-sm font-bold"
-        >
+        <Button type="button" variant="outline" onClick={onBack} className="h-10 flex-1 rounded-lg text-sm font-bold">
           취소
         </Button>
 
@@ -90,7 +81,7 @@ function TermsStep({ onNext, onBack }) {
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
 function TermsItem({ label, badge, badgeClass, checked, onCheckedChange, scrollContent, description }) {
@@ -110,11 +101,9 @@ function TermsItem({ label, badge, badgeClass, checked, onCheckedChange, scrollC
         </div>
       )}
 
-      {description && (
-        <p className="mt-2 pl-7 text-xs text-muted-foreground">{description}</p>
-      )}
+      {description && <p className="mt-2 pl-7 text-xs text-muted-foreground">{description}</p>}
     </div>
-  )
+  );
 }
 
-export { TermsStep }
+export { TermsStep };

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
 function getFirstTool(toolCategories) {
   return toolCategories[0] ?? null;
@@ -18,20 +18,14 @@ function getActiveGroup(tool, groupId) {
 
 export default function usePostEditorPanels(
   toolCategories,
-  {
-    initialGroupId,
-    initialOpen = false,
-    initialToolId,
-  } = {},
+  { initialGroupId, initialOpen = false, initialToolId } = {},
 ) {
   const initialTool = getActiveTool(toolCategories, initialToolId);
   const initialGroup = getActiveGroup(initialTool, initialGroupId);
 
-  const [isToolPanelOpen, setIsToolPanelOpen] = useState(
-    initialOpen && Boolean(initialTool && initialGroup),
-  );
-  const [selectedToolId, setSelectedToolId] = useState(initialTool?.id ?? "");
-  const [selectedGroupId, setSelectedGroupId] = useState(initialGroup?.id ?? "");
+  const [isToolPanelOpen, setIsToolPanelOpen] = useState(initialOpen && Boolean(initialTool && initialGroup));
+  const [selectedToolId, setSelectedToolId] = useState(initialTool?.id ?? '');
+  const [selectedGroupId, setSelectedGroupId] = useState(initialGroup?.id ?? '');
 
   const activeTool = getActiveTool(toolCategories, selectedToolId);
   const activeGroup = getActiveGroup(activeTool, selectedGroupId);
@@ -49,7 +43,7 @@ export default function usePostEditorPanels(
     }
 
     setSelectedToolId(nextTool.id);
-    setSelectedGroupId(nextTool.groups[0]?.id ?? "");
+    setSelectedGroupId(nextTool.groups[0]?.id ?? '');
     setIsToolPanelOpen(true);
   }
 

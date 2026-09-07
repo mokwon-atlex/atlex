@@ -29,12 +29,17 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PostLikeServiceTest {
 
-    @Mock PostLikeRepository postLikeRepository;
-    @Mock PostRepository postRepository;
-    @Mock UserRepository userRepository;
-    @Mock PostAccessService postAccessService;
+    @Mock
+    PostLikeRepository postLikeRepository;
+    @Mock
+    PostRepository postRepository;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    PostAccessService postAccessService;
 
-    @InjectMocks PostLikeService postLikeService;
+    @InjectMocks
+    PostLikeService postLikeService;
 
     private Post post(Long id, int likes) {
         return Post.builder().id(id).title("t").content("c").likes(likes).build();
@@ -77,7 +82,7 @@ class PostLikeServiceTest {
         when(postAccessService.getAccessiblePost(10L, 2L)).thenReturn(post(10L, 5));
         when(postLikeRepository.existsByPost_IdAndUser_Id(10L, 2L)).thenReturn(false);
         when(postLikeRepository.saveAndFlush(any(PostLike.class)))
-                .thenThrow(new DataIntegrityViolationException("duplicate"));
+            .thenThrow(new DataIntegrityViolationException("duplicate"));
 
         PostLikeResponse response = postLikeService.like(10L, 2L);
 

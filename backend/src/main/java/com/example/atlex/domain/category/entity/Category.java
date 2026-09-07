@@ -5,17 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(
-        name = "categories",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_categories_user_name",
-                columnNames = {"user_id", "name"}
-        ),
-        indexes = @Index(
-                name = "idx_categories_user_id_id",
-                columnList = "user_id,id"
-        )
-)
+@Table(name = "categories", uniqueConstraints = @UniqueConstraint(name = "uk_categories_user_name", columnNames = {
+    "user_id", "name"}), indexes = @Index(name = "idx_categories_user_id_id", columnList = "user_id,id"))
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

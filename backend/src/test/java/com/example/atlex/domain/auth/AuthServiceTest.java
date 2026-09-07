@@ -27,10 +27,14 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    @Mock UserRepository userRepository;
-    @Mock PasswordEncoder passwordEncoder;
-    @Mock JwtProvider jwtProvider;
-    @Mock RefreshTokenRepository tokenRepository;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    PasswordEncoder passwordEncoder;
+    @Mock
+    JwtProvider jwtProvider;
+    @Mock
+    RefreshTokenRepository tokenRepository;
 
     private AuthService authService;
 
@@ -41,12 +45,12 @@ class AuthServiceTest {
 
     private User activeUser(int failCount) {
         return User.builder()
-                .id(1L)
-                .userId("testUser")
-                .password("encoded")
-                .active(true)
-                .failCount(failCount)
-                .build();
+            .id(1L)
+            .userId("testUser")
+            .password("encoded")
+            .active(true)
+            .failCount(failCount)
+            .build();
     }
 
     @Test
@@ -57,9 +61,10 @@ class AuthServiceTest {
         when(passwordEncoder.matches("wrong", "encoded")).thenReturn(false);
 
         assertThrows(AuthenticationException.class,
-                () -> authService.login("testUser", "wrong"));
+            () -> authService.login("testUser", "wrong"));
 
-        verify(userRepository).incrementFailCountAndApplyLock(eq(1L), eq(5), any(LocalDateTime.class), any(LocalDateTime.class));
+        verify(userRepository).incrementFailCountAndApplyLock(eq(1L), eq(5), any(LocalDateTime.class),
+            any(LocalDateTime.class));
         verify(userRepository, never()).save(user);
     }
 
@@ -71,9 +76,10 @@ class AuthServiceTest {
         when(passwordEncoder.matches("wrong", "encoded")).thenReturn(false);
 
         assertThrows(AuthenticationException.class,
-                () -> authService.login("testUser", "wrong"));
+            () -> authService.login("testUser", "wrong"));
 
-        verify(userRepository).incrementFailCountAndApplyLock(eq(1L), eq(5), any(LocalDateTime.class), any(LocalDateTime.class));
+        verify(userRepository).incrementFailCountAndApplyLock(eq(1L), eq(5), any(LocalDateTime.class),
+            any(LocalDateTime.class));
     }
 
     @Test
@@ -100,22 +106,22 @@ class AuthServiceTest {
         when(userRepository.findByUserId("testUser")).thenReturn(Optional.of(user));
 
         assertThrows(TooManyLoginAttemptsException.class,
-                () -> authService.login("testUser", "any"));
+            () -> authService.login("testUser", "any"));
     }
 
     @Test
     @DisplayName("비활성 계정 로그인 시 AccountDisabledException")
     void 비활성계정_로그인_예외() {
         User user = User.builder()
-                .id(1L)
-                .userId("testUser")
-                .password("encoded")
-                .active(false)
-                .failCount(0)
-                .build();
+            .id(1L)
+            .userId("testUser")
+            .password("encoded")
+            .active(false)
+            .failCount(0)
+            .build();
         when(userRepository.findByUserId("testUser")).thenReturn(Optional.of(user));
 
         assertThrows(com.example.atlex.domain.auth.exception.AccountDisabledException.class,
-                () -> authService.login("testUser", "any"));
+            () -> authService.login("testUser", "any"));
     }
 }

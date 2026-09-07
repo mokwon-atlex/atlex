@@ -42,11 +42,16 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class GraphIndexServiceTest {
 
-    @Mock PostRepository postRepository;
-    @Mock PostTagRepository postTagRepository;
-    @Mock KeywordRepository keywordRepository;
-    @Mock PostKeywordRepository postKeywordRepository;
-    @Mock PostRelationRepository postRelationRepository;
+    @Mock
+    PostRepository postRepository;
+    @Mock
+    PostTagRepository postTagRepository;
+    @Mock
+    KeywordRepository keywordRepository;
+    @Mock
+    PostKeywordRepository postKeywordRepository;
+    @Mock
+    PostRelationRepository postRelationRepository;
 
     @Test
     @DisplayName("게시글의 기존 키워드를 지우고 제목, 본문, 태그 기반 PostKeyword를 다시 저장한다")
@@ -54,12 +59,12 @@ class GraphIndexServiceTest {
         GraphIndexService service = newService();
         User user = User.builder().id(1L).userId("author").name("작성자").build();
         Post post = Post.builder()
-                .id(10L)
-                .user(user)
-                .title("Spring Graph")
-                .content("Spring graph")
-                .isPublic(true)
-                .build();
+            .id(10L)
+            .user(user)
+            .title("Spring Graph")
+            .content("Spring graph")
+            .isPublic(true)
+            .build();
         Keyword spring = Keyword.builder().id(100L).name("spring").documentFrequency(0).build();
         Keyword graph = Keyword.builder().id(101L).name("graph").documentFrequency(0).build();
         Keyword jpa = Keyword.builder().id(102L).name("jpa").documentFrequency(0).build();
@@ -68,13 +73,12 @@ class GraphIndexServiceTest {
         when(postRepository.countByIsDeletedFalseAndIsPublicTrue()).thenReturn(10L);
         when(postTagRepository.findTagNamesByPostId(10L)).thenReturn(List.of("JPA"));
         when(keywordRepository.findAllByNameIn(List.of("spring", "graph", "jpa")))
-                .thenReturn(List.of(spring, graph));
+            .thenReturn(List.of(spring, graph));
         when(keywordRepository.saveAll(any())).thenReturn(List.of(jpa));
         when(postKeywordRepository.countPublicDocumentsByKeywordIds(List.of(100L, 101L)))
-                .thenReturn(List.of(
-                        new TestKeywordDocumentFrequency(100L, 2L),
-                        new TestKeywordDocumentFrequency(101L, 1L)
-                ));
+            .thenReturn(List.of(
+                new TestKeywordDocumentFrequency(100L, 2L),
+                new TestKeywordDocumentFrequency(101L, 1L)));
 
         service.refreshPostKeywords(10L);
 
@@ -82,8 +86,7 @@ class GraphIndexServiceTest {
         verify(keywordRepository).findAllByNameIn(List.of("spring", "graph", "jpa"));
         verify(postKeywordRepository).countPublicDocumentsByKeywordIds(List.of(100L, 101L));
         verify(postKeywordRepository, never()).countPublicDocumentsByKeywordId(anyLong());
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<PostKeyword>> captor = ArgumentCaptor.forClass(List.class);
+        @SuppressWarnings("unchecked") ArgumentCaptor<List<PostKeyword>> captor = ArgumentCaptor.forClass(List.class);
         verify(postKeywordRepository).saveAll(captor.capture());
         List<PostKeyword> saved = captor.getValue();
 
@@ -108,21 +111,19 @@ class GraphIndexServiceTest {
 
         when(postRepository.findWithUserById(10L)).thenReturn(Optional.of(source));
         when(postKeywordRepository.findByPostIdOrderByWeightDesc(10L)).thenReturn(List.of(
-                PostKeyword.of(source, spring, 1, 1, 0, 5.0),
-                PostKeyword.of(source, graph, 1, 0, 0, 3.0)
-        ));
-        when(postKeywordRepository.findPublicCandidatesByKeywordNames(eq(10L), eq(List.of("spring", "graph")), any(Pageable.class)))
-                .thenReturn(List.of(
-                        PostKeyword.of(strong, spring, 1, 2, 0, 4.0),
-                        PostKeyword.of(strong, graph, 1, 1, 0, 3.5),
-                        PostKeyword.of(weak, spring, 0, 1, 0, 0.05)
-                ));
+            PostKeyword.of(source, spring, 1, 1, 0, 5.0),
+            PostKeyword.of(source, graph, 1, 0, 0, 3.0)));
+        when(postKeywordRepository.findPublicCandidatesByKeywordNames(eq(10L), eq(List.of("spring", "graph")),
+            any(Pageable.class)))
+            .thenReturn(List.of(
+                PostKeyword.of(strong, spring, 1, 2, 0, 4.0),
+                PostKeyword.of(strong, graph, 1, 1, 0, 3.5),
+                PostKeyword.of(weak, spring, 0, 1, 0, 0.05)));
 
         service.refreshRelations(10L);
 
         verify(postRelationRepository).deleteBySourcePostId(10L);
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<PostRelation>> captor = ArgumentCaptor.forClass(List.class);
+        @SuppressWarnings("unchecked") ArgumentCaptor<List<PostRelation>> captor = ArgumentCaptor.forClass(List.class);
         verify(postRelationRepository).saveAll(captor.capture());
         List<PostRelation> saved = captor.getValue();
 
@@ -162,21 +163,19 @@ class GraphIndexServiceTest {
 
     private GraphIndexService newService(TransactionOperations transactionOperations) {
         return new GraphIndexService(
-                postRepository,
-                postTagRepository,
-                keywordRepository,
-                postKeywordRepository,
-                postRelationRepository,
-                new KeywordExtractor(),
-                new KeywordWeightCalculator(),
-                transactionOperations
-        );
+            postRepository,
+            postTagRepository,
+            keywordRepository,
+            postKeywordRepository,
+            postRelationRepository,
+            new KeywordExtractor(),
+            new KeywordWeightCalculator(),
+            transactionOperations);
     }
 
     private record TestKeywordDocumentFrequency(
-            Long keywordId,
-            Long documentFrequency
-    ) implements KeywordDocumentFrequencyProjection {
+        Long keywordId,
+        Long documentFrequency) implements KeywordDocumentFrequencyProjection {
         @Override
         public Long getKeywordId() {
             return keywordId;

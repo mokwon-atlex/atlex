@@ -1,4 +1,4 @@
-import { Capsule } from "@/components/common/ui/capsule"
+import { Capsule } from '@/components/common/ui/capsule';
 
 export default function BlogDetailAuthorCard({ authorCard }) {
   return (
@@ -11,12 +11,8 @@ export default function BlogDetailAuthorCard({ authorCard }) {
           </div>
 
           <div>
-            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              writer
-            </p>
-            <h2 className="mt-3 text-[1.9rem] font-bold tracking-[-0.08em] text-foreground">
-              {authorCard.name}
-            </h2>
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-muted-foreground">writer</p>
+            <h2 className="mt-3 text-[1.9rem] font-bold tracking-[-0.08em] text-foreground">{authorCard.name}</h2>
             <Capsule variant="outline" className="mt-3 text-[0.72rem]">
               {authorCard.role}
             </Capsule>
@@ -25,9 +21,7 @@ export default function BlogDetailAuthorCard({ authorCard }) {
 
         {/* 배지는 긴 문단을 늘리지 않고도 작성자 성격을 빠르게 요약해 줍니다. */}
         <div className="max-w-[34rem]">
-          <p className="text-[0.95rem] leading-8 text-foreground/82">
-            {authorCard.bio}
-          </p>
+          <p className="text-[0.95rem] leading-8 text-foreground/82">{authorCard.bio}</p>
           <div className="mt-5 flex flex-wrap gap-2">
             {authorCard.badges.map((badge) => (
               <Capsule key={badge} variant="outline" className="text-[0.72rem]">

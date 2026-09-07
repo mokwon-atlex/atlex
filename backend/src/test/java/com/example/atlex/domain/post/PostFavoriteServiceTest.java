@@ -36,11 +36,15 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PostFavoriteServiceTest {
 
-    @Mock PostFavoriteRepository postFavoriteRepository;
-    @Mock UserRepository userRepository;
-    @Mock PostAccessService postAccessService;
+    @Mock
+    PostFavoriteRepository postFavoriteRepository;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    PostAccessService postAccessService;
 
-    @InjectMocks PostFavoriteService postFavoriteService;
+    @InjectMocks
+    PostFavoriteService postFavoriteService;
 
     private Post post(Long id) {
         return Post.builder().id(id).title("t").content("c").build();
@@ -79,7 +83,7 @@ class PostFavoriteServiceTest {
         when(postAccessService.getAccessiblePost(10L, 2L)).thenReturn(post(10L));
         when(postFavoriteRepository.existsByPost_IdAndUser_Id(10L, 2L)).thenReturn(false);
         when(postFavoriteRepository.saveAndFlush(any(PostFavorite.class)))
-                .thenThrow(new DataIntegrityViolationException("duplicate"));
+            .thenThrow(new DataIntegrityViolationException("duplicate"));
 
         PostFavoriteResponse response = postFavoriteService.addFavorite(10L, 2L);
 

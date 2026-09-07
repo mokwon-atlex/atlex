@@ -1,4 +1,4 @@
-import { Textfield } from "@/components/common/ui/textfield"
+import { Textfield } from '@/components/common/ui/textfield';
 
 function LoginLogo() {
   return (
@@ -11,7 +11,7 @@ function LoginLogo() {
         ATLEX
       </Textfield>
     </div>
-  )
+  );
 }
 
-export { LoginLogo }
+export { LoginLogo };

@@ -1,14 +1,14 @@
-import { LoginLogo } from "@/components/domain/auth/login/feature/LoginLogo"
+import { LoginLogo } from '@/components/domain/auth/login/feature/LoginLogo';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof LoginLogo> } */
 const meta = {
-  title: "Domain/Auth/Feature/LoginLogo",
+  title: 'Domain/Auth/Feature/LoginLogo',
   component: LoginLogo,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
-}
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
+};
 
-export default meta
+export default meta;
 
 export const Default = {
   render: () => (
@@ -16,7 +16,7 @@ export const Default = {
       <LoginLogo />
     </div>
   ),
-}
+};
 
 export const ForcedVisible = {
   render: () => (
@@ -27,4 +27,4 @@ export const ForcedVisible = {
       <span className="text-xl font-bold tracking-tight">ATLEX</span>
     </div>
   ),
-}
+};

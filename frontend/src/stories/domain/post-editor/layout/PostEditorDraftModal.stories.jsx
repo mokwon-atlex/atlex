@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
-import { Button } from "@/components/common/ui/button";
-import PostEditorDraftModal from "@/components/domain/post-editor/layout/PostEditorDraftModal";
-import { postEditorDrafts } from "@/data/post-editor/post-editor-drafts";
+import { Button } from '@/components/common/ui/button';
+import PostEditorDraftModal from '@/components/domain/post-editor/layout/PostEditorDraftModal';
+import { postEditorDrafts } from '@/data/post-editor/post-editor-drafts';
 
 function DraftModalDemo({ drafts = postEditorDrafts }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,10 +30,10 @@ function DraftModalDemo({ drafts = postEditorDrafts }) {
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof PostEditorDraftModal> } */
 const meta = {
-  title: "Domain/PostEditor/Layout/PostEditorDraftModal",
+  title: 'Domain/PostEditor/Layout/PostEditorDraftModal',
   component: PostEditorDraftModal,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
 };
 
 export default meta;

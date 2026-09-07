@@ -34,16 +34,16 @@ public class UserResponse {
     private LocalDateTime updatedAt;
 
     //Entity를 Response DTO로 변환하는 정적 팩토리 메서드
-    public static UserResponse from(User user){
+    public static UserResponse from(User user) {
         return UserResponse.builder()
-                .id(user.getId())
-                .userId(user.getUserId())
-                .email(user.getEmail())
-                .name(user.getName())
-                .active(user.getActive())
-                .marketingAgreed(user.getMarketingAgreed())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt()) // 수정 전엔 null 또는 생성시간과 동일
-                .build();
+            .id(user.getId())
+            .userId(user.getUserId())
+            .email(user.getEmail())
+            .name(user.getName())
+            .active(user.getActive())
+            .marketingAgreed(user.getMarketingAgreed())
+            .createdAt(user.getCreatedAt())
+            .updatedAt(user.getUpdatedAt()) // 수정 전엔 null 또는 생성시간과 동일
+            .build();
     }
 }

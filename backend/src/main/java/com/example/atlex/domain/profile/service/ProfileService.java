@@ -22,7 +22,7 @@ public class ProfileService {
             throw new UserNotFoundException();
         }
         User user = userRepository.findByUserIdAndActiveTrue(userId)
-                .orElseThrow(UserNotFoundException::new);
+            .orElseThrow(UserNotFoundException::new);
         return PublicUserResponse.from(user);
     }
 
@@ -33,17 +33,16 @@ public class ProfileService {
         }
 
         User user = userRepository.findByUserIdAndActiveTrue(userId)
-                .orElseThrow(UserNotFoundException::new);
+            .orElseThrow(UserNotFoundException::new);
 
         if (loginUser == null || !user.getId().equals(loginUser.getId())) {
             throw new AccessDeniedException();
         }
 
         user.updateProfile(
-                request.getName() != null ? request.getName().trim() : null,
-                request.getProfileImage(),
-                request.getInfo()
-        );
+            request.getName() != null ? request.getName().trim() : null,
+            request.getProfileImage(),
+            request.getInfo());
 
         return PublicUserResponse.from(user);
     }

@@ -43,10 +43,14 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
 
-    @Mock PostRepository postRepository;
-    @Mock UserRepository userRepository;
-    @Mock CategoryRepository categoryRepository;
-    @Mock GraphIndexService graphIndexService;
+    @Mock
+    PostRepository postRepository;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    CategoryRepository categoryRepository;
+    @Mock
+    GraphIndexService graphIndexService;
 
     private PostService postService;
 
@@ -54,7 +58,7 @@ class PostServiceTest {
     void setUp() {
         postService = new PostService(postRepository, userRepository, categoryRepository, graphIndexService);
         lenient().when(postRepository.findAllPublic(isNull(), isNull(), any(Pageable.class)))
-                .thenReturn(Page.empty());
+            .thenReturn(Page.empty());
     }
 
     @Test
@@ -88,18 +92,17 @@ class PostServiceTest {
         postService.getPostList("TRENDING", null, null, request, null);
 
         assertSort(
-                captureAnonymousPageable(),
-                Sort.Order.desc("likes"),
-                Sort.Order.desc("hits"),
-                Sort.Order.desc("createdAt")
-        );
+            captureAnonymousPageable(),
+            Sort.Order.desc("likes"),
+            Sort.Order.desc("hits"),
+            Sort.Order.desc("createdAt"));
     }
 
     @Test
     @DisplayName("로그인 사용자는 기존 visible 조회 정책을 사용한다")
     void getPostList_authenticatedUsesVisiblePolicy() {
         when(postRepository.findAllVisibleTo(any(Long.class), isNull(), isNull(), any(Pageable.class)))
-                .thenReturn(Page.empty());
+            .thenReturn(Page.empty());
 
         postService.getPostList("latest", null, null, PageRequest.of(0, 10), 1L);
 
@@ -179,18 +182,17 @@ class PostServiceTest {
         User user = User.builder().id(1L).userId("owner").name("owner").build();
         Category category = Category.builder().id(10L).user(user).name("category").build();
         PostCreateRequest request = new PostCreateRequest(
-                "title",
-                null,
-                "content",
-                null,
-                category.getId(),
-                true
-        );
+            "title",
+            null,
+            "content",
+            null,
+            category.getId(),
+            true);
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(categoryRepository.findByIdAndUser_Id(category.getId(), user.getId()))
-                .thenReturn(Optional.of(category));
+            .thenReturn(Optional.of(category));
         when(postRepository.save(any(Post.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+            .thenAnswer(invocation -> invocation.getArgument(0));
 
         postService.createPost(request, user.getId());
 
@@ -202,21 +204,19 @@ class PostServiceTest {
     void createPost_rejectsOtherUsersCategory() {
         User user = User.builder().id(1L).userId("owner").build();
         PostCreateRequest request = new PostCreateRequest(
-                "title",
-                null,
-                "content",
-                null,
-                10L,
-                true
-        );
+            "title",
+            null,
+            "content",
+            null,
+            10L,
+            true);
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(categoryRepository.findByIdAndUser_Id(10L, user.getId()))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         CustomException exception = assertThrows(
-                CustomException.class,
-                () -> postService.createPost(request, user.getId())
-        );
+            CustomException.class,
+            () -> postService.createPost(request, user.getId()));
 
         assertEquals(ErrorCode.CATEGORY_NOT_FOUND, exception.getErrorCode());
     }
@@ -226,20 +226,19 @@ class PostServiceTest {
     void createPost_refreshesGraph() {
         User user = User.builder().id(1L).userId("owner").name("owner").build();
         PostCreateRequest request = new PostCreateRequest(
-                "title",
-                null,
-                "content",
-                null,
-                null,
-                true
-        );
+            "title",
+            null,
+            "content",
+            null,
+            null,
+            true);
         Post savedPost = Post.builder()
-                .id(100L)
-                .user(user)
-                .title("title")
-                .content("content")
-                .isPublic(true)
-                .build();
+            .id(100L)
+            .user(user)
+            .title("title")
+            .content("content")
+            .isPublic(true)
+            .build();
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(postRepository.save(any(Post.class))).thenReturn(savedPost);
 
@@ -254,22 +253,21 @@ class PostServiceTest {
         User author = User.builder().id(1L).userId("owner").name("owner").build();
         Category category = Category.builder().id(10L).user(author).name("category").build();
         Post post = Post.builder()
-                .id(100L)
-                .user(author)
-                .title("title")
-                .content("content")
-                .build();
+            .id(100L)
+            .user(author)
+            .title("title")
+            .content("content")
+            .build();
         PostUpdateRequest request = new PostUpdateRequest(
-                null,
-                null,
-                null,
-                null,
-                category.getId(),
-                null
-        );
+            null,
+            null,
+            null,
+            null,
+            category.getId(),
+            null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
         when(categoryRepository.findByIdAndUser_Id(category.getId(), author.getId()))
-                .thenReturn(Optional.of(category));
+            .thenReturn(Optional.of(category));
 
         postService.updatePost(post.getId(), request, author.getId());
 
@@ -282,27 +280,25 @@ class PostServiceTest {
     void updatePost_rejectsOtherUsersCategory() {
         User author = User.builder().id(1L).userId("owner").build();
         Post post = Post.builder()
-                .id(100L)
-                .user(author)
-                .title("title")
-                .content("content")
-                .build();
+            .id(100L)
+            .user(author)
+            .title("title")
+            .content("content")
+            .build();
         PostUpdateRequest request = new PostUpdateRequest(
-                null,
-                null,
-                null,
-                null,
-                10L,
-                null
-        );
+            null,
+            null,
+            null,
+            null,
+            10L,
+            null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
         when(categoryRepository.findByIdAndUser_Id(10L, author.getId()))
-                .thenReturn(Optional.empty());
+            .thenReturn(Optional.empty());
 
         CustomException exception = assertThrows(
-                CustomException.class,
-                () -> postService.updatePost(post.getId(), request, author.getId())
-        );
+            CustomException.class,
+            () -> postService.updatePost(post.getId(), request, author.getId()));
 
         assertEquals(ErrorCode.CATEGORY_NOT_FOUND, exception.getErrorCode());
     }
@@ -312,20 +308,19 @@ class PostServiceTest {
     void updatePost_refreshesGraph() {
         User author = User.builder().id(1L).userId("owner").name("owner").build();
         Post post = Post.builder()
-                .id(100L)
-                .user(author)
-                .title("old")
-                .content("old content")
-                .isPublic(true)
-                .build();
+            .id(100L)
+            .user(author)
+            .title("old")
+            .content("old content")
+            .isPublic(true)
+            .build();
         PostUpdateRequest request = new PostUpdateRequest(
-                "new",
-                null,
-                "new content",
-                null,
-                null,
-                null
-        );
+            "new",
+            null,
+            "new content",
+            null,
+            null,
+            null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
 
         postService.updatePost(post.getId(), request, author.getId());
@@ -338,12 +333,12 @@ class PostServiceTest {
     void deletePost_removesGraph() {
         User author = User.builder().id(1L).userId("owner").name("owner").build();
         Post post = Post.builder()
-                .id(100L)
-                .user(author)
-                .title("title")
-                .content("content")
-                .isPublic(true)
-                .build();
+            .id(100L)
+            .user(author)
+            .title("title")
+            .content("content")
+            .isPublic(true)
+            .build();
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
 
         postService.deletePost(post.getId(), author.getId());
@@ -353,30 +348,29 @@ class PostServiceTest {
 
     private String getListDescription(String description, String content) {
         User author = User.builder()
-                .id(1L)
-                .userId("author")
-                .name("author")
-                .build();
+            .id(1L)
+            .userId("author")
+            .name("author")
+            .build();
         Post post = Post.builder()
-                .id(1L)
-                .user(author)
-                .title("title")
-                .description(description)
-                .content(content)
-                .build();
+            .id(1L)
+            .user(author)
+            .title("title")
+            .description(description)
+            .content(content)
+            .build();
         when(postRepository.findAllPublic(isNull(), isNull(), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(post)));
+            .thenReturn(new PageImpl<>(List.of(post)));
 
         return postService.getPostList(
-                        "latest",
-                        null,
-                        null,
-                        PageRequest.of(0, 10),
-                        null
-                )
-                .getContent()
-                .get(0)
-                .getDescription();
+            "latest",
+            null,
+            null,
+            PageRequest.of(0, 10),
+            null)
+            .getContent()
+            .get(0)
+            .getDescription();
     }
 
     private Pageable captureAnonymousPageable() {

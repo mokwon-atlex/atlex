@@ -10,13 +10,13 @@ const meta = {
   argTypes: {
     orientation: {
       control: 'select',
-      options: ['horizontal', 'vertical']
+      options: ['horizontal', 'vertical'],
     },
     listVariant: {
       control: 'select',
-      options: ['default', 'line']
-    }
-  }
+      options: ['default', 'line'],
+    },
+  },
 };
 
 export default meta;
@@ -24,7 +24,7 @@ export default meta;
 export const Default = {
   args: {
     orientation: 'horizontal',
-    listVariant: 'default'
+    listVariant: 'default',
   },
   render: ({ orientation, listVariant }) => (
     <Tabs defaultValue="overview" orientation={orientation} className="w-[520px]">
@@ -55,13 +55,13 @@ export const Default = {
         <p className="text-muted-foreground">설정 내용을 확인하는 탭입니다.</p>
       </TabsContent>
     </Tabs>
-  )
+  ),
 };
 
 export const Line = {
   args: {
     orientation: 'horizontal',
-    listVariant: 'line'
+    listVariant: 'line',
   },
   render: ({ orientation, listVariant }) => (
     <Tabs defaultValue="notice" orientation={orientation} className="w-[520px]">
@@ -86,13 +86,13 @@ export const Line = {
         <p className="text-muted-foreground">채팅 내용을 보여주는 영역입니다.</p>
       </TabsContent>
     </Tabs>
-  )
+  ),
 };
 
 export const Vertical = {
   args: {
     orientation: 'vertical',
-    listVariant: 'default'
+    listVariant: 'default',
   },
   render: ({ orientation, listVariant }) => (
     <Tabs defaultValue="overview" orientation={orientation} className="w-[620px]">
@@ -123,13 +123,13 @@ export const Vertical = {
         <p className="text-muted-foreground">설정 내용을 확인합니다.</p>
       </TabsContent>
     </Tabs>
-  )
+  ),
 };
 
 export const Disabled = {
   args: {
     orientation: 'horizontal',
-    listVariant: 'default'
+    listVariant: 'default',
   },
   render: ({ orientation, listVariant }) => (
     <Tabs defaultValue="overview" orientation={orientation} className="w-[520px]">
@@ -157,13 +157,13 @@ export const Disabled = {
         <p className="text-muted-foreground">Settings 탭 내용입니다.</p>
       </TabsContent>
     </Tabs>
-  )
+  ),
 };
 
 export const WithIcon = {
   args: {
     orientation: 'horizontal',
-    listVariant: 'default'
+    listVariant: 'default',
   },
   render: ({ orientation, listVariant }) => (
     <Tabs defaultValue="overview" orientation={orientation} className="w-[520px]">
@@ -197,5 +197,5 @@ export const WithIcon = {
         <p className="text-muted-foreground">설정 탭 내용입니다.</p>
       </TabsContent>
     </Tabs>
-  )
+  ),
 };

@@ -7,10 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/common/ui/dialog";
-import { Button } from "@/components/common/ui/button";
+} from '@/components/common/ui/dialog';
+import { Button } from '@/components/common/ui/button';
 
-function BasicDialog({ variant, size, showCloseButton, title = "다이얼로그 제목", description = "다이얼로그 내용입니다." }) {
+function BasicDialog({
+  variant,
+  size,
+  showCloseButton,
+  title = '다이얼로그 제목',
+  description = '다이얼로그 내용입니다.',
+}) {
   return (
     <Dialog>
       <DialogTrigger render={<Button variant="outline" />}>열기</DialogTrigger>
@@ -26,19 +32,19 @@ function BasicDialog({ variant, size, showCloseButton, title = "다이얼로그 
 
 /** @type { import('@storybook/nextjs-vite').Meta } */
 const meta = {
-  title: "Common/UI/Dialog",
+  title: 'Common/UI/Dialog',
   component: DialogContent,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     variant: {
-      control: "select",
-      options: ["default", "destructive"],
+      control: 'select',
+      options: ['default', 'destructive'],
     },
     size: {
-      control: "select",
-      options: ["default", "md", "lg", "xl"],
+      control: 'select',
+      options: ['default', 'md', 'lg', 'xl'],
     },
-    showCloseButton: { control: "boolean" },
+    showCloseButton: { control: 'boolean' },
   },
   render: (args) => <BasicDialog {...args} />,
 };
@@ -46,7 +52,7 @@ const meta = {
 export default meta;
 
 export const Default = {
-  args: { variant: "default", size: "default", showCloseButton: true },
+  args: { variant: 'default', size: 'default', showCloseButton: true },
 };
 
 export const Destructive = {
@@ -62,7 +68,7 @@ export const Destructive = {
 export const Sizes = {
   render: () => (
     <div className="flex flex-wrap gap-3">
-      {["default", "md", "lg", "xl"].map((size) => (
+      {['default', 'md', 'lg', 'xl'].map((size) => (
         <Dialog key={size}>
           <DialogTrigger render={<Button variant="outline" />}>{size}</DialogTrigger>
           <DialogContent size={size}>

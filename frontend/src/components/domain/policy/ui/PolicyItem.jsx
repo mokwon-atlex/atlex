@@ -1,8 +1,8 @@
-"use client"
+'use client';
 
-import React, { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/common/ui/card";
-import { Button } from "@/components/common/ui/button";
+import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/ui/card';
+import { Button } from '@/components/common/ui/button';
 
 /**
  * 정책 개별 항목 카드 컴포넌트
@@ -20,21 +20,14 @@ export default function PolicyItem({ item }) {
       <CardContent className="space-y-4 pt-2">
         {/* 요약 내용은 항상 보임 */}
         <div className="rounded-lg bg-muted/50 p-4">
-          <h4 className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
-            내용 요약
-          </h4>
+          <h4 className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">내용 요약</h4>
           <p className="text-sm leading-relaxed text-foreground/80">{item.summary}</p>
         </div>
 
         {/* 세부 내용 토글 영역 */}
         {!isOpen ? (
           <div className="flex justify-start">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-8 text-xs font-semibold"
-              onClick={() => setIsOpen(true)}
-            >
+            <Button variant="outline" size="sm" className="h-8 text-xs font-semibold" onClick={() => setIsOpen(true)}>
               세부내용
             </Button>
           </div>
@@ -48,11 +41,11 @@ export default function PolicyItem({ item }) {
                 {item.content}
               </div>
             </div>
-            
+
             <div className="flex justify-end">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-8 text-xs font-semibold text-muted-foreground hover:text-foreground"
                 onClick={() => setIsOpen(false)}
               >

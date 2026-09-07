@@ -9,17 +9,17 @@ export function toBlogHomeProfile(apiProfile) {
     userId: apiProfile.userId,
     nickname: apiProfile.name,
     // 소개글(info)이 있으면 쓰고, 없으면 안내 문구.
-    bio: apiProfile.info || "아직 소개글이 없습니다.",
+    bio: apiProfile.info || '아직 소개글이 없습니다.',
     stats: [
-      { id: "followers", label: "팔로워", value: "0" },
-      { id: "following", label: "팔로잉", value: "0" },
-      { id: "posts", label: "게시글", value: "0" },
+      { id: 'followers', label: '팔로워', value: '0' },
+      { id: 'following', label: '팔로잉', value: '0' },
+      { id: 'posts', label: '게시글', value: '0' },
     ],
     quickActions: [
-      { id: "follow", label: "팔로우", tone: "accent" },
-      { id: "category", label: "카테고리", tone: "neutral" },
-      { id: "graph", label: "그래프 보기", tone: "soft" },
-      { id: "option", label: "블로그 옵션", tone: "neutral" },
+      { id: 'follow', label: '팔로우', tone: 'accent' },
+      { id: 'category', label: '카테고리', tone: 'neutral' },
+      { id: 'graph', label: '그래프 보기', tone: 'soft' },
+      { id: 'option', label: '블로그 옵션', tone: 'neutral' },
     ],
   };
 }

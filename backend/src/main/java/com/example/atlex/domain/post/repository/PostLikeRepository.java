@@ -13,5 +13,7 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
     // 실제 삭제된 행 수를 반환해 좋아요 취소가 카운트에 반영돼야 하는지 판단한다(멱등 처리).
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM PostLike pl WHERE pl.post.id = :postId AND pl.user.id = :userId")
-    int deleteByPostIdAndUserId(@Param("postId") Long postId, @Param("userId") Long userId);
+    int deleteByPostIdAndUserId(@Param("postId")
+    Long postId, @Param("userId")
+    Long userId);
 }

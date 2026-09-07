@@ -1,21 +1,21 @@
-import { Button } from "@/components/common/ui/button";
+import { Button } from '@/components/common/ui/button';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof Button> } */
 const meta = {
-  title: "Common/UI/Button",
+  title: 'Common/UI/Button',
   component: Button,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     variant: {
-      control: "select",
-      options: ["default", "outline", "secondary", "ghost", "destructive", "link"],
+      control: 'select',
+      options: ['default', 'outline', 'secondary', 'ghost', 'destructive', 'link'],
     },
     size: {
-      control: "select",
-      options: ["default", "xs", "sm", "lg", "icon", "icon-xs", "icon-sm", "icon-lg"],
+      control: 'select',
+      options: ['default', 'xs', 'sm', 'lg', 'icon', 'icon-xs', 'icon-sm', 'icon-lg'],
     },
-    disabled: { control: "boolean" },
-    children: { control: "text" },
+    disabled: { control: 'boolean' },
+    children: { control: 'text' },
   },
 };
 
@@ -23,44 +23,44 @@ export default meta;
 
 export const Default = {
   args: {
-    children: "Button",
-    variant: "default",
-    size: "default",
+    children: 'Button',
+    variant: 'default',
+    size: 'default',
   },
 };
 
 export const Outline = {
   args: {
-    children: "Button",
-    variant: "outline",
+    children: 'Button',
+    variant: 'outline',
   },
 };
 
 export const Secondary = {
   args: {
-    children: "Button",
-    variant: "secondary",
+    children: 'Button',
+    variant: 'secondary',
   },
 };
 
 export const Ghost = {
   args: {
-    children: "Button",
-    variant: "ghost",
+    children: 'Button',
+    variant: 'ghost',
   },
 };
 
 export const Destructive = {
   args: {
-    children: "Button",
-    variant: "destructive",
+    children: 'Button',
+    variant: 'destructive',
   },
 };
 
 export const Link = {
   args: {
-    children: "Button",
-    variant: "link",
+    children: 'Button',
+    variant: 'link',
   },
 };
 
@@ -90,7 +90,7 @@ export const AllVariants = {
 
 export const Disabled = {
   args: {
-    children: "Disabled",
+    children: 'Disabled',
     disabled: true,
   },
 };

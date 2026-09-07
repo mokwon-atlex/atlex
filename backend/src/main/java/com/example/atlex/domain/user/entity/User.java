@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EntityListeners(AuditingEntityListener .class)
+@EntityListeners(AuditingEntityListener.class)
 public class User {
 
     @Id
@@ -49,7 +49,6 @@ public class User {
     private Boolean marketingAgreed = false;
     private LocalDateTime agreedAt;
 
-
     @PrePersist
     void prePersist() {
         if (role == null) {
@@ -62,9 +61,15 @@ public class User {
     }
 
     public void update(String userId, String email, String name) {
-        if (userId != null) { this.userId = userId; }
-        if (email != null) { this.email = email; }
-        if (name != null) { this.name = name; }
+        if (userId != null) {
+            this.userId = userId;
+        }
+        if (email != null) {
+            this.email = email;
+        }
+        if (name != null) {
+            this.name = name;
+        }
     }
 
     public void changePassword(String encodedPassword) {
@@ -81,8 +86,14 @@ public class User {
     }
 
     public void updateProfile(String name, String profileImage, String info) {
-        if (name != null) { this.name = name; }
-        if (profileImage != null) { this.profileImage = profileImage; }
-        if (info != null) { this.info = info; }
+        if (name != null) {
+            this.name = name;
+        }
+        if (profileImage != null) {
+            this.profileImage = profileImage;
+        }
+        if (info != null) {
+            this.info = info;
+        }
     }
 }

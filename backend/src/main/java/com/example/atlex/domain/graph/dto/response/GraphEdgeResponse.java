@@ -28,13 +28,13 @@ public class GraphEdgeResponse {
 
     public static GraphEdgeResponse from(PostRelation relation) {
         List<String> keywords = relation.getSharedKeywords().isBlank()
-                ? List.of()
-                : Arrays.stream(relation.getSharedKeywords().split(",")).toList();
+            ? List.of()
+            : Arrays.stream(relation.getSharedKeywords().split(",")).toList();
         return GraphEdgeResponse.builder()
-                .sourcePostId(relation.getSourcePost().getId())
-                .targetPostId(relation.getTargetPost().getId())
-                .score(relation.getScore())
-                .sharedKeywords(keywords)
-                .build();
+            .sourcePostId(relation.getSourcePost().getId())
+            .targetPostId(relation.getTargetPost().getId())
+            .score(relation.getScore())
+            .sharedKeywords(keywords)
+            .build();
     }
 }

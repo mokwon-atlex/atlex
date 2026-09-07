@@ -1,17 +1,14 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useEditor } from "@tiptap/react";
-import { editorExtensions } from "@/lib/post-editor/rich-text-extensions";
+import { useState } from 'react';
+import { useEditor } from '@tiptap/react';
+import { editorExtensions } from '@/lib/post-editor/rich-text-extensions';
 import {
   executePromptToolbarAction,
   getItemActiveState,
   SIMPLE_TOOLBAR_ACTIONS,
-} from "@/lib/post-editor/rich-text-toolbar";
-import {
-  createInitialContent,
-  getSelectionSnapshot,
-} from "@/lib/post-editor/rich-text-utils";
+} from '@/lib/post-editor/rich-text-toolbar';
+import { createInitialContent, getSelectionSnapshot } from '@/lib/post-editor/rich-text-utils';
 
 // 이 훅은 "에디터 생성", "본문 상태 동기화", "툴바 버튼 연결" 세 가지를 한곳에 모은다.
 // 화면 컴포넌트는 복잡한 TipTap API 대신 이 훅이 돌려주는 값과 함수만 사용하면 된다.
@@ -20,7 +17,7 @@ import {
 // 2. 본문 텍스트와 비어 있는 상태 동기화
 // 3. 사이드바 버튼이 누르는 편집 명령 연결
 
-export default function usePostEditorRichText({ initialContent = "" } = {}) {
+export default function usePostEditorRichText({ initialContent = '' } = {}) {
   const [bodyText, setBodyText] = useState(initialContent);
   const [isEditorEmpty, setIsEditorEmpty] = useState(!initialContent.trim());
   // 본문 글자 수가 그대로여도 서식/undo 가능 여부는 바뀔 수 있어서
@@ -40,7 +37,7 @@ export default function usePostEditorRichText({ initialContent = "" } = {}) {
     content: createInitialContent(initialContent),
     editorProps: {
       attributes: {
-        class: "post-editor-prose__surface",
+        class: 'post-editor-prose__surface',
       },
     },
     extensions: editorExtensions,
@@ -61,7 +58,7 @@ export default function usePostEditorRichText({ initialContent = "" } = {}) {
   });
 
   function executeToolbarItem(groupId, itemLabel) {
-    if (!editor || groupId === "font-color") {
+    if (!editor || groupId === 'font-color') {
       // 색상 그룹은 아직 실제 기능과 연결하지 않았으므로 여기서 막아 둔다.
       return;
     }
@@ -88,7 +85,7 @@ export default function usePostEditorRichText({ initialContent = "" } = {}) {
       };
     }
 
-    if (groupId === "font-color") {
+    if (groupId === 'font-color') {
       return {
         isActive: false,
         isDisabled: true,
@@ -97,14 +94,14 @@ export default function usePostEditorRichText({ initialContent = "" } = {}) {
 
     // 실행 취소 / 다시 실행은 히스토리가 비어 있어도 항상 눌릴 수 있게 열어 둔다.
     // 실제로 되돌릴 내용이 없으면 TipTap 명령이 조용히 no-op 으로 끝난다.
-    if (itemLabel === "실행 취소") {
+    if (itemLabel === '실행 취소') {
       return {
         isActive: false,
         isDisabled: false,
       };
     }
 
-    if (itemLabel === "다시 실행") {
+    if (itemLabel === '다시 실행') {
       return {
         isActive: false,
         isDisabled: false,
@@ -120,7 +117,7 @@ export default function usePostEditorRichText({ initialContent = "" } = {}) {
 
   // 본문을 HTML 문자열로 추출한다(서식 보존). 저장 시 백엔드 content 로 보낸다.
   function getHTML() {
-    return editor?.getHTML() ?? "";
+    return editor?.getHTML() ?? '';
   }
 
   return {

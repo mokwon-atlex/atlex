@@ -1,23 +1,23 @@
-import { Bold, Italic, Underline } from "lucide-react";
-import { Toggle } from "@/components/common/ui/toggle";
+import { Bold, Italic, Underline } from 'lucide-react';
+import { Toggle } from '@/components/common/ui/toggle';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof Toggle> } */
 const meta = {
-  title: "Common/UI/Toggle",
+  title: 'Common/UI/Toggle',
   component: Toggle,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     variant: {
-      control: "select",
-      options: ["default", "outline"],
+      control: 'select',
+      options: ['default', 'outline'],
     },
     size: {
-      control: "select",
-      options: ["default", "sm", "lg"],
+      control: 'select',
+      options: ['default', 'sm', 'lg'],
     },
-    disabled: { control: "boolean" },
-    defaultPressed: { control: "boolean" },
-    children: { control: "text" },
+    disabled: { control: 'boolean' },
+    defaultPressed: { control: 'boolean' },
+    children: { control: 'text' },
   },
 };
 
@@ -25,33 +25,33 @@ export default meta;
 
 export const Default = {
   args: {
-    children: "Toggle",
-    variant: "default",
-    size: "default",
+    children: 'Toggle',
+    variant: 'default',
+    size: 'default',
   },
 };
 
 export const Outline = {
   args: {
-    children: "Toggle",
-    variant: "outline",
+    children: 'Toggle',
+    variant: 'outline',
   },
 };
 
 export const Pressed = {
   args: {
-    children: "Pressed",
-    variant: "default",
-    size: "default",
+    children: 'Pressed',
+    variant: 'default',
+    size: 'default',
     defaultPressed: true,
   },
 };
 
 export const Disabled = {
   args: {
-    children: "Disabled",
-    variant: "default",
-    size: "default",
+    children: 'Disabled',
+    variant: 'default',
+    size: 'default',
     disabled: true,
   },
 };

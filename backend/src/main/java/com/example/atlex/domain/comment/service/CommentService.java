@@ -32,13 +32,13 @@ public class CommentService {
         Post post = postAccessService.getAccessiblePost(postId, userId);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+            .orElseThrow(UserNotFoundException::new);
 
         Comment comment = Comment.builder()
-                .post(post)
-                .user(user)
-                .content(request.getContent())
-                .build();
+            .post(post)
+            .user(user)
+            .content(request.getContent())
+            .build();
 
         return CommentResponse.from(commentRepository.save(comment));
     }
@@ -48,14 +48,14 @@ public class CommentService {
         postAccessService.getAccessiblePost(postId, userId);
 
         return commentRepository.findAllByPostId(postId).stream()
-                .map(CommentResponse::from)
-                .toList();
+            .map(CommentResponse::from)
+            .toList();
     }
 
     @Transactional
     public CommentResponse updateComment(Long commentId, CommentUpdateRequest request, Long userId) {
         Comment comment = commentRepository.findActiveWithAuthorById(commentId)
-                .orElseThrow(CommentNotFoundException::new);
+            .orElseThrow(CommentNotFoundException::new);
 
         if (!comment.getUser().getId().equals(userId)) {
             throw new CommentUpdateForbiddenException();
@@ -68,7 +68,7 @@ public class CommentService {
     @Transactional
     public void deleteComment(Long commentId, Long userId) {
         Comment comment = commentRepository.findActiveWithAuthorById(commentId)
-                .orElseThrow(CommentNotFoundException::new);
+            .orElseThrow(CommentNotFoundException::new);
 
         boolean isCommentAuthor = comment.getUser().getId().equals(userId);
         boolean isPostAuthor = comment.getPost().getUser().getId().equals(userId);

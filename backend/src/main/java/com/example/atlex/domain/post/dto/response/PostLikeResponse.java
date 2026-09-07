@@ -15,9 +15,9 @@ public class PostLikeResponse {
 
     public static PostLikeResponse of(Long postId, boolean liked, Integer likes) {
         return PostLikeResponse.builder()
-                .postId(postId)
-                .liked(liked)
-                .likes(likes)
-                .build();
+            .postId(postId)
+            .liked(liked)
+            .likes(likes)
+            .build();
     }
 }

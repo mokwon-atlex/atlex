@@ -3,11 +3,11 @@
 
 // 재발급 요청에 붙는 config 플래그. 이 플래그가 달린 요청에는 만료된 accessToken 을 첨부하지 않고,
 // 401 이 나도 재귀 재발급하지 않는다. client.js 요청 인터셉터와 공유하므로 상수로 둔다.
-export const SKIP_AUTH_REFRESH = "_skipAuthRefresh";
+export const SKIP_AUTH_REFRESH = '_skipAuthRefresh';
 
 // 주입받은 값이 함수가 아니면 안전한 fallback 으로 대체한다(아래 setter 들의 공통 가드).
 function toFn(fn, fallback) {
-  return typeof fn === "function" ? fn : fallback;
+  return typeof fn === 'function' ? fn : fallback;
 }
 
 // ===== 저장 브리지 =====
@@ -47,13 +47,9 @@ export function createTokenRefresher(client) {
     if (!refreshPromise) {
       refreshPromise = (async () => {
         const refreshToken = getRefreshToken();
-        if (!refreshToken) throw new Error("리프레시 토큰이 없습니다.");
+        if (!refreshToken) throw new Error('리프레시 토큰이 없습니다.');
         // POST /auth/reissue { refreshToken } → data { accessToken, refreshToken, userId } (두 토큰 회전).
-        const data = await client.post(
-          "/auth/reissue",
-          { refreshToken },
-          { [SKIP_AUTH_REFRESH]: true },
-        );
+        const data = await client.post('/auth/reissue', { refreshToken }, { [SKIP_AUTH_REFRESH]: true });
         tokensRefreshedHandler(data); // { accessToken, refreshToken }
         return data?.accessToken ?? null;
       })()
@@ -74,12 +70,7 @@ export function createTokenRefresher(client) {
   // - SKIP_AUTH_REFRESH: reissue 요청 자체의 401 은 건너뜀.
   async function retryWithRefreshedToken(error) {
     const original = error.config;
-    if (
-      !original ||
-      original._retry ||
-      original[SKIP_AUTH_REFRESH] ||
-      !getRefreshToken()
-    ) {
+    if (!original || original._retry || original[SKIP_AUTH_REFRESH] || !getRefreshToken()) {
       return null;
     }
 
@@ -89,8 +80,8 @@ export function createTokenRefresher(client) {
       // 원요청의 stale Authorization 을 제거 → request 인터셉터가 갱신된 store 토큰으로 다시 채운다.
       // (AxiosHeaders 인스턴스/일반 객체 모두 대응)
       if (original.headers) {
-        if (typeof original.headers.delete === "function") {
-          original.headers.delete("Authorization");
+        if (typeof original.headers.delete === 'function') {
+          original.headers.delete('Authorization');
         } else {
           delete original.headers.Authorization;
         }

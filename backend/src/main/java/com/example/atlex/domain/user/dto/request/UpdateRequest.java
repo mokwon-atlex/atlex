@@ -23,17 +23,11 @@ public class UpdateRequest {
 
     @Schema(description = "변경할 이메일", example = "newemail@example.com")
     @Email(message = "이메일 형식(예: user@example.com)을 확인해주세요.")
-    @Pattern(
-            regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$",
-            message = "이메일 형식(예: user@example.com)을 확인해주세요."
-    )
+    @Pattern(regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$", message = "이메일 형식(예: user@example.com)을 확인해주세요.")
     private String email;
 
     @Schema(description = "변경할 닉네임 (2~10자, 한글/영문/숫자만 허용)", example = "새닉네임")
     @Size(min = 2, max = 10, message = "닉네임은 2자 이상 10자 이하로 입력해주세요.")
-    @Pattern(
-            regexp = "^[a-zA-Z가-힣0-9]*$",
-            message = "한글, 영어, 숫자만 입력 가능하며 특수문자는 사용할 수 없습니다."
-    )
+    @Pattern(regexp = "^[a-zA-Z가-힣0-9]*$", message = "한글, 영어, 숫자만 입력 가능하며 특수문자는 사용할 수 없습니다.")
     private String name;
 }

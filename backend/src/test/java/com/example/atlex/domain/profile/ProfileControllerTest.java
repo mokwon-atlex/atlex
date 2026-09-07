@@ -21,19 +21,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.hamcrest.Matchers.nullValue;
 
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-    properties = {
-        "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-        "spring.jpa.hibernate.ddl-auto=create-drop"
-    }
-)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = {
+    "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+    "spring.jpa.hibernate.ddl-auto=create-drop"
+})
 @Transactional
 class ProfileControllerTest {
 
-    @Autowired WebApplicationContext context;
-    @Autowired JwtProvider jwtProvider;
-    @Autowired UserRepository userRepository;
+    @Autowired
+    WebApplicationContext context;
+    @Autowired
+    JwtProvider jwtProvider;
+    @Autowired
+    UserRepository userRepository;
 
     private MockMvc mockMvc;
     private Long activeUserId;
@@ -96,68 +96,78 @@ class ProfileControllerTest {
             .build());
     }
 
-    @Test @DisplayName("비로그인 + 활성 회원 공개 프로필 조회 → 200")
+    @Test
+    @DisplayName("비로그인 + 활성 회원 공개 프로필 조회 → 200")
     void getProfile_anonymous_active() throws Exception {
         mockMvc.perform(get("/api/v1/profiles/{userId}", "testuser"))
             .andExpect(status().isOk());
     }
 
-    @Test @DisplayName("로그인 + 활성 회원 공개 프로필 조회 → 200")
+    @Test
+    @DisplayName("로그인 + 활성 회원 공개 프로필 조회 → 200")
     void getProfile_loggedIn_active() throws Exception {
         mockMvc.perform(get("/api/v1/profiles/{userId}", "testuser")
-                .header("Authorization", "Bearer " + token))
+            .header("Authorization", "Bearer " + token))
             .andExpect(status().isOk());
     }
 
-    @Test @DisplayName("존재하지 않는 userId 조회 → 404")
+    @Test
+    @DisplayName("존재하지 않는 userId 조회 → 404")
     void getProfile_notFound() throws Exception {
         mockMvc.perform(get("/api/v1/profiles/{userId}", "nonexistent"))
             .andExpect(status().isNotFound());
     }
 
-    @Test @DisplayName("active=false 회원 조회 → 404")
+    @Test
+    @DisplayName("active=false 회원 조회 → 404")
     void getProfile_inactive() throws Exception {
         mockMvc.perform(get("/api/v1/profiles/{userId}", "inactive"))
             .andExpect(status().isNotFound());
     }
 
-    @Test @DisplayName("GET /api/v1/users/{userId} 비로그인 → 401")
+    @Test
+    @DisplayName("GET /api/v1/users/{userId} 비로그인 → 401")
     void getUser_anonymous_unauthorized() throws Exception {
         mockMvc.perform(get("/api/v1/users/{userId}", "testuser"))
             .andExpect(status().isUnauthorized());
     }
 
-    @Test @DisplayName("GET /api/v1/users/{userId} 본인 조회 → 200")
+    @Test
+    @DisplayName("GET /api/v1/users/{userId} 본인 조회 → 200")
     void getUser_owner_success() throws Exception {
         mockMvc.perform(get("/api/v1/users/{userId}", "testuser")
-                .header("Authorization", "Bearer " + token))
+            .header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.id").value(activeUserId))
             .andExpect(jsonPath("$.data.userId").value("testuser"));
     }
 
-    @Test @DisplayName("GET /api/v1/users/{userId} 타인 조회 → 403")
+    @Test
+    @DisplayName("GET /api/v1/users/{userId} 타인 조회 → 403")
     void getUser_otherUser_forbidden() throws Exception {
         mockMvc.perform(get("/api/v1/users/{userId}", "testuser")
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
     }
 
-    @Test @DisplayName("기존 GET /api/v1/users/all 비로그인 → 401")
+    @Test
+    @DisplayName("기존 GET /api/v1/users/all 비로그인 → 401")
     void getAllUsers_anonymous_unauthorized() throws Exception {
         mockMvc.perform(get("/api/v1/users/all"))
             .andExpect(status().isUnauthorized());
     }
 
-    @Test @DisplayName("GET /api/v1/users/all 일반 사용자 → 403")
+    @Test
+    @DisplayName("GET /api/v1/users/all 일반 사용자 → 403")
     void getAllUsers_regularUser_forbidden() throws Exception {
         mockMvc.perform(get("/api/v1/users/all")
-                .header("Authorization", "Bearer " + token))
+            .header("Authorization", "Bearer " + token))
             .andExpect(status().isForbidden());
     }
 
-    @Test @DisplayName("공개 프로필 응답에 id, userId, name, profileImage, info 포함 및 민감 필드 없음")
+    @Test
+    @DisplayName("공개 프로필 응답에 id, userId, name, profileImage, info 포함 및 민감 필드 없음")
     void getProfile_responseFields() throws Exception {
         mockMvc.perform(get("/api/v1/profiles/{userId}", "testuser"))
             .andExpect(status().isOk())
@@ -173,7 +183,8 @@ class ProfileControllerTest {
             .andExpect(jsonPath("$.data.updatedAt").doesNotExist());
     }
 
-    @Test @DisplayName("profileImage와 info가 null이어도 공개 프로필 응답")
+    @Test
+    @DisplayName("profileImage와 info가 null이어도 공개 프로필 응답")
     void getProfile_nullProfileFields() throws Exception {
         mockMvc.perform(get("/api/v1/profiles/{userId}", "emptyprofile"))
             .andExpect(status().isOk())
@@ -184,18 +195,19 @@ class ProfileControllerTest {
             .andExpect(jsonPath("$.data.info").value(nullValue()));
     }
 
-    @Test @DisplayName("로그인 본인 프로필 PATCH -> 200 및 응답 반영")
+    @Test
+    @DisplayName("로그인 본인 프로필 PATCH -> 200 및 응답 반영")
     void updateProfile_owner_success() throws Exception {
         mockMvc.perform(patch("/api/v1/profiles/{userId}", "testuser")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                      "name": "updated",
-                      "profileImage": "https://example.com/updated.png",
-                      "info": "updated info"
-                    }
-                    """))
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "name": "updated",
+                  "profileImage": "https://example.com/updated.png",
+                  "info": "updated info"
+                }
+                """))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("SUCCESS"))
             .andExpect(jsonPath("$.message").value("프로필 수정 성공"))
@@ -208,18 +220,19 @@ class ProfileControllerTest {
             .andExpect(jsonPath("$.data.follower").doesNotExist());
     }
 
-    @Test @DisplayName("프로필 PATCH null 필드는 기존 값 유지")
+    @Test
+    @DisplayName("프로필 PATCH null 필드는 기존 값 유지")
     void updateProfile_nullFields_keepExistingValues() throws Exception {
         mockMvc.perform(patch("/api/v1/profiles/{userId}", "profileuser")
-                .header("Authorization", "Bearer " + profileToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                      "name": "onlyname",
-                      "profileImage": null,
-                      "info": null
-                    }
-                    """))
+            .header("Authorization", "Bearer " + profileToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "name": "onlyname",
+                  "profileImage": null,
+                  "info": null
+                }
+                """))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.userId").value("profileuser"))
             .andExpect(jsonPath("$.data.name").value("onlyname"))
@@ -227,76 +240,83 @@ class ProfileControllerTest {
             .andExpect(jsonPath("$.data.info").value("original info"));
     }
 
-    @Test @DisplayName("존재하지 않는 userId 프로필 PATCH -> 403 (컨트롤러 userId 불일치 우선 거부)")
+    @Test
+    @DisplayName("존재하지 않는 userId 프로필 PATCH -> 403 (컨트롤러 userId 불일치 우선 거부)")
     void updateProfile_notFound() throws Exception {
         mockMvc.perform(patch("/api/v1/profiles/{userId}", "nonexistent")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"updated\"}"))
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"name\":\"updated\"}"))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
     }
 
-    @Test @DisplayName("비활성 회원 프로필 PATCH -> 403 (컨트롤러 userId 불일치 우선 거부)")
+    @Test
+    @DisplayName("비활성 회원 프로필 PATCH -> 403 (컨트롤러 userId 불일치 우선 거부)")
     void updateProfile_inactive() throws Exception {
         mockMvc.perform(patch("/api/v1/profiles/{userId}", "inactive")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"updated\"}"))
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"name\":\"updated\"}"))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
     }
 
-    @Test @DisplayName("다른 사용자 프로필 PATCH -> 403")
+    @Test
+    @DisplayName("다른 사용자 프로필 PATCH -> 403")
     void updateProfile_otherUser_forbidden() throws Exception {
         mockMvc.perform(patch("/api/v1/profiles/{userId}", "testuser")
-                .header("Authorization", "Bearer " + otherToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"updated\"}"))
+            .header("Authorization", "Bearer " + otherToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"name\":\"updated\"}"))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
     }
 
-    @Test @DisplayName("비로그인 프로필 PATCH -> 401")
+    @Test
+    @DisplayName("비로그인 프로필 PATCH -> 401")
     void updateProfile_anonymous_unauthorized() throws Exception {
         mockMvc.perform(patch("/api/v1/profiles/{userId}", "testuser")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"updated\"}"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"name\":\"updated\"}"))
             .andExpect(status().isUnauthorized());
     }
 
-    @Test @DisplayName("프로필 PATCH validation 실패 -> 400")
+    @Test
+    @DisplayName("프로필 PATCH validation 실패 -> 400")
     void updateProfile_validationError() throws Exception {
         mockMvc.perform(patch("/api/v1/profiles/{userId}", "testuser")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"   \"}"))
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"name\":\"   \"}"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.errors[0].data.key").value("name"));
     }
 
-    @Test @DisplayName("프로필 PATCH profileImage 255자 초과 -> 400")
+    @Test
+    @DisplayName("프로필 PATCH profileImage 255자 초과 -> 400")
     void updateProfile_profileImageTooLong() throws Exception {
         String longProfileImage = "a".repeat(256);
 
         mockMvc.perform(patch("/api/v1/profiles/{userId}", "testuser")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"profileImage\":\"" + longProfileImage + "\"}"))
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"profileImage\":\"" + longProfileImage + "\"}"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.errors[0].data.key").value("profileImage"));
     }
 
-    @Test @DisplayName("프로필 PATCH info 255자 초과 -> 400")
+    @Test
+    @DisplayName("프로필 PATCH info 255자 초과 -> 400")
     void updateProfile_infoTooLong() throws Exception {
         String longInfo = "a".repeat(256);
 
         mockMvc.perform(patch("/api/v1/profiles/{userId}", "testuser")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"info\":\"" + longInfo + "\"}"))
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"info\":\"" + longInfo + "\"}"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.errors[0].data.key").value("info"));

@@ -13,15 +13,15 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException{
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
         return userRepository.findByUserId(userId)
-                .map(PrincipalDetails::new)
-                .orElseThrow(()-> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+            .map(PrincipalDetails::new)
+            .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
     }
 
     public UserDetails loadUserById(Long id) throws UsernameNotFoundException {
         return userRepository.findByIdAndActiveTrue(id)
-                .map(PrincipalDetails::new)
-                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+            .map(PrincipalDetails::new)
+            .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
     }
 }

@@ -1,13 +1,13 @@
-import { Image } from "@/components/common/ui/image";
-import { cn } from "@/lib/utils";
+import { Image } from '@/components/common/ui/image';
+import { cn } from '@/lib/utils';
 
 const sizeClassNameMap = {
-  sm: "h-14 w-14 border-[3px] text-[10px] leading-3",
-  lg: "h-28 w-28 border-4 text-sm leading-5",
+  sm: 'h-14 w-14 border-[3px] text-[10px] leading-3',
+  lg: 'h-28 w-28 border-4 text-sm leading-5',
 };
 
 function renderLabel(label) {
-  return label.split(" ").map((word, index) => (
+  return label.split(' ').map((word, index) => (
     <span key={`${word}-${index}`} className="block">
       {word}
     </span>
@@ -15,11 +15,11 @@ function renderLabel(label) {
 }
 
 export default function BlogHomeProfileAvatar({
-  alt = "프로필 사진",
+  alt = '프로필 사진',
   className,
-  label = "프로필 사진",
+  label = '프로필 사진',
   showLabel = true,
-  size = "lg",
+  size = 'lg',
   src,
 }) {
   const icon = src ? (
@@ -35,9 +35,9 @@ export default function BlogHomeProfileAvatar({
       shape="circle"
       icon={icon}
       className={cn(
-        "shrink-0 overflow-hidden border-solid border-primary/35 bg-primary/10 text-center font-semibold text-muted-foreground",
+        'shrink-0 overflow-hidden border-solid border-primary/35 bg-primary/10 text-center font-semibold text-muted-foreground',
         sizeClassNameMap[size],
-        className
+        className,
       )}
     />
   );

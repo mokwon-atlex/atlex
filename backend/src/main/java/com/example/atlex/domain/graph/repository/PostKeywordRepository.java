@@ -17,43 +17,46 @@ public interface PostKeywordRepository extends JpaRepository<PostKeyword, Long> 
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM PostKeyword pk WHERE pk.post.id = :postId")
-    void deleteByPostId(@Param("postId") Long postId);
+    void deleteByPostId(@Param("postId")
+    Long postId);
 
     @Query("""
-            SELECT pk
-            FROM PostKeyword pk
-            JOIN FETCH pk.post p
-            JOIN FETCH pk.keyword k
-            WHERE k.name IN :keywordNames
-              AND p.id <> :sourcePostId
-              AND p.isDeleted = false
-              AND p.isPublic = true
-            ORDER BY pk.weight DESC
-            """)
+        SELECT pk
+        FROM PostKeyword pk
+        JOIN FETCH pk.post p
+        JOIN FETCH pk.keyword k
+        WHERE k.name IN :keywordNames
+          AND p.id <> :sourcePostId
+          AND p.isDeleted = false
+          AND p.isPublic = true
+        ORDER BY pk.weight DESC
+        """)
     List<PostKeyword> findPublicCandidatesByKeywordNames(
-            @Param("sourcePostId") Long sourcePostId,
-            @Param("keywordNames") List<String> keywordNames,
-            Pageable pageable
-    );
+        @Param("sourcePostId")
+        Long sourcePostId,
+        @Param("keywordNames")
+        List<String> keywordNames,
+        Pageable pageable);
 
     @Query("""
-            SELECT COUNT(DISTINCT pk.post.id)
-            FROM PostKeyword pk
-            WHERE pk.keyword.id = :keywordId
-              AND pk.post.isDeleted = false
-              AND pk.post.isPublic = true
-            """)
-    int countPublicDocumentsByKeywordId(@Param("keywordId") Long keywordId);
+        SELECT COUNT(DISTINCT pk.post.id)
+        FROM PostKeyword pk
+        WHERE pk.keyword.id = :keywordId
+          AND pk.post.isDeleted = false
+          AND pk.post.isPublic = true
+        """)
+    int countPublicDocumentsByKeywordId(@Param("keywordId")
+    Long keywordId);
 
     @Query("""
-            SELECT pk.keyword.id AS keywordId, COUNT(DISTINCT pk.post.id) AS documentFrequency
-            FROM PostKeyword pk
-            WHERE pk.keyword.id IN :keywordIds
-              AND pk.post.isDeleted = false
-              AND pk.post.isPublic = true
-            GROUP BY pk.keyword.id
-            """)
+        SELECT pk.keyword.id AS keywordId, COUNT(DISTINCT pk.post.id) AS documentFrequency
+        FROM PostKeyword pk
+        WHERE pk.keyword.id IN :keywordIds
+          AND pk.post.isDeleted = false
+          AND pk.post.isPublic = true
+        GROUP BY pk.keyword.id
+        """)
     List<KeywordDocumentFrequencyProjection> countPublicDocumentsByKeywordIds(
-            @Param("keywordIds") Collection<Long> keywordIds
-    );
+        @Param("keywordIds")
+        Collection<Long> keywordIds);
 }

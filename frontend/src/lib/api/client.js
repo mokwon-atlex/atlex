@@ -1,7 +1,7 @@
-import axios from "axios";
-import { getApiBaseUrl } from "@/lib/api/baseUrl";
-import { getAccessToken, createTokenRefresher, SKIP_AUTH_REFRESH } from "@/lib/api/tokens";
-import { isEnvelope, createApiError } from "@/lib/api/envelope";
+import axios from 'axios';
+import { getApiBaseUrl } from '@/lib/api/baseUrl';
+import { getAccessToken, createTokenRefresher, SKIP_AUTH_REFRESH } from '@/lib/api/tokens';
+import { isEnvelope, createApiError } from '@/lib/api/envelope';
 
 // 공통 axios 인스턴스. 모든 lib/api/* 호출이 이 인스턴스를 거친다.
 // 이 파일은 "조립"만 담당한다 — 토큰 로직은 tokens.js, envelope 처리는 envelope.js 에 있다.
@@ -12,7 +12,7 @@ import { isEnvelope, createApiError } from "@/lib/api/envelope";
 //   3) 응답 실패(401):   accessToken 만료로 보고 refreshToken 으로 재발급 → 원요청 1회 재시도.
 //   4) 응답 실패(그 외): envelope 의 code/message 를 담은 Error 로 변환해 throw.
 export const apiClient = axios.create({
-  headers: { "Content-Type": "application/json" },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 const { retryWithRefreshedToken } = createTokenRefresher(apiClient);
@@ -26,11 +26,7 @@ apiClient.interceptors.request.use((config) => {
   // 이 플래그는 두 가지를 동시에 끈다: (1) 여기서 토큰 자동 첨부, (2) 응답 401 시 재발급 재시도.
   // 사용처: reissue(재귀 재발급 방지), login/signup(인증 전이라 stale 토큰을 붙이면
   //   백엔드가 무효 토큰을 먼저 거부해 요청 자체가 실패함).
-  if (
-    typeof window !== "undefined" &&
-    !config[SKIP_AUTH_REFRESH] &&
-    !config.headers?.Authorization
-  ) {
+  if (typeof window !== 'undefined' && !config[SKIP_AUTH_REFRESH] && !config.headers?.Authorization) {
     const token = getAccessToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
   }
@@ -42,7 +38,7 @@ apiClient.interceptors.response.use(
   (response) => {
     const body = response.data;
     if (isEnvelope(body)) {
-      if (body.code === "SUCCESS") return body.data;
+      if (body.code === 'SUCCESS') return body.data;
       throw createApiError(body, response.status);
     }
     return body;

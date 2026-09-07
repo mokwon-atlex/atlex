@@ -5,7 +5,7 @@ import { loadMainPosts } from '@/lib/queries/blog-main';
 
 export const metadata = {
   title: 'User Blog Main',
-  description: 'User blog main page'
+  description: 'User blog main page',
 };
 
 export default async function MainPage({ searchParams }) {
@@ -15,8 +15,7 @@ export default async function MainPage({ searchParams }) {
   // URL query parameter 에서 현재 보기 필터를 읽습니다.
   const filterId = resolvedSearchParams?.filter ?? blogMainFilters[0].id;
 
-  const activeFilter =
-    blogMainFilters.find(filter => filter.id === filterId) ?? blogMainFilters[0];
+  const activeFilter = blogMainFilters.find((filter) => filter.id === filterId) ?? blogMainFilters[0];
 
   const { posts, totalPages } = await loadMainPosts({
     filterId: activeFilter.id,

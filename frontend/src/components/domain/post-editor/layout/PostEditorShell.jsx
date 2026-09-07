@@ -6,7 +6,8 @@ export default function PostEditorShell({ children }) {
     <div className="relative">
       <div
         data-post-editor-shell
-        className="overflow-hidden rounded-[26px] bg-background shadow-[0_24px_48px_-24px_rgba(15,23,42,0.28)]">
+        className="overflow-hidden rounded-[26px] bg-background shadow-[0_24px_48px_-24px_rgba(15,23,42,0.28)]"
+      >
         {children}
       </div>
     </div>

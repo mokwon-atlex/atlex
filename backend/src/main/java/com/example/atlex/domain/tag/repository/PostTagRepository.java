@@ -15,59 +15,67 @@ import java.util.List;
 public interface PostTagRepository extends JpaRepository<PostTag, Long> {
 
     @Query("SELECT pt.tag FROM PostTag pt " +
-           "WHERE pt.user.id = :ownerId " +
-           "AND pt.post.isDeleted = false " +
-           "AND (:isOwner = true OR pt.post.isPublic = true) " +
-           "AND (:cursor IS NULL OR pt.tag.id < :cursor) " +
-           "GROUP BY pt.tag.id " +
-           "ORDER BY pt.tag.id DESC")
+        "WHERE pt.user.id = :ownerId " +
+        "AND pt.post.isDeleted = false " +
+        "AND (:isOwner = true OR pt.post.isPublic = true) " +
+        "AND (:cursor IS NULL OR pt.tag.id < :cursor) " +
+        "GROUP BY pt.tag.id " +
+        "ORDER BY pt.tag.id DESC")
     List<Tag> findTagPage(
-            @Param("ownerId") Long ownerId,
-            @Param("cursor") Long cursor,
-            @Param("isOwner") boolean isOwner,
-            Pageable pageable
-    );
+        @Param("ownerId")
+        Long ownerId,
+        @Param("cursor")
+        Long cursor,
+        @Param("isOwner")
+        boolean isOwner,
+        Pageable pageable);
 
     @Query("SELECT pt.tag.id AS tagId, COUNT(DISTINCT pt.post.id) AS postCount " +
-           "FROM PostTag pt " +
-           "WHERE pt.tag.id IN :tagIds AND pt.user.id = :ownerId " +
-           "AND pt.post.isDeleted = false " +
-           "AND (:isOwner = true OR pt.post.isPublic = true) " +
-           "GROUP BY pt.tag.id")
+        "FROM PostTag pt " +
+        "WHERE pt.tag.id IN :tagIds AND pt.user.id = :ownerId " +
+        "AND pt.post.isDeleted = false " +
+        "AND (:isOwner = true OR pt.post.isPublic = true) " +
+        "GROUP BY pt.tag.id")
     List<TagPostCountProjection> countPostsByTagIds(
-            @Param("tagIds") List<Long> tagIds,
-            @Param("ownerId") Long ownerId,
-            @Param("isOwner") boolean isOwner
-    );
+        @Param("tagIds")
+        List<Long> tagIds,
+        @Param("ownerId")
+        Long ownerId,
+        @Param("isOwner")
+        boolean isOwner);
 
     @Query("SELECT pt.tag.id AS tagId, pt.post.thumbnailUrl AS thumbnailUrl " +
-           "FROM PostTag pt " +
-           "WHERE pt.id IN (" +
-           "  SELECT MAX(pt2.id) FROM PostTag pt2 " +
-           "  WHERE pt2.tag.id IN :tagIds AND pt2.user.id = :ownerId " +
-           "  AND pt2.post.isDeleted = false " +
-           "  AND (:isOwner = true OR pt2.post.isPublic = true) " +
-           "  GROUP BY pt2.tag.id" +
-           ")")
+        "FROM PostTag pt " +
+        "WHERE pt.id IN (" +
+        "  SELECT MAX(pt2.id) FROM PostTag pt2 " +
+        "  WHERE pt2.tag.id IN :tagIds AND pt2.user.id = :ownerId " +
+        "  AND pt2.post.isDeleted = false " +
+        "  AND (:isOwner = true OR pt2.post.isPublic = true) " +
+        "  GROUP BY pt2.tag.id" +
+        ")")
     List<TagThumbnailProjection> findLatestThumbnailsByTagIds(
-            @Param("tagIds") List<Long> tagIds,
-            @Param("ownerId") Long ownerId,
-            @Param("isOwner") boolean isOwner
-    );
+        @Param("tagIds")
+        List<Long> tagIds,
+        @Param("ownerId")
+        Long ownerId,
+        @Param("isOwner")
+        boolean isOwner);
 
     @Query("""
-            SELECT pt.tag.name
-            FROM PostTag pt
-            WHERE pt.post.id = :postId
-            ORDER BY pt.tag.name ASC
-            """)
-    List<String> findTagNamesByPostId(@Param("postId") Long postId);
+        SELECT pt.tag.name
+        FROM PostTag pt
+        WHERE pt.post.id = :postId
+        ORDER BY pt.tag.name ASC
+        """)
+    List<String> findTagNamesByPostId(@Param("postId")
+    Long postId);
 
     @Query("""
-            SELECT pt.post.id AS postId, pt.tag.name AS tagName
-            FROM PostTag pt
-            WHERE pt.post.id IN :postIds
-            ORDER BY pt.post.id ASC, pt.tag.name ASC
-            """)
-    List<PostTagNameProjection> findTagNamesByPostIds(@Param("postIds") List<Long> postIds);
+        SELECT pt.post.id AS postId, pt.tag.name AS tagName
+        FROM PostTag pt
+        WHERE pt.post.id IN :postIds
+        ORDER BY pt.post.id ASC, pt.tag.name ASC
+        """)
+    List<PostTagNameProjection> findTagNamesByPostIds(@Param("postIds")
+    List<Long> postIds);
 }

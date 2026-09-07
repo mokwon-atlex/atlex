@@ -20,7 +20,7 @@ public class Tag {
 
     public static Tag of(String name) {
         return Tag.builder()
-                .name(name)
-                .build();
+            .name(name)
+            .build();
     }
 }

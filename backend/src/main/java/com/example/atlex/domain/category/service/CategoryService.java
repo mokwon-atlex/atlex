@@ -40,84 +40,79 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public CategoryListResponse getCategories(
-            String userId,
-            Integer limit,
-            Long cursor,
-            Long loginUserId
-    ) {
+        String userId,
+        Integer limit,
+        Long cursor,
+        Long loginUserId) {
         User owner = findActiveUser(userId);
         boolean ownerView = loginUserId != null && owner.getId().equals(loginUserId);
         int effectiveLimit = normalizeLimit(limit);
         validateCursor(cursor);
 
         List<Category> fetched = categoryRepository.findCategoryPage(
-                owner.getId(),
-                cursor == null ? Long.MAX_VALUE : cursor,
-                PageRequest.of(0, effectiveLimit + 1)
-        );
+            owner.getId(),
+            cursor == null ? Long.MAX_VALUE : cursor,
+            PageRequest.of(0, effectiveLimit + 1));
 
         boolean hasNext = fetched.size() > effectiveLimit;
         List<Category> categories = hasNext
-                ? List.copyOf(fetched.subList(0, effectiveLimit))
-                : fetched;
+            ? List.copyOf(fetched.subList(0, effectiveLimit))
+            : fetched;
 
         if (categories.isEmpty()) {
             return CategoryListResponse.builder()
-                    .content(List.of())
-                    .hasNext(false)
-                    .nextCursor(null)
-                    .build();
+                .content(List.of())
+                .hasNext(false)
+                .nextCursor(null)
+                .build();
         }
 
         List<Long> categoryIds = categories.stream()
-                .map(Category::getId)
-                .toList();
+            .map(Category::getId)
+            .toList();
         Map<Long, Long> postCounts = postRepository
-                .countPostsByCategoryIds(categoryIds, ownerView)
-                .stream()
-                .collect(Collectors.toMap(
-                        CategoryPostCountProjection::getCategoryId,
-                        CategoryPostCountProjection::getPostCount
-                ));
+            .countPostsByCategoryIds(categoryIds, ownerView)
+            .stream()
+            .collect(Collectors.toMap(
+                CategoryPostCountProjection::getCategoryId,
+                CategoryPostCountProjection::getPostCount));
         Map<Long, String> thumbnails = postRepository
-                .findLatestThumbnailsByCategoryIds(categoryIds, ownerView)
-                .stream()
-                .collect(Collectors.toMap(
-                        CategoryThumbnailProjection::getCategoryId,
-                        CategoryThumbnailProjection::getThumbnailUrl
-                ));
+            .findLatestThumbnailsByCategoryIds(categoryIds, ownerView)
+            .stream()
+            .collect(Collectors.toMap(
+                CategoryThumbnailProjection::getCategoryId,
+                CategoryThumbnailProjection::getThumbnailUrl));
 
         List<CategoryListItemResponse> content = categories.stream()
-                .map(category -> CategoryListItemResponse.builder()
-                        .id(category.getId())
-                        .name(category.getName())
-                        .postCount(postCounts.getOrDefault(category.getId(), 0L))
-                        .thumbnailUrl(thumbnails.get(category.getId()))
-                        .build())
-                .toList();
+            .map(category -> CategoryListItemResponse.builder()
+                .id(category.getId())
+                .name(category.getName())
+                .postCount(postCounts.getOrDefault(category.getId(), 0L))
+                .thumbnailUrl(thumbnails.get(category.getId()))
+                .build())
+            .toList();
 
         return CategoryListResponse.builder()
-                .content(content)
-                .hasNext(hasNext)
-                .nextCursor(hasNext ? categories.get(categories.size() - 1).getId() : null)
-                .build();
+            .content(content)
+            .hasNext(hasNext)
+            .nextCursor(hasNext ? categories.get(categories.size() - 1).getId() : null)
+            .build();
     }
 
     @Transactional
     public CategoryResponse createCategory(
-            String userId,
-            CategoryCreateRequest request,
-            Long loginUserId
-    ) {
+        String userId,
+        CategoryCreateRequest request,
+        Long loginUserId) {
         User owner = findOwner(userId, loginUserId);
         String name = request.getName().trim();
         validateDuplicateName(owner.getId(), name, null);
 
         try {
             Category category = categoryRepository.saveAndFlush(Category.builder()
-                    .user(owner)
-                    .name(name)
-                    .build());
+                .user(owner)
+                .name(name)
+                .build());
             return CategoryResponse.from(category);
         } catch (DataIntegrityViolationException e) {
             throw new DuplicateCategoryNameException();
@@ -126,11 +121,10 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse updateCategory(
-            String userId,
-            Long categoryId,
-            CategoryUpdateRequest request,
-            Long loginUserId
-    ) {
+        String userId,
+        Long categoryId,
+        CategoryUpdateRequest request,
+        Long loginUserId) {
         User owner = findOwner(userId, loginUserId);
         Category category = findOwnedCategory(categoryId, owner.getId());
         String name = request.getName().trim();
@@ -156,7 +150,7 @@ public class CategoryService {
 
     private User findActiveUser(String userId) {
         return userRepository.findByUserIdAndActiveTrue(userId)
-                .orElseThrow(UserNotFoundException::new);
+            .orElseThrow(UserNotFoundException::new);
     }
 
     private User findOwner(String userId, Long loginUserId) {
@@ -169,13 +163,13 @@ public class CategoryService {
 
     private Category findOwnedCategory(Long categoryId, Long ownerId) {
         return categoryRepository.findByIdAndUser_Id(categoryId, ownerId)
-                .orElseThrow(CategoryNotFoundException::new);
+            .orElseThrow(CategoryNotFoundException::new);
     }
 
     private void validateDuplicateName(Long ownerId, String name, Long categoryId) {
         boolean duplicated = categoryId == null
-                ? categoryRepository.existsByUser_IdAndName(ownerId, name)
-                : categoryRepository.existsByUser_IdAndNameAndIdNot(ownerId, name, categoryId);
+            ? categoryRepository.existsByUser_IdAndName(ownerId, name)
+            : categoryRepository.existsByUser_IdAndNameAndIdNot(ownerId, name, categoryId);
         if (duplicated) {
             throw new DuplicateCategoryNameException();
         }

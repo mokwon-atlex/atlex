@@ -40,37 +40,35 @@ public class GraphService {
         Map<Long, List<String>> tagNamesByPostId = findTagNamesByPostId(visiblePostIds);
 
         List<GraphNodeResponse> nodes = posts.stream()
-                .map(post -> GraphNodeResponse.from(post, tagNamesByPostId.getOrDefault(post.getId(), List.of())))
-                .toList();
+            .map(post -> GraphNodeResponse.from(post, tagNamesByPostId.getOrDefault(post.getId(), List.of())))
+            .toList();
         List<GraphEdgeResponse> edges = visiblePostIds.isEmpty()
-                ? List.of()
-                : postRelationRepository.findVisibleEdges(
-                        visiblePostIds,
-                        minScore == null ? DEFAULT_MIN_SCORE : minScore
-                ).stream().map(GraphEdgeResponse::from).toList();
+            ? List.of()
+            : postRelationRepository.findVisibleEdges(
+                visiblePostIds,
+                minScore == null ? DEFAULT_MIN_SCORE : minScore).stream().map(GraphEdgeResponse::from).toList();
 
         return PostGraphResponse.builder()
-                .nodes(nodes)
-                .edges(edges)
-                .build();
+            .nodes(nodes)
+            .edges(edges)
+            .build();
     }
 
     @Transactional(readOnly = true)
     public PostGraphResponse getPostGraph(Long postId, Double minScore, Integer limit, Long viewerId) {
         Post centerPost = postRepository.findWithUserById(postId)
-                .orElseThrow(PostNotFoundException::new);
+            .orElseThrow(PostNotFoundException::new);
 
         if (!isVisibleTo(centerPost, viewerId)) {
             throw new PostNotFoundException();
         }
 
         List<PostRelation> relations = Boolean.TRUE.equals(centerPost.getIsPublic())
-                ? postRelationRepository.findVisibleCenteredEdges(
-                        postId,
-                        minScore == null ? DEFAULT_MIN_SCORE : minScore,
-                        PageRequest.of(0, normalizeLimit(limit))
-                )
-                : List.of();
+            ? postRelationRepository.findVisibleCenteredEdges(
+                postId,
+                minScore == null ? DEFAULT_MIN_SCORE : minScore,
+                PageRequest.of(0, normalizeLimit(limit)))
+            : List.of();
 
         Map<Long, Post> postsById = new LinkedHashMap<>();
         postsById.put(centerPost.getId(), centerPost);
@@ -83,16 +81,16 @@ public class GraphService {
         Map<Long, List<String>> tagNamesByPostId = findTagNamesByPostId(postIds);
 
         List<GraphNodeResponse> nodes = postsById.values().stream()
-                .map(post -> GraphNodeResponse.from(post, tagNamesByPostId.getOrDefault(post.getId(), List.of())))
-                .toList();
+            .map(post -> GraphNodeResponse.from(post, tagNamesByPostId.getOrDefault(post.getId(), List.of())))
+            .toList();
         List<GraphEdgeResponse> edges = relations.stream()
-                .map(GraphEdgeResponse::from)
-                .toList();
+            .map(GraphEdgeResponse::from)
+            .toList();
 
         return PostGraphResponse.builder()
-                .nodes(nodes)
-                .edges(edges)
-                .build();
+            .nodes(nodes)
+            .edges(edges)
+            .build();
     }
 
     private String normalizeUserId(String userId) {
@@ -115,14 +113,14 @@ public class GraphService {
 
         for (PostTagNameProjection tagName : postTagRepository.findTagNamesByPostIds(postIds)) {
             tagNamesByPostId
-                    .computeIfAbsent(tagName.getPostId(), ignored -> new ArrayList<>())
-                    .add(tagName.getTagName());
+                .computeIfAbsent(tagName.getPostId(), ignored -> new ArrayList<>())
+                .add(tagName.getTagName());
         }
         return tagNamesByPostId;
     }
 
     private boolean isVisibleTo(Post post, Long viewerId) {
         return Boolean.TRUE.equals(post.getIsPublic())
-                || (viewerId != null && Objects.equals(post.getUser().getId(), viewerId));
+            || (viewerId != null && Objects.equals(post.getUser().getId(), viewerId));
     }
 }

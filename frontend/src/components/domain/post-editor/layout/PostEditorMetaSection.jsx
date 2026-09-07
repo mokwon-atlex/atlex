@@ -16,10 +16,7 @@ export default function PostEditorMetaSection({
   isPublic,
   onIsPublicChange,
 }) {
-  const categoryOptions = [
-    postEditorCategories[0],
-    ...categories,
-  ];
+  const categoryOptions = [postEditorCategories[0], ...categories];
 
   return (
     <section className="border-b border-border">
@@ -67,11 +64,7 @@ export default function PostEditorMetaSection({
             <FieldLabel htmlFor="post-editor-public" className={LABEL_CLASS}>
               {isPublic ? '공개' : '비공개'}
             </FieldLabel>
-            <Switch
-              id="post-editor-public"
-              checked={isPublic}
-              onCheckedChange={onIsPublicChange}
-            />
+            <Switch id="post-editor-public" checked={isPublic} onCheckedChange={onIsPublicChange} />
           </Field>
         </div>
       </div>

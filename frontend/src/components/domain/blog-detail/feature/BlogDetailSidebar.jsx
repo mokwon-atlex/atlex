@@ -1,23 +1,9 @@
-import BlogDetailActionRail from "@/components/domain/blog-detail/ui/BlogDetailActionRail";
-import BlogDetailMetaAside from "@/components/domain/blog-detail/ui/BlogDetailMetaAside";
+import BlogDetailActionRail from '@/components/domain/blog-detail/ui/BlogDetailActionRail';
+import BlogDetailMetaAside from '@/components/domain/blog-detail/ui/BlogDetailMetaAside';
 
-function hasMetaAsideContent({
-  asideNote,
-  keywords,
-  pageSignals,
-  publishedAt,
-  readTime,
-  sections,
-  updatedAt,
-}) {
+function hasMetaAsideContent({ asideNote, keywords, pageSignals, publishedAt, readTime, sections, updatedAt }) {
   return Boolean(
-    asideNote ||
-      publishedAt ||
-      readTime ||
-      updatedAt ||
-      keywords?.length ||
-      pageSignals?.length ||
-      sections?.length
+    asideNote || publishedAt || readTime || updatedAt || keywords?.length || pageSignals?.length || sections?.length,
   );
 }
 

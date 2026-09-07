@@ -1,37 +1,34 @@
-import { AlignCenter, AlignLeft, AlignRight, Bold, Italic, Underline } from "lucide-react";
-import { useState } from "react";
+import { AlignCenter, AlignLeft, AlignRight, Bold, Italic, Underline } from 'lucide-react';
+import { useState } from 'react';
 
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/common/ui/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from '@/components/common/ui/toggle-group';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof ToggleGroup> } */
 const meta = {
-  title: "Common/UI/ToggleGroup",
+  title: 'Common/UI/ToggleGroup',
   component: ToggleGroup,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
   argTypes: {
     variant: {
-      control: "select",
-      options: ["default", "outline"],
+      control: 'select',
+      options: ['default', 'outline'],
     },
     size: {
-      control: "select",
-      options: ["sm", "default", "lg"],
+      control: 'select',
+      options: ['sm', 'default', 'lg'],
     },
-    multiple: { control: "boolean" },
+    multiple: { control: 'boolean' },
     orientation: {
-      control: "select",
-      options: ["horizontal", "vertical"],
+      control: 'select',
+      options: ['horizontal', 'vertical'],
     },
   },
   args: {
-    variant: "default",
-    size: "default",
+    variant: 'default',
+    size: 'default',
     multiple: false,
   },
 };
@@ -40,7 +37,7 @@ export default meta;
 
 export const SingleSelect = {
   render: () => {
-    const [value, setValue] = useState(["left"]);
+    const [value, setValue] = useState(['left']);
     return (
       <ToggleGroup value={value} onValueChange={setValue}>
         <ToggleGroupItem value="left" aria-label="왼쪽 정렬">
@@ -59,7 +56,7 @@ export const SingleSelect = {
 
 export const MultipleSelect = {
   render: () => {
-    const [value, setValue] = useState(["bold"]);
+    const [value, setValue] = useState(['bold']);
     return (
       <ToggleGroup multiple value={value} onValueChange={setValue}>
         <ToggleGroupItem value="bold" aria-label="굵게">
@@ -78,7 +75,7 @@ export const MultipleSelect = {
 
 export const WithText = {
   render: () => {
-    const [value, setValue] = useState(["font-style"]);
+    const [value, setValue] = useState(['font-style']);
     return (
       <ToggleGroup value={value} onValueChange={setValue} variant="outline">
         <ToggleGroupItem value="font-style">글꼴 스타일</ToggleGroupItem>
@@ -92,18 +89,18 @@ export const WithText = {
 
 export const Vertical = {
   render: () => {
-    const [value, setValue] = useState(["option-1"]);
+    const [value, setValue] = useState(['option-1']);
     return (
-      <ToggleGroup
-        orientation="vertical"
-        value={value}
-        onValueChange={setValue}
-        variant="outline"
-        className="w-36"
-      >
-        <ToggleGroupItem value="option-1" className="justify-start">옵션 1</ToggleGroupItem>
-        <ToggleGroupItem value="option-2" className="justify-start">옵션 2</ToggleGroupItem>
-        <ToggleGroupItem value="option-3" className="justify-start">옵션 3</ToggleGroupItem>
+      <ToggleGroup orientation="vertical" value={value} onValueChange={setValue} variant="outline" className="w-36">
+        <ToggleGroupItem value="option-1" className="justify-start">
+          옵션 1
+        </ToggleGroupItem>
+        <ToggleGroupItem value="option-2" className="justify-start">
+          옵션 2
+        </ToggleGroupItem>
+        <ToggleGroupItem value="option-3" className="justify-start">
+          옵션 3
+        </ToggleGroupItem>
       </ToggleGroup>
     );
   },
@@ -112,8 +109,8 @@ export const Vertical = {
 export const Sizes = {
   render: () => (
     <div className="flex flex-col gap-4 items-start">
-      {["sm", "default", "lg"].map((size) => (
-        <ToggleGroup key={size} size={size} defaultValue={["a"]}>
+      {['sm', 'default', 'lg'].map((size) => (
+        <ToggleGroup key={size} size={size} defaultValue={['a']}>
           <ToggleGroupItem value="a">옵션 A</ToggleGroupItem>
           <ToggleGroupItem value="b">옵션 B</ToggleGroupItem>
           <ToggleGroupItem value="c">옵션 C</ToggleGroupItem>
@@ -126,11 +123,11 @@ export const Sizes = {
 export const Variants = {
   render: () => (
     <div className="flex flex-col gap-4 items-start">
-      <ToggleGroup variant="default" defaultValue={["a"]}>
+      <ToggleGroup variant="default" defaultValue={['a']}>
         <ToggleGroupItem value="a">Default A</ToggleGroupItem>
         <ToggleGroupItem value="b">Default B</ToggleGroupItem>
       </ToggleGroup>
-      <ToggleGroup variant="outline" defaultValue={["a"]}>
+      <ToggleGroup variant="outline" defaultValue={['a']}>
         <ToggleGroupItem value="a">Outline A</ToggleGroupItem>
         <ToggleGroupItem value="b">Outline B</ToggleGroupItem>
       </ToggleGroup>
@@ -140,12 +137,14 @@ export const Variants = {
 
 export const WithDisabledItem = {
   render: () => {
-    const [value, setValue] = useState(["a"]);
+    const [value, setValue] = useState(['a']);
     return (
       <ToggleGroup value={value} onValueChange={setValue} variant="outline">
         <ToggleGroupItem value="a">활성</ToggleGroupItem>
         <ToggleGroupItem value="b">활성 2</ToggleGroupItem>
-        <ToggleGroupItem value="c" disabled>비활성</ToggleGroupItem>
+        <ToggleGroupItem value="c" disabled>
+          비활성
+        </ToggleGroupItem>
       </ToggleGroup>
     );
   },
@@ -153,7 +152,7 @@ export const WithDisabledItem = {
 
 export const Attached = {
   render: () => {
-    const [value, setValue] = useState(["b"]);
+    const [value, setValue] = useState(['b']);
     return (
       <ToggleGroup spacing={0} value={value} onValueChange={setValue} variant="outline">
         <ToggleGroupItem value="a">

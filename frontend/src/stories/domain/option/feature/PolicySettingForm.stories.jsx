@@ -1,14 +1,14 @@
-import { PolicySettingForm } from "@/components/domain/option/feature/PolicySettingForm"
+import { PolicySettingForm } from '@/components/domain/option/feature/PolicySettingForm';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof PolicySettingForm> } */
 const meta = {
-  title: "Domain/Option/Feature/PolicySettingForm",
+  title: 'Domain/Option/Feature/PolicySettingForm',
   component: PolicySettingForm,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
-}
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
+};
 
-export default meta
+export default meta;
 
 export const Default = {
   render: () => (
@@ -16,4 +16,4 @@ export const Default = {
       <PolicySettingForm />
     </div>
   ),
-}
+};

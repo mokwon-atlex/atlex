@@ -1,19 +1,36 @@
-import { ScrollArea, ScrollBar } from "@/components/common/ui/scroll-area";
-import { Separator } from "@/components/common/ui/separator";
+import { ScrollArea, ScrollBar } from '@/components/common/ui/scroll-area';
+import { Separator } from '@/components/common/ui/separator';
 
 const TAGS = [
-  "공지", "운영", "이벤트", "채용", "개발", "디자인", "마케팅", "기획",
-  "인프라", "보안", "QA", "데이터", "AI", "모바일", "웹", "백엔드",
-  "프론트엔드", "DevOps", "분석", "리서치",
+  '공지',
+  '운영',
+  '이벤트',
+  '채용',
+  '개발',
+  '디자인',
+  '마케팅',
+  '기획',
+  '인프라',
+  '보안',
+  'QA',
+  '데이터',
+  'AI',
+  '모바일',
+  '웹',
+  '백엔드',
+  '프론트엔드',
+  'DevOps',
+  '분석',
+  '리서치',
 ];
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof ScrollArea> } */
 const meta = {
-  title: "Common/UI/ScrollArea",
+  title: 'Common/UI/ScrollArea',
   component: ScrollArea,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
 };
 
@@ -59,9 +76,8 @@ export const LongContent = {
       <p className="text-sm leading-6 text-muted-foreground">
         {Array.from({ length: 10 }, (_, i) => (
           <span key={i}>
-            행사 운영 일정과 부스 배치 변경 사항을 먼저 안내하는 예시 본문입니다.
-            현장 동선과 참여 시간, 주의 사항을 확인해 주세요. #{i + 1}
-            {" "}
+            행사 운영 일정과 부스 배치 변경 사항을 먼저 안내하는 예시 본문입니다. 현장 동선과 참여 시간, 주의 사항을
+            확인해 주세요. #{i + 1}{' '}
           </span>
         ))}
       </p>

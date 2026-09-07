@@ -1,7 +1,7 @@
-import { BookOpen, Eye, Heart, Lock } from "lucide-react";
+import { BookOpen, Eye, Heart, Lock } from 'lucide-react';
 
-import { nodeColor } from "@/components/domain/graph-view/lib/graph-view-utils";
-import { AuthorBadge, TagPill } from "@/components/domain/graph-view/ui/GraphViewBadges";
+import { nodeColor } from '@/components/domain/graph-view/lib/graph-view-utils';
+import { AuthorBadge, TagPill } from '@/components/domain/graph-view/ui/GraphViewBadges';
 
 export function NodePopup({ position, post }) {
   const color = nodeColor(post);
@@ -12,29 +12,22 @@ export function NodePopup({ position, post }) {
       style={{
         left: position.x,
         top: position.y,
-        transform: "translate(-50%, 16px)",
+        transform: 'translate(-50%, 16px)',
         width: 288,
       }}
     >
-      <div
-        className="flex h-24 items-center justify-center"
-        style={{ background: `${color}18` }}
-      >
+      <div className="flex h-24 items-center justify-center" style={{ background: `${color}18` }}>
         <BookOpen className="size-9" style={{ color, opacity: 0.72 }} />
       </div>
       <div className="p-4">
-        <h3 className="mb-2 text-sm font-black leading-snug text-foreground">
-          {post.title}
-        </h3>
+        <h3 className="mb-2 text-sm font-black leading-snug text-foreground">{post.title}</h3>
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <AuthorBadge author={post.author} />
           {post.tags.slice(0, 1).map((tag) => (
             <TagPill key={tag} tag={tag} />
           ))}
         </div>
-        <p className="mb-3 line-clamp-2 text-xs font-bold leading-relaxed text-muted-foreground">
-          {post.excerpt}
-        </p>
+        <p className="mb-3 line-clamp-2 text-xs font-bold leading-relaxed text-muted-foreground">{post.excerpt}</p>
         <div className="mb-3 flex flex-wrap gap-1.5">
           {post.tags.slice(1).map((tag) => (
             <TagPill key={tag} tag={tag} />

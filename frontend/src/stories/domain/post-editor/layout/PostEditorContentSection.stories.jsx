@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import PostEditorContentSection from "@/components/domain/post-editor/layout/PostEditorContentSection";
-import { postEditorCopy } from "@/data/post-editor/post-editor-copy";
-import usePostEditorRichText from "@/hooks/post-editor/post-editor-rich-text";
+import PostEditorContentSection from '@/components/domain/post-editor/layout/PostEditorContentSection';
+import { postEditorCopy } from '@/data/post-editor/post-editor-copy';
+import usePostEditorRichText from '@/hooks/post-editor/post-editor-rich-text';
 
-function ContentSectionDemo({ initialContent = "" }) {
+function ContentSectionDemo({ initialContent = '' }) {
   const richText = usePostEditorRichText({ initialContent });
 
   return (
@@ -23,10 +23,10 @@ function ContentSectionDemo({ initialContent = "" }) {
 
 /** @type { import('@storybook/nextjs-vite').Meta } */
 const meta = {
-  title: "Domain/PostEditor/Layout/PostEditorContentSection",
+  title: 'Domain/PostEditor/Layout/PostEditorContentSection',
   component: PostEditorContentSection,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
 };
 
 export default meta;

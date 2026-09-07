@@ -7,6 +7,4 @@
 // → 백엔드 카테고리가 열리기 전까지는 안전하게 '미분류'(categoryId 미전송) 만 제공한다.
 // 백엔드가 열리면 useUserBlogCategories(가칭) 훅으로 교체하고 이 파일은 삭제한다.
 // (id 는 백엔드 categoryId(Long) 와 동일한 의미)
-export const postEditorCategories = [
-  { id: null, name: '미분류' },
-];
+export const postEditorCategories = [{ id: null, name: '미분류' }];

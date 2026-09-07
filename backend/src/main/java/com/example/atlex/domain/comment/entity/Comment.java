@@ -46,7 +46,8 @@ public class Comment {
     private LocalDateTime updatedAt;
 
     public void update(String content) {
-        if (content != null) this.content = content;
+        if (content != null)
+            this.content = content;
     }
 
     public void softDelete() {

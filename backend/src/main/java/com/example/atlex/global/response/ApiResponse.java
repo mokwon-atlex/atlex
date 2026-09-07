@@ -34,49 +34,49 @@ public class ApiResponse<T> {
     // 성공 응답
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
-                .code("SUCCESS")
-                .message(null)
-                .data(data)
-                .errors(null)
-                .build();
+            .code("SUCCESS")
+            .message(null)
+            .data(data)
+            .errors(null)
+            .build();
     }
 
     // 성공 응답 (메시지 포함)
     public static <T> ApiResponse<T> success(T data, String message) {
         return ApiResponse.<T>builder()
-                .code("SUCCESS")
-                .message(message)
-                .data(data)
-                .errors(null)
-                .build();
+            .code("SUCCESS")
+            .message(message)
+            .data(data)
+            .errors(null)
+            .build();
     }
 
     // 실패 응답 (ErrorCode 기반 - GlobalExceptionHandler 검증 예외용)
     public static ApiResponse<Void> fail(ErrorCode errorCode) {
         return ApiResponse.<Void>builder()
-                .code(errorCode.name())
-                .message(errorCode.getMessage())
-                .data(null)
-                .errors(null)
-                .build();
+            .code(errorCode.name())
+            .message(errorCode.getMessage())
+            .data(null)
+            .errors(null)
+            .build();
     }
 
     public static ApiResponse<Void> fail(ErrorCode errorCode, List<ErrorData> errors) {
         return ApiResponse.<Void>builder()
-                .code(errorCode.name())
-                .message(errorCode.getMessage())
-                .data(null)
-                .errors(errors.isEmpty() ? null : errors)
-                .build();
+            .code(errorCode.name())
+            .message(errorCode.getMessage())
+            .data(null)
+            .errors(errors.isEmpty() ? null : errors)
+            .build();
     }
 
     // 비즈니스 예외용 - ErrorCode의 code/status를 쓰되 메시지는 예외에서 재정의
     public static ApiResponse<Void> fail(ErrorCode errorCode, String message, List<ErrorData> errors) {
         return ApiResponse.<Void>builder()
-                .code(errorCode.name())
-                .message(message)
-                .data(null)
-                .errors(errors.isEmpty() ? null : errors)
-                .build();
+            .code(errorCode.name())
+            .message(message)
+            .data(null)
+            .errors(errors.isEmpty() ? null : errors)
+            .build();
     }
 }

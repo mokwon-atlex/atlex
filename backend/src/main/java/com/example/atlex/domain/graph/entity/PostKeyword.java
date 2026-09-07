@@ -19,16 +19,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-        name = "post_keywords",
-        indexes = {
-                @Index(name = "idx_post_keywords_post_weight", columnList = "post_id, weight"),
-                @Index(name = "idx_post_keywords_keyword_weight", columnList = "keyword_id, weight")
-        },
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_post_keywords_post_keyword", columnNames = {"post_id", "keyword_id"})
-        }
-)
+@Table(name = "post_keywords", indexes = {
+    @Index(name = "idx_post_keywords_post_weight", columnList = "post_id, weight"),
+    @Index(name = "idx_post_keywords_keyword_weight", columnList = "keyword_id, weight")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "uk_post_keywords_post_keyword", columnNames = {"post_id", "keyword_id"})
+})
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -60,20 +56,19 @@ public class PostKeyword {
     private Double weight;
 
     public static PostKeyword of(
-            Post post,
-            Keyword keyword,
-            int titleCount,
-            int contentCount,
-            int tagCount,
-            double weight
-    ) {
+        Post post,
+        Keyword keyword,
+        int titleCount,
+        int contentCount,
+        int tagCount,
+        double weight) {
         return PostKeyword.builder()
-                .post(post)
-                .keyword(keyword)
-                .titleCount(titleCount)
-                .contentCount(contentCount)
-                .tagCount(tagCount)
-                .weight(weight)
-                .build();
+            .post(post)
+            .keyword(keyword)
+            .titleCount(titleCount)
+            .contentCount(contentCount)
+            .tagCount(tagCount)
+            .weight(weight)
+            .build();
     }
 }

@@ -9,14 +9,14 @@ import {
   FieldSet,
   FieldContent,
   FieldTitle,
-} from "@/components/common/ui/field";
-import { Input } from "@/components/common/ui/input";
-import { Textarea } from "@/components/common/ui/textarea";
+} from '@/components/common/ui/field';
+import { Input } from '@/components/common/ui/input';
+import { Textarea } from '@/components/common/ui/textarea';
 
 /** @type { import('@storybook/nextjs-vite').Meta } */
 const meta = {
-  title: "Common/UI/Field",
-  tags: ["autodocs"],
+  title: 'Common/UI/Field',
+  tags: ['autodocs'],
 };
 
 export default meta;
@@ -57,9 +57,9 @@ export const WithMultipleErrors = {
       <Input type="password" aria-invalid="true" />
       <FieldError
         errors={[
-          { message: "8자 이상이어야 합니다." },
-          { message: "숫자를 포함해야 합니다." },
-          { message: "특수문자를 포함해야 합니다." },
+          { message: '8자 이상이어야 합니다.' },
+          { message: '숫자를 포함해야 합니다.' },
+          { message: '특수문자를 포함해야 합니다.' },
         ]}
       />
     </Field>

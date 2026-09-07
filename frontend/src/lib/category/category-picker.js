@@ -1,11 +1,11 @@
-export const ALL_CATEGORY_ID = "all";
+export const ALL_CATEGORY_ID = 'all';
 
 function toDateValue(date) {
   if (!date) {
     return 0;
   }
 
-  return Date.parse(date.replaceAll(".", "-")) || 0;
+  return Date.parse(date.replaceAll('.', '-')) || 0;
 }
 
 export function findCategoryById(categories, categoryId) {
@@ -13,7 +13,7 @@ export function findCategoryById(categories, categoryId) {
 }
 
 function getCategoryLabel(category) {
-  return String(category?.label ?? category?.name ?? "").trim();
+  return String(category?.label ?? category?.name ?? '').trim();
 }
 
 export function filterPostsByCategoryId(posts = [], categories = [], categoryId) {
@@ -37,17 +37,13 @@ export function filterPostsByCategoryId(posts = [], categories = [], categoryId)
     return [];
   }
 
-  return posts.filter(
-    (post) => String(post?.category ?? "").trim() === selectedCategoryLabel
-  );
+  return posts.filter((post) => String(post?.category ?? '').trim() === selectedCategoryLabel);
 }
 
 export function getCategoryPickerItems(categories, posts) {
   return categories.map((category) => {
     const relatedPosts = filterPostsByCategoryId(posts, categories, category.id);
-    const latestPost = [...relatedPosts].sort(
-      (left, right) => toDateValue(right.date) - toDateValue(left.date)
-    )[0];
+    const latestPost = [...relatedPosts].sort((left, right) => toDateValue(right.date) - toDateValue(left.date))[0];
     const normalizedPostCount = Number(category.postCount);
     const hasServerPostCount = Number.isFinite(normalizedPostCount);
 

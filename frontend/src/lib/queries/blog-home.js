@@ -65,17 +65,15 @@ export async function loadBlogHomeData(identifier) {
 
   const profile = toBlogHomeProfile(profileData);
   const postContent = Array.isArray(postsPage?.content) ? postsPage?.content : [];
-  const ownerPostContent = postContent.filter((post) =>
-    isPostWrittenByUser(post, identifier)
-  );
+  const ownerPostContent = postContent.filter((post) => isPostWrittenByUser(post, identifier));
   const posts = ownerPostContent.map(toBlogHomeFeedPost);
   const totalCount =
     ownerPostContent.length === postContent.length
-      ? postsPage?.totalElements ?? ownerPostContent.length
+      ? (postsPage?.totalElements ?? ownerPostContent.length)
       : ownerPostContent.length;
   const totalPages =
     ownerPostContent.length === postContent.length
-      ? postsPage?.totalPages ?? Math.max(Math.ceil(totalCount / 10), 1)
+      ? (postsPage?.totalPages ?? Math.max(Math.ceil(totalCount / 10), 1))
       : Math.max(Math.ceil(totalCount / 10), 1);
 
   const feed = {
@@ -85,8 +83,7 @@ export async function loadBlogHomeData(identifier) {
     totalCount,
     filterLabel: '이번 주',
     sortLabel: '최신순',
-    helperText:
-      '제목과 본문은 카드형 목록으로 유지하고, 피드 중심의 배치로 재정렬한 정적 목업입니다.',
+    helperText: '제목과 본문은 카드형 목록으로 유지하고, 피드 중심의 배치로 재정렬한 정적 목업입니다.',
     pageSizeLabel: '한 페이지에 최대 10개',
     posts,
     pagination: createPagination(1, totalPages),
@@ -100,11 +97,7 @@ export async function loadBlogHomeData(identifier) {
 }
 
 function isPostWrittenByUser(post, userId) {
-  const postAuthorUserId =
-    post?.authorUserId ??
-    post?.userId ??
-    post?.author?.userId ??
-    post?.user?.userId;
+  const postAuthorUserId = post?.authorUserId ?? post?.userId ?? post?.author?.userId ?? post?.user?.userId;
 
   if (postAuthorUserId == null) {
     return false;

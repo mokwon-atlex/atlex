@@ -20,7 +20,7 @@ public class UserDeletionService {
     @Transactional
     public void delete(String userId) {
         User user = userRepository.findByUserIdAndActiveTrue(userId)
-                .orElseThrow(UserNotFoundException::new);
+            .orElseThrow(UserNotFoundException::new);
 
         Long id = user.getId();
         user.deactivate();

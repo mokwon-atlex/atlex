@@ -18,18 +18,20 @@ public class TagController implements TagControllerDocs {
 
     @GetMapping
     public ResponseEntity<ApiResponse<TagListResponse>> getTags(
-            @RequestParam String userId,
-            @RequestParam(required = false) Integer limit,
-            @RequestParam(required = false) Long cursor,
-            @AuthenticationPrincipal PrincipalDetails principalDetails
-    ) {
+        @RequestParam
+        String userId,
+        @RequestParam(required = false)
+        Integer limit,
+        @RequestParam(required = false)
+        Long cursor,
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails) {
         Long loginUserId = principalDetails != null ? principalDetails.user().getId() : null;
         TagListResponse response = tagService.getTags(
-                userId,
-                limit,
-                cursor,
-                loginUserId
-        );
+            userId,
+            limit,
+            cursor,
+            loginUserId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

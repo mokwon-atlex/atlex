@@ -1,18 +1,18 @@
-import { SignupForm } from "@/components/domain/auth/signup/feature/SignupForm"
+import { SignupForm } from '@/components/domain/auth/signup/feature/SignupForm';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof SignupForm> } */
 const meta = {
-  title: "Domain/Auth/Feature/SignupForm",
+  title: 'Domain/Auth/Feature/SignupForm',
   component: SignupForm,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
   argTypes: {
-    onBack: { action: "back" },
-    onLogin: { action: "login" },
+    onBack: { action: 'back' },
+    onLogin: { action: 'login' },
   },
-}
+};
 
-export default meta
+export default meta;
 
 export const Default = {
   render: (args) => (
@@ -21,7 +21,7 @@ export const Default = {
     </div>
   ),
   args: {},
-}
+};
 
 export const Scrollable = {
   render: (args) => (
@@ -30,4 +30,4 @@ export const Scrollable = {
     </div>
   ),
   args: {},
-}
+};

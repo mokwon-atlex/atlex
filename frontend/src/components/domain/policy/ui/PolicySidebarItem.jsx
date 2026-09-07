@@ -1,5 +1,5 @@
-import React from "react";
-import { NavItem } from "@/components/common/ui/nav-item";
+import React from 'react';
+import { NavItem } from '@/components/common/ui/nav-item';
 
 /**
  * 정책 사이드바 목차 아이템 컴포넌트
@@ -9,10 +9,7 @@ import { NavItem } from "@/components/common/ui/nav-item";
  */
 export default function PolicySidebarItem({ item, isActive, onClick }) {
   return (
-    <NavItem 
-      isActive={isActive} 
-      onClick={onClick}
-    >
+    <NavItem isActive={isActive} onClick={onClick}>
       {item.title}
     </NavItem>
   );

@@ -1,7 +1,7 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
-@import "../styles/theme.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import '../styles/theme.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -13,12 +13,12 @@ input::-ms-clear {
   display: none;
 }
 
-input[type="password"]::-webkit-credentials-auto-fill-button {
+input[type='password']::-webkit-credentials-auto-fill-button {
   visibility: hidden;
   display: none !important;
 }
 
-input[type="password"]::-webkit-textfield-decoration-container {
+input[type='password']::-webkit-textfield-decoration-container {
   display: none;
 }
 
@@ -29,11 +29,11 @@ input[type="password"]::-webkit-textfield-decoration-container {
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-nanum-gothic-coding), "Apple SD Gothic Neo", "Malgun Gothic", monospace;
+    font-family: var(--font-nanum-gothic-coding), 'Apple SD Gothic Neo', 'Malgun Gothic', monospace;
   }
 
   html {
-    font-family: var(--font-nanum-gothic-coding), "Apple SD Gothic Neo", "Malgun Gothic", monospace;
+    font-family: var(--font-nanum-gothic-coding), 'Apple SD Gothic Neo', 'Malgun Gothic', monospace;
   }
 }
 

@@ -1,6 +1,6 @@
-import BlogDetailArticle from "@/components/domain/blog-detail/ui/BlogDetailArticle";
-import BlogDetailAuthorCard from "@/components/domain/blog-detail/ui/BlogDetailAuthorCard";
-import BlogDetailHero from "@/components/domain/blog-detail/ui/BlogDetailHero";
+import BlogDetailArticle from '@/components/domain/blog-detail/ui/BlogDetailArticle';
+import BlogDetailAuthorCard from '@/components/domain/blog-detail/ui/BlogDetailAuthorCard';
+import BlogDetailHero from '@/components/domain/blog-detail/ui/BlogDetailHero';
 
 export default function BlogDetailContent({
   adminActions,

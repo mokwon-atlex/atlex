@@ -4,26 +4,26 @@
 // API 스펙에 없는 필드는 기본값/유도값으로 채운다.
 
 function truncate(text, max) {
-  if (!text) return "";
+  if (!text) return '';
   if (text.length <= max) return text;
   return `${text.slice(0, max).trimEnd()}…`;
 }
 
 function pad2(n) {
-  return String(n).padStart(2, "0");
+  return String(n).padStart(2, '0');
 }
 
 export function formatKoreanDate(iso) {
-  if (!iso) return "";
+  if (!iso) return '';
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  if (Number.isNaN(d.getTime())) return '';
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
 
 export function formatDotDate(iso) {
-  if (!iso) return "";
+  if (!iso) return '';
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
+  if (Number.isNaN(d.getTime())) return '';
   return `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}`;
 }
 
@@ -42,10 +42,8 @@ export function toBlogMainPost(apiPost) {
     likes: apiPost.likes ?? 0,
     comments: 0,
     publishedAt: formatKoreanDate(apiPost.createdAt),
-    eyebrow: apiPost.categoryName ?? "post",
-    cover: apiPost.thumbnailUrl
-      ? { variant: "image", url: apiPost.thumbnailUrl }
-      : { variant: "none" },
+    eyebrow: apiPost.categoryName ?? 'post',
+    cover: apiPost.thumbnailUrl ? { variant: 'image', url: apiPost.thumbnailUrl } : { variant: 'none' },
   };
 }
 
@@ -53,21 +51,19 @@ export function toBlogMainPost(apiPost) {
 // output: 상세 페이지 shape (BlogDetailContent 에서 소비)
 export function toBlogDetail(apiPost) {
   return {
-    blogTitle: apiPost.authorUserId ? `${apiPost.authorUserId}.log` : "blog",
-    category: apiPost.categoryName ?? "미분류",
+    blogTitle: apiPost.authorUserId ? `${apiPost.authorUserId}.log` : 'blog',
+    category: apiPost.categoryName ?? '미분류',
     title: apiPost.title,
     excerpt: truncate(apiPost.content, 120),
     publishedAt: formatKoreanDate(apiPost.createdAt),
     updatedAt: formatKoreanDate(apiPost.updatedAt),
     readTime: `${Math.max(1, Math.ceil((apiPost.content?.length ?? 0) / 300))} min read`,
-    visibilityLabel: apiPost.isPublic ? "공개" : "비공개",
+    visibilityLabel: apiPost.isPublic ? '공개' : '비공개',
     authorUserId: apiPost.authorUserId ?? null,
-    adminActions: ["통계", "수정", "삭제"],
+    adminActions: ['통계', '수정', '삭제'],
     contentBlocks: [
-      ...(apiPost.thumbnailUrl
-        ? [{ id: "cover", type: "image", src: apiPost.thumbnailUrl, caption: "" }]
-        : []),
-      { id: "body", type: "paragraph", text: apiPost.content ?? "" },
+      ...(apiPost.thumbnailUrl ? [{ id: 'cover', type: 'image', src: apiPost.thumbnailUrl, caption: '' }] : []),
+      { id: 'body', type: 'paragraph', text: apiPost.content ?? '' },
     ],
   };
 }

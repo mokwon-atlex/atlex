@@ -31,77 +31,73 @@ public class TagService {
 
     @Transactional(readOnly = true)
     public TagListResponse getTags(
-            String userId,
-            Integer limit,
-            Long cursor,
-            Long loginUserId
-    ) {
+        String userId,
+        Integer limit,
+        Long cursor,
+        Long loginUserId) {
         User owner = findActiveUser(userId);
         int effectiveLimit = normalizeLimit(limit);
         validateCursor(cursor);
         boolean isOwner = owner.getId().equals(loginUserId);
 
         List<Tag> fetched = postTagRepository.findTagPage(
-                owner.getId(),
-                cursor,
-                isOwner,
-                PageRequest.of(0, effectiveLimit + 1)
-        );
+            owner.getId(),
+            cursor,
+            isOwner,
+            PageRequest.of(0, effectiveLimit + 1));
 
         boolean hasNext = fetched.size() > effectiveLimit;
         List<Tag> tags = hasNext
-                ? List.copyOf(fetched.subList(0, effectiveLimit))
-                : fetched;
+            ? List.copyOf(fetched.subList(0, effectiveLimit))
+            : fetched;
 
         if (tags.isEmpty()) {
             return TagListResponse.builder()
-                    .content(List.of())
-                    .hasNext(false)
-                    .hasLast(true)
-                    .nextCursor(null)
-                    .build();
+                .content(List.of())
+                .hasNext(false)
+                .hasLast(true)
+                .nextCursor(null)
+                .build();
         }
 
         List<Long> tagIds = tags.stream()
-                .map(Tag::getId)
-                .toList();
+            .map(Tag::getId)
+            .toList();
 
         Map<Long, Long> postCounts = postTagRepository
-                .countPostsByTagIds(tagIds, owner.getId(), isOwner)
-                .stream()
-                .collect(Collectors.toMap(
-                        TagPostCountProjection::getTagId,
-                        TagPostCountProjection::getPostCount
-                ));
+            .countPostsByTagIds(tagIds, owner.getId(), isOwner)
+            .stream()
+            .collect(Collectors.toMap(
+                TagPostCountProjection::getTagId,
+                TagPostCountProjection::getPostCount));
 
         Map<Long, String> thumbnails = postTagRepository
-                .findLatestThumbnailsByTagIds(tagIds, owner.getId(), isOwner)
-                .stream()
-                .collect(Collectors.toMap(
-                        TagThumbnailProjection::getTagId,
-                        TagThumbnailProjection::getThumbnailUrl
-                ));
+            .findLatestThumbnailsByTagIds(tagIds, owner.getId(), isOwner)
+            .stream()
+            .collect(Collectors.toMap(
+                TagThumbnailProjection::getTagId,
+                TagThumbnailProjection::getThumbnailUrl));
 
         List<TagListItemResponse> content = tags.stream()
-                .map(tag -> TagListItemResponse.builder()
-                        .id(tag.getId())
-                        .name(tag.getName())
-                        .postCount(postCounts.getOrDefault(tag.getId(), 0L))
-                        .thumbnailUrl(thumbnails.get(tag.getId()))
-                        .build())
-                .toList();
+            .map(tag -> TagListItemResponse.builder()
+                .id(tag.getId())
+                .name(tag.getName())
+                .postCount(postCounts.getOrDefault(tag.getId(), 0L))
+                .thumbnailUrl(thumbnails.get(tag.getId()))
+                .build())
+            .toList();
 
         return TagListResponse.builder()
-                .content(content)
-                .hasNext(hasNext)
-                .hasLast(!hasNext)
-                .nextCursor(hasNext ? tags.get(tags.size() - 1).getId() : null)
-                .build();
+            .content(content)
+            .hasNext(hasNext)
+            .hasLast(!hasNext)
+            .nextCursor(hasNext ? tags.get(tags.size() - 1).getId() : null)
+            .build();
     }
 
     private User findActiveUser(String userId) {
         return userRepository.findByUserIdAndActiveTrue(userId)
-                .orElseThrow(UserNotFoundException::new);
+            .orElseThrow(UserNotFoundException::new);
     }
 
     private int normalizeLimit(Integer limit) {

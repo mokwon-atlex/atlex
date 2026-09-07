@@ -23,47 +23,44 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException e) {
         List<ErrorData> errors = e.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(fieldError -> ErrorData.field(
-                        fieldError.getDefaultMessage(),
-                        fieldError.getField(),
-                        fieldError.getRejectedValue()
-                ))
-                .collect(Collectors.toList());
+            .getFieldErrors()
+            .stream()
+            .map(fieldError -> ErrorData.field(
+                fieldError.getDefaultMessage(),
+                fieldError.getField(),
+                fieldError.getRejectedValue()))
+            .collect(Collectors.toList());
 
         return ResponseEntity
-                .status(ErrorCode.VALIDATION_ERROR.getStatus())
-                .body(ApiResponse.fail(ErrorCode.VALIDATION_ERROR, errors));
+            .status(ErrorCode.VALIDATION_ERROR.getStatus())
+            .body(ApiResponse.fail(ErrorCode.VALIDATION_ERROR, errors));
     }
 
     // 3. @RequestParam 누락
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponse<Void>> handleMissingParam(MissingServletRequestParameterException e) {
         List<ErrorData> errors = List.of(
-                ErrorData.field("필수 파라미터가 누락되었습니다.", e.getParameterName(), null)
-        );
+            ErrorData.field("필수 파라미터가 누락되었습니다.", e.getParameterName(), null));
         return ResponseEntity
-                .status(ErrorCode.VALIDATION_ERROR.getStatus())
-                .body(ApiResponse.fail(ErrorCode.VALIDATION_ERROR, errors));
+            .status(ErrorCode.VALIDATION_ERROR.getStatus())
+            .body(ApiResponse.fail(ErrorCode.VALIDATION_ERROR, errors));
     }
 
     // 4. @PathVariable / @RequestParam 타입 불일치
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
         List<ErrorData> errors = List.of(
-                ErrorData.field("파라미터 타입이 올바르지 않습니다.", e.getName(), e.getValue())
-        );
+            ErrorData.field("파라미터 타입이 올바르지 않습니다.", e.getName(), e.getValue()));
         return ResponseEntity
-                .status(ErrorCode.VALIDATION_ERROR.getStatus())
-                .body(ApiResponse.fail(ErrorCode.VALIDATION_ERROR, errors));
+            .status(ErrorCode.VALIDATION_ERROR.getStatus())
+            .body(ApiResponse.fail(ErrorCode.VALIDATION_ERROR, errors));
     }
 
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
         return ResponseEntity
-                .status(e.getErrorCode().getStatus())
-                .body(ApiResponse.fail(e.getErrorCode(), e.getMessage(), e.getErrors()));
+            .status(e.getErrorCode().getStatus())
+            .body(ApiResponse.fail(e.getErrorCode(), e.getMessage(), e.getErrors()));
     }
 
     @ExceptionHandler(Exception.class)
@@ -71,7 +68,7 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception", e);
         ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity
-                .status(errorCode.getStatus())
-                .body(ApiResponse.fail(errorCode));
+            .status(errorCode.getStatus())
+            .body(ApiResponse.fail(errorCode));
     }
 }

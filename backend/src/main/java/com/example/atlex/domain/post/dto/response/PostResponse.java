@@ -47,20 +47,20 @@ public class PostResponse {
 
     public static PostResponse from(Post post) {
         return PostResponse.builder()
-                .id(post.getId())
-                .categoryId(post.getCategory() != null ? post.getCategory().getId() : null)
-                .title(post.getTitle())
-                .description(post.getDescription())
-                .content(post.getContent())
-                .thumbnailUrl(post.getThumbnailUrl())
-                .authorId(post.getUser().getId())
-                .authorUserId(post.getUser().getUserId())
-                .authorName(post.getUser().getName())
-                .hits(post.getHits())
-                .likes(post.getLikes())
-                .isPublic(post.getIsPublic())
-                .createdAt(post.getCreatedAt())
-                .updatedAt(post.getUpdatedAt())
-                .build();
+            .id(post.getId())
+            .categoryId(post.getCategory() != null ? post.getCategory().getId() : null)
+            .title(post.getTitle())
+            .description(post.getDescription())
+            .content(post.getContent())
+            .thumbnailUrl(post.getThumbnailUrl())
+            .authorId(post.getUser().getId())
+            .authorUserId(post.getUser().getUserId())
+            .authorName(post.getUser().getName())
+            .hits(post.getHits())
+            .likes(post.getLikes())
+            .isPublic(post.getIsPublic())
+            .createdAt(post.getCreatedAt())
+            .updatedAt(post.getUpdatedAt())
+            .build();
     }
 }

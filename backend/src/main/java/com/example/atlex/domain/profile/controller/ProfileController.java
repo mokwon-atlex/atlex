@@ -26,16 +26,20 @@ public class ProfileController implements ProfileControllerDocs {
 
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<PublicUserResponse>> getPublicProfileByUserId(
-            @PathVariable String userId) {
+        @PathVariable
+        String userId) {
         PublicUserResponse response = profileService.getPublicProfile(userId);
         return ResponseEntity.ok(ApiResponse.success(response, null));
     }
 
     @PatchMapping("/{userId}")
     public ResponseEntity<ApiResponse<PublicUserResponse>> updatePublicProfile(
-            @PathVariable String userId,
-            @Valid @RequestBody ProfileUpdateRequest request,
-            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        @PathVariable
+        String userId,
+        @Valid @RequestBody
+        ProfileUpdateRequest request,
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails) {
         if (principalDetails == null) {
             throw new AuthenticationException();
         }

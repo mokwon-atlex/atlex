@@ -30,9 +30,12 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class GraphServiceTest {
 
-    @Mock PostRepository postRepository;
-    @Mock PostTagRepository postTagRepository;
-    @Mock PostRelationRepository postRelationRepository;
+    @Mock
+    PostRepository postRepository;
+    @Mock
+    PostTagRepository postTagRepository;
+    @Mock
+    PostRelationRepository postRelationRepository;
 
     @Test
     @DisplayName("전체 그래프 조회 시 태그를 게시글 ID 목록으로 한 번에 조회한다")
@@ -44,10 +47,9 @@ class GraphServiceTest {
 
         when(postRepository.findGraphVisiblePosts(null, null, null)).thenReturn(List.of(first, second));
         when(postTagRepository.findTagNamesByPostIds(List.of(10L, 11L))).thenReturn(List.of(
-                new TestPostTagName(10L, "graph"),
-                new TestPostTagName(10L, "spring"),
-                new TestPostTagName(11L, "jpa")
-        ));
+            new TestPostTagName(10L, "graph"),
+            new TestPostTagName(10L, "spring"),
+            new TestPostTagName(11L, "jpa")));
         when(postRelationRepository.findVisibleEdges(eq(List.of(10L, 11L)), eq(0.15))).thenReturn(List.of());
 
         PostGraphResponse response = service.getGraph(null, null, null, null);
@@ -69,11 +71,10 @@ class GraphServiceTest {
 
         when(postRepository.findWithUserById(10L)).thenReturn(Optional.of(center));
         when(postRelationRepository.findVisibleCenteredEdges(eq(10L), eq(0.15), any(Pageable.class)))
-                .thenReturn(List.of(relation));
+            .thenReturn(List.of(relation));
         when(postTagRepository.findTagNamesByPostIds(List.of(10L, 11L))).thenReturn(List.of(
-                new TestPostTagName(10L, "spring"),
-                new TestPostTagName(11L, "graph")
-        ));
+            new TestPostTagName(10L, "spring"),
+            new TestPostTagName(11L, "graph")));
 
         PostGraphResponse response = service.getPostGraph(10L, null, null, null);
 
@@ -88,9 +89,8 @@ class GraphServiceTest {
     }
 
     private record TestPostTagName(
-            Long postId,
-            String tagName
-    ) implements PostTagNameProjection {
+        Long postId,
+        String tagName) implements PostTagNameProjection {
         @Override
         public Long getPostId() {
             return postId;

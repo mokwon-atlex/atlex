@@ -34,9 +34,9 @@ public class PostFavoriteService {
 
         try {
             postFavoriteRepository.saveAndFlush(PostFavorite.builder()
-                    .post(post)
-                    .user(userRepository.getReferenceById(userId))
-                    .build());
+                .post(post)
+                .user(userRepository.getReferenceById(userId))
+                .build());
         } catch (DataIntegrityViolationException e) {
             // 동시 요청으로 (user_id, post_id) unique 제약을 동시에 위반한 경우 멱등하게 흡수한다.
             return PostFavoriteResponse.of(postId, true);
@@ -61,6 +61,6 @@ public class PostFavoriteService {
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
         return postFavoriteRepository.findFavoritesByUserId(userId, sortedPageable)
-                .map(favorite -> PostSummaryResponse.from(favorite.getPost()));
+            .map(favorite -> PostSummaryResponse.from(favorite.getPost()));
     }
 }

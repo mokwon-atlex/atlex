@@ -1,13 +1,13 @@
-"use client"
+'use client';
 
-import { useState } from "react"
+import { useState } from 'react';
 
-import Header from "@/components/common/layout/Header"
-import { AuthHero } from "@/components/domain/auth/AuthHero"
-import { AuthCard } from "@/components/domain/auth/AuthCard"
+import Header from '@/components/common/layout/Header';
+import { AuthHero } from '@/components/domain/auth/AuthHero';
+import { AuthCard } from '@/components/domain/auth/AuthCard';
 
 export default function Page() {
-  const [mode, setMode] = useState("login")
+  const [mode, setMode] = useState('login');
 
   return (
     <main className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,var(--muted),var(--background)_45%)]">
@@ -19,5 +19,5 @@ export default function Page() {
         </div>
       </div>
     </main>
-  )
+  );
 }

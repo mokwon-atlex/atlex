@@ -1,18 +1,18 @@
-import { TermsStep } from "@/components/domain/auth/terms/TermsStep"
+import { TermsStep } from '@/components/domain/auth/terms/TermsStep';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof TermsStep> } */
 const meta = {
-  title: "Domain/Auth/Feature/TermsStep",
+  title: 'Domain/Auth/Feature/TermsStep',
   component: TermsStep,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
   argTypes: {
-    onNext: { action: "next" },
-    onBack: { action: "back" },
+    onNext: { action: 'next' },
+    onBack: { action: 'back' },
   },
-}
+};
 
-export default meta
+export default meta;
 
 export const Default = {
   render: (args) => (
@@ -21,7 +21,7 @@ export const Default = {
     </div>
   ),
   args: {},
-}
+};
 
 export const InCard = {
   render: (args) => (
@@ -32,4 +32,4 @@ export const InCard = {
     </div>
   ),
   args: {},
-}
+};

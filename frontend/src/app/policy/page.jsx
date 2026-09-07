@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import React, { useState } from "react";
-import PolicyLayout from "@/components/domain/policy/layout/PolicyLayout";
-import PolicyItem from "@/components/domain/policy/ui/PolicyItem";
-import PolicySidebarItem from "@/components/domain/policy/ui/PolicySidebarItem";
-import { policyData } from "@/data/policy/policy-data";
+import React, { useState } from 'react';
+import PolicyLayout from '@/components/domain/policy/layout/PolicyLayout';
+import PolicyItem from '@/components/domain/policy/ui/PolicyItem';
+import PolicySidebarItem from '@/components/domain/policy/ui/PolicySidebarItem';
+import { policyData } from '@/data/policy/policy-data';
 
 export default function PolicyPage() {
   const [activeId, setActiveId] = useState(1);
@@ -20,7 +20,9 @@ export default function PolicyPage() {
               isActive={activeId === data.id}
               onClick={() => {
                 setActiveId(data.id);
-                document.getElementById(`policy-section-${data.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                document
+                  .getElementById(`policy-section-${data.id}`)
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
             />
           ))}

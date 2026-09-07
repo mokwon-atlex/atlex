@@ -1,9 +1,9 @@
-import { notFound } from "next/navigation";
-import BlogDetailContent from "@/components/domain/blog-detail/feature/BlogDetailContent";
-import BlogDetailSidebar from "@/components/domain/blog-detail/feature/BlogDetailSidebar";
-import Header from "@/components/common/layout/Header";
-import { loadBlogDetailData } from "@/lib/queries/blog-detail";
-import { stripHandle } from "@/lib/url/handle";
+import { notFound } from 'next/navigation';
+import BlogDetailContent from '@/components/domain/blog-detail/feature/BlogDetailContent';
+import BlogDetailSidebar from '@/components/domain/blog-detail/feature/BlogDetailSidebar';
+import Header from '@/components/common/layout/Header';
+import { loadBlogDetailData } from '@/lib/queries/blog-detail';
+import { stripHandle } from '@/lib/url/handle';
 
 export default async function BlogDetailPage({ params }) {
   const { username, postId } = await params;
@@ -13,10 +13,10 @@ export default async function BlogDetailPage({ params }) {
   try {
     detail = await loadBlogDetailData(postId, authorUserId);
   } catch (error) {
-    if (error?.code === "POST_NOT_FOUND") {
+    if (error?.code === 'POST_NOT_FOUND') {
       notFound();
     }
-    console.error("[BlogDetailPage] 데이터 로딩 실패:", error);
+    console.error('[BlogDetailPage] 데이터 로딩 실패:', error);
     throw error;
   }
 

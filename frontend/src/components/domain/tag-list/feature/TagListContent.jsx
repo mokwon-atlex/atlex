@@ -1,27 +1,25 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Input } from "@/components/common/ui/input";
-import { cn } from "@/lib/utils";
-import Header from "@/components/common/layout/Header";
-import TagSortTabs from "../ui/TagSortTabs";
-import TagGrid from "../ui/TagGrid";
-import { SORT_OPTIONS, getCacheKey, fetchTags } from "@/app/tag_list/_lib/tags";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Input } from '@/components/common/ui/input';
+import { cn } from '@/lib/utils';
+import Header from '@/components/common/layout/Header';
+import TagSortTabs from '../ui/TagSortTabs';
+import TagGrid from '../ui/TagGrid';
+import { SORT_OPTIONS, getCacheKey, fetchTags } from '@/app/tag_list/_lib/tags';
 
 export default function TagListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const sortParam = searchParams.get("sort");
-  const currentSort = SORT_OPTIONS.some((o) => o.value === sortParam)
-    ? sortParam
-    : "trending";
+  const sortParam = searchParams.get('sort');
+  const currentSort = SORT_OPTIONS.some((o) => o.value === sortParam) ? sortParam : 'trending';
 
   const [tags, setTags] = useState([]);
   const [page, setPage] = useState(1);
-  const [keyword, setKeyword] = useState("");
-  const [debouncedKeyword, setDebouncedKeyword] = useState("");
+  const [keyword, setKeyword] = useState('');
+  const [debouncedKeyword, setDebouncedKeyword] = useState('');
   const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,7 +117,7 @@ export default function TagListContent() {
         }
       }
     },
-    [currentSort, normalizedKeyword]
+    [currentSort, normalizedKeyword],
   );
 
   loadMoreCallbackRef.current = () => {
@@ -145,7 +143,7 @@ export default function TagListContent() {
           loadMoreCallbackRef.current?.();
         }
       },
-      { root: null, rootMargin: "160px", threshold: 0 }
+      { root: null, rootMargin: '160px', threshold: 0 },
     );
 
     observer.observe(node);
@@ -155,8 +153,8 @@ export default function TagListContent() {
   const handleSortChange = (sortValue) => {
     if (!SORT_OPTIONS.some((o) => o.value === sortValue)) return;
     const params = new URLSearchParams(searchParams.toString());
-    params.set("sort", sortValue);
-    params.delete("page");
+    params.set('sort', sortValue);
+    params.delete('page');
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
@@ -171,9 +169,7 @@ export default function TagListContent() {
         <section className="mx-auto w-full max-w-[820px]">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="text-[28px] font-bold tracking-[-0.02em] text-foreground">
-                태그 목록
-              </h1>
+              <h1 className="text-[28px] font-bold tracking-[-0.02em] text-foreground">태그 목록</h1>
               <TagSortTabs currentSort={currentSort} onSortChange={handleSortChange} />
             </div>
 
@@ -186,18 +182,16 @@ export default function TagListContent() {
               value={keyword}
               onChange={handleKeywordChange}
               className={cn(
-                "w-full border-border bg-muted text-[14px] text-foreground",
-                "placeholder:text-muted-foreground",
-                "focus-visible:border-ring focus-visible:bg-muted",
-                "sm:w-[250px]"
+                'w-full border-border bg-muted text-[14px] text-foreground',
+                'placeholder:text-muted-foreground',
+                'focus-visible:border-ring focus-visible:bg-muted',
+                'sm:w-[250px]',
               )}
             />
           </div>
 
           {isLoading && (
-            <p className="py-10 text-center text-[13px] text-muted-foreground">
-              태그를 불러오는 중입니다.
-            </p>
+            <p className="py-10 text-center text-[13px] text-muted-foreground">태그를 불러오는 중입니다.</p>
           )}
 
           {!isLoading && (

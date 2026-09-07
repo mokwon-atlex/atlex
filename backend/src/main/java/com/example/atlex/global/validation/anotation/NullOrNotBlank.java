@@ -10,9 +10,11 @@ import java.lang.annotation.*;
 @Constraint(validatedBy = NullOrNotBlankValidator.class)
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface NullOrNotBlank {
+public @interface NullOrNotBlank{
 
     String message() default "값이 있다면 공백일 수 없습니다.";
+
     Class<?>[] groups() default {};
+
     Class<? extends Payload>[] payload() default {};
 }

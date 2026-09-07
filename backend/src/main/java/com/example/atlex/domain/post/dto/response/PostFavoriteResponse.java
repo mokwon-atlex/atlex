@@ -14,8 +14,8 @@ public class PostFavoriteResponse {
 
     public static PostFavoriteResponse of(Long postId, boolean favorited) {
         return PostFavoriteResponse.builder()
-                .postId(postId)
-                .favorited(favorited)
-                .build();
+            .postId(postId)
+            .favorited(favorited)
+            .build();
     }
 }

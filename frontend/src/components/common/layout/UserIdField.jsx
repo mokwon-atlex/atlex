@@ -1,11 +1,20 @@
-"use client"
+'use client';
 
-import { Field, FieldLabel, FieldError } from "@/components/common/ui/field"
-import { Input } from "@/components/common/ui/input"
-import { Button } from "@/components/common/ui/button"
+import { Field, FieldLabel, FieldError } from '@/components/common/ui/field';
+import { Input } from '@/components/common/ui/input';
+import { Button } from '@/components/common/ui/button';
 
-export function UserIdField({ value, onChange, onBlur, onCheckDuplicate, checkResult, error, disabled, showCheckButton = true }) {
-  const isInvalid = !!error || checkResult?.ok === false
+export function UserIdField({
+  value,
+  onChange,
+  onBlur,
+  onCheckDuplicate,
+  checkResult,
+  error,
+  disabled,
+  showCheckButton = true,
+}) {
+  const isInvalid = !!error || checkResult?.ok === false;
 
   return (
     <Field data-invalid={isInvalid || undefined}>
@@ -23,24 +32,16 @@ export function UserIdField({ value, onChange, onBlur, onCheckDuplicate, checkRe
           disabled={disabled}
         />
         {showCheckButton && (
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onCheckDuplicate}
-            className="shrink-0"
-            disabled={disabled}
-          >
+          <Button type="button" variant="secondary" onClick={onCheckDuplicate} className="shrink-0" disabled={disabled}>
             중복확인
           </Button>
         )}
       </div>
 
       {checkResult && (
-        <p className={`text-sm ${checkResult.ok ? "text-green-600" : "text-destructive"}`}>
-          {checkResult.message}
-        </p>
+        <p className={`text-sm ${checkResult.ok ? 'text-green-600' : 'text-destructive'}`}>{checkResult.message}</p>
       )}
       {error && <FieldError>{error}</FieldError>}
     </Field>
-  )
+  );
 }

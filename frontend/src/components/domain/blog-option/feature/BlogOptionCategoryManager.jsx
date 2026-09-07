@@ -1,30 +1,24 @@
-"use client";
+'use client';
 
-import { LoaderCircle, Plus } from "lucide-react";
+import { LoaderCircle, Plus } from 'lucide-react';
 
-import { Button } from "@/components/common/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/common/ui/card";
-import { Field, FieldError, FieldLabel } from "@/components/common/ui/field";
-import { Input } from "@/components/common/ui/input";
-import BlogOptionCategoryItem from "@/components/domain/blog-option/ui/BlogOptionCategoryItem";
+import { Button } from '@/components/common/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/common/ui/card';
+import { Field, FieldError, FieldLabel } from '@/components/common/ui/field';
+import { Input } from '@/components/common/ui/input';
+import BlogOptionCategoryItem from '@/components/domain/blog-option/ui/BlogOptionCategoryItem';
 
 export default function BlogOptionCategoryManager({
-  categoryName = "",
+  categoryName = '',
   categories = [],
-  editingCategoryId = "",
-  editingCategoryName = "",
+  editingCategoryId = '',
+  editingCategoryName = '',
   isLoading = false,
   isAdding = false,
-  pendingUpdateId = "",
-  pendingDeleteId = "",
-  errorMessage = "",
-  noticeMessage = "",
+  pendingUpdateId = '',
+  pendingDeleteId = '',
+  errorMessage = '',
+  noticeMessage = '',
   onCategoryNameChange,
   onAddCategory,
   onStartEditCategory,
@@ -37,9 +31,7 @@ export default function BlogOptionCategoryManager({
     <Card className="rounded-[2rem] border-border/60 bg-card/80 shadow-sm backdrop-blur">
       <CardHeader>
         <CardTitle>카테고리 추가</CardTitle>
-        <CardDescription>
-          내 블로그에 사용할 카테고리를 추가하고 정리합니다.
-        </CardDescription>
+        <CardDescription>내 블로그에 사용할 카테고리를 추가하고 정리합니다.</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-6">
@@ -55,12 +47,7 @@ export default function BlogOptionCategoryManager({
               className="h-11 rounded-xl"
               disabled={isLoading || isAdding}
             />
-            <Button
-              type="submit"
-              variant="secondary"
-              className="h-11 rounded-xl px-5"
-              disabled={isLoading || isAdding}
-            >
+            <Button type="submit" variant="secondary" className="h-11 rounded-xl px-5" disabled={isLoading || isAdding}>
               {isAdding ? (
                 <>
                   <LoaderCircle className="size-4 animate-spin" />
@@ -77,18 +64,12 @@ export default function BlogOptionCategoryManager({
           <FieldError>{errorMessage}</FieldError>
         </Field>
 
-        {noticeMessage ? (
-          <p className="text-sm font-medium text-foreground/80">{noticeMessage}</p>
-        ) : null}
+        {noticeMessage ? <p className="text-sm font-medium text-foreground/80">{noticeMessage}</p> : null}
 
         <section className="space-y-3 border-t border-border/50 pt-5">
           <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-foreground">
-              등록된 카테고리
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              아래 목록에서 카테고리를 수정하거나 삭제할 수 있습니다.
-            </p>
+            <h3 className="text-sm font-semibold text-foreground">등록된 카테고리</h3>
+            <p className="text-sm text-muted-foreground">아래 목록에서 카테고리를 수정하거나 삭제할 수 있습니다.</p>
           </div>
 
           <div className="max-h-[23rem] space-y-3 overflow-y-auto pr-1">

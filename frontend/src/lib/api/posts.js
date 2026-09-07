@@ -2,34 +2,27 @@
 // 응답 데이터는 가공하지 않고 그대로 반환하고, 매핑/캐싱 정책은 상위 query/hook 에서 처리한다.
 // 백엔드 스펙이 바뀌면 이 파일의 경로, 메서드, 쿼리 파라미터만 맞춰 주면 된다.
 
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from '@/lib/api/client';
 
 // 게시글 목록 조회.
 // page, size 로 페이지네이션하고 authorUserId, type 이 있으면 해당 조건으로 필터링한다.
 // 응답 예시: { content: ApiPost[], totalElements, totalPages, ... }
 export function fetchPosts({ authorUserId, page = 0, size = 10, type } = {}) {
-  return apiClient.get("/posts", {
+  return apiClient.get('/posts', {
     params: {
       page,
       size,
       ...(authorUserId && { authorUserId }),
       ...(type && { type }),
-    }
+    },
   });
 }
 
 // GET /posts?userId={userId}&categoryId={categoryId}&tags={tags}&page={page}&size={size} — 특정 유저 게시글 목록 조회.
 // Authorization 헤더는 필요 시 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
 // payload: { userId?, categoryId?, type?, tags?, page?, size? }
-export function fetchUserBlogPosts({
-  userId,
-  categoryId,
-  type,
-  tags,
-  page = 0,
-  size = 10,
-} = {}) {
-  return apiClient.get("/posts", {
+export function fetchUserBlogPosts({ userId, categoryId, type, tags, page = 0, size = 10 } = {}) {
+  return apiClient.get('/posts', {
     params: {
       page,
       size,
@@ -37,7 +30,7 @@ export function fetchUserBlogPosts({
       ...(categoryId !== undefined && { categoryId }),
       ...(type && { type }),
       ...(tags !== undefined && { tags }),
-    }
+    },
   });
 }
 
@@ -50,7 +43,7 @@ export function fetchPostById(postId) {
 // Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
 // payload: { categoryId?, title, description?, content, tags?, isPublic? }
 export function createPost({ categoryId, title, description, content, tags, isPublic } = {}) {
-  return apiClient.post("/posts", {
+  return apiClient.post('/posts', {
     ...(categoryId != null && { categoryId }),
     title,
     description,
@@ -63,10 +56,7 @@ export function createPost({ categoryId, title, description, content, tags, isPu
 // PATCH /posts/{postId} — 게시글 수정.
 // Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
 // payload: { categoryId?, title?, description?, content?, tags?, isPublic? }
-export function updatePost(
-  postId,
-  { categoryId, title, description, content, tags, isPublic } = {},
-) {
+export function updatePost(postId, { categoryId, title, description, content, tags, isPublic } = {}) {
   return apiClient.patch(`/posts/${postId}`, {
     ...(categoryId !== undefined && { categoryId }),
     ...(title !== undefined && { title }),

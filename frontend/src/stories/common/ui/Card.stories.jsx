@@ -1,6 +1,6 @@
-import { ArrowRight, BellRing, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BellRing, ShieldCheck, Sparkles } from 'lucide-react';
 
-import { Button } from "@/components/common/ui/button";
+import { Button } from '@/components/common/ui/button';
 import {
   Card,
   CardAction,
@@ -9,32 +9,32 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/common/ui/card";
-import { Checkbox } from "@/components/common/ui/checkbox";
-import { Input } from "@/components/common/ui/input";
-import { Label } from "@/components/common/ui/label";
+} from '@/components/common/ui/card';
+import { Checkbox } from '@/components/common/ui/checkbox';
+import { Input } from '@/components/common/ui/input';
+import { Label } from '@/components/common/ui/label';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof Card> } */
 const meta = {
-  title: "Common/UI/Card",
+  title: 'Common/UI/Card',
   component: Card,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
   argTypes: {
     size: {
-      control: "select",
-      options: ["default", "sm"],
+      control: 'select',
+      options: ['default', 'sm'],
     },
     variant: {
-      control: "select",
-      options: ["default", "dashed"],
+      control: 'select',
+      options: ['default', 'dashed'],
     },
   },
   args: {
-    size: "default",
-    variant: "default",
+    size: 'default',
+    variant: 'default',
   },
 };
 
@@ -46,9 +46,7 @@ export const Playground = {
       <Card {...args}>
         <CardHeader>
           <CardTitle>Weekly product pulse</CardTitle>
-          <CardDescription>
-            Share the latest release notes and rollout updates with your team.
-          </CardDescription>
+          <CardDescription>Share the latest release notes and rollout updates with your team.</CardDescription>
           <CardAction>
             <span className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
               Live
@@ -74,21 +72,13 @@ export const Playground = {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-border/80 p-3">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Adoption
-              </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-                84%
-              </p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Adoption</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">84%</p>
             </div>
 
             <div className="rounded-xl border border-border/80 p-3">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Feedback
-              </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-                19 notes
-              </p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Feedback</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">19 notes</p>
             </div>
           </div>
         </CardContent>
@@ -107,16 +97,14 @@ export const Playground = {
 
 export const Compact = {
   args: {
-    size: "sm",
+    size: 'sm',
   },
   render: (args) => (
     <div className="w-[320px]">
       <Card {...args}>
         <CardHeader>
           <CardTitle>Security status</CardTitle>
-          <CardDescription>
-            Your workspace protection settings look healthy.
-          </CardDescription>
+          <CardDescription>Your workspace protection settings look healthy.</CardDescription>
           <CardAction>
             <ShieldCheck className="size-4 text-primary" />
           </CardAction>
@@ -145,9 +133,7 @@ export const Dashed = {
           <CardTitle>본문 영역</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            점선 테두리 카드입니다. 에디터 본문 프레임 등에 사용합니다.
-          </p>
+          <p className="text-sm text-muted-foreground">점선 테두리 카드입니다. 에디터 본문 프레임 등에 사용합니다.</p>
         </CardContent>
       </Card>
     </div>
@@ -160,28 +146,18 @@ export const SignInCard = {
       <Card>
         <CardHeader>
           <CardTitle>Sign in to your workspace</CardTitle>
-          <CardDescription>
-            Enter your email and password to continue to the dashboard.
-          </CardDescription>
+          <CardDescription>Enter your email and password to continue to the dashboard.</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="storybook-card-email">Email</Label>
-            <Input
-              id="storybook-card-email"
-              type="email"
-              placeholder="name@company.com"
-            />
+            <Input id="storybook-card-email" type="email" placeholder="name@company.com" />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="storybook-card-password">Password</Label>
-            <Input
-              id="storybook-card-password"
-              type="password"
-              placeholder="Enter your password"
-            />
+            <Input id="storybook-card-password" type="password" placeholder="Enter your password" />
           </div>
 
           <div className="flex items-center gap-2">
