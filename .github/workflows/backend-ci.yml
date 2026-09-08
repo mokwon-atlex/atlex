@@ -3,17 +3,12 @@ name: Backend CI
 on:
   push:
     branches: [develop, main]
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-ci.yml"
   pull_request:
     branches: [develop, main]
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-ci.yml"
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   test-and-build:
@@ -23,7 +18,15 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            backend:
+              - "backend/**"
+              - ".github/workflows/backend-ci.yml"
       - uses: actions/setup-java@v4
+        if: steps.changes.outputs.backend == 'true'
         with:
           distribution: temurin
           java-version: "17"
@@ -31,6 +34,9 @@ jobs:
           cache-dependency-path: |
             backend/*.gradle
             backend/gradle/wrapper/gradle-wrapper.properties
-      - run: ./gradlew spotlessCheck
-      - run: ./gradlew test
-      - run: ./gradlew bootJar
+      - if: steps.changes.outputs.backend == 'true'
+        run: ./gradlew spotlessCheck
+      - if: steps.changes.outputs.backend == 'true'
+        run: ./gradlew test
+      - if: steps.changes.outputs.backend == 'true'
+        run: ./gradlew bootJar

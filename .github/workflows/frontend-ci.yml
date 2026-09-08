@@ -3,17 +3,12 @@ name: Frontend CI
 on:
   push:
     branches: [develop, main]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/frontend-ci.yml"
   pull_request:
     branches: [develop, main]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/frontend-ci.yml"
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   test-and-build:
@@ -26,13 +21,26 @@ jobs:
       BASE_API_URL: http://127.0.0.1:8080/api/v1
     steps:
       - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - "frontend/**"
+              - ".github/workflows/frontend-ci.yml"
       - uses: actions/setup-node@v4
+        if: steps.changes.outputs.frontend == 'true'
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-      - run: npm run format:check
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test
-      - run: npm run build
+      - if: steps.changes.outputs.frontend == 'true'
+        run: npm ci
+      - if: steps.changes.outputs.frontend == 'true'
+        run: npm run format:check
+      - if: steps.changes.outputs.frontend == 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.changes.outputs.frontend == 'true'
+        run: npm run test
+      - if: steps.changes.outputs.frontend == 'true'
+        run: npm run build
