@@ -53,6 +53,12 @@ test("이슈 양식의 선택값에서 설명을 제외한 값만 읽는다", ()
   assert.equal(extractFormSelection(body, "작업 규모"), "큼");
 });
 
+test("제목 다음에 빈 줄이 없는 수동 이슈의 선택값도 읽는다", () => {
+  const body = ["### 중요도", "보통 — 일반적인 기능 개발 및 개선"].join("\n");
+
+  assert.equal(extractFormSelection(body, "중요도"), "보통");
+});
+
 test("이슈 제목에서 허용된 작업 타입만 읽는다", () => {
   assert.equal(extractTitleType("feat: 소셜 로그인 구현"), "feat");
   assert.equal(extractTitleType("hotfix: 로그인 복구"), null);
