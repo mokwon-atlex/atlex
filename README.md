@@ -2,6 +2,8 @@
 
 Atlex 프론트엔드와 백엔드를 함께 관리하는 모노레포입니다.
 
+개발과 코드 리뷰 규칙은 [Atlex 기여 가이드](CONTRIBUTING.md)를 따릅니다.
+
 ## 구조
 
 - `frontend/`: Next.js 16
