@@ -21,13 +21,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          # This job intentionally uses GitHub's API only. Never check out or
-          # execute files from the pull request, including fork pull requests.
+          # 이 작업은 GitHub API만 사용합니다. 포크 PR을 포함하여 PR의 파일을
+          # 체크아웃하거나 실행하지 않습니다.
           TYPE=$(printf '%s\n' "$PR_TITLE" | sed -nE \
-            's/^\[(feat|fix|refactor|test|docs|ci|chore)\][[:space:]]+.+$/\1/p')
+            's/^(feat|fix|refactor|test|docs|ci|chore):[[:space:]]+.+$/\1/p')
 
           if [ -z "$TYPE" ]; then
-            echo "PR 제목은 '[타입] 작업 제목' 형식이어야 합니다." >&2
+            echo "PR 제목은 '타입: 작업 제목' 형식이어야 합니다." >&2
             echo "지원 타입: feat, fix, refactor, test, docs, ci, chore" >&2
             exit 1
           fi

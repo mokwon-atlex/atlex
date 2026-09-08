@@ -1,6 +1,6 @@
 name: 버그 수정
 description: 재현 가능한 문제와 기대 동작을 공유합니다.
-title: "[fix] "
+title: "fix: "
 body:
   - type: markdown
     attributes:

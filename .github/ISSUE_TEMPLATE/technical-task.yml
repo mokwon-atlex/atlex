@@ -1,6 +1,6 @@
 name: 기술 작업
 description: 리팩터링, 테스트, 문서, CI 또는 기타 유지보수 작업을 제안합니다.
-title: "[type] "
+title: "type: "
 body:
   - type: markdown
     attributes:
@@ -28,7 +28,7 @@ body:
       label: 제목 확인
       description: 제목의 접두사가 선택한 작업 타입과 일치해야 합니다.
       options:
-        - label: 제목의 `[type]`을 선택한 작업 타입으로 변경했습니다.
+        - label: 제목의 `type:`을 선택한 작업 타입으로 변경했습니다.
           required: true
 
   - type: textarea
