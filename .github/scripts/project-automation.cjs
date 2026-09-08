@@ -1,6 +1,11 @@
 const RELATED_PRS_START = "<!-- related-prs:start -->";
 const RELATED_PRS_END = "<!-- related-prs:end -->";
 const RELATED_PRS_HEADING = "### 연관 PR";
+const TITLE_TYPES = ["feat", "fix", "refactor", "test", "docs", "ci", "chore"];
+const ISSUE_FIELD_IDS = {
+  priority: 40009158,
+  effort: 40009161,
+};
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -8,7 +13,7 @@ function escapeRegExp(value) {
 
 function extractFormSelection(body, heading) {
   const pattern = new RegExp(
-    `^###\\s+${escapeRegExp(heading)}\\s*\\r?\\n\\s*\\r?\\n([^\\r\\n]+)`,
+    `^#{2,3}\\s+${escapeRegExp(heading)}\\s*\\r?\\n\\s*\\r?\\n([^\\r\\n]+)`,
     "m",
   );
   const match = body.match(pattern);
@@ -18,6 +23,111 @@ function extractFormSelection(body, heading) {
   }
 
   return match[1].split(" — ")[0].trim() || null;
+}
+
+/**
+ * 이슈 제목에서 팀 규칙에 맞는 작업 타입을 추출합니다.
+ *
+ * @param {string} title 이슈 제목
+ * @returns {string|null} 작업 타입
+ */
+function extractTitleType(title) {
+  const match = title.match(new RegExp(`^(${TITLE_TYPES.join("|")}):\\s+.+$`));
+  return match?.[1] ?? null;
+}
+
+/**
+ * 제목의 작업 타입을 GitHub 기본 이슈 타입으로 변환합니다.
+ *
+ * @param {string} titleType 제목 작업 타입
+ * @returns {string} GitHub 이슈 타입
+ */
+function issueTypeForTitleType(titleType) {
+  if (titleType === "feat") {
+    return "Feature";
+  }
+  if (titleType === "fix") {
+    return "Bug";
+  }
+  return "Task";
+}
+
+/**
+ * 기존 비타입 라벨을 유지하면서 제목과 동일한 타입 라벨 하나만 남깁니다.
+ *
+ * @param {Array<string|object>} labels 기존 라벨
+ * @param {string} titleType 제목 작업 타입
+ * @returns {Array<string>} 동기화할 라벨 이름
+ */
+function synchronizeTypeLabels(labels, titleType) {
+  const labelNames = labels.map((label) =>
+    typeof label === "string" ? label : label.name,
+  );
+  return [
+    ...labelNames.filter((label) => !TITLE_TYPES.includes(label)),
+    titleType,
+  ];
+}
+
+/**
+ * 이슈 양식의 중요도와 작업 규모를 조직 이슈 필드 값으로 변환합니다.
+ *
+ * @param {string} issueBody 이슈 본문
+ * @returns {Array<{field_id: number, value: string}>} 조직 이슈 필드 값
+ */
+function buildIssueFieldValues(issueBody) {
+  const priority = { 높음: "High", 보통: "Medium", 낮음: "Low" }[
+    extractFormSelection(issueBody, "중요도")
+  ];
+  const effort = { 큼: "High", 보통: "Medium", 작음: "Low" }[
+    extractFormSelection(issueBody, "작업 규모")
+  ];
+
+  return [
+    priority && { field_id: ISSUE_FIELD_IDS.priority, value: priority },
+    effort && { field_id: ISSUE_FIELD_IDS.effort, value: effort },
+  ].filter(Boolean);
+}
+
+/**
+ * 이슈 제목, 라벨, 타입, 조직 이슈 필드를 팀 규칙에 맞게 동기화합니다.
+ *
+ * @param {object} github GitHub API 클라이언트
+ * @param {string} owner 저장소 소유자
+ * @param {string} repo 저장소 이름
+ * @param {object} issue GitHub 이슈
+ * @returns {Promise<void>}
+ */
+async function syncIssueMetadata(github, owner, repo, issue) {
+  const titleType = extractTitleType(issue.title);
+  if (!titleType) {
+    throw new Error(
+      `이슈 제목 형식이 올바르지 않습니다: ${TITLE_TYPES.map((type) => `${type}: 요약`).join(", ")}`,
+    );
+  }
+
+  await github.request("PATCH /repos/{owner}/{repo}/issues/{issue_number}", {
+    owner,
+    repo,
+    issue_number: issue.number,
+    labels: synchronizeTypeLabels(issue.labels ?? [], titleType),
+    type: issueTypeForTitleType(titleType),
+    headers: { "X-GitHub-Api-Version": "2026-03-10" },
+  });
+
+  const issueFieldValues = buildIssueFieldValues(issue.body ?? "");
+  if (issueFieldValues.length > 0) {
+    await github.request(
+      "POST /repos/{owner}/{repo}/issues/{issue_number}/issue-field-values",
+      {
+        owner,
+        repo,
+        issue_number: issue.number,
+        issue_field_values: issueFieldValues,
+        headers: { "X-GitHub-Api-Version": "2026-03-10" },
+      },
+    );
+  }
 }
 
 function parseIssueReferences(body, repositoryOwner, repositoryName) {
@@ -42,7 +152,9 @@ function parseIssueReferences(body, repositoryOwner, repositoryName) {
     }
   }
 
-  return [...references.values()].sort((left, right) => left.issueNumber - right.issueNumber);
+  return [...references.values()].sort(
+    (left, right) => left.issueNumber - right.issueNumber,
+  );
 }
 
 function relatedPullRequestNumbers(body) {
@@ -51,7 +163,9 @@ function relatedPullRequestNumbers(body) {
     return [];
   }
 
-  return [...managedSection[0].matchAll(/^- \[#(\d+)\]/gm)].map((match) => Number(match[1]));
+  return [...managedSection[0].matchAll(/^- \[#(\d+)\]/gm)].map((match) =>
+    Number(match[1]),
+  );
 }
 
 function managedSectionMatch(body) {
@@ -73,7 +187,9 @@ function escapeInlineCode(value) {
 }
 
 function renderRelatedPullRequests(body, pullRequests) {
-  const withoutManagedSection = body.replace(managedSectionMatch(body)?.[0] ?? "", "").trimEnd();
+  const withoutManagedSection = body
+    .replace(managedSectionMatch(body)?.[0] ?? "", "")
+    .trimEnd();
   if (pullRequests.length === 0) {
     return withoutManagedSection;
   }
@@ -102,7 +218,11 @@ function selectStatus(currentStatus, issueState, pullRequests) {
   if (issueState === "closed") {
     return "완료";
   }
-  if (pullRequests.some((pullRequest) => pullRequest.state === "open" || pullRequest.merged)) {
+  if (
+    pullRequests.some(
+      (pullRequest) => pullRequest.state === "open" || pullRequest.merged,
+    )
+  ) {
     return "진행 중";
   }
   return "시작 전";
@@ -122,7 +242,9 @@ function buildSingleSelectFieldMap(fields) {
         field.name,
         {
           ...field,
-          options: new Map(field.options.map((option) => [option.name, option.id])),
+          options: new Map(
+            field.options.map((option) => [option.name, option.id]),
+          ),
         },
       ]),
   );
@@ -183,12 +305,16 @@ async function findProjectItem(github, contentId, projectId) {
     }`,
     { contentId },
   );
-  const item = result.node?.projectItems.nodes.find((candidate) => candidate.project.id === projectId);
+  const item = result.node?.projectItems.nodes.find(
+    (candidate) => candidate.project.id === projectId,
+  );
   if (!item) {
     return null;
   }
 
-  const statusValue = item.fieldValues.nodes.find((value) => value?.field?.name === "Status");
+  const statusValue = item.fieldValues.nodes.find(
+    (value) => value?.field?.name === "Status",
+  );
   return { id: item.id, status: statusValue?.name ?? null };
 }
 
@@ -213,7 +339,9 @@ async function setSingleSelect(github, project, itemId, fieldName, optionName) {
   const field = project.fields.get(fieldName);
   const optionId = field?.options.get(optionName);
   if (!field || !optionId) {
-    throw new Error(`Project 필드 값을 찾을 수 없습니다: ${fieldName}=${optionName}`);
+    throw new Error(
+      `Project 필드 값을 찾을 수 없습니다: ${fieldName}=${optionName}`,
+    );
   }
 
   await github.graphql(
@@ -242,14 +370,27 @@ async function syncIssueFields(github, project, itemId, issueBody) {
   }
 }
 
-async function updateIssueStatus(github, project, issue, projectItem, pullRequests) {
+async function updateIssueStatus(
+  github,
+  project,
+  issue,
+  projectItem,
+  pullRequests,
+) {
   const status = selectStatus(projectItem.status, issue.state, pullRequests);
   if (status !== projectItem.status) {
     await setSingleSelect(github, project, projectItem.id, "Status", status);
   }
 }
 
-async function currentRelatedPullRequests(github, repositoryOwner, repositoryName, issueNumber, issueBody, currentPullRequestNumber) {
+async function currentRelatedPullRequests(
+  github,
+  repositoryOwner,
+  repositoryName,
+  issueNumber,
+  issueBody,
+  currentPullRequestNumber,
+) {
   const numbers = new Set(relatedPullRequestNumbers(issueBody));
   if (currentPullRequestNumber) {
     numbers.add(currentPullRequestNumber);
@@ -259,7 +400,11 @@ async function currentRelatedPullRequests(github, repositoryOwner, repositoryNam
   for (const number of numbers) {
     let response;
     try {
-      response = await github.rest.pulls.get({ owner: repositoryOwner, repo: repositoryName, pull_number: number });
+      response = await github.rest.pulls.get({
+        owner: repositoryOwner,
+        repo: repositoryName,
+        pull_number: number,
+      });
     } catch (error) {
       if (error.status === 404) {
         continue;
@@ -289,14 +434,30 @@ async function currentRelatedPullRequests(github, repositoryOwner, repositoryNam
   return related;
 }
 
-async function synchronizeIssue(github, project, repositoryOwner, repositoryName, issueNumber, currentPullRequestNumber) {
-  const response = await github.rest.issues.get({ owner: repositoryOwner, repo: repositoryName, issue_number: issueNumber });
+async function synchronizeIssue(
+  github,
+  project,
+  repositoryOwner,
+  repositoryName,
+  issueNumber,
+  currentPullRequestNumber,
+) {
+  const response = await github.rest.issues.get({
+    owner: repositoryOwner,
+    repo: repositoryName,
+    issue_number: issueNumber,
+  });
   if (response.data.pull_request) {
     return;
   }
 
   const issue = response.data;
-  const projectItem = await ensureProjectItem(github, issue.node_id, project.id);
+  await syncIssueMetadata(github, repositoryOwner, repositoryName, issue);
+  const projectItem = await ensureProjectItem(
+    github,
+    issue.node_id,
+    project.id,
+  );
   await syncIssueFields(github, project, projectItem.id, issue.body ?? "");
 
   const pullRequests = await currentRelatedPullRequests(
@@ -327,13 +488,24 @@ async function run({ github, context, projectOwner, projectNumber }) {
 
   if (context.eventName === "issues") {
     const issue = context.payload.issue;
-    const projectItem = await ensureProjectItem(github, issue.node_id, project.id);
+    await syncIssueMetadata(github, repositoryOwner, repositoryName, issue);
+    const projectItem = await ensureProjectItem(
+      github,
+      issue.node_id,
+      project.id,
+    );
     await syncIssueFields(github, project, projectItem.id, issue.body ?? "");
 
     if (["opened", "reopened", "closed"].includes(context.payload.action)) {
       const status = context.payload.action === "closed" ? "완료" : "시작 전";
       if (projectItem.status !== status) {
-        await setSingleSelect(github, project, projectItem.id, "Status", status);
+        await setSingleSelect(
+          github,
+          project,
+          projectItem.id,
+          "Status",
+          status,
+        );
       }
     }
     return;
@@ -346,7 +518,9 @@ async function run({ github, context, projectOwner, projectNumber }) {
       ...parseIssueReferences(currentBody, repositoryOwner, repositoryName),
       ...parseIssueReferences(previousBody, repositoryOwner, repositoryName),
     ];
-    const issueNumbers = [...new Set(references.map((reference) => reference.issueNumber))];
+    const issueNumbers = [
+      ...new Set(references.map((reference) => reference.issueNumber)),
+    ];
 
     for (const issueNumber of issueNumbers) {
       await synchronizeIssue(
@@ -362,10 +536,15 @@ async function run({ github, context, projectOwner, projectNumber }) {
 }
 
 module.exports = {
+  buildIssueFieldValues,
   buildSingleSelectFieldMap,
   extractFormSelection,
+  extractTitleType,
+  issueTypeForTitleType,
   parseIssueReferences,
   renderRelatedPullRequests,
   run,
   selectStatus,
+  syncIssueMetadata,
+  synchronizeTypeLabels,
 };
