@@ -1,0 +1,9 @@
+{
+  "name": "atlex",
+  "private": true,
+  "scripts": {
+    "check": "npm run check:frontend && npm run check:backend",
+    "check:frontend": "npm --prefix frontend run format:check && npm --prefix frontend run test && npm --prefix frontend run build",
+    "check:backend": "node scripts/run-backend-check.mjs"
+  }
+}
