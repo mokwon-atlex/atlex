@@ -13,7 +13,7 @@ function escapeRegExp(value) {
 
 function extractFormSelection(body, heading) {
   const pattern = new RegExp(
-    `^#{2,3}\\s+${escapeRegExp(heading)}\\s*\\r?\\n\\s*\\r?\\n([^\\r\\n]+)`,
+    `^#{2,3}\\s+${escapeRegExp(heading)}[ \\t]*\\r?\\n(?:[ \\t]*\\r?\\n)?([^\\r\\n]+)`,
     "m",
   );
   const match = body.match(pattern);
