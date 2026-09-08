@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "ko-KR"
+early_access: false
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  collapse_walkthrough: false
+  poem: false
+  in_progress_fortune: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "develop"
+      - "main"
+    ignore_usernames:
+      - "dependabot[bot]"
+      - "github-actions[bot]"
+  path_filters:
+    - "!**/build/**"
+    - "!**/generated/**"
+    - "!**/.next/**"
+    - "!**/coverage/**"
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        - CONTRIBUTING.md의 코딩 컨벤션과 협업 규칙을 기준으로 검토하세요.
+        - 명확한 버그, 보안 문제, 계약 위반과 유지보수 위험에 집중하세요.
+        - 취향 차이이거나 기존 포매터가 처리하는 형식만으로 리뷰를 남기지 마세요.
+        - 리뷰와 제안은 한국어로 간결하게 작성하세요.
+    - path: "frontend/src/**/*.{js,jsx}"
+      instructions: |
+        - 컴포넌트와 Hook의 책임이 과도하게 섞였는지 확인하세요.
+        - Server Component와 Client Component의 경계가 적절한지 확인하세요.
+        - 접근성, 상태 관리, API 오류 처리와 렌더링 성능 문제를 확인하세요.
+        - 백엔드 API와 데이터 계약 변경이 소비 코드에 반영됐는지 확인하세요.
+    - path: "frontend/src/stories/**"
+      instructions: |
+        - 주요 상태와 사용자 상호작용을 검증할 수 있는지 확인하세요.
+        - 실제 컴포넌트 구조와 다른 중복 구현을 만들지 않았는지 확인하세요.
+    - path: "backend/src/main/java/**/controller/**"
+      instructions: |
+        - 인증과 인가 누락 여부를 우선 확인하세요.
+        - 요청 검증과 오류 응답 형식이 기존 ApiResponse와 ErrorCode 패턴을 따르는지 확인하세요.
+        - Controller가 비즈니스 로직을 직접 수행하지 않는지 확인하세요.
+    - path: "backend/src/main/java/**/service/**"
+      instructions: |
+        - 트랜잭션 경계가 적절한지 확인하세요.
+        - N+1 쿼리, 반복 쿼리와 불필요한 전체 조회를 확인하세요.
+        - 도메인 책임이 과도하게 섞였는지 확인하세요.
+    - path: "backend/src/main/java/**/repository/**"
+      instructions: |
+        - JPQL의 named parameter, fetch join과 bulk update 또는 delete 사용이 안전한지 확인하세요.
+        - 쿼리가 도메인 규칙이나 서비스 책임을 대신하지 않는지 확인하세요.
+    - path: "backend/src/test/**"
+      instructions: |
+        - 테스트 이름이 검증하는 행위를 설명하는지 확인하세요.
+        - 인증, 권한, 비공개 리소스와 예외 경로가 누락됐는지 확인하세요.
+    - path: "**/*.md"
+      instructions: |
+        - 실제 코드와 현재 설정에 맞는 내용인지 확인하세요.
+        - 문서가 한국어로 명확하고 간결하게 작성됐는지 확인하세요.
+
+chat:
+  auto_reply: true
