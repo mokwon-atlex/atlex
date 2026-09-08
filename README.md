@@ -73,7 +73,7 @@ Copy-Item .env.example .env
 
 ## CI
 
-- 프론트엔드와 백엔드 CI는 각각 `frontend/**` 또는 `backend/**` 변경이 있거나 관련 workflow 파일이 변경된 경우에만, `develop`·`main` push 및 해당 브랜치 PR에서 실행됩니다.
+- 프론트엔드와 백엔드 CI는 `develop`·`main` push 및 해당 브랜치 PR에서 항상 체크를 생성합니다. 각 영역의 포맷, 테스트와 빌드는 `frontend/**`, `backend/**` 또는 관련 workflow 파일이 변경된 경우에만 실행합니다.
 - 프론트엔드 CI는 Node.js 22로 `npm ci`, `npm run format:check`, `npm run test`, `npm run build`를 실행하며, `BACKEND_ORIGIN=http://127.0.0.1:8080`, `BASE_API_URL=http://127.0.0.1:8080/api/v1`을 빌드용 값으로 사용합니다.
 - 백엔드 CI는 Java 17로 `./gradlew spotlessCheck`, `./gradlew test`, `./gradlew bootJar`를 실행합니다.
 
