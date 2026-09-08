@@ -21,5 +21,11 @@
 *.log
 *.tmp
 
+# Certbot 인증서와 challenge 산출물
+/backend/nginx/certbot/conf/*
+!/backend/nginx/certbot/conf/.gitkeep
+/backend/nginx/certbot/www/*
+!/backend/nginx/certbot/www/.gitkeep
+
 # Local Superpowers planning artifacts from the former backend repository
 backend/docs/superpowers/
