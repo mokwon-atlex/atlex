@@ -26,6 +26,3 @@
 !/backend/nginx/certbot/conf/.gitkeep
 /backend/nginx/certbot/www/*
 !/backend/nginx/certbot/www/.gitkeep
-
-# Local Superpowers planning artifacts from the former backend repository
-backend/docs/superpowers/
