@@ -79,14 +79,14 @@ test("연관 PR 영역만 교체하고 사용자가 작성한 본문은 유지�
   const updated = renderRelatedPullRequests(original, [
     {
       number: 25,
-      title: "[feat] 소셜 로그인 기능 구현",
+      title: "feat: 소셜 로그인 기능 구현",
       url: "https://github.com/mokwon-atlex/atlex/pull/25",
       state: "open",
       merged: false,
     },
     {
       number: 28,
-      title: "[test] 소셜 로그인 테스트 추가",
+      title: "test: 소셜 로그인 테스트 추가",
       url: "https://github.com/mokwon-atlex/atlex/pull/28",
       state: "closed",
       merged: true,
@@ -95,8 +95,8 @@ test("연관 PR 영역만 교체하고 사용자가 작성한 본문은 유지�
 
   assert.match(updated, /사용자가 작성한 내용/);
   assert.doesNotMatch(updated, /이전 PR/);
-  assert.match(updated, /\[#25\].+`\[feat\] 소셜 로그인 기능 구현` — 진행 중/);
-  assert.match(updated, /\[#28\].+`\[test\] 소셜 로그인 테스트 추가` — 병합됨/);
+  assert.match(updated, /\[#25\].+`feat: 소셜 로그인 기능 구현` — 진행 중/);
+  assert.match(updated, /\[#28\].+`test: 소셜 로그인 테스트 추가` — 병합됨/);
 });
 
 test("연관 PR이 없으면 자동 관리 영역을 제거한다", () => {
