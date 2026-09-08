@@ -31,59 +31,66 @@ public class CategoryController implements CategoryControllerDocs {
 
     @GetMapping
     public ResponseEntity<ApiResponse<CategoryListResponse>> getCategories(
-            @PathVariable String userId,
-            @RequestParam(required = false) Integer limit,
-            @RequestParam(required = false) Long cursor,
-            @AuthenticationPrincipal PrincipalDetails principalDetails
-    ) {
+        @PathVariable
+        String userId,
+        @RequestParam(required = false)
+        Integer limit,
+        @RequestParam(required = false)
+        Long cursor,
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails) {
         Long loginUserId = principalDetails != null ? principalDetails.user().getId() : null;
         CategoryListResponse response = categoryService.getCategories(
-                userId,
-                limit,
-                cursor,
-                loginUserId
-        );
+            userId,
+            limit,
+            cursor,
+            loginUserId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping
     public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
-            @PathVariable String userId,
-            @Valid @RequestBody CategoryCreateRequest request,
-            @AuthenticationPrincipal PrincipalDetails principalDetails
-    ) {
+        @PathVariable
+        String userId,
+        @Valid @RequestBody
+        CategoryCreateRequest request,
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails) {
         CategoryResponse response = categoryService.createCategory(
-                userId,
-                request,
-                principalDetails.user().getId()
-        );
+            userId,
+            request,
+            principalDetails.user().getId());
         return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response));
+            .status(HttpStatus.CREATED)
+            .body(ApiResponse.success(response));
     }
 
     @PatchMapping("/{categoryId}")
     public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(
-            @PathVariable String userId,
-            @PathVariable Long categoryId,
-            @Valid @RequestBody CategoryUpdateRequest request,
-            @AuthenticationPrincipal PrincipalDetails principalDetails
-    ) {
+        @PathVariable
+        String userId,
+        @PathVariable
+        Long categoryId,
+        @Valid @RequestBody
+        CategoryUpdateRequest request,
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails) {
         CategoryResponse response = categoryService.updateCategory(
-                userId,
-                categoryId,
-                request,
-                principalDetails.user().getId()
-        );
+            userId,
+            categoryId,
+            request,
+            principalDetails.user().getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @DeleteMapping("/{categoryId}")
     public ResponseEntity<Void> deleteCategory(
-            @PathVariable String userId,
-            @PathVariable Long categoryId,
-            @AuthenticationPrincipal PrincipalDetails principalDetails
-    ) {
+        @PathVariable
+        String userId,
+        @PathVariable
+        Long categoryId,
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails) {
         categoryService.deleteCategory(userId, categoryId, principalDetails.user().getId());
         return ResponseEntity.noContent().build();
     }

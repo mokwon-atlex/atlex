@@ -1,23 +1,23 @@
-import PostEditorTagChip from "@/components/domain/post-editor/ui/PostEditorTagChip";
+import PostEditorTagChip from '@/components/domain/post-editor/ui/PostEditorTagChip';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof PostEditorTagChip> } */
 const meta = {
-  title: "Domain/PostEditor/UI/PostEditorTagChip",
+  title: 'Domain/PostEditor/UI/PostEditorTagChip',
   component: PostEditorTagChip,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
   argTypes: {
     variant: {
-      control: "select",
-      options: ["automatic", "manual"],
+      control: 'select',
+      options: ['automatic', 'manual'],
     },
-    label: { control: "text" },
+    label: { control: 'text' },
   },
   args: {
-    label: "공지",
-    variant: "automatic",
+    label: '공지',
+    variant: 'automatic',
   },
 };
 
@@ -25,22 +25,22 @@ export default meta;
 
 export const Automatic = {
   args: {
-    label: "공지",
-    variant: "automatic",
+    label: '공지',
+    variant: 'automatic',
   },
 };
 
 export const Manual = {
   args: {
-    label: "운영",
-    variant: "manual",
+    label: '운영',
+    variant: 'manual',
   },
 };
 
 export const Removable = {
   args: {
-    label: "운영",
-    variant: "manual",
+    label: '운영',
+    variant: 'manual',
     onRemove: () => {},
   },
 };

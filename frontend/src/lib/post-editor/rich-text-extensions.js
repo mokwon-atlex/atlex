@@ -1,28 +1,28 @@
-import { mergeAttributes, Node } from "@tiptap/core";
-import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
-import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
-import TaskItem from "@tiptap/extension-task-item";
-import TaskList from "@tiptap/extension-task-list";
-import TextAlign from "@tiptap/extension-text-align";
-import Underline from "@tiptap/extension-underline";
-import StarterKit from "@tiptap/starter-kit";
-import { createBlockContent } from "@/lib/post-editor/rich-text-utils";
+import { mergeAttributes, Node } from '@tiptap/core';
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
+import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
+import TaskItem from '@tiptap/extension-task-item';
+import TaskList from '@tiptap/extension-task-list';
+import TextAlign from '@tiptap/extension-text-align';
+import Underline from '@tiptap/extension-underline';
+import StarterKit from '@tiptap/starter-kit';
+import { createBlockContent } from '@/lib/post-editor/rich-text-utils';
 
 function createParagraphVariant(name, dataType) {
   return Node.create({
     name,
-    group: "block",
-    content: "inline*",
+    group: 'block',
+    content: 'inline*',
     defining: true,
     parseHTML() {
       return [{ tag: `p[data-type="${dataType}"]` }];
     },
     renderHTML({ HTMLAttributes }) {
       return [
-        "p",
+        'p',
         mergeAttributes(HTMLAttributes, {
-          "data-type": dataType,
+          'data-type': dataType,
         }),
         0,
       ];
@@ -36,35 +36,27 @@ function createParagraphVariant(name, dataType) {
         [`toggle${name[0].toUpperCase()}${name.slice(1)}`]:
           () =>
           ({ editor, commands }) =>
-            editor.isActive(this.name)
-              ? commands.setParagraph()
-              : commands.setNode(this.name),
+            editor.isActive(this.name) ? commands.setParagraph() : commands.setNode(this.name),
       };
     },
   });
 }
 
-const LeadParagraph = createParagraphVariant(
-  "leadParagraph",
-  "lead-paragraph",
-);
+const LeadParagraph = createParagraphVariant('leadParagraph', 'lead-paragraph');
 
-const CaptionParagraph = createParagraphVariant(
-  "captionParagraph",
-  "caption-paragraph",
-);
+const CaptionParagraph = createParagraphVariant('captionParagraph', 'caption-paragraph');
 
 // StarterKit에 없는 편집기 전용 블록은 커스텀 노드로 만들어서 사이드바 버튼과 연결한다.
 const DetailsBlock = Node.create({
-  name: "detailsBlock",
-  group: "block",
-  content: "block+",
+  name: 'detailsBlock',
+  group: 'block',
+  content: 'block+',
   defining: true,
   isolating: true,
   addAttributes() {
     return {
       title: {
-        default: "토글 제목",
+        default: '토글 제목',
       },
     };
   },
@@ -75,13 +67,13 @@ const DetailsBlock = Node.create({
     const { title, ...restAttributes } = HTMLAttributes;
 
     return [
-      "details",
+      'details',
       mergeAttributes(restAttributes, {
-        "data-type": "details-block",
-        open: "open",
+        'data-type': 'details-block',
+        open: 'open',
       }),
-      ["summary", { class: "post-editor-block__summary" }, title],
-      ["div", { class: "post-editor-block__body" }, 0],
+      ['summary', { class: 'post-editor-block__summary' }, title],
+      ['div', { class: 'post-editor-block__body' }, 0],
     ];
   },
   addCommands() {
@@ -92,26 +84,24 @@ const DetailsBlock = Node.create({
           commands.insertContent({
             type: this.name,
             attrs: {
-              title: attributes.title?.trim() || "토글 제목",
+              title: attributes.title?.trim() || '토글 제목',
             },
-            content: createBlockContent(
-              attributes.content?.trim() || "토글 내용을 입력하세요.",
-            ),
+            content: createBlockContent(attributes.content?.trim() || '토글 내용을 입력하세요.'),
           }),
     };
   },
 });
 
 const CalloutBox = Node.create({
-  name: "calloutBox",
-  group: "block",
-  content: "block+",
+  name: 'calloutBox',
+  group: 'block',
+  content: 'block+',
   defining: true,
   isolating: true,
   addAttributes() {
     return {
       title: {
-        default: "알림",
+        default: '알림',
       },
     };
   },
@@ -122,12 +112,12 @@ const CalloutBox = Node.create({
     const { title, ...restAttributes } = HTMLAttributes;
 
     return [
-      "section",
+      'section',
       mergeAttributes(restAttributes, {
-        "data-type": "callout-box",
+        'data-type': 'callout-box',
       }),
-      ["div", { class: "post-editor-block__label" }, title],
-      ["div", { class: "post-editor-block__body" }, 0],
+      ['div', { class: 'post-editor-block__label' }, title],
+      ['div', { class: 'post-editor-block__body' }, 0],
     ];
   },
   addCommands() {
@@ -138,26 +128,24 @@ const CalloutBox = Node.create({
           commands.insertContent({
             type: this.name,
             attrs: {
-              title: attributes.title?.trim() || "알림",
+              title: attributes.title?.trim() || '알림',
             },
-            content: createBlockContent(
-              attributes.content?.trim() || "알림 내용을 입력하세요.",
-            ),
+            content: createBlockContent(attributes.content?.trim() || '알림 내용을 입력하세요.'),
           }),
     };
   },
 });
 
 const SectionBlock = Node.create({
-  name: "sectionBlock",
-  group: "block",
-  content: "block+",
+  name: 'sectionBlock',
+  group: 'block',
+  content: 'block+',
   defining: true,
   isolating: true,
   addAttributes() {
     return {
       title: {
-        default: "구분 영역",
+        default: '구분 영역',
       },
     };
   },
@@ -168,12 +156,12 @@ const SectionBlock = Node.create({
     const { title, ...restAttributes } = HTMLAttributes;
 
     return [
-      "section",
+      'section',
       mergeAttributes(restAttributes, {
-        "data-type": "section-block",
+        'data-type': 'section-block',
       }),
-      ["div", { class: "post-editor-block__label" }, title],
-      ["div", { class: "post-editor-block__body" }, 0],
+      ['div', { class: 'post-editor-block__label' }, title],
+      ['div', { class: 'post-editor-block__body' }, 0],
     ];
   },
   addCommands() {
@@ -184,21 +172,19 @@ const SectionBlock = Node.create({
           commands.insertContent({
             type: this.name,
             attrs: {
-              title: attributes.title?.trim() || "구분 영역",
+              title: attributes.title?.trim() || '구분 영역',
             },
-            content: createBlockContent(
-              attributes.content?.trim() || "영역 내용을 입력하세요.",
-            ),
+            content: createBlockContent(attributes.content?.trim() || '영역 내용을 입력하세요.'),
           }),
     };
   },
 });
 
 const MathBlock = Node.create({
-  name: "mathBlock",
-  group: "block",
-  content: "text*",
-  marks: "",
+  name: 'mathBlock',
+  group: 'block',
+  content: 'text*',
+  marks: '',
   code: true,
   defining: true,
   parseHTML() {
@@ -206,22 +192,22 @@ const MathBlock = Node.create({
   },
   renderHTML({ HTMLAttributes }) {
     return [
-      "div",
+      'div',
       mergeAttributes(HTMLAttributes, {
-        "data-type": "math-block",
+        'data-type': 'math-block',
       }),
-      ["div", { class: "post-editor-block__label" }, "수식 (LaTeX)"],
-      ["pre", { class: "post-editor-block__body" }, ["code", 0]],
+      ['div', { class: 'post-editor-block__label' }, '수식 (LaTeX)'],
+      ['pre', { class: 'post-editor-block__body' }, ['code', 0]],
     ];
   },
   addCommands() {
     return {
       insertMathBlock:
-        (latex = "E = mc^2") =>
+        (latex = 'E = mc^2') =>
         ({ commands }) =>
           commands.insertContent({
             type: this.name,
-            content: [{ type: "text", text: latex }],
+            content: [{ type: 'text', text: latex }],
           }),
     };
   },
@@ -237,7 +223,7 @@ export const editorExtensions = [
   Underline,
   Link.configure({
     autolink: true,
-    defaultProtocol: "https",
+    defaultProtocol: 'https',
     linkOnPaste: true,
     openOnClick: false,
   }),
@@ -246,14 +232,14 @@ export const editorExtensions = [
   }),
   TextAlign.configure({
     types: [
-      "blockquote",
-      "captionParagraph",
-      "calloutBox",
-      "detailsBlock",
-      "heading",
-      "leadParagraph",
-      "paragraph",
-      "sectionBlock",
+      'blockquote',
+      'captionParagraph',
+      'calloutBox',
+      'detailsBlock',
+      'heading',
+      'leadParagraph',
+      'paragraph',
+      'sectionBlock',
     ],
   }),
   TaskList,

@@ -43,19 +43,19 @@ public class PostSummaryResponse {
 
     public static PostSummaryResponse from(Post post) {
         return PostSummaryResponse.builder()
-                .id(post.getId())
-                .categoryId(post.getCategory() != null ? post.getCategory().getId() : null)
-                .categoryName(post.getCategory() != null ? post.getCategory().getName() : null)
-                .title(post.getTitle())
-                .description(resolveListDescription(post.getDescription(), post.getContent()))
-                .thumbnailUrl(post.getThumbnailUrl())
-                .authorId(post.getUser().getId())
-                .authorUserId(post.getUser().getUserId())
-                .authorName(post.getUser().getName())
-                .hits(post.getHits())
-                .likes(post.getLikes())
-                .createdAt(post.getCreatedAt())
-                .build();
+            .id(post.getId())
+            .categoryId(post.getCategory() != null ? post.getCategory().getId() : null)
+            .categoryName(post.getCategory() != null ? post.getCategory().getName() : null)
+            .title(post.getTitle())
+            .description(resolveListDescription(post.getDescription(), post.getContent()))
+            .thumbnailUrl(post.getThumbnailUrl())
+            .authorId(post.getUser().getId())
+            .authorUserId(post.getUser().getUserId())
+            .authorName(post.getUser().getName())
+            .hits(post.getHits())
+            .likes(post.getLikes())
+            .createdAt(post.getCreatedAt())
+            .build();
     }
 
     private static String resolveListDescription(String description, String content) {

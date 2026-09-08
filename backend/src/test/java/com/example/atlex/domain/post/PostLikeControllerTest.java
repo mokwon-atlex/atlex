@@ -21,20 +21,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-    properties = {
-        "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-        "spring.jpa.hibernate.ddl-auto=create-drop"
-    }
-)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = {
+    "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+    "spring.jpa.hibernate.ddl-auto=create-drop"
+})
 @Transactional
 class PostLikeControllerTest {
 
-    @Autowired WebApplicationContext context;
-    @Autowired JwtProvider jwtProvider;
-    @Autowired UserRepository userRepository;
-    @Autowired PostRepository postRepository;
+    @Autowired
+    WebApplicationContext context;
+    @Autowired
+    JwtProvider jwtProvider;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    PostRepository postRepository;
 
     private MockMvc mockMvc;
 
@@ -68,66 +69,73 @@ class PostLikeControllerTest {
 
     // ────────────────────────── 등록 ──────────────────────────
 
-    @Test @DisplayName("좋아요 등록 성공 → 200, liked=true, likes=1")
+    @Test
+    @DisplayName("좋아요 등록 성공 → 200, liked=true, likes=1")
     void like_success() throws Exception {
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.postId").value(publicPost.getId()))
             .andExpect(jsonPath("$.data.liked").value(true))
             .andExpect(jsonPath("$.data.likes").value(1));
     }
 
-    @Test @DisplayName("중복 좋아요 요청해도 likes가 중복 증가하지 않는다")
+    @Test
+    @DisplayName("중복 좋아요 요청해도 likes가 중복 증가하지 않는다")
     void like_duplicate_noDoubleCount() throws Exception {
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.liked").value(true))
             .andExpect(jsonPath("$.data.likes").value(1));
     }
 
-    @Test @DisplayName("비로그인 좋아요 → 401")
+    @Test
+    @DisplayName("비로그인 좋아요 → 401")
     void like_anonymous() throws Exception {
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", publicPost.getId()))
             .andExpect(status().isUnauthorized());
     }
 
-    @Test @DisplayName("없는 게시글에 좋아요 → 404")
+    @Test
+    @DisplayName("없는 게시글에 좋아요 → 404")
     void like_postNotFound() throws Exception {
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", 999999L)
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
     }
 
-    @Test @DisplayName("soft delete된 게시글에 좋아요 → 404")
+    @Test
+    @DisplayName("soft delete된 게시글에 좋아요 → 404")
     void like_softDeletedPost() throws Exception {
         publicPost.softDelete();
         postRepository.saveAndFlush(publicPost);
 
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
     }
 
-    @Test @DisplayName("비공개 게시글에 비작성자가 좋아요 → 404")
+    @Test
+    @DisplayName("비공개 게시글에 비작성자가 좋아요 → 404")
     void like_privatePost_notAuthor() throws Exception {
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", privatePost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
     }
 
-    @Test @DisplayName("비공개 게시글에 작성자 본인이 좋아요 → 200")
+    @Test
+    @DisplayName("비공개 게시글에 작성자 본인이 좋아요 → 200")
     void like_privatePost_author() throws Exception {
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", privatePost.getId())
-                .header("Authorization", "Bearer " + authorToken))
+            .header("Authorization", "Bearer " + authorToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.liked").value(true))
             .andExpect(jsonPath("$.data.likes").value(1));
@@ -135,29 +143,32 @@ class PostLikeControllerTest {
 
     // ────────────────────────── 취소 ──────────────────────────
 
-    @Test @DisplayName("좋아요 취소 성공 → 200, liked=false, likes=0")
+    @Test
+    @DisplayName("좋아요 취소 성공 → 200, liked=false, likes=0")
     void unlike_success() throws Exception {
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk());
 
         mockMvc.perform(delete("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.liked").value(false))
             .andExpect(jsonPath("$.data.likes").value(0));
     }
 
-    @Test @DisplayName("좋아요하지 않은 상태에서 취소해도 likes가 음수가 되지 않는다")
+    @Test
+    @DisplayName("좋아요하지 않은 상태에서 취소해도 likes가 음수가 되지 않는다")
     void unlike_whenNotLiked_noNegative() throws Exception {
         mockMvc.perform(delete("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.liked").value(false))
             .andExpect(jsonPath("$.data.likes").value(0));
     }
 
-    @Test @DisplayName("비로그인 좋아요 취소 → 401")
+    @Test
+    @DisplayName("비로그인 좋아요 취소 → 401")
     void unlike_anonymous() throws Exception {
         mockMvc.perform(delete("/api/v1/posts/{postId}/likes", publicPost.getId()))
             .andExpect(status().isUnauthorized());
@@ -165,44 +176,47 @@ class PostLikeControllerTest {
 
     // ────────────────────────── 다중 사용자 ──────────────────────────
 
-    @Test @DisplayName("서로 다른 두 사용자가 같은 게시글에 좋아요 → likes=2")
+    @Test
+    @DisplayName("서로 다른 두 사용자가 같은 게시글에 좋아요 → likes=2")
     void like_byTwoUsers_countsTwo() throws Exception {
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + authorToken))
+            .header("Authorization", "Bearer " + authorToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.liked").value(true))
             .andExpect(jsonPath("$.data.likes").value(2));
     }
 
-    @Test @DisplayName("B가 좋아요한 게시글을 A가 취소해도 B의 좋아요는 유지되고 likes는 감소하지 않는다")
+    @Test
+    @DisplayName("B가 좋아요한 게시글을 A가 취소해도 B의 좋아요는 유지되고 likes는 감소하지 않는다")
     void unlike_byNonLiker_keepsOthersLike() throws Exception {
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk());
 
         mockMvc.perform(delete("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + authorToken))
+            .header("Authorization", "Bearer " + authorToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.liked").value(false))
             .andExpect(jsonPath("$.data.likes").value(1));
     }
 
-    @Test @DisplayName("like → unlike → like 재수행 시 최종 likes=1")
+    @Test
+    @DisplayName("like → unlike → like 재수행 시 최종 likes=1")
     void like_unlike_like_finalOne() throws Exception {
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk());
 
         mockMvc.perform(delete("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/posts/{postId}/likes", publicPost.getId())
-                .header("Authorization", "Bearer " + otherToken))
+            .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.liked").value(true))
             .andExpect(jsonPath("$.data.likes").value(1));

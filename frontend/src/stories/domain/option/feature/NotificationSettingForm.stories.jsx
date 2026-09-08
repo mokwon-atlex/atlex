@@ -1,14 +1,14 @@
-import { NotificationSettingForm } from "@/components/domain/option/feature/NotificationSettingForm"
+import { NotificationSettingForm } from '@/components/domain/option/feature/NotificationSettingForm';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof NotificationSettingForm> } */
 const meta = {
-  title: "Domain/Option/Feature/NotificationSettingForm",
+  title: 'Domain/Option/Feature/NotificationSettingForm',
   component: NotificationSettingForm,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
-}
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
+};
 
-export default meta
+export default meta;
 
 export const Default = {
   render: () => (
@@ -16,4 +16,4 @@ export const Default = {
       <NotificationSettingForm />
     </div>
   ),
-}
+};

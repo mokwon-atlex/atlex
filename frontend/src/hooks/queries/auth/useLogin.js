@@ -32,7 +32,11 @@ export function useLogin(options) {
   return useMutation({
     // Step 1: API 를 호출하고 받은 값을 그대로 반환한다. store 변경은 여기서 하지 않는다.
     mutationFn: async ({ userId, password }) => {
-      const { accessToken, refreshToken, userId: loggedInUserId } = await loginApi({
+      const {
+        accessToken,
+        refreshToken,
+        userId: loggedInUserId,
+      } = await loginApi({
         userId,
         password,
       });

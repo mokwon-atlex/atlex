@@ -27,9 +27,8 @@ public class KeywordExtractor {
 
         Map<String, KeywordOccurrence> result = new LinkedHashMap<>();
         occurrences.forEach((keyword, occurrence) -> result.put(
-                keyword,
-                new KeywordOccurrence(keyword, occurrence.titleCount, occurrence.contentCount, occurrence.tagCount)
-        ));
+            keyword,
+            new KeywordOccurrence(keyword, occurrence.titleCount, occurrence.contentCount, occurrence.tagCount)));
         return result;
     }
 

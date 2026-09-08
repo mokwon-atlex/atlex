@@ -1,6 +1,6 @@
-import { Capsule } from "@/components/common/ui/capsule"
-import { textfieldVariants } from "@/components/common/ui/textfield"
-import { AdminActions } from "@/components/domain/blog-detail/ui/AdminActions"
+import { Capsule } from '@/components/common/ui/capsule';
+import { textfieldVariants } from '@/components/common/ui/textfield';
+import { AdminActions } from '@/components/domain/blog-detail/ui/AdminActions';
 
 function MetaItem({ children }) {
   return <span className="text-[0.95rem] text-muted-foreground">{children}</span>;
@@ -24,11 +24,21 @@ export default function BlogDetailHero({
           {category}
         </Capsule>
 
-        <h1 className={textfieldVariants({ whitespace: "keep", className: "text-[clamp(2.5rem,5vw,4.4rem)] font-bold leading-[1] tracking-[-0.11em] text-foreground" })}>
+        <h1
+          className={textfieldVariants({
+            whitespace: 'keep',
+            className: 'text-[clamp(2.5rem,5vw,4.4rem)] font-bold leading-[1] tracking-[-0.11em] text-foreground',
+          })}
+        >
           {title}
         </h1>
 
-        <p className={textfieldVariants({ whitespace: "keep", className: "max-w-[40rem] text-[1rem] leading-8 text-foreground/76 sm:text-[1.06rem]" })}>
+        <p
+          className={textfieldVariants({
+            whitespace: 'keep',
+            className: 'max-w-[40rem] text-[1rem] leading-8 text-foreground/76 sm:text-[1.06rem]',
+          })}
+        >
           {excerpt}
         </p>
 

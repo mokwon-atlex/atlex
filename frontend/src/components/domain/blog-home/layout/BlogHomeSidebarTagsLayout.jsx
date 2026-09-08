@@ -1,13 +1,9 @@
-import {
-  CardDescription,
-  CardTitle,
-} from "@/components/common/ui/card";
-import BlogHomeSidebarCard from "@/components/domain/blog-home/layout/BlogHomeSidebarCard";
-import BlogHomeTagChip from "@/components/domain/blog-home/ui/BlogHomeTagChip";
+import { CardDescription, CardTitle } from '@/components/common/ui/card';
+import BlogHomeSidebarCard from '@/components/domain/blog-home/layout/BlogHomeSidebarCard';
+import BlogHomeTagChip from '@/components/domain/blog-home/ui/BlogHomeTagChip';
 
-const defaultTitle = "태그";
-const defaultDescription =
-  "글 목록에서 쓰는 태그들을 한 번에 훑어볼 수 있게 둔 영역이다.";
+const defaultTitle = '태그';
+const defaultDescription = '글 목록에서 쓰는 태그들을 한 번에 훑어볼 수 있게 둔 영역이다.';
 
 export default function BlogHomeSidebarTagsLayout({
   description = defaultDescription,

@@ -1,39 +1,33 @@
-import { Bold, Info, Settings } from "lucide-react";
+import { Bold, Info, Settings } from 'lucide-react';
 
-import { Button } from "@/components/common/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/common/ui/tooltip";
+import { Button } from '@/components/common/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/ui/tooltip';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof TooltipContent> } */
 const meta = {
-  title: "Common/UI/Tooltip",
+  title: 'Common/UI/Tooltip',
   component: TooltipContent,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
   argTypes: {
     side: {
-      control: "select",
-      options: ["top", "bottom", "left", "right"],
+      control: 'select',
+      options: ['top', 'bottom', 'left', 'right'],
     },
     align: {
-      control: "select",
-      options: ["start", "center", "end"],
+      control: 'select',
+      options: ['start', 'center', 'end'],
     },
   },
   args: {
-    side: "top",
-    align: "center",
+    side: 'top',
+    align: 'center',
   },
   render: (args) => (
     <Tooltip>
-      <TooltipTrigger render={<Button variant="outline" />}>
-        호버해 보세요
-      </TooltipTrigger>
+      <TooltipTrigger render={<Button variant="outline" />}>호버해 보세요</TooltipTrigger>
       <TooltipContent {...args}>툴팁 내용</TooltipContent>
     </Tooltip>
   ),
@@ -42,7 +36,7 @@ const meta = {
 export default meta;
 
 export const Default = {
-  args: { side: "top" },
+  args: { side: 'top' },
 };
 
 export const Sides = {
@@ -103,11 +97,9 @@ export const WithIconButton = {
 export const OnText = {
   render: () => (
     <p className="text-sm text-muted-foreground">
-      게시물에{" "}
+      게시물에{' '}
       <Tooltip>
-        <TooltipTrigger className="underline underline-offset-2 cursor-help">
-          #태그
-        </TooltipTrigger>
+        <TooltipTrigger className="underline underline-offset-2 cursor-help">#태그</TooltipTrigger>
         <TooltipContent>본문에 #으로 시작하는 단어를 쓰면 자동 태그가 됩니다.</TooltipContent>
       </Tooltip>
       를 추가하면 검색이 쉬워집니다.

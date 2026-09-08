@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { Lock, Search } from "lucide-react";
+import { useMemo, useState } from 'react';
+import { Lock, Search } from 'lucide-react';
 
-import { AuthorBadge, TagPill } from "@/components/domain/graph-view/ui/GraphViewBadges";
-import { cn } from "@/lib/utils";
+import { AuthorBadge, TagPill } from '@/components/domain/graph-view/ui/GraphViewBadges';
+import { cn } from '@/lib/utils';
 
 export function PostListPanel({ onSelect, posts, selectedId }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const filteredPosts = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
 
@@ -19,7 +19,7 @@ export function PostListPanel({ onSelect, posts, selectedId }) {
       (post) =>
         post.title.toLowerCase().includes(trimmed) ||
         post.author.name.toLowerCase().includes(trimmed) ||
-        post.tags.some((tag) => tag.toLowerCase().includes(trimmed))
+        post.tags.some((tag) => tag.toLowerCase().includes(trimmed)),
     );
   }, [posts, query]);
 
@@ -36,9 +36,7 @@ export function PostListPanel({ onSelect, posts, selectedId }) {
           />
         </label>
       </div>
-      <p className="px-4 py-3 text-xs font-bold text-muted-foreground">
-        전체 {filteredPosts.length}개
-      </p>
+      <p className="px-4 py-3 text-xs font-bold text-muted-foreground">전체 {filteredPosts.length}개</p>
       <div className="flex-1 divide-y divide-border overflow-y-auto">
         {filteredPosts.map((post) => {
           const selected = selectedId === post.id;
@@ -48,23 +46,16 @@ export function PostListPanel({ onSelect, posts, selectedId }) {
               key={post.id}
               type="button"
               className={cn(
-                "w-full px-4 py-4 text-left transition-colors hover:bg-muted/45",
-                selected ? "bg-primary/10" : ""
+                'w-full px-4 py-4 text-left transition-colors hover:bg-muted/45',
+                selected ? 'bg-primary/10' : '',
               )}
               onClick={() => onSelect(post.id)}
             >
               <div className="mb-2 flex items-start justify-between gap-2">
-                <p
-                  className={cn(
-                    "text-sm font-black leading-snug",
-                    selected ? "text-primary" : "text-foreground"
-                  )}
-                >
+                <p className={cn('text-sm font-black leading-snug', selected ? 'text-primary' : 'text-foreground')}>
                   {post.title}
                 </p>
-                {post.isPrivate ? (
-                  <Lock className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-                ) : null}
+                {post.isPrivate ? <Lock className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" /> : null}
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
                 <AuthorBadge author={post.author} />
@@ -72,9 +63,7 @@ export function PostListPanel({ onSelect, posts, selectedId }) {
                   <TagPill key={tag} tag={tag} />
                 ))}
                 {post.tags.length > 2 ? (
-                  <span className="text-xs font-bold text-muted-foreground">
-                    +{post.tags.length - 2}
-                  </span>
+                  <span className="text-xs font-bold text-muted-foreground">+{post.tags.length - 2}</span>
                 ) : null}
               </div>
             </button>

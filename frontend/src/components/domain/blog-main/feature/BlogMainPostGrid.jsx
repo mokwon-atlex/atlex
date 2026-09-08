@@ -12,7 +12,7 @@ export default function BlogMainPostGrid({ emptyMessage, posts }) {
   return (
     // 화면이 넓어질수록 열 수만 늘려 카드 밀도가 자연스럽게 올라가도록 구성했습니다.
     <section className="mx-auto grid w-full max-w-[1540px] grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {posts.map(post => (
+      {posts.map((post) => (
         <BlogMainPostCard key={post.id} post={post} />
       ))}
     </section>

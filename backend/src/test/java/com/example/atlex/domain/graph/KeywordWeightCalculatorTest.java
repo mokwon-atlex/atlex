@@ -15,15 +15,13 @@ class KeywordWeightCalculatorTest {
     @DisplayName("제목과 태그에 등장한 키워드는 본문만 등장한 키워드보다 높은 가중치를 받는다")
     void boostsTitleAndTagOccurrences() {
         double titleAndTag = calculator.calculate(
-                new KeywordOccurrence("spring", 1, 0, 1),
-                20,
-                4
-        );
+            new KeywordOccurrence("spring", 1, 0, 1),
+            20,
+            4);
         double contentOnly = calculator.calculate(
-                new KeywordOccurrence("spring", 0, 2, 0),
-                20,
-                4
-        );
+            new KeywordOccurrence("spring", 0, 2, 0),
+            20,
+            4);
 
         assertTrue(titleAndTag > contentOnly);
     }

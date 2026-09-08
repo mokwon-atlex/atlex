@@ -6,6 +6,8 @@
     "dev": "next dev",
     "test": "vitest run --passWithNoTests",
     "build": "next build",
+    "format": "prettier --write --ignore-unknown .",
+    "format:check": "prettier --check --ignore-unknown .",
     "start": "next start",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
@@ -50,6 +52,7 @@
     "@vitest/coverage-v8": "^4.1.5",
     "babel-plugin-react-compiler": "1.0.0",
     "playwright": "^1.59.1",
+    "prettier": "3.9.6",
     "storybook": "^10.4.1",
     "tailwindcss": "^4",
     "vite": "^8.0.10",

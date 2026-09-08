@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -86,9 +86,7 @@ export default function ProfileMenu() {
             >
               로그아웃
             </button>
-            {logoutError && (
-              <p className="px-3 py-1 text-xs text-destructive">{logoutError}</p>
-            )}
+            {logoutError && <p className="px-3 py-1 text-xs text-destructive">{logoutError}</p>}
           </>
         )}
       </PopoverContent>

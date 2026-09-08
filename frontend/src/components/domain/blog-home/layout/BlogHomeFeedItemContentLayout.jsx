@@ -1,30 +1,24 @@
-import { Lock } from "lucide-react";
+import { Lock } from 'lucide-react';
 
-import { Capsule } from "@/components/common/ui/capsule";
-import { Textfield, textfieldVariants } from "@/components/common/ui/textfield";
-import { cn } from "@/lib/utils";
+import { Capsule } from '@/components/common/ui/capsule';
+import { Textfield, textfieldVariants } from '@/components/common/ui/textfield';
+import { cn } from '@/lib/utils';
 
 const titleClampStyle = {
-  display: "-webkit-box",
-  WebkitBoxOrient: "vertical",
+  display: '-webkit-box',
+  WebkitBoxOrient: 'vertical',
   WebkitLineClamp: 2,
-  overflow: "hidden",
+  overflow: 'hidden',
 };
 
 const excerptClampStyle = {
-  display: "-webkit-box",
-  WebkitBoxOrient: "vertical",
+  display: '-webkit-box',
+  WebkitBoxOrient: 'vertical',
   WebkitLineClamp: 3,
-  overflow: "hidden",
+  overflow: 'hidden',
 };
 
-export default function BlogHomeFeedItemContentLayout({
-  category,
-  excerpt,
-  isPrivate = false,
-  tags = [],
-  title,
-}) {
+export default function BlogHomeFeedItemContentLayout({ category, excerpt, isPrivate = false, tags = [], title }) {
   // 비공개일 때만 배지를 띄우고, 카테고리명이 있을 때만 라벨로 보여준다.
   const hasCategory = Boolean(category);
   const showMeta = isPrivate || hasCategory;
@@ -54,22 +48,17 @@ export default function BlogHomeFeedItemContentLayout({
       <h3
         className={cn(
           textfieldVariants({
-            size: "xl",
-            weight: "bold",
+            size: 'xl',
+            weight: 'bold',
           }),
-          "leading-snug tracking-tight md:text-2xl"
+          'leading-snug tracking-tight md:text-2xl',
         )}
         style={titleClampStyle}
       >
         {title}
       </h3>
 
-      <Textfield
-        variant="muted"
-        size="sm"
-        className="mt-3 leading-6"
-        style={excerptClampStyle}
-      >
+      <Textfield variant="muted" size="sm" className="mt-3 leading-6" style={excerptClampStyle}>
         {excerpt}
       </Textfield>
 

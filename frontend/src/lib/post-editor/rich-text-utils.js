@@ -2,32 +2,32 @@
 
 export function escapeHtml(value) {
   return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 export function createInitialContent(value) {
   const trimmedValue = value.trim();
 
   if (!trimmedValue) {
-    return "<p></p>";
+    return '<p></p>';
   }
 
   // 기존 초안 데이터는 일반 문자열이라서, 에디터가 이해할 수 있는 기본 문단 HTML로 바꿔서 넣는다.
   return value
     .split(/\n{2,}/)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`)
-    .join("");
+    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
+    .join('');
 }
 
 export function normalizeUrl(value) {
   const trimmedValue = value.trim();
 
   if (!trimmedValue) {
-    return "";
+    return '';
   }
 
   if (/^(https?:|mailto:|tel:|\/|#)/i.test(trimmedValue)) {
@@ -44,7 +44,7 @@ export function getSelectionSnapshot(editor) {
 }
 
 export function getSelectedText(editor, selection) {
-  return editor.state.doc.textBetween(selection.from, selection.to, " ").trim();
+  return editor.state.doc.textBetween(selection.from, selection.to, ' ').trim();
 }
 
 export function restoreSelection(editor, selection) {
@@ -52,7 +52,7 @@ export function restoreSelection(editor, selection) {
 }
 
 export function parsePositiveInteger(value, fallbackValue) {
-  const parsedValue = Number.parseInt(value ?? "", 10);
+  const parsedValue = Number.parseInt(value ?? '', 10);
 
   if (Number.isNaN(parsedValue) || parsedValue <= 0) {
     return fallbackValue;
@@ -64,8 +64,8 @@ export function parsePositiveInteger(value, fallbackValue) {
 export function createBlockContent(text) {
   return [
     {
-      type: "paragraph",
-      content: [{ type: "text", text }],
+      type: 'paragraph',
+      content: [{ type: 'text', text }],
     },
   ];
 }

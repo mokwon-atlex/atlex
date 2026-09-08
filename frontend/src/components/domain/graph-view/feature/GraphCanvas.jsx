@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from 'react';
 
 import {
   ARROW_LENGTH,
@@ -11,12 +11,9 @@ import {
   edgeColor,
   edgeWidth,
   nodeColor,
-} from "@/components/domain/graph-view/lib/graph-view-utils";
-import { EdgeKeywordTooltip } from "@/components/domain/graph-view/ui/EdgeKeywordTooltip";
-import {
-  LockBadge,
-  NodeDocIcon,
-} from "@/components/domain/graph-view/ui/GraphViewIcons";
+} from '@/components/domain/graph-view/lib/graph-view-utils';
+import { EdgeKeywordTooltip } from '@/components/domain/graph-view/ui/EdgeKeywordTooltip';
+import { LockBadge, NodeDocIcon } from '@/components/domain/graph-view/ui/GraphViewIcons';
 
 export function GraphCanvas({
   activeTab,
@@ -37,10 +34,7 @@ export function GraphCanvas({
   const dragRef = useRef(null);
   const [isPanning, setIsPanning] = useState(false);
   const [hoveredEdgeId, setHoveredEdgeId] = useState(null);
-  const postMap = useMemo(
-    () => new Map(posts.map((post) => [post.id, post])),
-    [posts]
-  );
+  const postMap = useMemo(() => new Map(posts.map((post) => [post.id, post])), [posts]);
   const visibleEdges = useMemo(
     () =>
       edges.filter((edge) => {
@@ -54,12 +48,9 @@ export function GraphCanvas({
 
         return edge.strength >= minSharedTags;
       }),
-    [edges, minSharedTags, showExplicitEdges, showTagEdges]
+    [edges, minSharedTags, showExplicitEdges, showTagEdges],
   );
-  const filteredPosts =
-    activeTab === "내 포스트"
-      ? posts.filter((post) => post.author.id === "park")
-      : posts;
+  const filteredPosts = activeTab === '내 포스트' ? posts.filter((post) => post.author.id === 'park') : posts;
   const filteredPostIds = new Set(filteredPosts.map((post) => post.id));
 
   const getSvgPoint = (event) => {
@@ -86,7 +77,7 @@ export function GraphCanvas({
       return;
     }
 
-    const nodeElement = event.target.closest?.("[data-node-id]");
+    const nodeElement = event.target.closest?.('[data-node-id]');
     event.preventDefault();
     event.currentTarget.setPointerCapture?.(event.pointerId);
     dragRef.current = {
@@ -156,7 +147,7 @@ export function GraphCanvas({
       onPointerDown={handleCanvasPointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={finishDrag}
-      style={{ cursor: isPanning ? "grabbing" : "grab", touchAction: "none" }}
+      style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
     >
       <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
         {visibleEdges.map((edge) => {
@@ -193,12 +184,10 @@ export function GraphCanvas({
           const isDimmed = hoveredId || selectedId || hoveredEdgeId;
           const edgeOpacity = isDimmed ? (isLit ? 0.96 : 0.16) : 0.86;
           const lineWidth = edgeWidth(edge);
-          const dashArray = edge.isExplicit ? "7,6" : undefined;
+          const dashArray = edge.isExplicit ? '7,6' : undefined;
           const lineEndX = edge.isExplicit ? x2 - ux * ARROW_LENGTH : x2;
           const lineEndY = edge.isExplicit ? y2 - uy * ARROW_LENGTH : y2;
-          const arrowPoints = edge.isExplicit
-            ? createArrowPoints(x2, y2, lineEndX, lineEndY, ux, uy)
-            : null;
+          const arrowPoints = edge.isExplicit ? createArrowPoints(x2, y2, lineEndX, lineEndY, ux, uy) : null;
           const tooltipX = x1 + (lineEndX - x1) * 0.56 - uy * 20;
           const tooltipY = y1 + (lineEndY - y1) * 0.56 + ux * 20;
           const isEdgeHovered = hoveredEdgeId === edge.id;
@@ -209,7 +198,7 @@ export function GraphCanvas({
               onMouseEnter={() => setHoveredEdgeId(edge.id)}
               onMouseLeave={() => setHoveredEdgeId(null)}
               opacity={edgeOpacity}
-              style={{ transition: "opacity 0.18s" }}
+              style={{ transition: 'opacity 0.18s' }}
             >
               <line
                 stroke="transparent"
@@ -251,9 +240,7 @@ export function GraphCanvas({
                   strokeWidth="1.5"
                 />
               ) : null}
-              {isEdgeHovered ? (
-                <EdgeKeywordTooltip edge={edge} x={tooltipX} y={tooltipY} />
-              ) : null}
+              {isEdgeHovered ? <EdgeKeywordTooltip edge={edge} x={tooltipX} y={tooltipY} /> : null}
             </g>
           );
         })}
@@ -271,45 +258,32 @@ export function GraphCanvas({
               onMouseEnter={() => onHover(post.id)}
               onMouseLeave={() => onHover(null)}
               style={{
-                cursor: "pointer",
+                cursor: 'pointer',
                 opacity: isDimmed ? 0.38 : 1,
-                transition: "opacity 0.18s",
-                touchAction: "none",
+                transition: 'opacity 0.18s',
+                touchAction: 'none',
               }}
             >
               {isHovered || isSelected ? (
-                <circle
-                  cx={post.x}
-                  cy={post.y}
-                  fill={color}
-                  opacity="0.14"
-                  r={post.radius + 14}
-                />
+                <circle cx={post.x} cy={post.y} fill={color} opacity="0.14" r={post.radius + 14} />
               ) : null}
-              <circle
-                cx={post.x}
-                cy={post.y + 3}
-                fill="rgba(15,23,42,0.12)"
-                r={post.radius * 0.88}
-              />
+              <circle cx={post.x} cy={post.y + 3} fill="rgba(15,23,42,0.12)" r={post.radius * 0.88} />
               <circle
                 cx={post.x}
                 cy={post.y}
                 fill="#FFFFFF"
                 r={post.radius}
                 stroke={color}
-                strokeDasharray={post.isPrivate ? "5,3" : undefined}
+                strokeDasharray={post.isPrivate ? '5,3' : undefined}
                 strokeWidth={isHovered || isSelected ? 4.5 : post.isPrivate ? 3.5 : 3.25}
               />
               <NodeDocIcon color={color} cx={post.x} cy={post.y} r={post.radius} />
-              {post.isPrivate ? (
-                <LockBadge x={post.x + post.radius * 0.52} y={post.y + post.radius * 0.52} />
-              ) : null}
+              {post.isPrivate ? <LockBadge x={post.x + post.radius * 0.52} y={post.y + post.radius * 0.52} /> : null}
               <text
-                fill={isHovered || isSelected ? "#111827" : "#242832"}
+                fill={isHovered || isSelected ? '#111827' : '#242832'}
                 fontFamily="var(--font-nanum-gothic-coding), system-ui, sans-serif"
                 fontSize="14"
-                fontWeight={isHovered || isSelected ? "800" : "700"}
+                fontWeight={isHovered || isSelected ? '800' : '700'}
                 paintOrder="stroke"
                 stroke="rgba(248,248,245,0.96)"
                 strokeLinejoin="round"

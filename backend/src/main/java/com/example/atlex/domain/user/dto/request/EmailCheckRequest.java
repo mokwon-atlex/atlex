@@ -17,9 +17,6 @@ public class EmailCheckRequest {
     @Schema(description = "중복 확인할 이메일", example = "john@example.com")
     @NotBlank(message = "이메일을 입력해주세요.")
     @Email(message = "이메일 형식(예: user@example.com)을 확인해주세요.")
-    @Pattern(
-            regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$",
-            message = "이메일 형식(예: user@example.com)을 확인해주세요."
-    )
+    @Pattern(regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$", message = "이메일 형식(예: user@example.com)을 확인해주세요.")
     private String email;
 }

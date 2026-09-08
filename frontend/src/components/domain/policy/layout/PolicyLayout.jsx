@@ -22,16 +22,14 @@ export default function PolicyLayout({ children, sidebar }) {
       <main className="mx-auto w-full max-w-content-narrow px-5 pb-12 pt-7 sm:px-8 lg:px-10">
         <div className="mb-8">
           <h2 className="text-3xl font-black tracking-tight">이용약관 및 정책</h2>
-          <p className="mt-2 text-muted-foreground">
-            서비스 이용을 위한 중요 약관 및 정책 안내입니다.
-          </p>
+          <p className="mt-2 text-muted-foreground">서비스 이용을 위한 중요 약관 및 정책 안내입니다.</p>
         </div>
 
         {/* 공통 Tabs 컴포넌트 사용 */}
         <nav className="mb-8">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
-              {tabs.map(tab => (
+              {tabs.map((tab) => (
                 <TabsTrigger key={tab} value={tab}>
                   {tab}
                 </TabsTrigger>
@@ -50,9 +48,7 @@ export default function PolicyLayout({ children, sidebar }) {
           {/* 사이드바 구역 */}
           <aside className="order-1 lg:order-2">
             <div className="sticky top-24 rounded-xl border border-border bg-card p-4 shadow-sm">
-              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                목차
-              </h3>
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted-foreground">목차</h3>
               <ul className="space-y-1">{sidebar}</ul>
             </div>
           </aside>

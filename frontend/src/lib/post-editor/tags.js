@@ -1,7 +1,7 @@
 const BODY_TAG_PATTERN = /(^|[^\p{L}\p{N}_-])#([\p{L}\p{N}_-]+)/gu;
 
 function normalizeTag(tag) {
-  return tag.trim().replace(/^#+/, "").replace(/\s+/g, " ");
+  return tag.trim().replace(/^#+/, '').replace(/\s+/g, ' ');
 }
 
 function uniqueTags(tags) {

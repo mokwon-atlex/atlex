@@ -1,19 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import {
-  extractBodyTags,
-  mergeTags,
-  parseTagInput,
-} from "@/lib/post-editor/tags";
+import { useState } from 'react';
+import { extractBodyTags, mergeTags, parseTagInput } from '@/lib/post-editor/tags';
 
-export default function usePostEditorTags(
-  body,
-  {
-    initialManualTags = [],
-  } = {},
-) {
-  const [tagInput, setTagInput] = useState("");
+export default function usePostEditorTags(body, { initialManualTags = [] } = {}) {
+  const [tagInput, setTagInput] = useState('');
   const [manualTags, setManualTags] = useState(initialManualTags);
 
   const bodyTags = extractBodyTags(body);
@@ -27,15 +18,13 @@ export default function usePostEditorTags(
     }
 
     setManualTags((currentTags) => mergeTags(currentTags, nextTags));
-    setTagInput("");
+    setTagInput('');
 
     return true;
   }
 
   function removeManualTag(tagToRemove) {
-    setManualTags((currentTags) =>
-      currentTags.filter((tag) => tag !== tagToRemove),
-    );
+    setManualTags((currentTags) => currentTags.filter((tag) => tag !== tagToRemove));
   }
 
   function handleTagInputChange(value) {
@@ -47,13 +36,13 @@ export default function usePostEditorTags(
       return;
     }
 
-    if (event.key === "Enter") {
+    if (event.key === 'Enter') {
       event.preventDefault();
       registerTags(tagInput);
       return;
     }
 
-    if (event.key === "Backspace" && !tagInput.trim() && manualTags.length > 0) {
+    if (event.key === 'Backspace' && !tagInput.trim() && manualTags.length > 0) {
       event.preventDefault();
       setManualTags((currentTags) => currentTags.slice(0, -1));
     }

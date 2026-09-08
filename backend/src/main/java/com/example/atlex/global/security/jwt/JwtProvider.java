@@ -33,8 +33,10 @@ public class JwtProvider {
 
     private Key key;
 
-    public JwtProvider(@Lazy CustomUserDetailsService userDetailsService,
-                       @Value("${jwt.secret}") String secretKey) {
+    public JwtProvider(@Lazy
+    CustomUserDetailsService userDetailsService,
+        @Value("${jwt.secret}")
+        String secretKey) {
         this.userDetailsService = userDetailsService;
         this.secretKey = secretKey;
     }
@@ -61,17 +63,17 @@ public class JwtProvider {
         Date now = new Date();
 
         return Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + validTime))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+            .setClaims(claims)
+            .setIssuedAt(now)
+            .setExpiration(new Date(now.getTime() + validTime))
+            .signWith(key, SignatureAlgorithm.HS256)
+            .compact();
     }
 
     // 시큐리티 인증 객체 생성 — 만료 토큰은 거부 (validateAccessToken 이후 호출)
     public Authentication getAuthentication(String token) {
         String id = Jwts.parserBuilder().setSigningKey(key).build()
-                .parseClaimsJws(token).getBody().getSubject();
+            .parseClaimsJws(token).getBody().getSubject();
         UserDetails userDetails = userDetailsService.loadUserById(Long.parseLong(id));
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
@@ -97,7 +99,7 @@ public class JwtProvider {
     private boolean validateTokenType(String token, String expectedTokenType) {
         try {
             Claims claims = Jwts.parserBuilder().setSigningKey(key).build()
-                    .parseClaimsJws(token).getBody();
+                .parseClaimsJws(token).getBody();
             return expectedTokenType.equals(claims.get(TOKEN_TYPE_CLAIM, String.class));
         } catch (JwtException | IllegalArgumentException e) {
             return false;
@@ -107,7 +109,7 @@ public class JwtProvider {
     // 토큰에서 PK 추출
     public Long getUserPk(String token) {
         return Long.parseLong(Jwts.parserBuilder().setSigningKey(key).build()
-                .parseClaimsJws(token).getBody().getSubject());
+            .parseClaimsJws(token).getBody().getSubject());
     }
 
 }

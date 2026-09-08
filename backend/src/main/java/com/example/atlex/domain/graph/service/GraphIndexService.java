@@ -58,16 +58,14 @@ public class GraphIndexService {
 
     public int rebuildPublicGraph() {
         List<Long> postIds = postRepository.findAllPublicGraphSourcePosts()
-                .stream()
-                .map(Post::getId)
-                .toList();
+            .stream()
+            .map(Post::getId)
+            .toList();
 
         postIds.forEach(postId -> transactionOperations.executeWithoutResult(
-                ignored -> refreshPostKeywords(postId)
-        ));
+            ignored -> refreshPostKeywords(postId)));
         postIds.forEach(postId -> transactionOperations.executeWithoutResult(
-                ignored -> refreshRelations(postId)
-        ));
+            ignored -> refreshRelations(postId)));
 
         return postIds.size();
     }
@@ -75,7 +73,7 @@ public class GraphIndexService {
     @Transactional
     public void refreshPostKeywords(Long postId) {
         Post post = postRepository.findWithUserById(postId)
-                .orElseThrow(PostNotFoundException::new);
+            .orElseThrow(PostNotFoundException::new);
 
         postKeywordRepository.deleteByPostId(postId);
         if (Boolean.TRUE.equals(post.getIsDeleted()) || !Boolean.TRUE.equals(post.getIsPublic())) {
@@ -84,34 +82,31 @@ public class GraphIndexService {
 
         List<String> tagNames = postTagRepository.findTagNamesByPostId(postId);
         Map<String, KeywordOccurrence> occurrences = keywordExtractor.extract(
-                post.getTitle(),
-                post.getContent(),
-                tagNames
-        );
+            post.getTitle(),
+            post.getContent(),
+            tagNames);
         long totalPosts = Math.max(postRepository.countByIsDeletedFalseAndIsPublicTrue(), 1L);
         List<String> keywordNames = occurrences.keySet().stream().toList();
         KeywordResolution keywordResolution = findOrCreateKeywords(keywordNames);
         Map<Long, Long> documentFrequencyByKeywordId = countDocumentFrequencies(
-                keywordResolution.existingKeywordIds()
-        );
+            keywordResolution.existingKeywordIds());
 
         List<PostKeyword> postKeywords = new ArrayList<>();
         for (KeywordOccurrence occurrence : occurrences.values()) {
             Keyword keyword = keywordResolution.keywordsByName().get(occurrence.keyword());
             long otherDocumentFrequency = keyword.getId() == null
-                    ? 0L
-                    : documentFrequencyByKeywordId.getOrDefault(keyword.getId(), 0L);
+                ? 0L
+                : documentFrequencyByKeywordId.getOrDefault(keyword.getId(), 0L);
             int documentFrequency = Math.toIntExact(otherDocumentFrequency + 1);
             keyword.updateDocumentFrequency(documentFrequency);
             double weight = keywordWeightCalculator.calculate(occurrence, totalPosts, documentFrequency);
             postKeywords.add(PostKeyword.of(
-                    post,
-                    keyword,
-                    occurrence.titleCount(),
-                    occurrence.contentCount(),
-                    occurrence.tagCount(),
-                    weight
-            ));
+                post,
+                keyword,
+                occurrence.titleCount(),
+                occurrence.contentCount(),
+                occurrence.tagCount(),
+                weight));
         }
 
         postKeywordRepository.saveAll(postKeywords);
@@ -120,7 +115,7 @@ public class GraphIndexService {
     @Transactional
     public void refreshRelations(Long postId) {
         Post sourcePost = postRepository.findWithUserById(postId)
-                .orElseThrow(PostNotFoundException::new);
+            .orElseThrow(PostNotFoundException::new);
 
         postRelationRepository.deleteBySourcePostId(postId);
         if (Boolean.TRUE.equals(sourcePost.getIsDeleted()) || !Boolean.TRUE.equals(sourcePost.getIsPublic())) {
@@ -128,30 +123,29 @@ public class GraphIndexService {
         }
 
         List<PostKeyword> sourceKeywords = postKeywordRepository.findByPostIdOrderByWeightDesc(postId)
-                .stream()
-                .limit(MAX_SOURCE_KEYWORDS)
-                .toList();
+            .stream()
+            .limit(MAX_SOURCE_KEYWORDS)
+            .toList();
         if (sourceKeywords.isEmpty()) {
             return;
         }
 
         List<String> sourceKeywordNames = sourceKeywords.stream()
-                .map(postKeyword -> postKeyword.getKeyword().getName())
-                .toList();
+            .map(postKeyword -> postKeyword.getKeyword().getName())
+            .toList();
         Map<String, PostKeyword> sourceByKeyword = new LinkedHashMap<>();
         for (PostKeyword sourceKeyword : sourceKeywords) {
             sourceByKeyword.put(sourceKeyword.getKeyword().getName(), sourceKeyword);
         }
 
         List<PostKeyword> candidateKeywords = postKeywordRepository.findPublicCandidatesByKeywordNames(
-                postId,
-                sourceKeywordNames,
-                PageRequest.of(0, MAX_CANDIDATES)
-        );
+            postId,
+            sourceKeywordNames,
+            PageRequest.of(0, MAX_CANDIDATES));
 
         double sourceTotalWeight = sourceKeywords.stream()
-                .mapToDouble(PostKeyword::getWeight)
-                .sum();
+            .mapToDouble(PostKeyword::getWeight)
+            .sum();
         Map<Long, CandidateScore> scores = new LinkedHashMap<>();
 
         for (PostKeyword candidateKeyword : candidateKeywords) {
@@ -162,18 +156,17 @@ public class GraphIndexService {
             }
 
             CandidateScore candidateScore = scores.computeIfAbsent(
-                    candidateKeyword.getPost().getId(),
-                    ignored -> new CandidateScore(candidateKeyword.getPost(), sourceTotalWeight)
-            );
+                candidateKeyword.getPost().getId(),
+                ignored -> new CandidateScore(candidateKeyword.getPost(), sourceTotalWeight));
             candidateScore.add(keywordName, sourceKeyword.getWeight(), candidateKeyword.getWeight());
         }
 
         List<PostRelation> relations = scores.values().stream()
-                .map(candidateScore -> candidateScore.toRelation(sourcePost))
-                .filter(relation -> relation.getScore() >= MIN_SCORE)
-                .sorted(Comparator.comparing(PostRelation::getScore).reversed())
-                .limit(TOP_K)
-                .toList();
+            .map(candidateScore -> candidateScore.toRelation(sourcePost))
+            .filter(relation -> relation.getScore() >= MIN_SCORE)
+            .sorted(Comparator.comparing(PostRelation::getScore).reversed())
+            .limit(TOP_K)
+            .toList();
 
         postRelationRepository.saveAll(relations);
     }
@@ -184,17 +177,17 @@ public class GraphIndexService {
         existingKeywords.forEach(keyword -> keywordsByName.put(keyword.getName(), keyword));
 
         List<Keyword> newKeywords = keywordNames.stream()
-                .filter(keywordName -> !keywordsByName.containsKey(keywordName))
-                .map(Keyword::of)
-                .toList();
+            .filter(keywordName -> !keywordsByName.containsKey(keywordName))
+            .map(Keyword::of)
+            .toList();
         if (!newKeywords.isEmpty()) {
             keywordRepository.saveAll(newKeywords)
-                    .forEach(keyword -> keywordsByName.put(keyword.getName(), keyword));
+                .forEach(keyword -> keywordsByName.put(keyword.getName(), keyword));
         }
         List<Long> existingKeywordIds = existingKeywords.stream()
-                .map(Keyword::getId)
-                .filter(id -> id != null)
-                .toList();
+            .map(Keyword::getId)
+            .filter(id -> id != null)
+            .toList();
         return new KeywordResolution(keywordsByName, existingKeywordIds);
     }
 
@@ -204,17 +197,16 @@ public class GraphIndexService {
         }
 
         Map<Long, Long> documentFrequencyByKeywordId = new LinkedHashMap<>();
-        for (KeywordDocumentFrequencyProjection projection
-                : postKeywordRepository.countPublicDocumentsByKeywordIds(existingKeywordIds)) {
+        for (KeywordDocumentFrequencyProjection projection : postKeywordRepository
+            .countPublicDocumentsByKeywordIds(existingKeywordIds)) {
             documentFrequencyByKeywordId.put(projection.getKeywordId(), projection.getDocumentFrequency());
         }
         return documentFrequencyByKeywordId;
     }
 
     private record KeywordResolution(
-            Map<String, Keyword> keywordsByName,
-            List<Long> existingKeywordIds
-    ) {
+        Map<String, Keyword> keywordsByName,
+        List<Long> existingKeywordIds) {
     }
 
     private static class CandidateScore {

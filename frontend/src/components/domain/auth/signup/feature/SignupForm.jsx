@@ -1,33 +1,33 @@
-"use client"
+'use client';
 
-import { useState } from "react"
+import { useState } from 'react';
 
-import { Button } from "@/components/common/ui/button"
-import { FieldGroup } from "@/components/common/ui/field"
+import { Button } from '@/components/common/ui/button';
+import { FieldGroup } from '@/components/common/ui/field';
 
-import { UserIdField } from "@/components/common/layout/UserIdField"
-import { EmailField } from "@/components/common/layout/EmailField"
-import { PasswordField } from "@/components/common/layout/PasswordField"
-import { NicknameField } from "@/components/common/layout/NicknameField"
+import { UserIdField } from '@/components/common/layout/UserIdField';
+import { EmailField } from '@/components/common/layout/EmailField';
+import { PasswordField } from '@/components/common/layout/PasswordField';
+import { NicknameField } from '@/components/common/layout/NicknameField';
 
-import { useSignup } from "@/hooks/queries/auth/useSignup"
+import { useSignup } from '@/hooks/queries/auth/useSignup';
 
 function SignupForm({ onBack, onLogin }) {
-  const [userId, setUserId] = useState("")
-  const [nickname, setNickname] = useState("")
+  const [userId, setUserId] = useState('');
+  const [nickname, setNickname] = useState('');
 
-  const [emailLocal, setEmailLocal] = useState("")
-  const [emailDomain, setEmailDomain] = useState("")
-  const [selectedDomain, setSelectedDomain] = useState("")
+  const [emailLocal, setEmailLocal] = useState('');
+  const [emailDomain, setEmailDomain] = useState('');
+  const [selectedDomain, setSelectedDomain] = useState('');
 
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [userIdCheck, setUserIdCheck] = useState(null)
-  const [nicknameCheck, setNicknameCheck] = useState(null)
-  const [error, setError] = useState("")
+  const [userIdCheck, setUserIdCheck] = useState(null);
+  const [nicknameCheck, setNicknameCheck] = useState(null);
+  const [error, setError] = useState('');
 
-  const { mutateAsync: signup, isPending } = useSignup()
+  const { mutateAsync: signup, isPending } = useSignup();
 
   const passwordChecks = {
     length: password.length >= 10,
@@ -35,14 +35,14 @@ function SignupForm({ onBack, onLogin }) {
     upper: /[A-Z]/.test(password),
     number: /[0-9]/.test(password),
     special: /[^A-Za-z0-9]/.test(password),
-  }
+  };
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError('');
 
-    const domain = emailDomain || selectedDomain
-    const email = emailLocal && domain ? `${emailLocal}@${domain}` : ""
+    const domain = emailDomain || selectedDomain;
+    const email = emailLocal && domain ? `${emailLocal}@${domain}` : '';
 
     try {
       await signup({
@@ -54,10 +54,10 @@ function SignupForm({ onBack, onLogin }) {
         termsAgreed: true,
         privacyAgreed: true,
         marketingAgreed: false,
-      })
-      onLogin?.()
+      });
+      onLogin?.();
     } catch (err) {
-      setError(err.message ?? "회원가입에 실패했습니다.")
+      setError(err.message ?? '회원가입에 실패했습니다.');
     }
   }
 
@@ -70,7 +70,7 @@ function SignupForm({ onBack, onLogin }) {
           onCheckDuplicate={() =>
             setUserIdCheck({
               ok: true,
-              message: "사용 가능한 아이디입니다.",
+              message: '사용 가능한 아이디입니다.',
             })
           }
           checkResult={userIdCheck}
@@ -99,48 +99,33 @@ function SignupForm({ onBack, onLogin }) {
           onCheckDuplicate={() =>
             setNicknameCheck({
               ok: true,
-              message: "사용 가능한 닉네임입니다.",
+              message: '사용 가능한 닉네임입니다.',
             })
           }
           checkResult={nicknameCheck}
         />
 
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         <div className="flex gap-3 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onBack}
-            className="h-10 flex-1 rounded-lg text-sm font-bold"
-          >
+          <Button type="button" variant="outline" onClick={onBack} className="h-10 flex-1 rounded-lg text-sm font-bold">
             뒤로가기
           </Button>
 
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="h-10 flex-1 rounded-lg text-sm font-bold"
-          >
-            {isPending ? "처리 중..." : "회원가입"}
+          <Button type="submit" disabled={isPending} className="h-10 flex-1 rounded-lg text-sm font-bold">
+            {isPending ? '처리 중...' : '회원가입'}
           </Button>
         </div>
 
         <p className="pt-1 text-center text-sm text-muted-foreground">
-          이미 계정이 있으신가요?{" "}
-          <button
-            type="button"
-            onClick={onLogin}
-            className="font-semibold text-primary hover:underline"
-          >
+          이미 계정이 있으신가요?{' '}
+          <button type="button" onClick={onLogin} className="font-semibold text-primary hover:underline">
             로그인
           </button>
         </p>
       </FieldGroup>
     </form>
-  )
+  );
 }
 
-export { SignupForm }
+export { SignupForm };

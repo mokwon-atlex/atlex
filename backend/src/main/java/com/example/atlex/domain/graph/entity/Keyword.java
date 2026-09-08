@@ -33,9 +33,9 @@ public class Keyword {
 
     public static Keyword of(String name) {
         return Keyword.builder()
-                .name(name)
-                .documentFrequency(0)
-                .build();
+            .name(name)
+            .documentFrequency(0)
+            .build();
     }
 
     public void updateDocumentFrequency(int documentFrequency) {

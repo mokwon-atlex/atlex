@@ -20,8 +20,7 @@ const useAuthStore = create(
       refreshToken: null,
       login: ({ user, accessToken, refreshToken }) =>
         set({ isLoggedIn: true, user, accessToken, refreshToken: refreshToken ?? null }),
-      logout: () =>
-        set({ isLoggedIn: false, user: null, accessToken: null, refreshToken: null }),
+      logout: () => set({ isLoggedIn: false, user: null, accessToken: null, refreshToken: null }),
       // 토큰 재발급 시 accessToken(+회전된 refreshToken) 만 갱신. 값이 없으면 기존값 유지.
       setTokens: ({ accessToken, refreshToken } = {}) =>
         set((s) => ({
@@ -29,8 +28,8 @@ const useAuthStore = create(
           refreshToken: refreshToken ?? s.refreshToken,
         })),
     }),
-    { name: 'auth-storage' }
-  )
+    { name: 'auth-storage' },
+  ),
 );
 
 // module-level side-effect 로 1회 주입한다. (zustand 자체가 client-only 이므로 RSC 영향 없음)

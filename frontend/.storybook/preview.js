@@ -1,6 +1,6 @@
-import { createElement } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import "../src/app/globals.css";
+import { createElement } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import '../src/app/globals.css';
 
 /** @type { import('@storybook/nextjs-vite').Preview } */
 const preview = {
@@ -10,8 +10,8 @@ const preview = {
     },
     controls: {
       matchers: {
-       color: /(background|color)$/i,
-       date: /Date$/i,
+        color: /(background|color)$/i,
+        date: /Date$/i,
       },
     },
 
@@ -19,8 +19,8 @@ const preview = {
       // 'todo' - show a11y violations in the test UI only
       // 'error' - fail CI on a11y violations
       // 'off' - skip a11y checks entirely
-      test: "todo"
-    }
+      test: 'todo',
+    },
   },
   decorators: [
     (Story) => {
@@ -31,11 +31,7 @@ const preview = {
         },
       });
 
-      return createElement(
-        QueryClientProvider,
-        { client: queryClient },
-        createElement(Story),
-      );
+      return createElement(QueryClientProvider, { client: queryClient }, createElement(Story));
     },
   ],
 };

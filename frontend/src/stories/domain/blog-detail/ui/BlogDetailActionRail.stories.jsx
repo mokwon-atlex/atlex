@@ -1,14 +1,14 @@
-import BlogDetailActionRail from "@/components/domain/blog-detail/ui/BlogDetailActionRail";
+import BlogDetailActionRail from '@/components/domain/blog-detail/ui/BlogDetailActionRail';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof BlogDetailActionRail> } */
 const meta = {
-  title: "Domain/BlogDetail/UI/BlogDetailActionRail",
+  title: 'Domain/BlogDetail/UI/BlogDetailActionRail',
   component: BlogDetailActionRail,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
   argTypes: {
-    likes: { control: "number" },
-    bookmarks: { control: "number" },
+    likes: { control: 'number' },
+    bookmarks: { control: 'number' },
   },
 };
 

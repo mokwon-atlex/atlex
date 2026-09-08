@@ -1,22 +1,22 @@
-import { Label } from "@/components/common/ui/label"
+import { Label } from '@/components/common/ui/label';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof Label> } */
 const meta = {
-  title: "Common/UI/Label",
+  title: 'Common/UI/Label',
   component: Label,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
-    variant: { control: "select", options: ["default", "muted"] },
-    size: { control: "select", options: ["sm", "default", "lg"] },
-    children: { control: "text" },
+    variant: { control: 'select', options: ['default', 'muted'] },
+    size: { control: 'select', options: ['sm', 'default', 'lg'] },
+    children: { control: 'text' },
   },
-}
+};
 
-export default meta
+export default meta;
 
-export const Default = { args: { children: "이메일 주소" } }
+export const Default = { args: { children: '이메일 주소' } };
 
-export const Muted = { args: { variant: "muted", children: "선택 항목" } }
+export const Muted = { args: { variant: 'muted', children: '선택 항목' } };
 
 export const Sizes = {
   render: () => (
@@ -26,7 +26,7 @@ export const Sizes = {
       <Label size="lg">Large 레이블</Label>
     </div>
   ),
-}
+};
 
 export const AllVariants = {
   render: () => (
@@ -35,7 +35,7 @@ export const AllVariants = {
       <Label variant="muted">Muted</Label>
     </div>
   ),
-}
+};
 
 export const WithInput = {
   render: () => (
@@ -49,7 +49,7 @@ export const WithInput = {
       />
     </div>
   ),
-}
+};
 
 export const Disabled = {
   render: () => (
@@ -57,4 +57,4 @@ export const Disabled = {
       <Label>비활성화 레이블</Label>
     </div>
   ),
-}
+};

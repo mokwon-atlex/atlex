@@ -1,9 +1,9 @@
 export function GraphLegend() {
   const items = [
-    { label: "공통 태그 적음", dashed: false, width: 2.5, arrow: false },
-    { label: "공통 태그 보통", dashed: false, width: 4, arrow: false },
-    { label: "공통 태그 많음", dashed: false, width: 5.5, arrow: false },
-    { label: "명시적 링크", dashed: true, width: 2.5, arrow: true },
+    { label: '공통 태그 적음', dashed: false, width: 2.5, arrow: false },
+    { label: '공통 태그 보통', dashed: false, width: 4, arrow: false },
+    { label: '공통 태그 많음', dashed: false, width: 5.5, arrow: false },
+    { label: '명시적 링크', dashed: true, width: 2.5, arrow: true },
   ];
 
   return (
@@ -30,7 +30,7 @@ export function GraphLegend() {
               <line
                 markerEnd={item.arrow ? `url(#${markerId})` : undefined}
                 stroke="#6B7280"
-                strokeDasharray={item.dashed ? "5,3" : undefined}
+                strokeDasharray={item.dashed ? '5,3' : undefined}
                 strokeLinecap="butt"
                 strokeWidth={item.width}
                 x1="2"
@@ -43,9 +43,7 @@ export function GraphLegend() {
           </div>
         );
       })}
-      <p className="pt-1 text-[11px] font-bold text-muted-foreground">
-        간선 hover 시 연결 키워드 표시
-      </p>
+      <p className="pt-1 text-[11px] font-bold text-muted-foreground">간선 hover 시 연결 키워드 표시</p>
     </div>
   );
 }

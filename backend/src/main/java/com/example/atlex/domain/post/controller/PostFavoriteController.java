@@ -23,25 +23,31 @@ public class PostFavoriteController implements PostFavoriteControllerDocs {
 
     @GetMapping("/favorites")
     public ResponseEntity<ApiResponse<Page<PostSummaryResponse>>> getMyFavorites(
-            @AuthenticationPrincipal PrincipalDetails principalDetails,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<PostSummaryResponse> response =
-                postFavoriteService.getMyFavorites(principalDetails.user().getId(), pageable);
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails,
+        @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
+        Pageable pageable) {
+        Page<PostSummaryResponse> response = postFavoriteService.getMyFavorites(principalDetails.user().getId(),
+            pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping("/{postId}/favorites")
     public ResponseEntity<ApiResponse<PostFavoriteResponse>> addFavorite(
-            @AuthenticationPrincipal PrincipalDetails principalDetails,
-            @PathVariable Long postId) {
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails,
+        @PathVariable
+        Long postId) {
         PostFavoriteResponse response = postFavoriteService.addFavorite(postId, principalDetails.user().getId());
         return ResponseEntity.ok(ApiResponse.success(response, "즐겨찾기 상태가 변경되었습니다"));
     }
 
     @DeleteMapping("/{postId}/favorites")
     public ResponseEntity<ApiResponse<PostFavoriteResponse>> removeFavorite(
-            @AuthenticationPrincipal PrincipalDetails principalDetails,
-            @PathVariable Long postId) {
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails,
+        @PathVariable
+        Long postId) {
         PostFavoriteResponse response = postFavoriteService.removeFavorite(postId, principalDetails.user().getId());
         return ResponseEntity.ok(ApiResponse.success(response, "즐겨찾기 상태가 변경되었습니다"));
     }

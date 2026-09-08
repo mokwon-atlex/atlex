@@ -2,7 +2,7 @@
 
 export function stripHandle(segment) {
   if (!segment) return segment;
-  return segment.startsWith("@") ? segment.slice(1) : segment;
+  return segment.startsWith('@') ? segment.slice(1) : segment;
 }
 
 export function userBlogHref(userId) {

@@ -1,20 +1,20 @@
-import { useArgs } from "storybook/preview-api";
+import { useArgs } from 'storybook/preview-api';
 
-import PaginationLayout from "@/components/common/layout/PaginationLayout";
+import PaginationLayout from '@/components/common/layout/PaginationLayout';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof PaginationLayout> } */
 const meta = {
-  title: "Common/Layout/PaginationLayout",
+  title: 'Common/Layout/PaginationLayout',
   component: PaginationLayout,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
   argTypes: {
-    totalPages: { control: "number" },
-    currentPage: { control: "number" },
-    siblingCount: { control: "number" },
-    showEllipsis: { control: "boolean" },
-    showFirstLast: { control: "boolean" },
-    onPageChange: { action: "onPageChange" },
+    totalPages: { control: 'number' },
+    currentPage: { control: 'number' },
+    siblingCount: { control: 'number' },
+    showEllipsis: { control: 'boolean' },
+    showFirstLast: { control: 'boolean' },
+    onPageChange: { action: 'onPageChange' },
   },
   args: {
     totalPages: 10,

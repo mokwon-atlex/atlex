@@ -1,20 +1,20 @@
-import { Capsule } from "@/components/common/ui/capsule";
+import { Capsule } from '@/components/common/ui/capsule';
 
 /** @type { import('@storybook/react').Meta<typeof Capsule> } */
 const meta = {
-  title: "Common/UI/Capsule",
+  title: 'Common/UI/Capsule',
   component: Capsule,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     variant: {
-      control: "select",
-      options: ["default", "secondary", "outline", "ghost", "success"],
+      control: 'select',
+      options: ['default', 'secondary', 'outline', 'ghost', 'success'],
     },
     size: {
-      control: "select",
-      options: ["sm", "default", "lg"],
+      control: 'select',
+      options: ['sm', 'default', 'lg'],
     },
-    children: { control: "text" },
+    children: { control: 'text' },
   },
 };
 
@@ -22,51 +22,51 @@ export default meta;
 
 export const Default = {
   args: {
-    children: "Capsule",
-    variant: "default",
-    size: "default",
+    children: 'Capsule',
+    variant: 'default',
+    size: 'default',
   },
 };
 
 export const Secondary = {
   args: {
-    children: "Secondary",
-    variant: "secondary",
+    children: 'Secondary',
+    variant: 'secondary',
   },
 };
 
 export const Outline = {
   args: {
-    children: "Outline",
-    variant: "outline",
+    children: 'Outline',
+    variant: 'outline',
   },
 };
 
 export const Ghost = {
   args: {
-    children: "Ghost",
-    variant: "ghost",
+    children: 'Ghost',
+    variant: 'ghost',
   },
 };
 
 export const Small = {
   args: {
-    children: "Small",
-    size: "sm",
+    children: 'Small',
+    size: 'sm',
   },
 };
 
 export const Large = {
   args: {
-    children: "Large",
-    size: "lg",
+    children: 'Large',
+    size: 'lg',
   },
 };
 
 export const Success = {
   args: {
-    children: "Success",
-    variant: "success",
+    children: 'Success',
+    variant: 'success',
   },
 };
 

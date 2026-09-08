@@ -1,14 +1,12 @@
-import { BarChart3, Network, Sparkles } from "lucide-react"
+import { BarChart3, Network, Sparkles } from 'lucide-react';
 
-import { Capsule } from "@/components/common/ui/capsule"
-import { Textfield } from "@/components/common/ui/textfield"
+import { Capsule } from '@/components/common/ui/capsule';
+import { Textfield } from '@/components/common/ui/textfield';
 
 function AuthHero() {
   return (
     <section className="hidden lg:block">
-      <Capsule variant="outline">
-        Graph Based Blog Platform
-      </Capsule>
+      <Capsule variant="outline">Graph Based Blog Platform</Capsule>
 
       <h1 className="mt-5 text-[42px] font-black leading-[1.08] tracking-[-0.04em] text-foreground">
         글의 관계를 연결하고
@@ -18,14 +16,8 @@ function AuthHero() {
         보여주세요.
       </h1>
 
-      <Textfield
-        variant="muted"
-        size="default"
-        whitespace="keep"
-        className="mt-5 max-w-xl leading-7"
-      >
-        Atlex는 글, 주제, 반응 데이터를 하나의 흐름으로 연결해
-        블로그를 더 직관적으로 탐색할 수 있도록 도와줍니다.
+      <Textfield variant="muted" size="default" whitespace="keep" className="mt-5 max-w-xl leading-7">
+        Atlex는 글, 주제, 반응 데이터를 하나의 흐름으로 연결해 블로그를 더 직관적으로 탐색할 수 있도록 도와줍니다.
       </Textfield>
 
       <div className="mt-8 grid max-w-xl grid-cols-3 gap-4">
@@ -52,7 +44,7 @@ function AuthHero() {
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 function Feature({ title, description }) {
@@ -66,7 +58,7 @@ function Feature({ title, description }) {
         {description}
       </Textfield>
     </div>
-  )
+  );
 }
 
-export { AuthHero }
+export { AuthHero };

@@ -37,15 +37,15 @@ public class GraphNodeResponse {
 
     public static GraphNodeResponse from(Post post, List<String> tags) {
         return GraphNodeResponse.builder()
-                .id(post.getId())
-                .title(post.getTitle())
-                .authorId(post.getUser().getId())
-                .authorUserId(post.getUser().getUserId())
-                .authorName(post.getUser().getName())
-                .categoryId(post.getCategory() != null ? post.getCategory().getId() : null)
-                .categoryName(post.getCategory() != null ? post.getCategory().getName() : null)
-                .isPublic(post.getIsPublic())
-                .tags(tags)
-                .build();
+            .id(post.getId())
+            .title(post.getTitle())
+            .authorId(post.getUser().getId())
+            .authorUserId(post.getUser().getUserId())
+            .authorName(post.getUser().getName())
+            .categoryId(post.getCategory() != null ? post.getCategory().getId() : null)
+            .categoryName(post.getCategory() != null ? post.getCategory().getName() : null)
+            .isPublic(post.getIsPublic())
+            .tags(tags)
+            .build();
     }
 }

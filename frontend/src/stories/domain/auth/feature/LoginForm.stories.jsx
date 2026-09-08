@@ -1,17 +1,17 @@
-import { LoginForm } from "@/components/domain/auth/login/feature/LoginForm"
+import { LoginForm } from '@/components/domain/auth/login/feature/LoginForm';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof LoginForm> } */
 const meta = {
-  title: "Domain/Auth/Feature/LoginForm",
+  title: 'Domain/Auth/Feature/LoginForm',
   component: LoginForm,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
   argTypes: {
-    onSwitchMode: { action: "switchMode" },
+    onSwitchMode: { action: 'switchMode' },
   },
-}
+};
 
-export default meta
+export default meta;
 
 export const Default = {
   render: (args) => (
@@ -22,7 +22,7 @@ export const Default = {
   args: {
     onSwitchMode: undefined,
   },
-}
+};
 
 export const WithSwitchAction = {
   render: (args) => (
@@ -31,4 +31,4 @@ export const WithSwitchAction = {
     </div>
   ),
   args: {},
-}
+};

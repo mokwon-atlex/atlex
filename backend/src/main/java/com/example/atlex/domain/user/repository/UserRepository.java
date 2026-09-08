@@ -12,14 +12,23 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUserId(String userId);
+
     boolean existsByEmail(String email);
+
     Optional<User> findByUserId(String userId);
+
     Optional<User> findByIdAndActiveTrue(Long id);
+
     Optional<User> findByUserIdAndActiveTrue(String userId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE User u SET u.failCount = u.failCount + 1, " +
-           "u.lockedUntil = CASE WHEN u.failCount + 1 >= :maxFail AND (u.lockedUntil IS NULL OR u.lockedUntil < :now) THEN :lockUntil ELSE u.lockedUntil END " +
-           "WHERE u.id = :id")
-    void incrementFailCountAndApplyLock(@Param("id") Long id, @Param("maxFail") int maxFail, @Param("lockUntil") LocalDateTime lockUntil, @Param("now") LocalDateTime now);
+        "u.lockedUntil = CASE WHEN u.failCount + 1 >= :maxFail AND (u.lockedUntil IS NULL OR u.lockedUntil < :now) THEN :lockUntil ELSE u.lockedUntil END "
+        +
+        "WHERE u.id = :id")
+    void incrementFailCountAndApplyLock(@Param("id")
+    Long id, @Param("maxFail")
+    int maxFail, @Param("lockUntil")
+    LocalDateTime lockUntil, @Param("now")
+    LocalDateTime now);
 }

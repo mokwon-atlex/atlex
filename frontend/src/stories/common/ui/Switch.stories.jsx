@@ -1,24 +1,24 @@
-import { useArgs } from "storybook/preview-api";
+import { useArgs } from 'storybook/preview-api';
 
-import { Switch } from "@/components/common/ui/switch";
-import { Label } from "@/components/common/ui/label";
+import { Switch } from '@/components/common/ui/switch';
+import { Label } from '@/components/common/ui/label';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof Switch> } */
 const meta = {
-  title: "Common/UI/Switch",
+  title: 'Common/UI/Switch',
   component: Switch,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
   argTypes: {
     size: {
-      control: "select",
-      options: ["default", "sm"],
+      control: 'select',
+      options: ['default', 'sm'],
     },
-    disabled: { control: "boolean" },
-    defaultChecked: { control: "boolean" },
+    disabled: { control: 'boolean' },
+    defaultChecked: { control: 'boolean' },
   },
   args: {
-    size: "default",
+    size: 'default',
     disabled: false,
     defaultChecked: false,
   },

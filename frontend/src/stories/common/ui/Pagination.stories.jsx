@@ -6,14 +6,14 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/common/ui/pagination";
+} from '@/components/common/ui/pagination';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof Pagination> } */
 const meta = {
-  title: "Common/UI/Pagination",
+  title: 'Common/UI/Pagination',
   component: Pagination,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
 };
 
 export default meta;
@@ -87,11 +87,7 @@ export const FirstPage = {
     <Pagination>
       <PaginationContent>
         <PaginationItem>
-          <PaginationPrevious
-            href="#"
-            className="pointer-events-none opacity-50"
-            disabled
-          />
+          <PaginationPrevious href="#" className="pointer-events-none opacity-50" disabled />
         </PaginationItem>
         <PaginationItem>
           <PaginationLink href="#" isActive>
@@ -131,11 +127,7 @@ export const LastPage = {
           </PaginationLink>
         </PaginationItem>
         <PaginationItem>
-          <PaginationNext
-            href="#"
-            className="pointer-events-none opacity-50"
-            disabled
-          />
+          <PaginationNext href="#" className="pointer-events-none opacity-50" disabled />
         </PaginationItem>
       </PaginationContent>
     </Pagination>
@@ -147,11 +139,7 @@ export const SinglePage = {
     <Pagination>
       <PaginationContent>
         <PaginationItem>
-          <PaginationPrevious
-            href="#"
-            className="pointer-events-none opacity-50"
-            disabled
-          />
+          <PaginationPrevious href="#" className="pointer-events-none opacity-50" disabled />
         </PaginationItem>
         <PaginationItem>
           <PaginationLink href="#" isActive>
@@ -159,11 +147,7 @@ export const SinglePage = {
           </PaginationLink>
         </PaginationItem>
         <PaginationItem>
-          <PaginationNext
-            href="#"
-            className="pointer-events-none opacity-50"
-            disabled
-          />
+          <PaginationNext href="#" className="pointer-events-none opacity-50" disabled />
         </PaginationItem>
       </PaginationContent>
     </Pagination>

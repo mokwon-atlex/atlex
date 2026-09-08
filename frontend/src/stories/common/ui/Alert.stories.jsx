@@ -1,29 +1,24 @@
-import { AlertCircle, Info, TriangleAlert } from "lucide-react";
+import { AlertCircle, Info, TriangleAlert } from 'lucide-react';
 
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/common/ui/alert";
-import { Button } from "@/components/common/ui/button";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/common/ui/alert';
+import { Button } from '@/components/common/ui/button';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof Alert> } */
 const meta = {
-  title: "Common/UI/Alert",
+  title: 'Common/UI/Alert',
   component: Alert,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
   argTypes: {
     variant: {
-      control: "select",
-      options: ["default", "warning", "destructive"],
+      control: 'select',
+      options: ['default', 'warning', 'destructive'],
     },
   },
   args: {
-    variant: "default",
+    variant: 'default',
   },
 };
 
@@ -48,8 +43,7 @@ export const Warning = {
         <TriangleAlert />
         <AlertTitle>주의</AlertTitle>
         <AlertDescription>
-          이 기능은 현재 비활성화 상태입니다. 색상 스타일을 적용하려면 Pro
-          플랜이 필요합니다.
+          이 기능은 현재 비활성화 상태입니다. 색상 스타일을 적용하려면 Pro 플랜이 필요합니다.
         </AlertDescription>
       </Alert>
     </div>
@@ -62,9 +56,7 @@ export const Destructive = {
       <Alert variant="destructive">
         <AlertCircle />
         <AlertTitle>오류</AlertTitle>
-        <AlertDescription>
-          작업을 완료할 수 없습니다. 잠시 후 다시 시도해 주세요.
-        </AlertDescription>
+        <AlertDescription>작업을 완료할 수 없습니다. 잠시 후 다시 시도해 주세요.</AlertDescription>
       </Alert>
     </div>
   ),
@@ -76,9 +68,7 @@ export const WithAction = {
       <Alert variant="warning">
         <TriangleAlert />
         <AlertTitle>임시 저장 만료 예정</AlertTitle>
-        <AlertDescription>
-          임시 저장된 글이 48시간 후 자동 삭제됩니다.
-        </AlertDescription>
+        <AlertDescription>임시 저장된 글이 48시간 후 자동 삭제됩니다.</AlertDescription>
         <AlertAction>
           <Button variant="outline" size="sm">
             지금 저장

@@ -1,15 +1,9 @@
-import { Button } from "@/components/common/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/common/ui/tooltip";
-import { TOOLBAR_ITEM_ICON_MAP } from "@/lib/post-editor/rich-text-toolbar-icons";
-import { Type } from "lucide-react";
+import { Button } from '@/components/common/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/ui/tooltip';
+import { TOOLBAR_ITEM_ICON_MAP } from '@/lib/post-editor/rich-text-toolbar-icons';
+import { Type } from 'lucide-react';
 
-export default function PostEditorToolbarButton({
-  groupId,
-  isActive,
-  isDisabled,
-  item,
-  onExecuteItem,
-}) {
+export default function PostEditorToolbarButton({ groupId, isActive, isDisabled, item, onExecuteItem }) {
   const Icon = TOOLBAR_ITEM_ICON_MAP[item] ?? Type;
 
   return (
@@ -18,7 +12,7 @@ export default function PostEditorToolbarButton({
         render={
           <Button
             type="button"
-            variant={isActive ? "default" : "ghost"}
+            variant={isActive ? 'default' : 'ghost'}
             size="icon-sm"
             disabled={isDisabled}
             aria-label={item}

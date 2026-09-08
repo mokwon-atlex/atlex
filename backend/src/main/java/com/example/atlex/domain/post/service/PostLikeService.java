@@ -31,9 +31,9 @@ public class PostLikeService {
 
         try {
             postLikeRepository.saveAndFlush(PostLike.builder()
-                    .post(post)
-                    .user(userRepository.getReferenceById(userId))
-                    .build());
+                .post(post)
+                .user(userRepository.getReferenceById(userId))
+                .build());
         } catch (DataIntegrityViolationException e) {
             // 순차 중복은 위 existsBy로 이미 걸러진다. 여기 도달하는 것은 "진짜 동시 요청"이 (user_id, post_id)
             // unique 제약을 동시에 위반한 경우다. 이때 saveAndFlush의 실패로 현재 트랜잭션이 rollback-only로

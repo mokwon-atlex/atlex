@@ -1,14 +1,14 @@
-import { useState } from "react"
-import { PasswordField } from "@/components/common/layout/PasswordField"
+import { useState } from 'react';
+import { PasswordField } from '@/components/common/layout/PasswordField';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof PasswordField> } */
 const meta = {
-  title: "Common/Layout/PasswordField",
+  title: 'Common/Layout/PasswordField',
   component: PasswordField,
-  tags: ["autodocs"],
-}
+  tags: ['autodocs'],
+};
 
-export default meta
+export default meta;
 
 function validate(password) {
   return {
@@ -17,13 +17,13 @@ function validate(password) {
     upper: /[A-Z]/.test(password),
     number: /[0-9]/.test(password),
     special: /[^a-zA-Z0-9]/.test(password),
-  }
+  };
 }
 
 function Controlled(props) {
-  const [value, setValue] = useState("")
-  const [confirmValue, setConfirmValue] = useState("")
-  const checks = validate(value)
+  const [value, setValue] = useState('');
+  const [confirmValue, setConfirmValue] = useState('');
+  const checks = validate(value);
 
   return (
     <div className="w-full">
@@ -36,22 +36,22 @@ function Controlled(props) {
         {...props}
       />
     </div>
-  )
+  );
 }
 
 export const Default = {
   render: () => <Controlled />,
-}
+};
 
 export const WithError = {
   render: () => <Controlled error="비밀번호를 입력해주세요." />,
-}
+};
 
 export const AllChecksPassed = {
   render: () => {
     function AllPassed() {
-      const password = "Abcdefg123!"
-      const [confirmValue, setConfirmValue] = useState("")
+      const password = 'Abcdefg123!';
+      const [confirmValue, setConfirmValue] = useState('');
 
       return (
         <div className="w-80">
@@ -63,18 +63,18 @@ export const AllChecksPassed = {
             checks={validate(password)}
           />
         </div>
-      )
+      );
     }
 
-    return <AllPassed />
+    return <AllPassed />;
   },
-}
+};
 
 export const WithoutChecks = {
   render: () => {
     function NoChecks() {
-      const [value, setValue] = useState("")
-      const [confirmValue, setConfirmValue] = useState("")
+      const [value, setValue] = useState('');
+      const [confirmValue, setConfirmValue] = useState('');
 
       return (
         <div className="w-80">
@@ -85,9 +85,9 @@ export const WithoutChecks = {
             onConfirmChange={(e) => setConfirmValue(e.target.value)}
           />
         </div>
-      )
+      );
     }
 
-    return <NoChecks />
+    return <NoChecks />;
   },
-}
+};

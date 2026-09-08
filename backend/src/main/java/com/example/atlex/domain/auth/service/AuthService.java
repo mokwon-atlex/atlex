@@ -35,7 +35,7 @@ public class AuthService {
     @Transactional(noRollbackFor = AuthenticationException.class)
     public TokenResponse login(String userId, String password) {
         User user = userRepository.findByUserId(userId)
-                .orElseThrow(AuthenticationException::new);
+            .orElseThrow(AuthenticationException::new);
 
         if (Boolean.FALSE.equals(user.getActive())) {
             throw new AccountDisabledException();
@@ -49,7 +49,8 @@ public class AuthService {
         // 비밀번호 검증 — 실패 카운트는 DB 레벨에서 원자적으로 증가
         if (!passwordEncoder.matches(password, user.getPassword())) {
             LocalDateTime now = LocalDateTime.now();
-            userRepository.incrementFailCountAndApplyLock(user.getId(), MAX_FAIL_COUNT, now.plusMinutes(LOCK_MINUTES), now);
+            userRepository.incrementFailCountAndApplyLock(user.getId(), MAX_FAIL_COUNT, now.plusMinutes(LOCK_MINUTES),
+                now);
             throw new AuthenticationException();
         }
 
@@ -63,25 +64,29 @@ public class AuthService {
 
         // 리프레시 토큰 저장 (기존 토큰 있으면 갱신)
         RefreshToken token = tokenRepository.findById(user.getId())
-                .map(t -> { t.updateToken(refreshToken, expiredDate); return t; })
-                .orElse(RefreshToken.builder().id(user.getId()).token(refreshToken).expiredDate(expiredDate).build());
+            .map(t -> {
+                t.updateToken(refreshToken, expiredDate);
+                return t;
+            })
+            .orElse(RefreshToken.builder().id(user.getId()).token(refreshToken).expiredDate(expiredDate).build());
         tokenRepository.save(token);
 
         return TokenResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .userId(userId)
-                .build();
+            .accessToken(accessToken)
+            .refreshToken(refreshToken)
+            .userId(userId)
+            .build();
     }
+
     @Transactional
     public TokenResponse reissue(String refreshToken) {
-        if(!jwtProvider.validateRefreshToken(refreshToken)){
+        if (!jwtProvider.validateRefreshToken(refreshToken)) {
             throw new InvalidTokenException("리프레시 토큰이 만료되었습니다.");
         }
 
         Long userPk = jwtProvider.getUserPk(refreshToken);
         User user = userRepository.findByIdAndActiveTrue(userPk)
-                .orElseThrow(UserNotFoundException::new);
+            .orElseThrow(UserNotFoundException::new);
 
         // 잠긴 계정은 토큰 갱신 차단 (403 반환 — 클라이언트가 재로그인 화면으로 유도)
         if (user.isLocked()) {
@@ -89,7 +94,7 @@ public class AuthService {
         }
 
         RefreshToken savedToken = tokenRepository.findById(userPk)
-                .orElseThrow(() -> new InvalidTokenException("로그인 정보가 없습니다. 다시 로그인 해주세요."));
+            .orElseThrow(() -> new InvalidTokenException("로그인 정보가 없습니다. 다시 로그인 해주세요."));
         if (!savedToken.getToken().equals(refreshToken)) {
             throw new InvalidTokenException("토큰 정보가 일치하지 않습니다.");
         }
@@ -107,11 +112,12 @@ public class AuthService {
         tokenRepository.save(savedToken);
 
         return TokenResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
-                .userId(user.getUserId())
-                .build();
+            .accessToken(newAccessToken)
+            .refreshToken(newRefreshToken)
+            .userId(user.getUserId())
+            .build();
     }
+
     @Transactional
     public void logout(Long id) {
         tokenRepository.deleteById(id);

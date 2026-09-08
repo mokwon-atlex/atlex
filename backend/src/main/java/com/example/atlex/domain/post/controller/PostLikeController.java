@@ -18,16 +18,20 @@ public class PostLikeController implements PostLikeControllerDocs {
 
     @PostMapping("/{postId}/likes")
     public ResponseEntity<ApiResponse<PostLikeResponse>> like(
-            @AuthenticationPrincipal PrincipalDetails principalDetails,
-            @PathVariable Long postId) {
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails,
+        @PathVariable
+        Long postId) {
         PostLikeResponse response = postLikeService.like(postId, principalDetails.user().getId());
         return ResponseEntity.ok(ApiResponse.success(response, "좋아요 상태가 변경되었습니다"));
     }
 
     @DeleteMapping("/{postId}/likes")
     public ResponseEntity<ApiResponse<PostLikeResponse>> unlike(
-            @AuthenticationPrincipal PrincipalDetails principalDetails,
-            @PathVariable Long postId) {
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails,
+        @PathVariable
+        Long postId) {
         PostLikeResponse response = postLikeService.unlike(postId, principalDetails.user().getId());
         return ResponseEntity.ok(ApiResponse.success(response, "좋아요 상태가 변경되었습니다"));
     }

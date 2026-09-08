@@ -26,11 +26,11 @@ public class PublicUserResponse {
 
     public static PublicUserResponse from(User user) {
         return PublicUserResponse.builder()
-                .id(user.getId())
-                .userId(user.getUserId())
-                .name(user.getName())
-                .profileImage(user.getProfileImage())
-                .info(user.getInfo())
-                .build();
+            .id(user.getId())
+            .userId(user.getUserId())
+            .name(user.getName())
+            .profileImage(user.getProfileImage())
+            .info(user.getInfo())
+            .build();
     }
 }

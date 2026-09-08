@@ -51,15 +51,15 @@ public class UserService {
         }
 
         User user = User.builder()
-                .userId(cleanUserId)
-                .email(cleanEmail)
-                .password(passwordEncoder.encode(cleanPassword))
-                .name(cleanName)
-                .termsAgreed(request.getTermsAgreed())
-                .privacyAgreed(request.getPrivacyAgreed())
-                .marketingAgreed(Boolean.TRUE.equals(request.getMarketingAgreed()))
-                .agreedAt(LocalDateTime.now())
-                .build();
+            .userId(cleanUserId)
+            .email(cleanEmail)
+            .password(passwordEncoder.encode(cleanPassword))
+            .name(cleanName)
+            .termsAgreed(request.getTermsAgreed())
+            .privacyAgreed(request.getPrivacyAgreed())
+            .marketingAgreed(Boolean.TRUE.equals(request.getMarketingAgreed()))
+            .agreedAt(LocalDateTime.now())
+            .build();
 
         return UserResponse.from(userRepository.save(user));
     }
@@ -67,7 +67,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserResponse findByUserId(String userId) {
         User user = userRepository.findByUserId(userId)
-                .orElseThrow(UserNotFoundException::new);
+            .orElseThrow(UserNotFoundException::new);
         return UserResponse.from(user);
     }
 
@@ -82,14 +82,14 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<UserResponse> findAll() {
         return userRepository.findAll().stream()
-                .map(UserResponse::from)
-                .collect(Collectors.toList());
+            .map(UserResponse::from)
+            .collect(Collectors.toList());
     }
 
     @Transactional
     public UserResponse update(String userId, UpdateRequest request) {
         User user = userRepository.findByUserIdAndActiveTrue(userId)
-                .orElseThrow(UserNotFoundException::new);
+            .orElseThrow(UserNotFoundException::new);
 
         if (request.getUserId() != null) {
             String cleanUserId = request.getUserId().trim();
@@ -108,10 +108,9 @@ public class UserService {
         }
 
         user.update(
-                request.getUserId(),
-                request.getEmail(),
-                request.getName() != null ? request.getName().trim() : null
-        );
+            request.getUserId(),
+            request.getEmail(),
+            request.getName() != null ? request.getName().trim() : null);
 
         return UserResponse.from(user);
     }
@@ -119,7 +118,7 @@ public class UserService {
     @Transactional
     public void changePassword(String userId, ChangePasswordRequest request) {
         User user = userRepository.findByUserIdAndActiveTrue(userId)
-                .orElseThrow(UserNotFoundException::new);
+            .orElseThrow(UserNotFoundException::new);
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new InvalidCurrentPasswordException();

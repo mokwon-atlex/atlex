@@ -5,8 +5,8 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@/components/common/ui/popover";
-import { Button } from "@/components/common/ui/button";
+} from '@/components/common/ui/popover';
+import { Button } from '@/components/common/ui/button';
 
 function BasicPopover({ side, align, sideOffset, alignOffset }) {
   return (
@@ -26,20 +26,20 @@ function BasicPopover({ side, align, sideOffset, alignOffset }) {
 
 /** @type { import('@storybook/nextjs-vite').Meta } */
 const meta = {
-  title: "Common/UI/Popover",
+  title: 'Common/UI/Popover',
   component: PopoverContent,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     side: {
-      control: "select",
-      options: ["top", "bottom", "left", "right"],
+      control: 'select',
+      options: ['top', 'bottom', 'left', 'right'],
     },
     align: {
-      control: "select",
-      options: ["start", "center", "end"],
+      control: 'select',
+      options: ['start', 'center', 'end'],
     },
-    sideOffset: { control: "number" },
-    alignOffset: { control: "number" },
+    sideOffset: { control: 'number' },
+    alignOffset: { control: 'number' },
   },
   render: (args) => <BasicPopover {...args} />,
 };
@@ -47,13 +47,13 @@ const meta = {
 export default meta;
 
 export const Default = {
-  args: { side: "bottom", align: "center", sideOffset: 4, alignOffset: 0 },
+  args: { side: 'bottom', align: 'center', sideOffset: 4, alignOffset: 0 },
 };
 
 export const Positions = {
   render: () => (
     <div className="flex items-center justify-center gap-3 h-60">
-      {["top", "bottom", "left", "right"].map((side) => (
+      {['top', 'bottom', 'left', 'right'].map((side) => (
         <Popover key={side}>
           <PopoverTrigger render={<Button variant="outline" />}>{side}</PopoverTrigger>
           <PopoverContent side={side}>
@@ -71,7 +71,7 @@ export const Positions = {
 export const Alignments = {
   render: () => (
     <div className="flex items-center justify-center gap-3 h-40">
-      {["start", "center", "end"].map((align) => (
+      {['start', 'center', 'end'].map((align) => (
         <Popover key={align}>
           <PopoverTrigger render={<Button variant="outline" />}>{align}</PopoverTrigger>
           <PopoverContent align={align}>

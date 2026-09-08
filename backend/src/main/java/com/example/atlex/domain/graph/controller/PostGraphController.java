@@ -22,11 +22,14 @@ public class PostGraphController implements PostGraphControllerDocs {
 
     @GetMapping
     public ResponseEntity<ApiResponse<PostGraphResponse>> getGraph(
-            @AuthenticationPrincipal PrincipalDetails principalDetails,
-            @RequestParam(required = false) String userId,
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) Double minScore
-    ) {
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails,
+        @RequestParam(required = false)
+        String userId,
+        @RequestParam(required = false)
+        Long categoryId,
+        @RequestParam(required = false)
+        Double minScore) {
         Long viewerId = principalDetails != null ? principalDetails.user().getId() : null;
         PostGraphResponse response = graphService.getGraph(userId, categoryId, minScore, viewerId);
         return ResponseEntity.ok(ApiResponse.success(response));
@@ -34,11 +37,14 @@ public class PostGraphController implements PostGraphControllerDocs {
 
     @GetMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<PostGraphResponse>> getPostGraph(
-            @AuthenticationPrincipal PrincipalDetails principalDetails,
-            @PathVariable Long postId,
-            @RequestParam(required = false) Double minScore,
-            @RequestParam(required = false) Integer limit
-    ) {
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails,
+        @PathVariable
+        Long postId,
+        @RequestParam(required = false)
+        Double minScore,
+        @RequestParam(required = false)
+        Integer limit) {
         Long viewerId = principalDetails != null ? principalDetails.user().getId() : null;
         PostGraphResponse response = graphService.getPostGraph(postId, minScore, limit, viewerId);
         return ResponseEntity.ok(ApiResponse.success(response));

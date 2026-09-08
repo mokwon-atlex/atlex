@@ -8,7 +8,7 @@ export default function PostEditorTopBar({
   onOpenDraftModal, // 임시 저장 목록 모달 열기 핸들러
   onPublish, // 게시 버튼 핸들러
   publishButtonLabel = '게시 버튼',
-  publishDisabled = false // 게시 진행 중 등 버튼 비활성화 여부
+  publishDisabled = false, // 게시 진행 중 등 버튼 비활성화 여부
 }) {
   return (
     <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-7">

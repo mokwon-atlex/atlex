@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 import {
   Pagination,
@@ -10,13 +10,11 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/common/ui/pagination";
-import { cn } from "@/lib/utils";
+} from '@/components/common/ui/pagination';
+import { cn } from '@/lib/utils';
 
 function getNumericPages(items = []) {
-  return items
-    .map((item) => Number.parseInt(item.label, 10))
-    .filter((page) => Number.isFinite(page));
+  return items.map((item) => Number.parseInt(item.label, 10)).filter((page) => Number.isFinite(page));
 }
 
 function getPageRange(currentPage, totalPages, siblingCount = 1) {
@@ -27,7 +25,7 @@ function getPageRange(currentPage, totalPages, siblingCount = 1) {
   if (left > 1) {
     pages.push(1);
     if (left > 2) {
-      pages.push("ellipsis-left");
+      pages.push('ellipsis-left');
     }
   }
 
@@ -37,7 +35,7 @@ function getPageRange(currentPage, totalPages, siblingCount = 1) {
 
   if (right < totalPages) {
     if (right < totalPages - 1) {
-      pages.push("ellipsis-right");
+      pages.push('ellipsis-right');
     }
     pages.push(totalPages);
   }
@@ -54,8 +52,7 @@ export default function BlogHomePagination({
 }) {
   const numericPages = getNumericPages(items);
   const totalPages = Math.max(controlledTotalPages ?? Math.max(...numericPages, 1), 1);
-  const initialCurrentPage =
-    Number.parseInt(items.find((item) => item.current)?.label, 10) || 1;
+  const initialCurrentPage = Number.parseInt(items.find((item) => item.current)?.label, 10) || 1;
   const [currentPage, setCurrentPage] = useState(initialCurrentPage);
   const resolvedCurrentPage = controlledCurrentPage ?? currentPage;
   const pages = getPageRange(resolvedCurrentPage, totalPages, 1);
@@ -91,14 +88,14 @@ export default function BlogHomePagination({
             aria-disabled={isPrevDisabled}
             disabled={isPrevDisabled}
             className={cn(
-              "h-10 min-w-10 rounded-lg border border-border bg-card px-3 text-sm font-semibold text-muted-foreground shadow-none transition-colors hover:no-underline",
-              isPrevDisabled && "pointer-events-none opacity-50"
+              'h-10 min-w-10 rounded-lg border border-border bg-card px-3 text-sm font-semibold text-muted-foreground shadow-none transition-colors hover:no-underline',
+              isPrevDisabled && 'pointer-events-none opacity-50',
             )}
           />
         </PaginationItem>
 
         {pages.map((page) => {
-          if (page === "ellipsis-left" || page === "ellipsis-right") {
+          if (page === 'ellipsis-left' || page === 'ellipsis-right') {
             return (
               <PaginationItem key={page}>
                 <PaginationEllipsis className="h-10 min-w-10 px-2 text-muted-foreground" />
@@ -116,10 +113,10 @@ export default function BlogHomePagination({
                 onClick={(event) => handlePageChange(page, event)}
                 disabled={isActive}
                 className={cn(
-                  "h-10 min-w-10 rounded-lg border px-3 text-sm font-semibold shadow-none transition-colors hover:no-underline",
+                  'h-10 min-w-10 rounded-lg border px-3 text-sm font-semibold shadow-none transition-colors hover:no-underline',
                   isActive
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-card text-muted-foreground"
+                    ? 'border-foreground bg-foreground text-background'
+                    : 'border-border bg-card text-muted-foreground',
                 )}
               >
                 {page}
@@ -136,8 +133,8 @@ export default function BlogHomePagination({
             aria-disabled={isNextDisabled}
             disabled={isNextDisabled}
             className={cn(
-              "h-10 min-w-10 rounded-lg border border-border bg-card px-3 text-sm font-semibold text-muted-foreground shadow-none transition-colors hover:no-underline",
-              isNextDisabled && "pointer-events-none opacity-50"
+              'h-10 min-w-10 rounded-lg border border-border bg-card px-3 text-sm font-semibold text-muted-foreground shadow-none transition-colors hover:no-underline',
+              isNextDisabled && 'pointer-events-none opacity-50',
             )}
           />
         </PaginationItem>

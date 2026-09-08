@@ -25,8 +25,7 @@ public class ErrorData {
     // ====== field ======
     public static ErrorData field(String message, String key, Object value) {
         return new ErrorData(
-                message,
-                Map.of("key", key, "value", value)
-        );
+            message,
+            Map.of("key", key, "value", value));
     }
 }

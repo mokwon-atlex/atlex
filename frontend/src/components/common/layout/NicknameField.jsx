@@ -1,11 +1,11 @@
-"use client"
+'use client';
 
-import { Field, FieldLabel, FieldError } from "@/components/common/ui/field"
-import { Input } from "@/components/common/ui/input"
-import { Button } from "@/components/common/ui/button"
+import { Field, FieldLabel, FieldError } from '@/components/common/ui/field';
+import { Input } from '@/components/common/ui/input';
+import { Button } from '@/components/common/ui/button';
 
 export function NicknameField({ value, onChange, onBlur, onCheckDuplicate, checkResult, error }) {
-  const isInvalid = !!error || checkResult?.ok === false
+  const isInvalid = !!error || checkResult?.ok === false;
 
   return (
     <Field data-invalid={isInvalid || undefined}>
@@ -21,22 +21,15 @@ export function NicknameField({ value, onChange, onBlur, onCheckDuplicate, check
           aria-invalid={isInvalid || undefined}
           className="flex-1"
         />
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onCheckDuplicate}
-          className="shrink-0"
-        >
+        <Button type="button" variant="secondary" onClick={onCheckDuplicate} className="shrink-0">
           중복확인
         </Button>
       </div>
 
       {checkResult && (
-        <p className={`text-sm ${checkResult.ok ? "text-green-600" : "text-destructive"}`}>
-          {checkResult.message}
-        </p>
+        <p className={`text-sm ${checkResult.ok ? 'text-green-600' : 'text-destructive'}`}>{checkResult.message}</p>
       )}
       {error && <FieldError>{error}</FieldError>}
     </Field>
-  )
+  );
 }

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import PostEditorToolRail from "@/components/domain/post-editor/layout/PostEditorToolRail";
-import { postEditorToolCategories } from "@/data/post-editor/post-editor-tool-categories";
+import PostEditorToolRail from '@/components/domain/post-editor/layout/PostEditorToolRail';
+import { postEditorToolCategories } from '@/data/post-editor/post-editor-tool-categories';
 
 const mockGetItemState = () => ({
   isActive: false,
@@ -22,10 +22,10 @@ function ToolRailDemo() {
 
 /** @type { import('@storybook/nextjs-vite').Meta } */
 const meta = {
-  title: "Domain/PostEditor/Layout/PostEditorToolRail",
+  title: 'Domain/PostEditor/Layout/PostEditorToolRail',
   component: PostEditorToolRail,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
 };
 
 export default meta;

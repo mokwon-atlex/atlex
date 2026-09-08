@@ -1,33 +1,28 @@
-import { useArgs } from "storybook/preview-api";
+import { useArgs } from 'storybook/preview-api';
 
-import { Checkbox } from "@/components/common/ui/checkbox";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldTitle,
-} from "@/components/common/ui/field";
-import { Label } from "@/components/common/ui/label";
+import { Checkbox } from '@/components/common/ui/checkbox';
+import { Field, FieldContent, FieldDescription, FieldTitle } from '@/components/common/ui/field';
+import { Label } from '@/components/common/ui/label';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof Checkbox> } */
 const meta = {
-  title: "Common/UI/Checkbox",
+  title: 'Common/UI/Checkbox',
   component: Checkbox,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   argTypes: {
     variant: {
-      control: "select",
-      options: ["default", "outline", "filled", "ghost"],
+      control: 'select',
+      options: ['default', 'outline', 'filled', 'ghost'],
     },
-    checked: { control: "boolean" },
-    disabled: { control: "boolean" },
-    "aria-invalid": { control: "boolean" },
+    checked: { control: 'boolean' },
+    disabled: { control: 'boolean' },
+    'aria-invalid': { control: 'boolean' },
   },
   args: {
-    variant: "default",
+    variant: 'default',
     checked: false,
     disabled: false,
-    "aria-invalid": false,
+    'aria-invalid': false,
   },
 };
 
@@ -80,7 +75,7 @@ export const States = {
 export const AllVariants = {
   render: () => (
     <div className="flex flex-col gap-3">
-      {["default", "outline", "filled", "ghost"].map((variant) => (
+      {['default', 'outline', 'filled', 'ghost'].map((variant) => (
         <div key={variant} className="flex items-center gap-3">
           <Checkbox id={`checkbox-${variant}`} variant={variant} defaultChecked />
           <Label htmlFor={`checkbox-${variant}`}>{variant}</Label>
@@ -92,7 +87,7 @@ export const AllVariants = {
 
 export const Invalid = {
   args: {
-    "aria-invalid": true,
+    'aria-invalid': true,
   },
   render: function Render(args) {
     const [{ checked }, updateArgs] = useArgs();
@@ -117,9 +112,7 @@ export const WithDescription = {
       <Checkbox id="checkbox-description" defaultChecked />
       <FieldContent>
         <FieldTitle>Receive product updates</FieldTitle>
-        <FieldDescription>
-          Send release notes and feature announcements to my email.
-        </FieldDescription>
+        <FieldDescription>Send release notes and feature announcements to my email.</FieldDescription>
       </FieldContent>
     </Field>
   ),

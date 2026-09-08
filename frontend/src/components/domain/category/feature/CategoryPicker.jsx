@@ -1,18 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-import CategoryPickerCard from "@/components/domain/category/ui/CategoryPickerCard";
-import { getCategoryPickerItems } from "@/lib/category/category-picker";
+import CategoryPickerCard from '@/components/domain/category/ui/CategoryPickerCard';
+import { getCategoryPickerItems } from '@/lib/category/category-picker';
 
 const PAGE_SIZE = 6;
 
-export default function CategoryPicker({
-  categories,
-  posts,
-  selectedCategoryId,
-  onCategorySelect,
-}) {
+export default function CategoryPicker({ categories, posts, selectedCategoryId, onCategorySelect }) {
   const items = getCategoryPickerItems(categories, posts);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const scrollAreaRef = useRef(null);
@@ -38,15 +33,13 @@ export default function CategoryPicker({
           return;
         }
 
-        setVisibleCount((currentCount) =>
-          Math.min(currentCount + PAGE_SIZE, items.length)
-        );
+        setVisibleCount((currentCount) => Math.min(currentCount + PAGE_SIZE, items.length));
       },
       {
         root: scrollArea,
-        rootMargin: "0px 0px 160px 0px",
+        rootMargin: '0px 0px 160px 0px',
         threshold: 0.1,
-      }
+      },
     );
 
     observer.observe(sentinel);
@@ -59,10 +52,7 @@ export default function CategoryPicker({
   const visibleItems = items.slice(0, visibleCount);
 
   return (
-    <div
-      ref={scrollAreaRef}
-      className="no-scrollbar h-full min-h-0 overflow-y-auto pr-1"
-    >
+    <div ref={scrollAreaRef} className="no-scrollbar h-full min-h-0 overflow-y-auto pr-1">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {visibleItems.map((category) => (
           <CategoryPickerCard
@@ -74,9 +64,7 @@ export default function CategoryPicker({
         ))}
       </div>
 
-      {visibleCount < items.length ? (
-        <div ref={sentinelRef} className="h-1" aria-hidden />
-      ) : null}
+      {visibleCount < items.length ? <div ref={sentinelRef} className="h-1" aria-hidden /> : null}
     </div>
   );
 }

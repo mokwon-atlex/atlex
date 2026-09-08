@@ -1,6 +1,6 @@
-import { Tabs, TabsList, TabsTrigger } from "@/components/common/ui/tabs";
-import { cn } from "@/lib/utils";
-import { SORT_OPTIONS } from "@/app/tag_list/_lib/tags";
+import { Tabs, TabsList, TabsTrigger } from '@/components/common/ui/tabs';
+import { cn } from '@/lib/utils';
+import { SORT_OPTIONS } from '@/app/tag_list/_lib/tags';
 
 export default function TagSortTabs({ currentSort, onSortChange }) {
   return (
@@ -11,11 +11,11 @@ export default function TagSortTabs({ currentSort, onSortChange }) {
             key={option.value}
             value={option.value}
             className={cn(
-              "px-0 pb-2 text-[15px] text-muted-foreground",
-              "hover:text-foreground",
-              "data-active:font-bold data-active:text-primary",
-              "data-[state=active]:font-bold data-[state=active]:text-primary",
-              "after:bg-primary"
+              'px-0 pb-2 text-[15px] text-muted-foreground',
+              'hover:text-foreground',
+              'data-active:font-bold data-active:text-primary',
+              'data-[state=active]:font-bold data-[state=active]:text-primary',
+              'after:bg-primary',
             )}
           >
             {option.label}

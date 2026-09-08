@@ -1,22 +1,24 @@
-"use client";
+'use client';
 
-import PostEditorSidebar from "@/components/domain/post-editor/layout/PostEditorSidebar";
-import { postEditorToolCategories } from "@/data/post-editor/post-editor-tool-categories";
-import usePostEditorPanels from "@/hooks/post-editor/post-editor-panels";
+import PostEditorSidebar from '@/components/domain/post-editor/layout/PostEditorSidebar';
+import { postEditorToolCategories } from '@/data/post-editor/post-editor-tool-categories';
+import usePostEditorPanels from '@/hooks/post-editor/post-editor-panels';
 
 // getItemState 목 — 실제 tiptap 없이 상태를 시뮬레이션한다
 const mockGetItemState = (groupId, item) => ({
-  isActive: item === "볼드",           // 볼드만 활성 상태처럼 표시
-  isDisabled: groupId === "font-color", // 색상 그룹은 항상 비활성
+  isActive: item === '볼드', // 볼드만 활성 상태처럼 표시
+  isDisabled: groupId === 'font-color', // 색상 그룹은 항상 비활성
 });
 
-function SidebarDemo({ initialGroupId = "font-style", initialToolId = "text-style" }) {
-  const { activeGroup, activeTool, closeToolPanel, onSelectGroup, selectGroup } =
-    usePostEditorPanels(postEditorToolCategories, {
+function SidebarDemo({ initialGroupId = 'font-style', initialToolId = 'text-style' }) {
+  const { activeGroup, activeTool, closeToolPanel, onSelectGroup, selectGroup } = usePostEditorPanels(
+    postEditorToolCategories,
+    {
       initialGroupId,
       initialOpen: true,
       initialToolId,
-    });
+    },
+  );
 
   return (
     <div className="h-[600px] w-[360px] overflow-hidden rounded-2xl border border-border bg-background">
@@ -34,10 +36,10 @@ function SidebarDemo({ initialGroupId = "font-style", initialToolId = "text-styl
 
 /** @type { import('@storybook/nextjs-vite').Meta } */
 const meta = {
-  title: "Domain/PostEditor/Layout/PostEditorSidebar",
+  title: 'Domain/PostEditor/Layout/PostEditorSidebar',
   component: PostEditorSidebar,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
 };
 
 export default meta;

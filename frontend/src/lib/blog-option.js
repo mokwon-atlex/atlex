@@ -2,37 +2,27 @@ export const CATEGORY_PAGE_SIZE = 10;
 export const BLOG_OPTION_BIO_MAX_LENGTH = 30;
 
 export function normalizeBlogBio(profile) {
-  if (typeof profile?.info === "string") {
+  if (typeof profile?.info === 'string') {
     return profile.info;
   }
 
-  if (typeof profile?.bio === "string") {
+  if (typeof profile?.bio === 'string') {
     return profile.bio;
   }
 
-  if (typeof profile?.description === "string") {
+  if (typeof profile?.description === 'string') {
     return profile.description;
   }
 
-  return "";
+  return '';
 }
 
 function normalizeCategoryItem(category, index) {
   const source = category?.category ?? category?.item ?? category;
-  const id =
-    source?.id ?? source?.categoryId ?? source?.categoryID ?? index;
-  const name = String(
-    source?.name ??
-      source?.categoryName ??
-      source?.label ??
-      source?.title ??
-      ""
-  ).trim();
-  const postCount = Number(
-    source?.postCount ?? source?.postsCount ?? source?.count ?? 0
-  );
-  const thumbnailUrl =
-    typeof source?.thumbnailUrl === "string" ? source.thumbnailUrl : null;
+  const id = source?.id ?? source?.categoryId ?? source?.categoryID ?? index;
+  const name = String(source?.name ?? source?.categoryName ?? source?.label ?? source?.title ?? '').trim();
+  const postCount = Number(source?.postCount ?? source?.postsCount ?? source?.count ?? 0);
+  const thumbnailUrl = typeof source?.thumbnailUrl === 'string' ? source.thumbnailUrl : null;
 
   if (!name) {
     return null;
@@ -68,7 +58,5 @@ export function normalizeCategoryList(response) {
       response?.values,
     ].find(Array.isArray) ?? [];
 
-  return rawCategories
-    .map((category, index) => normalizeCategoryItem(category, index))
-    .filter(Boolean);
+  return rawCategories.map((category, index) => normalizeCategoryItem(category, index)).filter(Boolean);
 }

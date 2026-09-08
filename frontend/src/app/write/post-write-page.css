@@ -38,13 +38,13 @@
   line-height: 2rem;
 }
 
-.post-editor-prose .tiptap p[data-type="lead-paragraph"] {
+.post-editor-prose .tiptap p[data-type='lead-paragraph'] {
   color: #0f172a;
   font-size: 1.125rem;
   font-weight: 600;
 }
 
-.post-editor-prose .tiptap p[data-type="caption-paragraph"] {
+.post-editor-prose .tiptap p[data-type='caption-paragraph'] {
   color: #64748b;
   font-size: 0.875rem;
   line-height: 1.6;
@@ -76,23 +76,23 @@
   padding-left: 1.5rem;
 }
 
-.post-editor-prose .tiptap ul[data-type="taskList"] {
+.post-editor-prose .tiptap ul[data-type='taskList'] {
   list-style: none;
   padding-left: 0;
 }
 
-.post-editor-prose .tiptap ul[data-type="taskList"] li {
+.post-editor-prose .tiptap ul[data-type='taskList'] li {
   align-items: flex-start;
   display: flex;
   gap: 0.75rem;
   margin-top: 0.75rem;
 }
 
-.post-editor-prose .tiptap ul[data-type="taskList"] li > label {
+.post-editor-prose .tiptap ul[data-type='taskList'] li > label {
   margin-top: 0.45rem;
 }
 
-.post-editor-prose .tiptap ul[data-type="taskList"] li > div {
+.post-editor-prose .tiptap ul[data-type='taskList'] li > div {
   flex: 1;
   min-width: 0;
 }
@@ -146,10 +146,10 @@
   font-weight: 700;
 }
 
-.post-editor-prose .tiptap [data-type="callout-box"],
-.post-editor-prose .tiptap [data-type="details-block"],
-.post-editor-prose .tiptap [data-type="math-block"],
-.post-editor-prose .tiptap [data-type="section-block"] {
+.post-editor-prose .tiptap [data-type='callout-box'],
+.post-editor-prose .tiptap [data-type='details-block'],
+.post-editor-prose .tiptap [data-type='math-block'],
+.post-editor-prose .tiptap [data-type='section-block'] {
   background: #fff;
   border: 1px solid #cbd5e1;
   border-radius: 1rem;
@@ -157,12 +157,12 @@
   padding: 1rem 1rem 1.1rem;
 }
 
-.post-editor-prose .tiptap [data-type="callout-box"] {
+.post-editor-prose .tiptap [data-type='callout-box'] {
   background: #f8fafc;
   border-color: #94a3b8;
 }
 
-.post-editor-prose .tiptap [data-type="section-block"] {
+.post-editor-prose .tiptap [data-type='section-block'] {
   background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
 }
 
@@ -185,7 +185,7 @@
   margin-top: 0;
 }
 
-.post-editor-prose .tiptap [data-type="math-block"] .post-editor-block__body {
+.post-editor-prose .tiptap [data-type='math-block'] .post-editor-block__body {
   margin: 0;
 }
 

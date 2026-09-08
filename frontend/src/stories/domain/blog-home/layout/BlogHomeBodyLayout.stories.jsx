@@ -1,15 +1,15 @@
-import BlogHomeBodyLayout from "@/components/domain/blog-home/layout/BlogHomeBodyLayout";
+import BlogHomeBodyLayout from '@/components/domain/blog-home/layout/BlogHomeBodyLayout';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof BlogHomeBodyLayout> } */
 const meta = {
-  title: "Domain/BlogHome/Layout/BlogHomeBodyLayout",
+  title: 'Domain/BlogHome/Layout/BlogHomeBodyLayout',
   component: BlogHomeBodyLayout,
-  tags: ["autodocs"],
-  parameters: { layout: "fullscreen" },
+  tags: ['autodocs'],
+  parameters: { layout: 'fullscreen' },
   argTypes: {
-    stickySidebar: { control: "boolean" },
-    sidebarClassName: { control: "text" },
-    contentClassName: { control: "text" },
+    stickySidebar: { control: 'boolean' },
+    sidebarClassName: { control: 'text' },
+    contentClassName: { control: 'text' },
   },
 };
 
@@ -46,10 +46,7 @@ export const StickySidebar = {
       >
         <div className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground"
-            >
+            <div key={i} className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
               콘텐츠 카드 {i + 1}
             </div>
           ))}

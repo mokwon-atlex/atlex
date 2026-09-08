@@ -1,25 +1,33 @@
-"use client"
+'use client';
 
-import { Field, FieldLabel, FieldError } from "@/components/common/ui/field"
-import { Input } from "@/components/common/ui/input"
+import { Field, FieldLabel, FieldError } from '@/components/common/ui/field';
+import { Input } from '@/components/common/ui/input';
 
 const EMAIL_DOMAINS = [
-  { label: "직접 입력", value: "" },
-  { label: "naver.com", value: "naver.com" },
-  { label: "daum.net", value: "daum.net" },
-  { label: "kakao.com", value: "kakao.com" },
-  { label: "gmail.com", value: "gmail.com" },
-  { label: "nate.com", value: "nate.com" },
-]
+  { label: '직접 입력', value: '' },
+  { label: 'naver.com', value: 'naver.com' },
+  { label: 'daum.net', value: 'daum.net' },
+  { label: 'kakao.com', value: 'kakao.com' },
+  { label: 'gmail.com', value: 'gmail.com' },
+  { label: 'nate.com', value: 'nate.com' },
+];
 
-export function EmailField({ localValue, domainValue, onLocalChange, onDomainChange, selectedDomain, onSelectedDomainChange, error }) {
-  const isInvalid = !!error
-  const isDirect = selectedDomain === ""
+export function EmailField({
+  localValue,
+  domainValue,
+  onLocalChange,
+  onDomainChange,
+  selectedDomain,
+  onSelectedDomainChange,
+  error,
+}) {
+  const isInvalid = !!error;
+  const isDirect = selectedDomain === '';
 
   function handleSelectChange(e) {
-    const value = e.target.value
-    onSelectedDomainChange(value)
-    onDomainChange({ target: { value } })
+    const value = e.target.value;
+    onSelectedDomainChange(value);
+    onDomainChange({ target: { value } });
   }
 
   return (
@@ -53,11 +61,13 @@ export function EmailField({ localValue, domainValue, onLocalChange, onDomainCha
           className="h-8 shrink-0 rounded-lg border-2 border-border bg-transparent px-2.5 text-sm text-foreground outline-none focus:border-ring"
         >
           {EMAIL_DOMAINS.map(({ label, value }) => (
-            <option key={value} value={value}>{label}</option>
+            <option key={value} value={value}>
+              {label}
+            </option>
           ))}
         </select>
       </div>
       {error && <FieldError>{error}</FieldError>}
     </Field>
-  )
+  );
 }

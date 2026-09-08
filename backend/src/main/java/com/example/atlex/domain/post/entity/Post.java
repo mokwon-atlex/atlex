@@ -65,17 +65,21 @@ public class Post {
     private LocalDateTime updatedAt;
 
     public void update(
-            String title,
-            String description,
-            String content,
-            String thumbnailUrl,
-            Boolean isPublic
-    ) {
-        if (title != null) this.title = title;
-        if (description != null) this.description = description;
-        if (content != null) this.content = content;
-        if (thumbnailUrl != null) this.thumbnailUrl = thumbnailUrl;
-        if (isPublic != null) this.isPublic = isPublic;
+        String title,
+        String description,
+        String content,
+        String thumbnailUrl,
+        Boolean isPublic) {
+        if (title != null)
+            this.title = title;
+        if (description != null)
+            this.description = description;
+        if (content != null)
+            this.content = content;
+        if (thumbnailUrl != null)
+            this.thumbnailUrl = thumbnailUrl;
+        if (isPublic != null)
+            this.isPublic = isPublic;
     }
 
     public void updateCategory(Category category) {

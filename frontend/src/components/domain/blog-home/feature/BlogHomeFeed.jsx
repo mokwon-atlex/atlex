@@ -1,9 +1,9 @@
-import { Card } from "@/components/common/ui/card";
-import { Textfield, textfieldVariants } from "@/components/common/ui/textfield";
-import { cn } from "@/lib/utils";
-import BlogHomeFeedItemLayout from "@/components/domain/blog-home/layout/BlogHomeFeedItemLayout";
-import BlogHomePagination from "@/components/domain/blog-home/ui/BlogHomePagination";
-import { blogHomeFeedCopy } from "@/data/blog-home/blog-home-copy";
+import { Card } from '@/components/common/ui/card';
+import { Textfield, textfieldVariants } from '@/components/common/ui/textfield';
+import { cn } from '@/lib/utils';
+import BlogHomeFeedItemLayout from '@/components/domain/blog-home/layout/BlogHomeFeedItemLayout';
+import BlogHomePagination from '@/components/domain/blog-home/ui/BlogHomePagination';
+import { blogHomeFeedCopy } from '@/data/blog-home/blog-home-copy';
 
 export default function BlogHomeFeed({ feed }) {
   const {
@@ -22,12 +22,7 @@ export default function BlogHomeFeed({ feed }) {
         <Textfield className="text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">
           {eyebrowLabel}
         </Textfield>
-        <h2
-          className={cn(
-            textfieldVariants({ size: "xl", weight: "bold" }),
-            "text-3xl tracking-tight"
-          )}
-        >
+        <h2 className={cn(textfieldVariants({ size: 'xl', weight: 'bold' }), 'text-3xl tracking-tight')}>
           {title} <span className="text-primary">{totalCount}</span>
         </h2>
       </div>
@@ -35,16 +30,12 @@ export default function BlogHomeFeed({ feed }) {
       {hasPosts ? (
         <Card
           className={cn(
-            "overflow-hidden rounded-3xl gap-0 border-border bg-card/40 py-0 shadow-none",
-            isLoading && "opacity-60"
+            'overflow-hidden rounded-3xl gap-0 border-border bg-card/40 py-0 shadow-none',
+            isLoading && 'opacity-60',
           )}
         >
           {posts.map((post, index) => (
-            <BlogHomeFeedItemLayout
-              key={post.id}
-              {...post}
-              isLast={index === posts.length - 1}
-            />
+            <BlogHomeFeedItemLayout key={post.id} {...post} isLast={index === posts.length - 1} />
           ))}
         </Card>
       ) : (

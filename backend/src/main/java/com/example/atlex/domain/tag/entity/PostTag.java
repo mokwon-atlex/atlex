@@ -6,13 +6,10 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(
-        name = "post_tags",
-        indexes = {
-                @Index(name = "idx_post_tags_user_id_tag_id", columnList = "user_id, tag_id"),
-                @Index(name = "idx_post_tags_post_id", columnList = "post_id")
-        }
-)
+@Table(name = "post_tags", indexes = {
+    @Index(name = "idx_post_tags_user_id_tag_id", columnList = "user_id, tag_id"),
+    @Index(name = "idx_post_tags_post_id", columnList = "post_id")
+})
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -37,9 +34,9 @@ public class PostTag {
 
     public static PostTag of(User user, Post post, Tag tag) {
         return PostTag.builder()
-                .user(user)
-                .post(post)
-                .tag(tag)
-                .build();
+            .user(user)
+            .post(post)
+            .tag(tag)
+            .build();
     }
 }

@@ -25,7 +25,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
 
@@ -54,7 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        UserDetails userDetails = (UserDetails) auth.getPrincipal();
+        UserDetails userDetails = (UserDetails)auth.getPrincipal();
         if (!userDetails.isAccountNonLocked()) {
             sendUnauthorized(response);
             return;
@@ -68,7 +68,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write(
-                objectMapper.writeValueAsString(ApiResponse.fail(ErrorCode.INVALID_TOKEN))
-        );
+            objectMapper.writeValueAsString(ApiResponse.fail(ErrorCode.INVALID_TOKEN)));
     }
 }

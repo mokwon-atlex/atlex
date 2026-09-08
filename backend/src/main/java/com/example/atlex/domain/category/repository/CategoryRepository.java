@@ -12,16 +12,17 @@ import java.util.Optional;
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     @Query("""
-            SELECT c FROM Category c
-            WHERE c.user.id = :userId
-              AND c.id < :cursor
-            ORDER BY c.id DESC
-            """)
+        SELECT c FROM Category c
+        WHERE c.user.id = :userId
+          AND c.id < :cursor
+        ORDER BY c.id DESC
+        """)
     List<Category> findCategoryPage(
-            @Param("userId") Long userId,
-            @Param("cursor") Long cursor,
-            Pageable pageable
-    );
+        @Param("userId")
+        Long userId,
+        @Param("cursor")
+        Long cursor,
+        Pageable pageable);
 
     Optional<Category> findByIdAndUser_Id(Long id, Long userId);
 

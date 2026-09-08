@@ -15,11 +15,11 @@ class PrincipalDetailsTest {
     @DisplayName("role이 null인 기존 사용자도 ROLE_USER 권한으로 처리")
     void getAuthorities_nullRole_defaultsToUser() {
         User user = User.builder()
-                .userId("legacy")
-                .password("pw")
-                .active(true)
-                .role(null)
-                .build();
+            .userId("legacy")
+            .password("pw")
+            .active(true)
+            .role(null)
+            .build();
 
         Collection<? extends GrantedAuthority> authorities = new PrincipalDetails(user).getAuthorities();
 

@@ -25,16 +25,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "post_relations",
-        indexes = {
-                @Index(name = "idx_post_relations_source_score", columnList = "source_post_id, score"),
-                @Index(name = "idx_post_relations_target", columnList = "target_post_id")
-        },
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_post_relations_source_target", columnNames = {"source_post_id", "target_post_id"})
-        }
-)
+@Table(name = "post_relations", indexes = {
+    @Index(name = "idx_post_relations_source_score", columnList = "source_post_id, score"),
+    @Index(name = "idx_post_relations_target", columnList = "target_post_id")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "uk_post_relations_source_target", columnNames = {"source_post_id", "target_post_id"})
+})
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -69,10 +65,10 @@ public class PostRelation {
 
     public static PostRelation of(Post sourcePost, Post targetPost, double score, String sharedKeywords) {
         return PostRelation.builder()
-                .sourcePost(sourcePost)
-                .targetPost(targetPost)
-                .score(score)
-                .sharedKeywords(sharedKeywords)
-                .build();
+            .sourcePost(sourcePost)
+            .targetPost(targetPost)
+            .score(score)
+            .sharedKeywords(sharedKeywords)
+            .build();
     }
 }

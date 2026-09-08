@@ -35,14 +35,14 @@ public class CommentResponse {
 
     public static CommentResponse from(Comment comment) {
         return CommentResponse.builder()
-                .id(comment.getId())
-                .postId(comment.getPost().getId())
-                .content(comment.getContent())
-                .authorId(comment.getUser().getId())
-                .authorUserId(comment.getUser().getUserId())
-                .authorName(comment.getUser().getName())
-                .createdAt(comment.getCreatedAt())
-                .updatedAt(comment.getUpdatedAt())
-                .build();
+            .id(comment.getId())
+            .postId(comment.getPost().getId())
+            .content(comment.getContent())
+            .authorId(comment.getUser().getId())
+            .authorUserId(comment.getUser().getUserId())
+            .authorName(comment.getUser().getName())
+            .createdAt(comment.getCreatedAt())
+            .updatedAt(comment.getUpdatedAt())
+            .build();
     }
 }

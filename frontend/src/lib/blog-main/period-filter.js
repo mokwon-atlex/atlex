@@ -10,7 +10,7 @@ function getStartOfToday() {
 export function getPeriodRange(period) {
   const today = getStartOfToday();
 
-  if (period === "week") {
+  if (period === 'week') {
     const startDate = new Date(today);
 
     // 월요일을 한 주의 시작으로 계산합니다.
@@ -27,7 +27,7 @@ export function getPeriodRange(period) {
     return { startDate, endDate };
   }
 
-  if (period === "month") {
+  if (period === 'month') {
     const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
     const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
 
@@ -38,7 +38,7 @@ export function getPeriodRange(period) {
 }
 
 export function isPostInPeriod(post, period) {
-  if (!period || period === "all") return true;
+  if (!period || period === 'all') return true;
 
   const range = getPeriodRange(period);
   if (!range) return true;

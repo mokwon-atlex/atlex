@@ -26,21 +26,23 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-        properties = {
-                "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-                "spring.jpa.hibernate.ddl-auto=create-drop"
-        }
-)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = {
+    "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+    "spring.jpa.hibernate.ddl-auto=create-drop"
+})
 @Transactional
 class GraphEntityRepositoryTest {
 
-    @Autowired UserRepository userRepository;
-    @Autowired PostRepository postRepository;
-    @Autowired KeywordRepository keywordRepository;
-    @Autowired PostKeywordRepository postKeywordRepository;
-    @Autowired PostRelationRepository postRelationRepository;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    PostRepository postRepository;
+    @Autowired
+    KeywordRepository keywordRepository;
+    @Autowired
+    PostKeywordRepository postKeywordRepository;
+    @Autowired
+    PostRelationRepository postRelationRepository;
 
     @Test
     @DisplayName("키워드, 게시글 키워드, 게시글 관계를 저장하고 조회한다")
@@ -82,10 +84,9 @@ class GraphEntityRepositoryTest {
         Method postKeywordDelete = PostKeywordRepository.class.getMethod("deleteByPostId", Long.class);
         Method relationSourceDelete = PostRelationRepository.class.getMethod("deleteBySourcePostId", Long.class);
         Method relationPostDelete = PostRelationRepository.class.getMethod(
-                "deleteBySourcePostIdOrTargetPostId",
-                Long.class,
-                Long.class
-        );
+            "deleteBySourcePostIdOrTargetPostId",
+            Long.class,
+            Long.class);
 
         assertDeleteQuery(postKeywordDelete);
         assertDeleteQuery(relationSourceDelete);
@@ -110,20 +111,20 @@ class GraphEntityRepositoryTest {
 
     private User saveUser() {
         return userRepository.save(User.builder()
-                .userId("author")
-                .email("author@test.com")
-                .password("pw")
-                .name("작성자")
-                .active(true)
-                .build());
+            .userId("author")
+            .email("author@test.com")
+            .password("pw")
+            .name("작성자")
+            .active(true)
+            .build());
     }
 
     private Post savePost(User user, String title, String content) {
         return postRepository.save(Post.builder()
-                .user(user)
-                .title(title)
-                .content(content)
-                .isPublic(true)
-                .build());
+            .user(user)
+            .title(title)
+            .content(content)
+            .isPublic(true)
+            .build());
     }
 }

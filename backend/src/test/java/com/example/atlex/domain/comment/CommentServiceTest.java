@@ -32,11 +32,15 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
 
-    @Mock CommentRepository commentRepository;
-    @Mock PostAccessService postAccessService;
-    @Mock UserRepository userRepository;
+    @Mock
+    CommentRepository commentRepository;
+    @Mock
+    PostAccessService postAccessService;
+    @Mock
+    UserRepository userRepository;
 
-    @InjectMocks CommentService commentService;
+    @InjectMocks
+    CommentService commentService;
 
     private User user(Long id, String userId) {
         return User.builder().id(id).userId(userId).name(userId).build();
@@ -58,7 +62,7 @@ class CommentServiceTest {
         when(postAccessService.getAccessiblePost(10L, 2L)).thenThrow(new PostNotFoundException());
 
         CustomException e = assertThrows(CustomException.class,
-                () -> commentService.createComment(10L, new CommentCreateRequest("댓글"), 2L));
+            () -> commentService.createComment(10L, new CommentCreateRequest("댓글"), 2L));
 
         assertEquals(ErrorCode.POST_NOT_FOUND, e.getErrorCode());
         verify(commentRepository, never()).save(any(Comment.class));
@@ -89,7 +93,7 @@ class CommentServiceTest {
         when(commentRepository.findActiveWithAuthorById(100L)).thenReturn(Optional.of(comment));
 
         CustomException e = assertThrows(CustomException.class,
-                () -> commentService.updateComment(100L, new CommentUpdateRequest("수정"), 3L));
+            () -> commentService.updateComment(100L, new CommentUpdateRequest("수정"), 3L));
 
         assertEquals(ErrorCode.COMMENT_UPDATE_FORBIDDEN, e.getErrorCode());
     }
@@ -100,7 +104,7 @@ class CommentServiceTest {
         when(commentRepository.findActiveWithAuthorById(100L)).thenReturn(Optional.empty());
 
         CustomException e = assertThrows(CustomException.class,
-                () -> commentService.updateComment(100L, new CommentUpdateRequest("수정"), 2L));
+            () -> commentService.updateComment(100L, new CommentUpdateRequest("수정"), 2L));
 
         assertEquals(ErrorCode.COMMENT_NOT_FOUND, e.getErrorCode());
     }
@@ -150,7 +154,7 @@ class CommentServiceTest {
         when(commentRepository.findActiveWithAuthorById(100L)).thenReturn(Optional.of(comment));
 
         CustomException e = assertThrows(CustomException.class,
-                () -> commentService.deleteComment(100L, 3L));
+            () -> commentService.deleteComment(100L, 3L));
 
         assertEquals(ErrorCode.COMMENT_DELETE_FORBIDDEN, e.getErrorCode());
         assertEquals(false, comment.getIsDeleted());

@@ -1,17 +1,17 @@
-import BlogHomeTagChip from "@/components/domain/blog-home/ui/BlogHomeTagChip";
+import BlogHomeTagChip from '@/components/domain/blog-home/ui/BlogHomeTagChip';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof BlogHomeTagChip> } */
 const meta = {
-  title: "Domain/BlogHome/UI/BlogHomeTagChip",
+  title: 'Domain/BlogHome/UI/BlogHomeTagChip',
   component: BlogHomeTagChip,
-  tags: ["autodocs"],
-  parameters: { layout: "centered" },
+  tags: ['autodocs'],
+  parameters: { layout: 'centered' },
   argTypes: {
-    active: { control: "boolean" },
-    fullWidth: { control: "boolean" },
-    label: { control: "text" },
-    count: { control: "number" },
-    onClick: { action: "clicked" },
+    active: { control: 'boolean' },
+    fullWidth: { control: 'boolean' },
+    label: { control: 'text' },
+    count: { control: 'number' },
+    onClick: { action: 'clicked' },
   },
 };
 
@@ -19,7 +19,7 @@ export default meta;
 
 export const Default = {
   args: {
-    label: "태그 1",
+    label: '태그 1',
     count: 12,
     active: false,
     fullWidth: false,
@@ -28,7 +28,7 @@ export const Default = {
 
 export const Active = {
   args: {
-    label: "태그 1",
+    label: '태그 1',
     count: 12,
     active: true,
     fullWidth: false,
@@ -37,7 +37,7 @@ export const Active = {
 
 export const WithoutCount = {
   args: {
-    label: "태그만",
+    label: '태그만',
     active: false,
     fullWidth: false,
   },

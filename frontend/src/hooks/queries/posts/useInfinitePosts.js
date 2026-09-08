@@ -21,49 +21,42 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchPosts } from '@/lib/api/posts';
 import { toBlogMainPost } from '@/lib/mappers/post';
 
-export function useInfinitePosts({
-  pageSize = 10,
-  authorUserId,
-  initialPosts,
-  totalPages,
-} = {}) {
-  const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
-      // queryKey: 이 배열이 같으면 같은 캐시를 바라본다. pageSize/authorUserId 가 바뀌면 새 요청을 보낸다.
-      queryKey: ['posts', { authorUserId, pageSize }],
+export function useInfinitePosts({ pageSize = 10, authorUserId, initialPosts, totalPages } = {}) {
+  const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    // queryKey: 이 배열이 같으면 같은 캐시를 바라본다. pageSize/authorUserId 가 바뀌면 새 요청을 보낸다.
+    queryKey: ['posts', { authorUserId, pageSize }],
 
-      // queryFn: 다음 페이지를 실제로 가져오는 함수. pageParam 은 TanStack 이 주입해주는 페이지 번호.
-      queryFn: async ({ pageParam }) => {
-        const res = await fetchPosts({
-          authorUserId,
-          page: pageParam,
-          size: pageSize,
-        });
-        // API 응답을 컴포넌트가 바로 쓸 수 있는 shape 으로 변환해 캐시에 저장한다.
-        // SSR 에서 내려온 initialData 와 형태를 맞춰야 hydration 이 자연스럽다.
-        return {
-          posts: res.content.map(toBlogMainPost),
-          page: res.number,       // 현재 페이지 번호 (0부터 시작)
-          totalPages: res.totalPages,
-        };
-      },
+    // queryFn: 다음 페이지를 실제로 가져오는 함수. pageParam 은 TanStack 이 주입해주는 페이지 번호.
+    queryFn: async ({ pageParam }) => {
+      const res = await fetchPosts({
+        authorUserId,
+        page: pageParam,
+        size: pageSize,
+      });
+      // API 응답을 컴포넌트가 바로 쓸 수 있는 shape 으로 변환해 캐시에 저장한다.
+      // SSR 에서 내려온 initialData 와 형태를 맞춰야 hydration 이 자연스럽다.
+      return {
+        posts: res.content.map(toBlogMainPost),
+        page: res.number, // 현재 페이지 번호 (0부터 시작)
+        totalPages: res.totalPages,
+      };
+    },
 
-      initialPageParam: 0, // 첫 요청은 0번 페이지부터.
+    initialPageParam: 0, // 첫 요청은 0번 페이지부터.
 
-      // 다음 페이지 번호를 계산한다. 마지막 페이지라면 undefined 를 반환해 hasNextPage 를 false 로 만든다.
-      getNextPageParam: (lastPage) =>
-        lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    // 다음 페이지 번호를 계산한다. 마지막 페이지라면 undefined 를 반환해 hasNextPage 를 false 로 만든다.
+    getNextPageParam: (lastPage) => (lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined),
 
-      // SSR 에서 받은 첫 페이지를 캐시에 바로 주입한다.
-      // initialPosts 가 없으면 undefined 로 두어 클라이언트가 직접 첫 페이지를 요청하게 한다.
-      initialData:
-        initialPosts === undefined
-          ? undefined
-          : {
-              pages: [{ posts: initialPosts, page: 0, totalPages: totalPages ?? 0 }],
-              pageParams: [0],
-            },
-    });
+    // SSR 에서 받은 첫 페이지를 캐시에 바로 주입한다.
+    // initialPosts 가 없으면 undefined 로 두어 클라이언트가 직접 첫 페이지를 요청하게 한다.
+    initialData:
+      initialPosts === undefined
+        ? undefined
+        : {
+            pages: [{ posts: initialPosts, page: 0, totalPages: totalPages ?? 0 }],
+            pageParams: [0],
+          },
+  });
 
   // sentinel: 목록 맨 아래에 놓을 빈 요소. 이 요소가 화면에 들어오면 다음 페이지를 불러온다.
   const sentinelRef = useRef(null);
@@ -103,11 +96,11 @@ export function useInfinitePosts({
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return {
-    posts,                          // 화면에 렌더링할 글 목록 (전체 페이지 합산)
-    isLoading: isFetchingNextPage,  // 다음 페이지를 불러오는 중인지
-    error,                          // 요청 실패 시 에러 객체
-    hasMore: hasNextPage,           // 더 불러올 페이지가 있는지
-    loadMore: fetchNextPage,        // 수동으로 다음 페이지를 불러오고 싶을 때 호출
-    sentinelRef,                    // 목록 맨 아래 요소에 연결할 ref
+    posts, // 화면에 렌더링할 글 목록 (전체 페이지 합산)
+    isLoading: isFetchingNextPage, // 다음 페이지를 불러오는 중인지
+    error, // 요청 실패 시 에러 객체
+    hasMore: hasNextPage, // 더 불러올 페이지가 있는지
+    loadMore: fetchNextPage, // 수동으로 다음 페이지를 불러오고 싶을 때 호출
+    sentinelRef, // 목록 맨 아래 요소에 연결할 ref
   };
 }
