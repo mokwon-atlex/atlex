@@ -9,6 +9,22 @@ Atlex 프론트엔드와 백엔드를 함께 관리하는 모노레포입니다.
 - `frontend/`: Next.js 16
 - `backend/`: Spring Boot 4, Java 17
 
+## 루트 통합 검증
+
+루트 디렉터리에서 다음 명령으로 포맷, 테스트와 빌드를 함께 검사합니다.
+
+```bash
+npm run check:frontend
+npm run check:backend
+npm run check
+```
+
+- `check:frontend`: 프론트엔드 Prettier 검사, 테스트와 빌드
+- `check:backend`: 백엔드 Spotless 검사, 테스트와 `bootJar`
+- `check`: 프론트엔드와 백엔드 검증을 순차 실행
+
+백엔드 검증은 운영체제에 따라 `gradlew` 또는 `gradlew.bat`을 자동으로 사용합니다.
+
 ## 프론트엔드
 
 `frontend/.env.example`을 참고해 `frontend/.env`를 만든 뒤 실행합니다.
