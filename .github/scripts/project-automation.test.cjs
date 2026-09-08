@@ -2,11 +2,16 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  buildIssueFieldValues,
   buildSingleSelectFieldMap,
   extractFormSelection,
+  extractTitleType,
+  issueTypeForTitleType,
   parseIssueReferences,
   renderRelatedPullRequests,
   selectStatus,
+  syncIssueMetadata,
+  synchronizeTypeLabels,
 } = require("./project-automation.cjs");
 
 test("프로젝트 필드 응답에서 단일 선택 필드만 변환한다", () => {
@@ -35,7 +40,7 @@ test("프로젝트 필드 응답에서 단일 선택 필드만 변환한다", ()
 
 test("이슈 양식의 선택값에서 설명을 제외한 값만 읽는다", () => {
   const body = [
-    "### 중요도",
+    "## 중요도",
     "",
     "높음 — 핵심 기능 또는 후속 작업에 직접 영향",
     "",
@@ -48,13 +53,99 @@ test("이슈 양식의 선택값에서 설명을 제외한 값만 읽는다", ()
   assert.equal(extractFormSelection(body, "작업 규모"), "큼");
 });
 
+test("이슈 제목에서 허용된 작업 타입만 읽는다", () => {
+  assert.equal(extractTitleType("feat: 소셜 로그인 구현"), "feat");
+  assert.equal(extractTitleType("hotfix: 로그인 복구"), null);
+  assert.equal(extractTitleType("[feat] 소셜 로그인 구현"), null);
+});
+
+test("제목 타입을 GitHub 이슈 타입으로 변환한다", () => {
+  assert.equal(issueTypeForTitleType("feat"), "Feature");
+  assert.equal(issueTypeForTitleType("fix"), "Bug");
+  assert.equal(issueTypeForTitleType("refactor"), "Task");
+  assert.equal(issueTypeForTitleType("docs"), "Task");
+});
+
+test("기존 타입 라벨을 제목 타입 라벨 하나로 동기화한다", () => {
+  assert.deepEqual(synchronizeTypeLabels(["backend", "fix", "문서"], "feat"), [
+    "backend",
+    "문서",
+    "feat",
+  ]);
+});
+
+test("이슈 양식 값을 조직 이슈 필드 값으로 변환한다", () => {
+  const body = [
+    "### 중요도",
+    "",
+    "높음 — 핵심 기능 또는 후속 작업에 직접 영향",
+    "",
+    "## 작업 규모",
+    "",
+    "보통 — 일반적인 범위의 작업",
+  ].join("\n");
+
+  assert.deepEqual(buildIssueFieldValues(body), [
+    { field_id: 40009158, value: "High" },
+    { field_id: 40009161, value: "Medium" },
+  ]);
+});
+
+test("이슈 메타데이터를 제목과 양식에 맞게 GitHub에 반영한다", async () => {
+  const requests = [];
+  const github = {
+    request: async (route, parameters) => requests.push({ route, parameters }),
+  };
+
+  await syncIssueMetadata(github, "mokwon-atlex", "atlex", {
+    number: 6,
+    title: "fix: Tiptap 확장 중복 등록 제거",
+    labels: [{ name: "feat" }, { name: "frontend" }],
+    body: ["### 중요도", "", "보통", "", "### 작업 규모", "", "작음"].join(
+      "\n",
+    ),
+  });
+
+  assert.deepEqual(requests, [
+    {
+      route: "PATCH /repos/{owner}/{repo}/issues/{issue_number}",
+      parameters: {
+        owner: "mokwon-atlex",
+        repo: "atlex",
+        issue_number: 6,
+        labels: ["frontend", "fix"],
+        type: "Bug",
+        headers: { "X-GitHub-Api-Version": "2026-03-10" },
+      },
+    },
+    {
+      route:
+        "POST /repos/{owner}/{repo}/issues/{issue_number}/issue-field-values",
+      parameters: {
+        owner: "mokwon-atlex",
+        repo: "atlex",
+        issue_number: 6,
+        issue_field_values: [
+          { field_id: 40009158, value: "Medium" },
+          { field_id: 40009161, value: "Low" },
+        ],
+        headers: { "X-GitHub-Api-Version": "2026-03-10" },
+      },
+    },
+  ]);
+});
+
 test("Closes와 Related to 참조를 구분하고 중복에서는 Closes를 우선한다", () => {
-  const references = parseIssueReferences([
-    "Closes #12",
-    "Related to #34",
-    "related TO mokwon-atlex/atlex#56",
-    "Related to #12",
-  ].join("\n"), "mokwon-atlex", "atlex");
+  const references = parseIssueReferences(
+    [
+      "Closes #12",
+      "Related to #34",
+      "related TO mokwon-atlex/atlex#56",
+      "Related to #12",
+    ].join("\n"),
+    "mokwon-atlex",
+    "atlex",
+  );
 
   assert.deepEqual(references, [
     { issueNumber: 12, relation: "closes" },
@@ -114,7 +205,10 @@ test("연관 PR이 없으면 자동 관리 영역을 제거한다", () => {
 });
 
 test("보류 상태는 PR 상태보다 우선한다", () => {
-  assert.equal(selectStatus("보류", "open", [{ state: "open", merged: false }]), "보류");
+  assert.equal(
+    selectStatus("보류", "open", [{ state: "open", merged: false }]),
+    "보류",
+  );
 });
 
 test("닫힌 이슈는 완료로 변경한다", () => {
@@ -122,10 +216,19 @@ test("닫힌 이슈는 완료로 변경한다", () => {
 });
 
 test("진행 중이거나 병합된 PR이 있으면 진행 중을 유지한다", () => {
-  assert.equal(selectStatus("시작 전", "open", [{ state: "open", merged: false }]), "진행 중");
-  assert.equal(selectStatus("시작 전", "open", [{ state: "closed", merged: true }]), "진행 중");
+  assert.equal(
+    selectStatus("시작 전", "open", [{ state: "open", merged: false }]),
+    "진행 중",
+  );
+  assert.equal(
+    selectStatus("시작 전", "open", [{ state: "closed", merged: true }]),
+    "진행 중",
+  );
 });
 
 test("모든 PR이 병합 없이 닫히면 시작 전으로 돌아간다", () => {
-  assert.equal(selectStatus("진행 중", "open", [{ state: "closed", merged: false }]), "시작 전");
+  assert.equal(
+    selectStatus("진행 중", "open", [{ state: "closed", merged: false }]),
+    "시작 전",
+  );
 });
