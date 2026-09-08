@@ -13,7 +13,7 @@ body:
     attributes:
       label: 문제 설명
       description: 발생한 문제를 간단히 설명해 주세요.
-      placeholder: 로그인 세션이 만료된 후 메인 화면이 반복해서 새로고침됩니다.
+      placeholder: 로그인 세션 만료 후 메인 화면 반복 새로고침
     validations:
       required: true
 
@@ -23,9 +23,9 @@ body:
       label: 재현 방법
       description: 문제를 재현할 수 있는 순서를 작성해 주세요.
       placeholder: |
-        1. 로그인합니다.
-        2. 세션을 만료시킵니다.
-        3. 메인 화면에 접근합니다.
+        1. 로그인 완료
+        2. 세션 만료
+        3. 메인 화면 접근
     validations:
       required: true
 
@@ -34,7 +34,7 @@ body:
     attributes:
       label: 현재 동작
       description: 현재 어떤 동작이 발생하는지 작성해 주세요.
-      placeholder: 메인 화면과 로그인 화면 사이에서 리다이렉트가 반복됩니다.
+      placeholder: 메인 화면과 로그인 화면 간 반복 리다이렉트
     validations:
       required: true
 
@@ -43,7 +43,7 @@ body:
     attributes:
       label: 기대 동작
       description: 정상적으로 기대하는 동작을 작성해 주세요.
-      placeholder: 세션이 만료되면 로그인 화면으로 한 번만 이동해야 합니다.
+      placeholder: 세션 만료 후 로그인 화면으로 단일 이동
     validations:
       required: true
 
@@ -52,7 +52,7 @@ body:
     attributes:
       label: 완료 조건
       description: 어떤 상태가 되면 수정이 완료되는지 작성해 주세요.
-      placeholder: 세션 만료 후 리다이렉트 반복이 발생하지 않고 로그인 화면이 표시됩니다.
+      placeholder: 반복 리다이렉트 제거 및 로그인 화면 표시
     validations:
       required: true
 

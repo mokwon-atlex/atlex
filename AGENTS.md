@@ -7,14 +7,17 @@
 작업을 시작하기 전에 다음 문서를 확인합니다.
 
 1. 현재 사용자의 지시와 연결된 GitHub 이슈
-2. 이슈에 연결된 Notion 문서
-3. `docs/ai/README.md`
-4. `CONTRIBUTING.md`
-5. 변경 경로에 따른 영역별 문서
+2. 팀 Notion의 [`팀 문서`](https://app.notion.com/p/3d5c4b3d7d9e81a5a83ff394b07ab5c2)
+3. 이슈에 연결된 Notion 문서
+4. `docs/ai/README.md`
+5. `CONTRIBUTING.md`
+6. 변경 경로에 따른 영역별 문서
    - `frontend/**`: `docs/ai/frontend.md`
    - `backend/**`: `docs/ai/backend.md`
 
 프론트엔드와 백엔드를 함께 변경하면 두 영역별 문서를 모두 확인합니다.
+
+새로운 GitHub 이슈 또는 독립된 작업 요청을 시작할 때 `팀 문서`를 최초 1회 확인합니다. 커밋 수와 대화 횟수는 작업 단위를 나누는 기준으로 사용하지 않으며, 같은 작업을 이어가는 동안에는 문서 변경이나 충돌 징후가 없는 한 다시 조회하지 않습니다.
 
 ## 규칙 우선순위
 

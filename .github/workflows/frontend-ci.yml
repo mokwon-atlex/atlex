@@ -11,7 +11,7 @@ permissions:
   pull-requests: read
 
 jobs:
-  test-and-build:
+  frontend-test-and-build:
     runs-on: ubuntu-latest
     defaults:
       run:
