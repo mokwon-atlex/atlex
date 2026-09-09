@@ -1,4 +1,4 @@
-name: Request Team Reviewers
+name: Ready for Review
 
 on:
   pull_request_target:
@@ -23,3 +23,17 @@ jobs:
           script: |
             const automation = require("./.github/scripts/request-reviewers.cjs");
             await automation.run({ github, context, core });
+
+      - name: Notify Discord
+        uses: actions/github-script@v9
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        with:
+          script: |
+            const notification = require("./.github/scripts/discord-ready-notification.cjs");
+            await notification.sendReadyNotification({
+              webhookUrl: process.env.DISCORD_WEBHOOK_URL,
+              pullRequest: context.payload.pull_request,
+              fetchImpl: globalThis.fetch,
+              core,
+            });

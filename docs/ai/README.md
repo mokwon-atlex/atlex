@@ -112,6 +112,7 @@
 - Draft PR에서 CodeRabbit 리뷰를 완료하고 모든 리뷰 의견을 검토·처리한 뒤에만 Ready for review 전환을 제안합니다.
 - Ready for review 전환은 사용자가 GitHub에서 직접 수행합니다.
 - Ready for review 전환 시 PR 작성자를 제외한 저장소의 모든 사용자 협업자에게 리뷰가 자동 요청됩니다.
+- Ready for review 전환 시 Discord에 리뷰 요청 알림이 자동 전송됩니다.
 - 커밋 승인은 push나 PR 생성 승인을 포함하지 않습니다.
 - push 승인은 PR 생성 승인을 포함하지 않습니다.
 - PR 승인과 병합은 사용자가 GitHub에서 직접 수행합니다.
