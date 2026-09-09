@@ -2,7 +2,8 @@
   "name": "atlex",
   "private": true,
   "scripts": {
-    "check": "npm run check:frontend && npm run check:backend",
+    "check": "npm run check:automation && npm run check:frontend && npm run check:backend",
+    "check:automation": "node --test .github/scripts/project-automation.test.cjs .github/scripts/request-reviewers.test.cjs",
     "check:frontend": "npm --prefix frontend run format:check && npm --prefix frontend run test && npm --prefix frontend run build",
     "check:backend": "node scripts/run-backend-check.mjs"
   }
