@@ -1,4 +1,16 @@
 /**
+ * Discord Markdown 링크 문맥에서 안전하게 표시할 텍스트로 변환합니다.
+ *
+ * @param {string} value 원본 텍스트
+ * @returns {string} 줄바꿈과 Markdown 특수 문자를 이스케이프한 텍스트
+ */
+function escapeDiscordMarkdownText(value) {
+  return value
+    .replace(/\r\n|\r|\n/g, " ")
+    .replace(/([\\`*_{}\[\]()<>#+\-.!|~>])/g, "\\$1");
+}
+
+/**
  * Ready for review 전환 내용을 Discord에 알립니다.
  *
  * @param {object} parameters 실행 매개변수
@@ -21,9 +33,10 @@ async function sendReadyNotification({
     return false;
   }
 
+  const safeTitle = escapeDiscordMarkdownText(pullRequest.title);
   const content = [
     "**리뷰 요청**",
-    `[#${pullRequest.number} ${pullRequest.title}](${pullRequest.html_url})`,
+    `[#${pullRequest.number} ${safeTitle}](${pullRequest.html_url})`,
     `작성자: ${pullRequest.user.login}`,
   ].join("\n");
 
@@ -43,4 +56,4 @@ async function sendReadyNotification({
   return true;
 }
 
-module.exports = { sendReadyNotification };
+module.exports = { escapeDiscordMarkdownText, sendReadyNotification };

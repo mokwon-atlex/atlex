@@ -35,7 +35,7 @@ test("Ready 상태의 PR 정보를 멘션 없이 Discord에 전송한다", async
     webhookUrl: "https://discord.example/webhook",
     pullRequest: {
       number: 25,
-      title: "chore: Draft PR 리뷰 절차 자동화 @everyone",
+      title: "제목](https://evil.example)\n*강조* @everyone",
       html_url: "https://github.com/mokwon-atlex/atlex/pull/25",
       user: { login: "author" },
     },
@@ -56,7 +56,7 @@ test("Ready 상태의 PR 정보를 멘션 없이 Discord에 전송한다", async
         body: JSON.stringify({
           content: [
             "**리뷰 요청**",
-            "[#25 chore: Draft PR 리뷰 절차 자동화 @everyone](https://github.com/mokwon-atlex/atlex/pull/25)",
+            "[#25 제목\\]\\(https://evil\\.example\\) \\*강조\\* @everyone](https://github.com/mokwon-atlex/atlex/pull/25)",
             "작성자: author",
           ].join("\n"),
           allowed_mentions: { parse: [] },
