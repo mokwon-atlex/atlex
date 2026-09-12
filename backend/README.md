@@ -42,9 +42,15 @@ src/main/java/com/example/atlex
 - `domain.post`: 게시글 생성, 목록 조회, 상세 조회, 수정, soft delete
 - `domain.category`: 사용자별 카테고리 목록, 생성, 수정, 삭제
 - `domain.tag`: 사용자별 태그 목록 조회
-- `global`: 보안 설정, JWT 필터/프로바이더, 인증 principal, 예외, 공통 응답, 공통 validation
+- `global`: 보안 설정, JWT 필터/프로바이더, 인증 principal, 예외, 공통 응답, 공통 validation, 헬스 체크
 
 ## 주요 API
+
+### Health
+
+| Method | URL | 인증 | 설명 |
+| --- | --- | --- | --- |
+| GET | `/api/v1/health` | 불필요 | 애플리케이션 기동 및 헬스 상태 확인 (`status: UP`) |
 
 ### Auth
 
@@ -186,6 +192,14 @@ src/main/java/com/example/atlex
   "errors": []
 }
 ```
+
+## 배포 및 운영
+
+- GitHub Actions `Deploy Backend` 워크플로우를 통해 `main` 브랜치 변경 시 자동 배포됩니다.
+- **불변 이미지 배포**: 빌드 시 대상 커밋 SHA 태그(`IMAGE_TAG`) 이미지를 생성하고, EC2 배포 시 해당 SHA 이미지를 명시적으로 pull 및 실행합니다.
+- **배포 동시성 제어**: 워크플로우 concurrency 설정을 통해 배포 작업을 직렬화하고, 배포 직전 원격 `origin/main`의 최신 커밋 SHA와 일치하는지 확인하여 최신이 아닌 커밋의 덮어쓰기 배포를 차단합니다.
+- **헬스 체크 검증**: 컨테이너 기동 후 `http://localhost/api/v1/health`를 폴링 검증하며, 실패 시 컨테이너 로그를 출력하고 워크플로우를 실패 처리합니다.
+- **EC2 중지 상태 주의사항**: EC2 인스턴스가 중지(stopped) 상태인 경우 SSH 연결 실패로 인해 배포 및 검증이 실패합니다. 배포 워크플로우 실행 전 EC2 인스턴스가 running 상태인지 확인해야 합니다.
 
 ## 관련 문서
 
