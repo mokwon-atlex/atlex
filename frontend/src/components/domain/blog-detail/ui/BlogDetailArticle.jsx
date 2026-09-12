@@ -1,4 +1,5 @@
 import { textfieldVariants } from '@/components/common/ui/textfield';
+import styles from './BlogDetailArticle.module.css';
 
 function ArticleImage({ src, caption }) {
   return (
@@ -12,6 +13,15 @@ function ArticleImage({ src, caption }) {
   );
 }
 
+/**
+ * 정제된 게시글 HTML을 서식이 유지된 상태로 렌더링한다.
+ * @param {{ html: string }} props 저장된 게시글 HTML
+ * @returns {React.ReactElement} 리치 텍스트 본문
+ */
+function RichTextArticle({ html }) {
+  return <div className={styles.richText} dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
 export default function BlogDetailArticle({ contentBlocks }) {
   return (
     <article className="space-y-8">
@@ -19,6 +29,10 @@ export default function BlogDetailArticle({ contentBlocks }) {
         // 이미지 블록은 읽기 리듬을 끊어 주면서도 렌더링 분기는 단순하게 유지합니다.
         if (block.type === 'image') {
           return <ArticleImage key={block.id} src={block.src} caption={block.caption} />;
+        }
+
+        if (block.type === 'rich-text') {
+          return <RichTextArticle key={block.id} html={block.html} />;
         }
 
         // 그 외 블록은 현재 기본 문단 스타일로 처리합니다.

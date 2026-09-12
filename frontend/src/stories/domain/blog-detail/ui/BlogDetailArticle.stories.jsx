@@ -1,4 +1,5 @@
 import BlogDetailArticle from '@/components/domain/blog-detail/ui/BlogDetailArticle';
+import { expect, within } from 'storybook/test';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof BlogDetailArticle> } */
 const meta = {
@@ -85,5 +86,25 @@ export const SingleParagraph = {
         text: '단일 문단으로 구성된 짧은 아티클입니다. 간결하고 핵심적인 내용만을 담아 독자의 시간을 존중합니다.',
       },
     ],
+  },
+};
+
+export const RichText = {
+  args: {
+    contentBlocks: [
+      {
+        id: 'body',
+        type: 'rich-text',
+        html: '<h2>서식이 유지된 본문</h2><p>문단과 <strong>굵은 글씨</strong>, <a href="https://example.com" target="_blank">링크</a>를 표시합니다.</p><ul><li>첫 번째 항목</li><li>두 번째 항목</li></ul>',
+      },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole('heading', { name: '서식이 유지된 본문' })).toBeVisible();
+    await expect(canvas.getByText('굵은 글씨').tagName).toBe('STRONG');
+    await expect(canvas.getByRole('link', { name: '링크' })).toHaveAttribute('href', 'https://example.com');
+    await expect(canvas.getAllByRole('listitem')).toHaveLength(2);
   },
 };
