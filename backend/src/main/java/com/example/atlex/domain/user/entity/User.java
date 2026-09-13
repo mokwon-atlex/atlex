@@ -40,6 +40,9 @@ public class User {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    /** 연속 로그인 실패 횟수입니다. */
+    @Builder.Default
     private int failCount = 0;
     private LocalDateTime lockedUntil;
 
