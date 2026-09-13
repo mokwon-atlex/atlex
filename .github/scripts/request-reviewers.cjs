@@ -19,7 +19,7 @@ function selectReviewerLogins(collaborators, authorLogin) {
 }
 
 /**
- * Ready for review 상태의 PR에 저장소 팀원 전체를 리뷰어로 지정합니다.
+ * Ready for review 상태의 PR 작성자를 담당자로 지정하고 저장소 팀원 전체에게 리뷰를 요청합니다.
  *
  * @param {object} parameters 실행 매개변수
  * @param {object} parameters.github GitHub API 클라이언트
@@ -40,6 +40,13 @@ async function run({ github, context, core }) {
     },
   );
   const reviewers = selectReviewerLogins(collaborators, pullRequest.user.login);
+
+  await github.rest.issues.addAssignees({
+    owner,
+    repo,
+    issue_number: pullRequest.number,
+    assignees: [pullRequest.user.login],
+  });
 
   if (reviewers.length === 0) {
     core.info("리뷰를 요청할 팀원이 없습니다.");
