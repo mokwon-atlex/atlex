@@ -1,6 +1,42 @@
 import sanitizeHtml from 'sanitize-html';
 
-const HTML_TAG_PATTERN = /<\/?[a-z][^>]*>/i;
+const RICH_TEXT_ALLOWED_TAGS = [
+  'a',
+  'b',
+  'blockquote',
+  'br',
+  'code',
+  'del',
+  'details',
+  'div',
+  'em',
+  'h1',
+  'h2',
+  'h3',
+  'hr',
+  'i',
+  'img',
+  'input',
+  'label',
+  'li',
+  'ol',
+  'p',
+  'pre',
+  's',
+  'section',
+  'span',
+  'strong',
+  'summary',
+  'table',
+  'tbody',
+  'td',
+  'th',
+  'thead',
+  'tr',
+  'u',
+  'ul',
+];
+const HTML_TAG_PATTERN = new RegExp(`</?(?:${RICH_TEXT_ALLOWED_TAGS.join('|')})\\b[^>]*>`, 'i');
 const BLOCK_TAG_PATTERN =
   /<\/?(?:blockquote|br|div|h[1-3]|li|ol|p|pre|section|summary|table|tbody|td|th|thead|tr|ul)\b[^>]*>/gi;
 const HTML_ENTITIES = {
@@ -13,42 +49,7 @@ const HTML_ENTITIES = {
 };
 
 const RICH_TEXT_SANITIZE_OPTIONS = {
-  allowedTags: [
-    'a',
-    'b',
-    'blockquote',
-    'br',
-    'code',
-    'del',
-    'details',
-    'div',
-    'em',
-    'h1',
-    'h2',
-    'h3',
-    'hr',
-    'i',
-    'img',
-    'input',
-    'label',
-    'li',
-    'ol',
-    'p',
-    'pre',
-    's',
-    'section',
-    'span',
-    'strong',
-    'summary',
-    'table',
-    'tbody',
-    'td',
-    'th',
-    'thead',
-    'tr',
-    'u',
-    'ul',
-  ],
+  allowedTags: RICH_TEXT_ALLOWED_TAGS,
   allowedAttributes: {
     a: ['href', { name: 'target', values: ['_blank'] }, 'rel'],
     details: ['data-type', 'open', 'style'],
@@ -78,29 +79,31 @@ const RICH_TEXT_SANITIZE_OPTIONS = {
     },
   },
   transformTags: {
-    /**
-     * 새 창 링크에만 안전한 rel 속성을 강제한다.
-     * @param {string} tagName 변환할 태그 이름
-     * @param {Record<string, string>} attributes 링크 속성
-     * @returns {{ tagName: string, attribs: Record<string, string> }} 변환된 링크 태그
-     */
-    a(tagName, attributes) {
-      if (attributes.target !== '_blank') {
-        delete attributes.target;
-        delete attributes.rel;
-        return { tagName, attribs: attributes };
-      }
-
-      return {
-        tagName,
-        attribs: {
-          ...attributes,
-          rel: 'noopener noreferrer',
-        },
-      };
-    },
+    a: transformAnchorTag,
   },
 };
+
+/**
+ * 새 창 링크에 탭 전환 공격 방지 속성을 추가하고, 그 외 링크에는 불필요한 속성을 제거한다.
+ * @param {string} tagName 정제 중인 태그 이름
+ * @param {Record<string, string>} attributes 정제된 링크 속성
+ * @returns {{ tagName: string, attribs: Record<string, string> }} 렌더링할 링크 태그 정보
+ */
+function transformAnchorTag(tagName, attributes) {
+  if (attributes.target !== '_blank') {
+    delete attributes.target;
+    delete attributes.rel;
+    return { tagName, attribs: attributes };
+  }
+
+  return {
+    tagName,
+    attribs: {
+      ...attributes,
+      rel: 'noopener noreferrer',
+    },
+  };
+}
 
 /**
  * 게시글 본문이 HTML 태그를 포함하는지 확인한다.

@@ -1,6 +1,11 @@
 import { textfieldVariants } from '@/components/common/ui/textfield';
 import styles from './BlogDetailArticle.module.css';
 
+/**
+ * 게시글 본문의 이미지와 선택적 설명을 렌더링한다.
+ * @param {{ src: string, caption?: string }} props 이미지 정보
+ * @returns {React.ReactElement} 이미지 블록
+ */
 function ArticleImage({ src, caption }) {
   return (
     <figure className="space-y-4">
@@ -23,9 +28,9 @@ function RichTextArticle({ html }) {
 }
 
 /**
- * 게시글 본문 블록을 유형에 맞는 상세 화면 요소로 렌더링한다.
- * @param {{ contentBlocks: Array<object> }} props 게시글 본문 블록 목록
- * @returns {React.ReactElement} 게시글 상세 본문
+ * 게시글 상세 본문 블록을 유형에 맞춰 렌더링한다.
+ * @param {{ contentBlocks: Array<{ id: string, type: string, text?: string, html?: string, src?: string, caption?: string }> }} props 본문 블록 목록
+ * @returns {React.ReactElement} 게시글 본문
  */
 export default function BlogDetailArticle({ contentBlocks }) {
   return (
