@@ -99,6 +99,11 @@ export const RichText = {
       },
     ],
   },
+  /**
+   * 리치 텍스트의 주요 서식 요소가 의미에 맞는 HTML로 표시되는지 확인한다.
+   * @param {{ canvasElement: HTMLElement }} context Storybook 상호작용 컨텍스트
+   * @returns {Promise<void>} 검증 완료 Promise
+   */
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 

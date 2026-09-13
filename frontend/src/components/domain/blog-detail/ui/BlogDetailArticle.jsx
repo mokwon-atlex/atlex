@@ -22,6 +22,11 @@ function RichTextArticle({ html }) {
   return <div className={styles.richText} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
+/**
+ * 게시글 본문 블록을 유형에 맞는 상세 화면 요소로 렌더링한다.
+ * @param {{ contentBlocks: Array<object> }} props 게시글 본문 블록 목록
+ * @returns {React.ReactElement} 게시글 상세 본문
+ */
 export default function BlogDetailArticle({ contentBlocks }) {
   return (
     <article className="space-y-8">

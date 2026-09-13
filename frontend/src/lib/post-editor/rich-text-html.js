@@ -78,6 +78,12 @@ const RICH_TEXT_SANITIZE_OPTIONS = {
     },
   },
   transformTags: {
+    /**
+     * 새 창 링크에만 안전한 rel 속성을 강제한다.
+     * @param {string} tagName 변환할 태그 이름
+     * @param {Record<string, string>} attributes 링크 속성
+     * @returns {{ tagName: string, attribs: Record<string, string> }} 변환된 링크 태그
+     */
     a(tagName, attributes) {
       if (attributes.target !== '_blank') {
         delete attributes.target;
