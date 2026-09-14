@@ -43,9 +43,7 @@ export const Default = {
   render: () => (
     <PolicyLayout
       sidebar={mockPolicyItems.map((item, index) => (
-        <li key={index}>
-          <PolicySidebarItem item={item} isActive={index === 0} onClick={() => {}} />
-        </li>
+        <PolicySidebarItem key={index} item={item} isActive={index === 0} onClick={() => {}} />
       ))}
     >
       {mockPolicyItems.map((item, index) => (
@@ -57,13 +55,7 @@ export const Default = {
 
 export const SingleItem = {
   render: () => (
-    <PolicyLayout
-      sidebar={
-        <li>
-          <PolicySidebarItem item={mockPolicyItems[0]} isActive onClick={() => {}} />
-        </li>
-      }
-    >
+    <PolicyLayout sidebar={<PolicySidebarItem item={mockPolicyItems[0]} isActive onClick={() => {}} />}>
       <PolicyItem item={mockPolicyItems[0]} />
     </PolicyLayout>
   ),

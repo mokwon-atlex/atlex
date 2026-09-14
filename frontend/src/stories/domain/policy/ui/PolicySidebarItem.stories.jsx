@@ -63,9 +63,12 @@ export const NavigationList = {
         <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted-foreground">목차</h3>
         <ul className="space-y-1">
           {items.map((item, index) => (
-            <li key={index}>
-              <PolicySidebarItem item={item} isActive={activeIndex === index} onClick={() => setActiveIndex(index)} />
-            </li>
+            <PolicySidebarItem
+              key={index}
+              item={item}
+              isActive={activeIndex === index}
+              onClick={() => setActiveIndex(index)}
+            />
           ))}
         </ul>
       </div>
