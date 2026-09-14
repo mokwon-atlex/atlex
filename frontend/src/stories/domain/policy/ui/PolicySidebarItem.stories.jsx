@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { expect } from 'storybook/test';
+
 import PolicySidebarItem from '@/components/domain/policy/ui/PolicySidebarItem';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof PolicySidebarItem> } */
@@ -25,6 +27,14 @@ const meta = {
 export default meta;
 
 const mockItem = { title: '제1조 (목적)' };
+
+/**
+ * 렌더링 결과에 중첩된 목록 요소가 없는지 검증합니다.
+ * @param {{ canvasElement: HTMLElement }} context - 스토리 렌더링 컨텍스트
+ */
+async function expectNoNestedListItem({ canvasElement }) {
+  await expect(canvasElement.querySelector('li li')).toBeNull();
+}
 
 export const Default = {
   args: {
@@ -74,4 +84,5 @@ export const NavigationList = {
       </div>
     );
   },
+  play: expectNoNestedListItem,
 };
