@@ -1,3 +1,5 @@
+import { expect } from 'storybook/test';
+
 import PolicyLayout from '@/components/domain/policy/layout/PolicyLayout';
 import PolicyItem from '@/components/domain/policy/ui/PolicyItem';
 import PolicySidebarItem from '@/components/domain/policy/ui/PolicySidebarItem';
@@ -39,6 +41,14 @@ const mockPolicyItems = [
   },
 ];
 
+/**
+ * 렌더링 결과에 중첩된 목록 요소가 없는지 검증합니다.
+ * @param {{ canvasElement: HTMLElement }} context - 스토리 렌더링 컨텍스트
+ */
+async function expectNoNestedListItem({ canvasElement }) {
+  await expect(canvasElement.querySelector('li li')).toBeNull();
+}
+
 export const Default = {
   render: () => (
     <PolicyLayout
@@ -51,6 +61,7 @@ export const Default = {
       ))}
     </PolicyLayout>
   ),
+  play: expectNoNestedListItem,
 };
 
 export const SingleItem = {
@@ -59,4 +70,5 @@ export const SingleItem = {
       <PolicyItem item={mockPolicyItems[0]} />
     </PolicyLayout>
   ),
+  play: expectNoNestedListItem,
 };
