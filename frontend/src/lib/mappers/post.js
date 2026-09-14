@@ -3,6 +3,8 @@
 // 백엔드 응답 필드명이 바뀌면 input 부분만 수정하면 된다 (호출부 무영향).
 // API 스펙에 없는 필드는 기본값/유도값으로 채운다.
 
+import { getRichTextPlainText, hasRichTextHtml, sanitizeRichTextHtml } from '@/lib/post-editor/rich-text-html';
+
 function truncate(text, max) {
   if (!text) return '';
   if (text.length <= max) return text;
@@ -50,20 +52,26 @@ export function toBlogMainPost(apiPost) {
 // input: fetchPostById 응답 (ApiPost)
 // output: 상세 페이지 shape (BlogDetailContent 에서 소비)
 export function toBlogDetail(apiPost) {
+  const content = apiPost.content ?? '';
+  const sanitizedContent = sanitizeRichTextHtml(content);
+  const plainTextContent = getRichTextPlainText(sanitizedContent);
+
   return {
     blogTitle: apiPost.authorUserId ? `${apiPost.authorUserId}.log` : 'blog',
     category: apiPost.categoryName ?? '미분류',
     title: apiPost.title,
-    excerpt: truncate(apiPost.content, 120),
+    excerpt: truncate(plainTextContent, 120),
     publishedAt: formatKoreanDate(apiPost.createdAt),
     updatedAt: formatKoreanDate(apiPost.updatedAt),
-    readTime: `${Math.max(1, Math.ceil((apiPost.content?.length ?? 0) / 300))} min read`,
+    readTime: `${Math.max(1, Math.ceil(plainTextContent.length / 300))} min read`,
     visibilityLabel: apiPost.isPublic ? '공개' : '비공개',
     authorUserId: apiPost.authorUserId ?? null,
     adminActions: ['통계', '수정', '삭제'],
     contentBlocks: [
       ...(apiPost.thumbnailUrl ? [{ id: 'cover', type: 'image', src: apiPost.thumbnailUrl, caption: '' }] : []),
-      { id: 'body', type: 'paragraph', text: apiPost.content ?? '' },
+      hasRichTextHtml(content)
+        ? { id: 'body', type: 'rich-text', html: sanitizedContent }
+        : { id: 'body', type: 'paragraph', text: content },
     ],
   };
 }
