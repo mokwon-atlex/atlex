@@ -1,0 +1,143 @@
+.richText {
+  color: var(--foreground);
+  font-size: 1rem;
+  line-height: 2.25rem;
+  overflow-wrap: break-word;
+}
+
+.richText > * + * {
+  margin-top: 1.5rem;
+}
+
+.richText h1,
+.richText h2,
+.richText h3 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.richText h1 {
+  font-size: 1.875rem;
+}
+
+.richText h2 {
+  font-size: 1.5rem;
+}
+
+.richText h3 {
+  font-size: 1.25rem;
+}
+
+.richText p[data-type='lead-paragraph'] {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.richText p[data-type='caption-paragraph'] {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.richText a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.18em;
+}
+
+.richText blockquote {
+  border-left: 4px solid var(--border);
+  color: var(--muted-foreground);
+  padding-left: 1rem;
+}
+
+.richText ul,
+.richText ol {
+  padding-left: 1.5rem;
+}
+
+.richText ul {
+  list-style: disc;
+}
+
+.richText ol {
+  list-style: decimal;
+}
+
+.richText li + li {
+  margin-top: 0.5rem;
+}
+
+.richText ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.richText ul[data-type='taskList'] li {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.richText ul[data-type='taskList'] input {
+  margin-top: 0.75rem;
+}
+
+.richText img {
+  border-radius: 1rem;
+  display: block;
+  margin-inline: auto;
+  max-width: 100%;
+}
+
+.richText pre {
+  background: var(--foreground);
+  border-radius: 1rem;
+  color: var(--background);
+  overflow-x: auto;
+  padding: 1rem 1.125rem;
+}
+
+.richText code {
+  background: color-mix(in oklab, var(--muted) 80%, transparent);
+  border-radius: 0.4rem;
+  font-size: 0.95em;
+  padding: 0.15rem 0.35rem;
+}
+
+.richText pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.richText hr {
+  border: 0;
+  border-top: 1px dashed var(--border);
+}
+
+.richText table {
+  border-collapse: collapse;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.richText th,
+.richText td {
+  border: 1px solid var(--border);
+  min-width: 6rem;
+  padding: 0.75rem;
+  vertical-align: top;
+}
+
+.richText th {
+  background: var(--muted);
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .richText {
+    font-size: 1.05rem;
+  }
+}
