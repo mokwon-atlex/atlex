@@ -1,4 +1,6 @@
 import BlogDetailArticle from '@/components/domain/blog-detail/ui/BlogDetailArticle';
+import { toBlogDetail } from '@/lib/mappers/post';
+import { expect, within } from 'storybook/test';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof BlogDetailArticle> } */
 const meta = {
@@ -85,5 +87,62 @@ export const SingleParagraph = {
         text: '단일 문단으로 구성된 짧은 아티클입니다. 간결하고 핵심적인 내용만을 담아 독자의 시간을 존중합니다.',
       },
     ],
+  },
+};
+
+export const RichText = {
+  args: {
+    contentBlocks: [
+      {
+        id: 'body',
+        type: 'rich-text',
+        html: '<h2>서식이 유지된 본문</h2><p>문단과 <strong>굵은 글씨</strong>, <a href="https://example.com" target="_blank">링크</a>를 표시합니다.</p><ul><li>첫 번째 항목</li><li>두 번째 항목</li></ul>',
+      },
+    ],
+  },
+  /**
+   * 리치 텍스트의 주요 서식 요소가 의미에 맞는 HTML로 표시되는지 확인한다.
+   * @param {{ canvasElement: HTMLElement }} context Storybook 상호작용 컨텍스트
+   * @returns {Promise<void>} 검증 완료 Promise
+   */
+  play: async ({ canvasElement }) => {
+    const richTextDetail = toBlogDetail({
+      authorUserId: 'writer',
+      content: '<p>Safe <strong>format</strong></p>',
+      isPublic: true,
+      title: 'Rich text post',
+    });
+    const unsafeHtmlDetail = toBlogDetail({
+      authorUserId: 'writer',
+      content: '<p onclick="alert(1)">Safe text<a href="javascript:alert(1)">link</a></p><script>alert(1)</script>',
+      isPublic: true,
+      title: 'Unsafe rich text post',
+    });
+    const literalTagTextDetail = toBlogDetail({
+      authorUserId: 'writer',
+      content: 'Generic type <T> is plain text.',
+      isPublic: true,
+      title: 'Plain text post',
+    });
+    const richTextBlock = richTextDetail.contentBlocks.at(-1);
+    const unsafeHtmlBlock = unsafeHtmlDetail.contentBlocks.at(-1);
+    const literalTagTextBlock = literalTagTextDetail.contentBlocks.at(-1);
+    const canvas = within(canvasElement);
+
+    await expect(richTextBlock).toMatchObject({ type: 'rich-text' });
+    await expect(richTextBlock.html).toContain('<strong>format</strong>');
+    await expect(unsafeHtmlBlock.html).not.toContain('<script');
+    await expect(unsafeHtmlBlock.html).not.toContain('onclick');
+    await expect(unsafeHtmlBlock.html).not.toContain('javascript:');
+    await expect(unsafeHtmlBlock.html).toContain('Safe text');
+    await expect(unsafeHtmlBlock.html).toContain('link');
+    await expect(literalTagTextBlock).toMatchObject({
+      text: 'Generic type <T> is plain text.',
+      type: 'paragraph',
+    });
+    await expect(canvas.getByRole('heading', { name: '서식이 유지된 본문' })).toBeVisible();
+    await expect(canvas.getByText('굵은 글씨').tagName).toBe('STRONG');
+    await expect(canvas.getByRole('link', { name: '링크' })).toHaveAttribute('href', 'https://example.com');
+    await expect(canvas.getAllByRole('listitem')).toHaveLength(2);
   },
 };
