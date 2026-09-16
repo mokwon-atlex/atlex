@@ -48,6 +48,7 @@ function isPostWrittenByUser(post, userId) {
   return String(postAuthorUserId).toLowerCase() === String(userId).toLowerCase();
 }
 
+/** 카테고리 필터와 프로필별 그래프 바로가기를 포함한 블로그 홈 본문이다. */
 export default function CategoryBlogHomeContent({ categories = [], feed, profile, tags }) {
   const currentUserId = useAuthStore((state) => state.user?.userId);
   const [mounted, setMounted] = useState(false);
@@ -58,6 +59,7 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   const [selectedCategoryId, setSelectedCategoryId] = useState(ALL_CATEGORY_ID);
   const isOwnerBlog = mounted && currentUserId === profile.userId;
   const resolvedQuickActions = isOwnerBlog ? quickActions : quickActions.filter(({ id }) => id !== 'option');
+  const graphHref = profile?.userId ? `/graph?userId=${encodeURIComponent(profile.userId)}` : '/graph';
 
   const resolvedTags = tags.map((tag) => ({
     ...tag,
@@ -149,7 +151,7 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
       />
     ),
     graph: ({ icon: Icon, id, label }) => (
-      <Link key={id} href="/graph" aria-label={label} className={quickActionLinkClassName}>
+      <Link key={id} href={graphHref} aria-label={label} className={quickActionLinkClassName}>
         {Icon ? <Icon className="size-4" /> : null}
       </Link>
     ),

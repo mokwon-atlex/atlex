@@ -1,8 +1,9 @@
-import { BookOpen, Eye, Heart, Lock } from 'lucide-react';
+import { BookOpen, Lock } from 'lucide-react';
 
 import { nodeColor } from '@/components/domain/graph-view/lib/graph-view-utils';
 import { AuthorBadge, TagPill } from '@/components/domain/graph-view/ui/GraphViewBadges';
 
+/** 선택한 게시글의 API 제공 정보를 간단히 보여 주는 팝업이다. */
 export function NodePopup({ position, post }) {
   const color = nodeColor(post);
 
@@ -27,7 +28,9 @@ export function NodePopup({ position, post }) {
             <TagPill key={tag} tag={tag} />
           ))}
         </div>
-        <p className="mb-3 line-clamp-2 text-xs font-bold leading-relaxed text-muted-foreground">{post.excerpt}</p>
+        <p className="mb-3 line-clamp-2 text-xs font-bold leading-relaxed text-muted-foreground">
+          {post.categoryName ? `${post.categoryName} 카테고리 게시글` : '게시글 관계 그래프 노드'}
+        </p>
         <div className="mb-3 flex flex-wrap gap-1.5">
           {post.tags.slice(1).map((tag) => (
             <TagPill key={tag} tag={tag} />
@@ -39,18 +42,9 @@ export function NodePopup({ position, post }) {
               <Lock className="size-3" /> 나만 보기
             </span>
           ) : (
-            <span className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Eye className="size-3" />
-                {post.views}
-              </span>
-              <span className="flex items-center gap-1">
-                <Heart className="size-3" />
-                {post.likes}
-              </span>
-            </span>
+            <span className="text-xs font-bold text-muted-foreground">공개 게시글</span>
           )}
-          <span className="text-xs font-black text-primary">읽기 →</span>
+          <span className="text-xs font-black text-primary">노드 클릭해 읽기 →</span>
         </div>
       </div>
     </div>

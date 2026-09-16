@@ -15,65 +15,28 @@ const TAG_META = {
   일상: { color: '#9AA3AF', bg: '#F3F4F6', text: '#374151' },
 };
 
-const NODE_COLOR_BY_TAG = {
-  철학: '#5547D5',
-  UX: '#5547D5',
-  디자인: '#108477',
-  AI: '#2B7EDB',
-  개발: '#346DC8',
-  일상: '#9AA3AF',
-};
-
-export function createPosts(data, authors) {
-  const authorMap = new Map(authors.map((author) => [author.id, author]));
-
-  return data.nodes.map((node) => {
-    const author = authorMap.get(node.authorId) ?? authors[0];
-
-    return {
-      id: node.id,
-      title: node.label,
-      author,
-      tags: node.tags,
-      excerpt: node.excerpt,
-      views: node.views,
-      likes: node.likes,
-      isPrivate: Boolean(node.private),
-      x: (node.x / 100) * SVG_W,
-      y: (node.y / 100) * SVG_H,
-      radius: Math.max(node.size / 2.05, 27),
-    };
-  });
-}
-
-export function createEdges(data) {
-  const nodeMap = new Map(data.nodes.map((node) => [node.id, node]));
-
-  return data.edges.map((edge, index) => ({
-    id: `${edge.from}-${edge.to}-${index}`,
-    from: edge.from,
-    to: edge.to,
-    strength: edge.dashed ? 0 : Math.max(1, Math.min(3, Math.round(edge.width / 2))),
-    sharedTags: getSharedTags(edge, nodeMap),
-    primaryTag: inferEdgeTag(edge, nodeMap),
-    isExplicit: Boolean(edge.dashed),
-  }));
-}
-
+/** API 응답에서 계산한 노드 고유 색상을 반환한다. */
 export function nodeColor(post) {
-  if (post.isPrivate) {
-    return '#9B9BA8';
-  }
-
-  return NODE_COLOR_BY_TAG[post.tags[0]] ?? PRIMARY;
+  return post.color ?? PRIMARY;
 }
 
-export function edgeColor(edge) {
-  if (edge.isExplicit || !edge.primaryTag) {
-    return '#AEB5BF';
+/** 노드 제목을 두 줄 안에서 읽기 좋게 나누고, 넘치는 글자는 말줄임표로 표시한다. */
+export function splitNodeTitle(title, maxLineLength = 7) {
+  const normalizedTitle = String(title ?? '').trim();
+  const maxVisibleLength = maxLineLength * 2;
+
+  if (normalizedTitle.length <= maxLineLength) {
+    return [normalizedTitle];
   }
 
-  return tagMeta(edge.primaryTag).color;
+  const firstLine = normalizedTitle.slice(0, maxLineLength);
+  const remainingTitle = normalizedTitle.slice(maxLineLength, maxVisibleLength);
+  const secondLine =
+    normalizedTitle.length > maxVisibleLength
+      ? `${remainingTitle.slice(0, Math.max(maxLineLength - 1, 1))}…`
+      : remainingTitle;
+
+  return [firstLine, secondLine];
 }
 
 export function edgeWidth(edge) {
@@ -114,26 +77,4 @@ export function toggleSetValue(previous, value) {
 
 export function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
-}
-
-function inferEdgeTag(edge, nodeMap) {
-  if (edge.dashed) {
-    return null;
-  }
-
-  const from = nodeMap.get(edge.from);
-  const sharedTag = getSharedTags(edge, nodeMap)[0];
-
-  return sharedTag ?? from?.tags[0] ?? null;
-}
-
-function getSharedTags(edge, nodeMap) {
-  const from = nodeMap.get(edge.from);
-  const to = nodeMap.get(edge.to);
-
-  if (!from || !to) {
-    return [];
-  }
-
-  return from.tags.filter((tag) => to.tags.includes(tag));
 }

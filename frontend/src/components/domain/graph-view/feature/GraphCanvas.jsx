@@ -8,20 +8,22 @@ import {
   SVG_H,
   SVG_W,
   createArrowPoints,
-  edgeColor,
   edgeWidth,
   nodeColor,
+  splitNodeTitle,
 } from '@/components/domain/graph-view/lib/graph-view-utils';
 import { EdgeKeywordTooltip } from '@/components/domain/graph-view/ui/EdgeKeywordTooltip';
 import { LockBadge, NodeDocIcon } from '@/components/domain/graph-view/ui/GraphViewIcons';
 
+/** 노드·간선 SVG와 확대, 이동, 선택 상호작용을 렌더링한다. */
 export function GraphCanvas({
   activeTab,
+  currentUserId,
   edges,
   hoveredId,
   minSharedTags,
   onHover,
-  onSelect,
+  onOpenPost,
   pan,
   posts,
   selectedId,
@@ -50,7 +52,7 @@ export function GraphCanvas({
       }),
     [edges, minSharedTags, showExplicitEdges, showTagEdges],
   );
-  const filteredPosts = activeTab === '내 포스트' ? posts.filter((post) => post.author.id === 'park') : posts;
+  const filteredPosts = activeTab === 'mine' ? posts.filter((post) => post.author.id === currentUserId) : posts;
   const filteredPostIds = new Set(filteredPosts.map((post) => post.id));
 
   const getSvgPoint = (event) => {
@@ -131,7 +133,7 @@ export function GraphCanvas({
     drag.element?.releasePointerCapture?.(drag.pointerId);
 
     if (drag.targetNodeId && !drag.moved) {
-      onSelect(selectedId === drag.targetNodeId ? null : drag.targetNodeId);
+      onOpenPost(drag.targetNodeId);
     }
 
     dragRef.current = null;
@@ -174,7 +176,10 @@ export function GraphCanvas({
           const y1 = from.y + uy * (from.radius + startGap);
           const x2 = to.x - ux * (to.radius + endGap);
           const y2 = to.y - uy * (to.radius + endGap);
-          const color = edgeColor(edge);
+          const fromColor = nodeColor(from);
+          const toColor = nodeColor(to);
+          const gradientId = `edge-gradient-${edge.id}`;
+          const gradient = `url(#${gradientId})`;
           const isLit =
             hoveredEdgeId === edge.id ||
             hoveredId === edge.from ||
@@ -200,6 +205,19 @@ export function GraphCanvas({
               opacity={edgeOpacity}
               style={{ transition: 'opacity 0.18s' }}
             >
+              <defs>
+                <linearGradient
+                  gradientUnits="userSpaceOnUse"
+                  id={gradientId}
+                  x1={x1}
+                  x2={lineEndX}
+                  y1={y1}
+                  y2={lineEndY}
+                >
+                  <stop offset="0%" stopColor={fromColor} />
+                  <stop offset="100%" stopColor={toColor} />
+                </linearGradient>
+              </defs>
               <line
                 stroke="transparent"
                 strokeLinecap="round"
@@ -221,7 +239,7 @@ export function GraphCanvas({
                 y2={lineEndY}
               />
               <line
-                stroke={color}
+                stroke={gradient}
                 strokeDasharray={dashArray}
                 strokeLinecap="butt"
                 strokeWidth={lineWidth + (isEdgeHovered ? 1.2 : 0)}
@@ -232,7 +250,7 @@ export function GraphCanvas({
               />
               {arrowPoints ? (
                 <polygon
-                  fill={color}
+                  fill={toColor}
                   opacity="0.96"
                   points={arrowPoints}
                   stroke={CANVAS_BG}
@@ -247,6 +265,7 @@ export function GraphCanvas({
 
         {filteredPosts.map((post) => {
           const color = nodeColor(post);
+          const titleLines = splitNodeTitle(post.title);
           const isHovered = hoveredId === post.id;
           const isSelected = selectedId === post.id;
           const isDimmed = (hoveredId || selectedId) && !isHovered && !isSelected;
@@ -282,7 +301,7 @@ export function GraphCanvas({
               <text
                 fill={isHovered || isSelected ? '#111827' : '#242832'}
                 fontFamily="var(--font-nanum-gothic-coding), system-ui, sans-serif"
-                fontSize="14"
+                fontSize="12"
                 fontWeight={isHovered || isSelected ? '800' : '700'}
                 paintOrder="stroke"
                 stroke="rgba(248,248,245,0.96)"
@@ -290,9 +309,13 @@ export function GraphCanvas({
                 strokeWidth="4"
                 textAnchor="middle"
                 x={post.x}
-                y={post.y + post.radius + 18}
+                y={post.y + post.radius + 20}
               >
-                {post.title.length > 12 ? `${post.title.slice(0, 12)}...` : post.title}
+                {titleLines.map((line, index) => (
+                  <tspan key={`${post.id}-${index}`} dy={index === 0 ? 0 : 16} x={post.x}>
+                    {line}
+                  </tspan>
+                ))}
               </text>
             </g>
           );

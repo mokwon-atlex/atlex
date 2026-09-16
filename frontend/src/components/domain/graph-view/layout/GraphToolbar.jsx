@@ -2,7 +2,21 @@ import { BookOpen, LayoutGrid, PanelLeft } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
-export function GraphToolbar({ activeTab, setActiveTab, setShowPanel, setShowSidebar, showPanel, showSidebar }) {
+/** 그래프 범위 선택과 보조 패널 열기를 제공하는 상단 도구 모음이다. */
+export function GraphToolbar({
+  activeTab,
+  isLoggedIn,
+  setActiveTab,
+  setShowPanel,
+  setShowSidebar,
+  showPanel,
+  showSidebar,
+}) {
+  const tabs = [
+    { id: 'all', label: '탐색' },
+    { id: 'mine', label: '내 포스트' },
+  ];
+
   return (
     <nav className="z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-5 shadow-sm">
       <div className="mr-1 flex min-w-0 items-center gap-2">
@@ -25,19 +39,25 @@ export function GraphToolbar({ activeTab, setActiveTab, setShowPanel, setShowSid
       </button>
 
       <div className="ml-1 flex gap-1">
-        {['탐색', '내 포스트'].map((tab) => (
+        {tabs.map((tab) => (
           <button
-            key={tab}
+            key={tab.id}
             type="button"
+            aria-disabled={tab.id === 'mine' && !isLoggedIn}
             className={cn(
               'h-9 rounded-full px-4 text-base font-bold transition-colors',
-              activeTab === tab
+              activeTab === tab.id
                 ? 'bg-primary/12 text-primary'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+              tab.id === 'mine' && !isLoggedIn ? 'cursor-not-allowed opacity-50' : '',
             )}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => {
+              if (tab.id !== 'mine' || isLoggedIn) {
+                setActiveTab(tab.id);
+              }
+            }}
           >
-            {tab}
+            {tab.label}
           </button>
         ))}
       </div>
