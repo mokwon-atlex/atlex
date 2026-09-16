@@ -90,7 +90,7 @@ public class AiSuggestionService {
         if (suggestion == null) {
             return "";
         }
-        String cleaned = suggestion.trim().replaceAll("[\"'\n\r`]", "");
+        String cleaned = suggestion.replaceAll("[\"'\n\r`]", "").trim();
         if (cleaned.startsWith(currentTitle)) {
             cleaned = cleaned.substring(currentTitle.length()).trim();
         }
