@@ -1,3 +1,5 @@
+import { expect } from 'storybook/test';
+
 import PolicyLayout from '@/components/domain/policy/layout/PolicyLayout';
 import PolicyItem from '@/components/domain/policy/ui/PolicyItem';
 import PolicySidebarItem from '@/components/domain/policy/ui/PolicySidebarItem';
@@ -39,13 +41,19 @@ const mockPolicyItems = [
   },
 ];
 
+/**
+ * 렌더링 결과에 중첩된 목록 요소가 없는지 검증합니다.
+ * @param {{ canvasElement: HTMLElement }} context - 스토리 렌더링 컨텍스트
+ */
+async function expectNoNestedListItem({ canvasElement }) {
+  await expect(canvasElement.querySelector('li li')).toBeNull();
+}
+
 export const Default = {
   render: () => (
     <PolicyLayout
       sidebar={mockPolicyItems.map((item, index) => (
-        <li key={index}>
-          <PolicySidebarItem item={item} isActive={index === 0} onClick={() => {}} />
-        </li>
+        <PolicySidebarItem key={index} item={item} isActive={index === 0} onClick={() => {}} />
       ))}
     >
       {mockPolicyItems.map((item, index) => (
@@ -53,18 +61,14 @@ export const Default = {
       ))}
     </PolicyLayout>
   ),
+  play: expectNoNestedListItem,
 };
 
 export const SingleItem = {
   render: () => (
-    <PolicyLayout
-      sidebar={
-        <li>
-          <PolicySidebarItem item={mockPolicyItems[0]} isActive onClick={() => {}} />
-        </li>
-      }
-    >
+    <PolicyLayout sidebar={<PolicySidebarItem item={mockPolicyItems[0]} isActive onClick={() => {}} />}>
       <PolicyItem item={mockPolicyItems[0]} />
     </PolicyLayout>
   ),
+  play: expectNoNestedListItem,
 };
