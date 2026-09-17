@@ -18,6 +18,7 @@ import PostEditorShell from '@/components/domain/post-editor/layout/PostEditorSh
 import { postEditorCopy } from '@/data/post-editor/post-editor-copy';
 import { postEditorDrafts } from '@/data/post-editor/post-editor-drafts';
 import { postEditorToolCategories } from '@/data/post-editor/post-editor-tool-categories';
+import usePostEditorAiSuggestion from '@/hooks/post-editor/post-editor-ai-suggestion';
 import usePostEditorRichText from '@/hooks/post-editor/post-editor-rich-text';
 import usePostEditorTags from '@/hooks/post-editor/post-editor-tags';
 import { useCreatePost } from '@/hooks/queries/posts/useCreatePost';
@@ -42,6 +43,15 @@ export default function PostWritePage() {
 
   // 수동 태그 입력 + 본문 #해시태그 자동 감지를 통합 관리하는 훅
   const tagField = usePostEditorTags(richText.bodyText);
+
+  // AI 제목 자동완성 및 본문 단락 추천 훅
+  const selectedCategoryName = categories.find((c) => c.id === categoryId)?.name;
+  const aiSuggestion = usePostEditorAiSuggestion({
+    category: selectedCategoryName,
+    editor: richText.editor,
+    tags: tagField.combinedTags,
+    title,
+  });
 
   const createPost = useCreatePost();
 
@@ -133,6 +143,14 @@ export default function PostWritePage() {
           tagField={tagField}
           tagPlaceholder={postEditorCopy.tagPlaceholder}
           onTitleChange={setTitle}
+          titleSuggestion={aiSuggestion.titleSuggestion}
+          isSuggestingTitle={aiSuggestion.isSuggestingTitle}
+          onAcceptTitleSuggestion={(currentTitle) => {
+            const next = aiSuggestion.acceptTitleSuggestion(currentTitle);
+            if (next) setTitle(next);
+          }}
+          onDismissTitleSuggestion={aiSuggestion.dismissTitleSuggestion}
+          onRequestTitleSuggestion={aiSuggestion.requestTitleSuggestion}
         />
 
         <PostEditorMetaSection
@@ -162,6 +180,11 @@ export default function PostWritePage() {
               bodyText={richText.bodyText}
               editor={richText.editor}
               isEditorEmpty={richText.isEditorEmpty}
+              isSuggestingParagraph={aiSuggestion.isSuggestingParagraph}
+              onRequestParagraphAi={() => {
+                richText.editor?.commands.focus();
+                aiSuggestion.requestParagraphSuggestion({ insertDirectly: true });
+              }}
             />
           }
           toolRail={

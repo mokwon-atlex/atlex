@@ -15,6 +15,7 @@ export const AiSuggestionExtension = Extension.create({
     return {
       onAccept: null,
       onDismiss: null,
+      onRequestAi: null,
     };
   },
 
@@ -69,6 +70,13 @@ export const AiSuggestionExtension = Extension.create({
         }
         return editor.commands.clearAiSuggestion();
       },
+      'Mod-j': () => {
+        if (this.options.onRequestAi) {
+          this.options.onRequestAi();
+          return true;
+        }
+        return false;
+      },
     };
   },
 
@@ -89,12 +97,35 @@ export const AiSuggestionExtension = Extension.create({
               if (!text) return DecorationSet.empty;
 
               const pos = tr.selection.from;
-              const widget = Decoration.widget(pos, () => {
-                const span = document.createElement('span');
-                span.className = 'text-muted-foreground/50 select-none pointer-events-none opacity-50';
-                span.textContent = text;
-                return span;
-              });
+              const widget = Decoration.widget(
+                pos,
+                () => {
+                  const container = document.createElement('span');
+                  container.className =
+                    'post-editor-ai-ghost inline-flex items-baseline select-none cursor-pointer rounded px-0.5 hover:bg-muted/40 transition-colors';
+                  container.title = '클릭하거나 Tab 키를 눌러 바로 삽입';
+                  container.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    editor.commands.acceptAiSuggestion();
+                    editor.commands.focus();
+                  });
+
+                  const textSpan = document.createElement('span');
+                  textSpan.className = 'text-muted-foreground/50 opacity-60';
+                  textSpan.textContent = text;
+                  container.appendChild(textSpan);
+
+                  const badge = document.createElement('span');
+                  badge.className =
+                    'ml-1.5 inline-flex items-center rounded border border-border/60 bg-muted/40 px-1 py-0.5 text-[9px] font-medium leading-none text-muted-foreground align-middle';
+                  badge.textContent = 'Tab';
+                  container.appendChild(badge);
+
+                  return container;
+                },
+                { side: 1 },
+              );
               return DecorationSet.create(tr.doc, [widget]);
             }
             if (tr.docChanged || tr.selectionSet) {

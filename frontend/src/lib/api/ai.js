@@ -10,7 +10,7 @@ import { apiClient } from '@/lib/api/client';
  * @returns {Promise<{ suggestion: string }>}
  */
 export async function fetchTitleAiSuggestion({ currentTitle, category, tags }, signal) {
-  return apiClient.post('/api/v1/ai/suggest/title', { currentTitle, category, tags }, { signal });
+  return apiClient.post('/ai/suggest/title', { currentTitle, category, tags }, { signal });
 }
 
 /**
@@ -24,5 +24,5 @@ export async function fetchTitleAiSuggestion({ currentTitle, category, tags }, s
  * @returns {Promise<{ suggestion: string }>}
  */
 export async function fetchParagraphAiSuggestion({ title, category, tags, currentWriting }, signal) {
-  return apiClient.post('/api/v1/ai/suggest/paragraph', { title, category, tags, currentWriting }, { signal });
+  return apiClient.post('/ai/suggest/paragraph', { title, category, tags, currentWriting }, { signal });
 }

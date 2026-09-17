@@ -1,12 +1,11 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
 import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import TextAlign from '@tiptap/extension-text-align';
-import Underline from '@tiptap/extension-underline';
 import StarterKit from '@tiptap/starter-kit';
+import { AiSuggestionExtension } from '@/lib/post-editor/rich-text-ai-extension';
 import { createBlockContent } from '@/lib/post-editor/rich-text-utils';
 
 function createParagraphVariant(name, dataType) {
@@ -219,13 +218,12 @@ export const editorExtensions = [
     heading: {
       levels: [1, 2, 3],
     },
-  }),
-  Underline,
-  Link.configure({
-    autolink: true,
-    defaultProtocol: 'https',
-    linkOnPaste: true,
-    openOnClick: false,
+    link: {
+      autolink: true,
+      defaultProtocol: 'https',
+      linkOnPaste: true,
+      openOnClick: false,
+    },
   }),
   Image.configure({
     allowBase64: true,
@@ -258,4 +256,5 @@ export const editorExtensions = [
   CalloutBox,
   SectionBlock,
   MathBlock,
+  AiSuggestionExtension,
 ];

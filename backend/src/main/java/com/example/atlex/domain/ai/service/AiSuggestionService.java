@@ -30,8 +30,10 @@ public class AiSuggestionService {
 
         [규칙]
         1. 직전 작성 내용을 그대로 반복하지 마세요.
-        2. 2~4문장 정도의 자연스러운 1개 단락 텍스트만 출력하세요.
-        3. 마크다운 헤더(# 등), 따옴표, 인사말, 안내 문구를 포함하지 말고 본문 텍스트만 출력하세요.
+        2. 2~3문장 정도의 자연스럽고 간결한 1개 단락 텍스트만 출력하세요.
+        3. 마크다운 헤더(#), 별표(*), 불릿(-), 따옴표, 괄호 해설, 인사말을 절대 포함하지 마세요.
+        4. 반드시 자연스러운 한국어로만 작성하고, 불필요한 영어 번역이나 영문 단어를 섞지 마세요.
+        5. 직전 문장 뒤에 바로 이어 붙일 수 있는 순수 본문 텍스트만 출력하세요.
         """;
 
     /**
@@ -77,6 +79,9 @@ public class AiSuggestionService {
         if (request.getCurrentWriting() != null && !request.getCurrentWriting().isBlank()) {
             userPrompt.append("직전 작성 내용: ").append(request.getCurrentWriting().trim()).append("\n");
         }
+        if (userPrompt.isEmpty()) {
+            userPrompt.append("새로운 블로그 글의 흥미로운 도입부 첫 단락을 작성해 주세요.\n");
+        }
 
         String rawSuggestion = geminiClient.generateContent(PARAGRAPH_SYSTEM_PROMPT, userPrompt.toString(), 300);
         String cleaned = cleanParagraphSuggestion(rawSuggestion);
@@ -101,6 +106,8 @@ public class AiSuggestionService {
         if (suggestion == null) {
             return "";
         }
-        return suggestion.trim().replaceAll("^[`\"]+|[`\"]+$", "");
+        return suggestion.trim()
+            .replaceAll("^[`\"'*#\\-]+|[`\"'*#\\-]+$", "")
+            .trim();
     }
 }

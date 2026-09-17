@@ -24,12 +24,13 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         titleAbortControllerRef.current.abort();
       }
 
+      setTitleSuggestion('');
+      clearTimeout(debounceTimerRef.current);
+
       if (!currentTitle || currentTitle.trim().length < 2) {
-        setTitleSuggestion('');
         return;
       }
 
-      clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = setTimeout(async () => {
         const controller = new AbortController();
         titleAbortControllerRef.current = controller;
@@ -58,12 +59,16 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
   );
 
   // 2. 제목 제안 수락 (Tab 키 처리)
-  const acceptTitleSuggestion = useCallback(() => {
-    if (!titleSuggestion) return '';
-    const completedTitle = `${title}${titleSuggestion}`;
-    setTitleSuggestion('');
-    return completedTitle;
-  }, [title, titleSuggestion]);
+  const acceptTitleSuggestion = useCallback(
+    (overrideTitle) => {
+      if (!titleSuggestion) return '';
+      const baseTitle = overrideTitle !== undefined ? overrideTitle : title;
+      const completedTitle = `${baseTitle}${titleSuggestion}`;
+      setTitleSuggestion('');
+      return completedTitle;
+    },
+    [title, titleSuggestion],
+  );
 
   // 3. 제목 제안 취소
   const dismissTitleSuggestion = useCallback(() => {
@@ -72,12 +77,29 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
 
   // 4. 본문 단락 추천 요청
   const requestParagraphSuggestion = useCallback(
-    async (currentWriting) => {
+    async (optionsOrWritingOverride = {}) => {
       if (paragraphAbortControllerRef.current) {
         paragraphAbortControllerRef.current.abort();
       }
 
       if (!editor) return;
+
+      let currentWritingOverride;
+      let insertDirectly = false;
+
+      if (typeof optionsOrWritingOverride === 'string') {
+        currentWritingOverride = optionsOrWritingOverride;
+      } else if (optionsOrWritingOverride && typeof optionsOrWritingOverride === 'object') {
+        currentWritingOverride = optionsOrWritingOverride.currentWritingOverride;
+        insertDirectly = Boolean(optionsOrWritingOverride.insertDirectly);
+      }
+
+      let currentWriting = currentWritingOverride;
+      if (currentWriting === undefined && editor.state) {
+        const { from } = editor.state.selection;
+        const textBefore = editor.state.doc.textBetween(0, from, '\n', '\n');
+        currentWriting = textBefore.length > 1000 ? textBefore.slice(-1000) : textBefore;
+      }
 
       const controller = new AbortController();
       paragraphAbortControllerRef.current = controller;
@@ -95,7 +117,13 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         );
 
         if (res?.suggestion) {
-          editor.commands.setAiSuggestion(res.suggestion);
+          if (insertDirectly) {
+            editor.chain().focus().clearAiSuggestion().insertContent(res.suggestion).run();
+          } else {
+            editor.commands.setAiSuggestion(res.suggestion);
+          }
+        } else {
+          editor.commands.clearAiSuggestion();
         }
       } catch (error) {
         if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
