@@ -11,7 +11,7 @@ import {
   edgeWidth,
   nodeColor,
   splitNodeTitle,
-} from '@/components/domain/graph-view/lib/graph-view-utils';
+} from '@/lib/graph-view/graph-view-utils';
 import { EdgeKeywordTooltip } from '@/components/domain/graph-view/ui/EdgeKeywordTooltip';
 import { LockBadge, NodeDocIcon } from '@/components/domain/graph-view/ui/GraphViewIcons';
 

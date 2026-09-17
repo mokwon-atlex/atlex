@@ -1,4 +1,4 @@
-import { SVG_H, SVG_W } from '@/components/domain/graph-view/lib/graph-view-utils';
+import { SVG_H, SVG_W } from '@/lib/graph-view/graph-view-utils';
 
 const AVATAR_COLORS = ['#6252D9', '#159D91', '#2F7ED8', '#E25555', '#7B5CE1', '#D97706'];
 

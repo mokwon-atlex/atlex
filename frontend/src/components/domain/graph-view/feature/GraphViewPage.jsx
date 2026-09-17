@@ -9,8 +9,8 @@ import { GraphCanvas } from '@/components/domain/graph-view/feature/GraphCanvas'
 import { FilterSidebar } from '@/components/domain/graph-view/layout/FilterSidebar';
 import { GraphToolbar } from '@/components/domain/graph-view/layout/GraphToolbar';
 import { PostListPanel } from '@/components/domain/graph-view/layout/PostListPanel';
-import { toGraphViewData } from '@/components/domain/graph-view/lib/graph-api-data';
-import { CANVAS_BG, clamp, toggleSetValue } from '@/components/domain/graph-view/lib/graph-view-utils';
+import { toGraphViewData } from '@/lib/graph-view/graph-api-data';
+import { CANVAS_BG, clamp, toggleSetValue } from '@/lib/graph-view/graph-view-utils';
 import { CanvasButton } from '@/components/domain/graph-view/ui/CanvasButton';
 import { GraphLegend } from '@/components/domain/graph-view/ui/GraphLegend';
 import { NodePopup } from '@/components/domain/graph-view/ui/NodePopup';

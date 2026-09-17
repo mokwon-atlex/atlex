@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { expect, waitFor, within } from 'storybook/test';
 
 import GraphViewPage from '@/components/domain/graph-view/feature/GraphViewPage';
-import { toGraphViewData } from '@/components/domain/graph-view/lib/graph-api-data';
-import { splitNodeTitle } from '@/components/domain/graph-view/lib/graph-view-utils';
+import { toGraphViewData } from '@/lib/graph-view/graph-api-data';
+import { splitNodeTitle } from '@/lib/graph-view/graph-view-utils';
 
 const graphFixture = {
   nodes: [

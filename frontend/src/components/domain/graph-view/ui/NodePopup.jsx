@@ -1,6 +1,6 @@
 import { BookOpen, Lock } from 'lucide-react';
 
-import { nodeColor } from '@/components/domain/graph-view/lib/graph-view-utils';
+import { nodeColor } from '@/lib/graph-view/graph-view-utils';
 import { AuthorBadge, TagPill } from '@/components/domain/graph-view/ui/GraphViewBadges';
 
 /** 선택한 게시글의 API 제공 정보를 간단히 보여 주는 팝업이다. */

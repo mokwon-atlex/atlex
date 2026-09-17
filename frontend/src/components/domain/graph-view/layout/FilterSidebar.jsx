@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-import { tagMeta } from '@/components/domain/graph-view/lib/graph-view-utils';
+import { tagMeta } from '@/lib/graph-view/graph-view-utils';
 import { Avatar } from '@/components/domain/graph-view/ui/GraphViewBadges';
 import { FilterIcon, MiniConnectionIcon } from '@/components/domain/graph-view/ui/GraphViewIcons';
-import { PRIMARY } from '@/components/domain/graph-view/lib/graph-view-utils';
+import { PRIMARY } from '@/lib/graph-view/graph-view-utils';
 
 /** 작성자·태그·관계 조건으로 그래프 표시 범위를 좁히는 사이드바다. */
 export function FilterSidebar({
