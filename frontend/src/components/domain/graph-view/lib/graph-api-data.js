@@ -3,10 +3,31 @@ import { SVG_H, SVG_W } from '@/components/domain/graph-view/lib/graph-view-util
 const AVATAR_COLORS = ['#6252D9', '#159D91', '#2F7ED8', '#E25555', '#7B5CE1', '#D97706'];
 
 /**
+ * @typedef {object} GraphNodeResponse
+ * @property {number} id 게시글 ID
+ * @property {string} title 게시글 제목
+ * @property {number} authorId 작성자 DB ID
+ * @property {string} authorUserId 작성자 아이디
+ * @property {string} authorName 작성자 표시 이름
+ * @property {number | null} categoryId 카테고리 ID
+ * @property {string | null} categoryName 카테고리 이름
+ * @property {boolean} isPublic 공개 여부
+ * @property {string[]} tags 게시글 태그 목록
+ */
+
+/**
+ * @typedef {object} GraphEdgeResponse
+ * @property {number} sourcePostId 출발 게시글 ID
+ * @property {number} targetPostId 도착 게시글 ID
+ * @property {number} score 관계 유사도 점수
+ * @property {string[]} sharedKeywords 공통 키워드 목록
+ */
+
+/**
  * 그래프 API 응답을 그래프 화면에서 사용하는 노드, 간선, 필터 데이터로 변환한다.
  * API에 좌표가 없으므로 같은 응답은 항상 같은 위치를 사용하도록 노드 순서에서 좌표를 계산한다.
  *
- * @param {{ nodes?: object[], edges?: object[] } | undefined} graph API 응답
+ * @param {{ nodes?: GraphNodeResponse[], edges?: GraphEdgeResponse[] } | undefined} graph API 응답
  * @returns {{ authors: object[], edges: object[], posts: object[], tagCounts: [string, number][] }} 화면 데이터
  */
 export function toGraphViewData(graph) {

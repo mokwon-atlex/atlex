@@ -55,9 +55,11 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
         return loadGraph(query);
       }
 
-      return postId != null
-        ? fetchPostGraphByPostId(postId, { minScore })
-        : fetchPostGraph({ categoryId, minScore, userId: requestedUserId });
+      if (requestedUserId) {
+        return fetchPostGraph({ categoryId, minScore, userId: requestedUserId });
+      }
+
+      return postId != null ? fetchPostGraphByPostId(postId, { minScore }) : fetchPostGraph({ categoryId, minScore });
     },
     enabled: activeTab !== 'mine' || Boolean(resolvedCurrentUserId),
   });
@@ -291,6 +293,14 @@ function getGraphState({ activeTab, graphQuery, isLoggedIn, posts }) {
       description: '게시글 관계를 불러오는 중입니다.',
       isLoading: true,
       title: '그래프를 준비하고 있습니다',
+    };
+  }
+
+  if (graphQuery.isFetching) {
+    return {
+      description: '게시글 관계를 다시 불러오는 중입니다.',
+      isLoading: true,
+      title: '그래프를 다시 불러오는 중입니다',
     };
   }
 

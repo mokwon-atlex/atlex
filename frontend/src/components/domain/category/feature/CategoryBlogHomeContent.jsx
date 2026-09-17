@@ -59,7 +59,16 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   const [selectedCategoryId, setSelectedCategoryId] = useState(ALL_CATEGORY_ID);
   const isOwnerBlog = mounted && currentUserId === profile.userId;
   const resolvedQuickActions = isOwnerBlog ? quickActions : quickActions.filter(({ id }) => id !== 'option');
-  const graphHref = profile?.userId ? `/graph?userId=${encodeURIComponent(profile.userId)}` : '/graph';
+  const graphParams = new URLSearchParams();
+
+  if (profile?.userId) {
+    graphParams.set('userId', profile.userId);
+  }
+  if (selectedCategoryId !== ALL_CATEGORY_ID) {
+    graphParams.set('categoryId', String(selectedCategoryId));
+  }
+
+  const graphHref = graphParams.size > 0 ? `/graph?${graphParams.toString()}` : '/graph';
 
   const resolvedTags = tags.map((tag) => ({
     ...tag,

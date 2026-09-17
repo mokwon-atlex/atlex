@@ -27,7 +27,7 @@ function toOptionalScore(value) {
  */
 export default async function StandaloneGraphPage({ searchParams }) {
   const params = await searchParams;
-  const userId = typeof params?.userId === 'string' && params.userId.trim() ? params.userId : undefined;
+  const userId = typeof params?.userId === 'string' && params.userId.trim() ? params.userId.trim() : undefined;
 
   return (
     <main className="min-h-screen bg-background text-foreground">

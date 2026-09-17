@@ -272,16 +272,27 @@ export function GraphCanvas({
 
           return (
             <g
+              aria-label={`${post.title} 게시글 열기`}
               key={post.id}
               data-node-id={post.id}
+              onBlur={() => onHover(null)}
+              onFocus={() => onHover(post.id)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onOpenPost(post.id);
+                }
+              }}
               onMouseEnter={() => onHover(post.id)}
               onMouseLeave={() => onHover(null)}
+              role="button"
               style={{
                 cursor: 'pointer',
                 opacity: isDimmed ? 0.38 : 1,
                 transition: 'opacity 0.18s',
                 touchAction: 'none',
               }}
+              tabIndex={0}
             >
               {isHovered || isSelected ? (
                 <circle cx={post.x} cy={post.y} fill={color} opacity="0.14" r={post.radius + 14} />

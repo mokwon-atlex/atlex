@@ -93,6 +93,7 @@ export const Default = {
     ).toBeGreaterThan(300);
     await waitFor(() => expect(canvas.getByText('정보 구조')).toBeVisible());
     await expect(canvas.getByText('디자인 시스템')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: '정보 구조 게시글 열기' })).toHaveAttribute('tabindex', '0');
     await expect(canvasElement.querySelectorAll('linearGradient')).toHaveLength(1);
   },
 };
