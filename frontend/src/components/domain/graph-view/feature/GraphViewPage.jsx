@@ -55,11 +55,13 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
         return loadGraph(query);
       }
 
-      if (requestedUserId) {
+      if (activeTab === 'mine') {
         return fetchPostGraph({ categoryId, minScore, userId: requestedUserId });
       }
 
-      return postId != null ? fetchPostGraphByPostId(postId, { minScore }) : fetchPostGraph({ categoryId, minScore });
+      return postId != null
+        ? fetchPostGraphByPostId(postId, { minScore })
+        : fetchPostGraph({ categoryId, minScore, userId: requestedUserId });
     },
     enabled: activeTab !== 'mine' || Boolean(resolvedCurrentUserId),
   });
