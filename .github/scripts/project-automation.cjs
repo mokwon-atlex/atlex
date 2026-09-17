@@ -130,11 +130,20 @@ async function syncIssueMetadata(github, owner, repo, issue) {
   }
 }
 
+/**
+ * PR 본문에서 현재 저장소의 이슈 참조를 추출합니다.
+ *
+ * @param {string} body PR 본문
+ * @param {string} repositoryOwner 저장소 소유자
+ * @param {string} repositoryName 저장소 이름
+ * @returns {{issueNumber: number, relation: "closes" | "related"}[]} 이슈 참조 목록
+ */
 function parseIssueReferences(body, repositoryOwner, repositoryName) {
   const references = new Map();
   const pattern = /\b(Closes|Related\s+to)\s+(?:([\w.-]+)\/([\w.-]+))?#(\d+)/gi;
+  const visibleBody = body.replace(/<!--[\s\S]*?-->/g, "");
 
-  for (const match of body.matchAll(pattern)) {
+  for (const match of visibleBody.matchAll(pattern)) {
     const [, keyword, owner, repository, issueNumberText] = match;
     if (
       owner &&
