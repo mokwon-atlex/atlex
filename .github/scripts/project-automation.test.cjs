@@ -160,6 +160,23 @@ test("Closes와 Related to 참조를 구분하고 중복에서는 Closes를 우�
   ]);
 });
 
+test("HTML 주석 내부의 이슈 참조를 제외한다", () => {
+  const references = parseIssueReferences(
+    [
+      "Closes #7",
+      "",
+      "<!--",
+      "기본: Closes #123",
+      "불가피하게 여러 PR로 나눈 경우: Related to #124",
+      "-->",
+    ].join("\n"),
+    "mokwon-atlex",
+    "atlex",
+  );
+
+  assert.deepEqual(references, [{ issueNumber: 7, relation: "closes" }]);
+});
+
 test("연관 PR 영역만 교체하고 사용자가 작성한 본문은 유지한다", () => {
   const original = [
     "### 참고 사항",
