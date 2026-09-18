@@ -163,11 +163,16 @@ export default function PostWritePage() {
           onIsPublicChange={setIsPublic}
         />
 
-        {(validationError || createPost.isError) && (
+        {(validationError || createPost.isError || aiSuggestion.aiError) && (
           <div className="px-5 pt-4 sm:px-7">
-            <Alert variant="destructive">
+            <Alert
+              variant={aiSuggestion.aiError && !validationError && !createPost.isError ? 'default' : 'destructive'}
+            >
               <AlertDescription>
-                {validationError || createPost.error?.message || '게시에 실패했습니다. 잠시 후 다시 시도해 주세요.'}
+                {validationError ||
+                  createPost.error?.message ||
+                  aiSuggestion.aiError ||
+                  '게시에 실패했습니다. 잠시 후 다시 시도해 주세요.'}
               </AlertDescription>
             </Alert>
           </div>
@@ -183,7 +188,7 @@ export default function PostWritePage() {
               isSuggestingParagraph={aiSuggestion.isSuggestingParagraph}
               onRequestParagraphAi={() => {
                 richText.editor?.commands.focus();
-                aiSuggestion.requestParagraphSuggestion({ insertDirectly: true });
+                aiSuggestion.requestParagraphSuggestion();
               }}
             />
           }

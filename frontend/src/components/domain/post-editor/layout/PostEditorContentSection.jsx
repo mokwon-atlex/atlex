@@ -41,7 +41,7 @@ export default function PostEditorContentSection({
                 onClick={onRequestParagraphAi}
                 disabled={isSuggestingParagraph}
                 className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                title="현재 커서 위치에 AI가 이어서 작성하여 바로 삽입합니다 (단축키: Ctrl + J)"
+                title="현재 커서 위치에 AI가 이어서 추천합니다 (단축키: Ctrl + J, 적용: Tab, 취소: Esc)"
               >
                 {isSuggestingParagraph ? (
                   <Loader2 className="size-3 animate-spin text-primary" />

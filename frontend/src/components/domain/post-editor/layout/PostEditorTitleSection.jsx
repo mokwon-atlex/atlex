@@ -35,6 +35,8 @@ export default function PostEditorTitleSection({
   };
 
   const handleKeyDown = (event) => {
+    if (event.nativeEvent?.isComposing) return;
+
     if (event.key === 'Tab' && titleSuggestion) {
       event.preventDefault();
       if (onAcceptTitleSuggestion) {
@@ -92,6 +94,40 @@ export default function PostEditorTitleSection({
               </div>
             ) : null}
           </div>
+
+          {titleSuggestion ? (
+            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1 font-medium text-primary shrink-0">
+                <Sparkles className="size-3" />
+                AI 추천:
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onAcceptTitleSuggestion) {
+                    onAcceptTitleSuggestion(title);
+                  } else {
+                    onTitleChange(`${title}${titleSuggestion}`);
+                    onDismissTitleSuggestion?.();
+                  }
+                }}
+                className="cursor-pointer truncate text-left hover:underline hover:text-foreground transition-colors"
+                title="클릭하여 추천 제목 적용 (단축키: Tab)"
+              >
+                &ldquo;{title}
+                {titleSuggestion}&rdquo;
+              </button>
+              <PostEditorAiBadge label="Tab 적용" className="shrink-0" />
+              <button
+                type="button"
+                onClick={onDismissTitleSuggestion}
+                className="ml-auto shrink-0 text-muted-foreground/60 hover:text-foreground text-[11px]"
+                title="추천 닫기 (단축키: Esc)"
+              >
+                닫기
+              </button>
+            </div>
+          ) : null}
         </Field>
       </div>
 

@@ -12,6 +12,11 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
   const [titleSuggestion, setTitleSuggestion] = useState('');
   const [isSuggestingTitle, setIsSuggestingTitle] = useState(false);
   const [isSuggestingParagraph, setIsSuggestingParagraph] = useState(false);
+  const [aiError, setAiError] = useState('');
+
+  const clearAiError = useCallback(() => {
+    setAiError('');
+  }, []);
 
   const titleAbortControllerRef = useRef(null);
   const paragraphAbortControllerRef = useRef(null);
@@ -35,6 +40,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         const controller = new AbortController();
         titleAbortControllerRef.current = controller;
         setIsSuggestingTitle(true);
+        setAiError('');
 
         try {
           const res = await fetchTitleAiSuggestion(
@@ -49,6 +55,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         } catch (error) {
           if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
             setTitleSuggestion('');
+            setAiError('AI 제목 추천을 가져오지 못했습니다.');
           }
         } finally {
           setIsSuggestingTitle(false);
@@ -104,6 +111,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
       const controller = new AbortController();
       paragraphAbortControllerRef.current = controller;
       setIsSuggestingParagraph(true);
+      setAiError('');
 
       try {
         const res = await fetchParagraphAiSuggestion(
@@ -128,6 +136,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
       } catch (error) {
         if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
           editor.commands.clearAiSuggestion();
+          setAiError('AI 단락 제안을 불러오지 못했습니다.');
         }
       } finally {
         setIsSuggestingParagraph(false);
@@ -147,6 +156,8 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
 
   return {
     acceptTitleSuggestion,
+    aiError,
+    clearAiError,
     dismissTitleSuggestion,
     isSuggestingParagraph,
     isSuggestingTitle,

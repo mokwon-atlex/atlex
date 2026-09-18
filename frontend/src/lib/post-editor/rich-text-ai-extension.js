@@ -102,8 +102,8 @@ export const AiSuggestionExtension = Extension.create({
                 () => {
                   const container = document.createElement('span');
                   container.className =
-                    'post-editor-ai-ghost inline-flex items-baseline select-none cursor-pointer rounded px-0.5 hover:bg-muted/40 transition-colors';
-                  container.title = '클릭하거나 Tab 키를 눌러 바로 삽입';
+                    'post-editor-ai-ghost inline cursor-pointer select-none rounded px-0.5 transition-colors hover:bg-muted/40';
+                  container.title = '클릭하거나 Tab 키를 눌러 바로 삽입 (취소: Esc)';
                   container.addEventListener('mousedown', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -112,7 +112,7 @@ export const AiSuggestionExtension = Extension.create({
                   });
 
                   const textSpan = document.createElement('span');
-                  textSpan.className = 'text-muted-foreground/50 opacity-60';
+                  textSpan.className = 'text-muted-foreground/60 whitespace-pre-wrap';
                   textSpan.textContent = text;
                   container.appendChild(textSpan);
 
