@@ -70,7 +70,8 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
     (overrideTitle) => {
       if (!titleSuggestion) return '';
       const baseTitle = overrideTitle !== undefined ? overrideTitle : title;
-      const completedTitle = `${baseTitle}${titleSuggestion}`;
+      const needsSpace = baseTitle && !baseTitle.endsWith(' ') && !titleSuggestion.startsWith(' ');
+      const completedTitle = `${baseTitle}${needsSpace ? ' ' : ''}${titleSuggestion}`;
       setTitleSuggestion('');
       return completedTitle;
     },
@@ -102,10 +103,14 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
       }
 
       let currentWriting = currentWritingOverride;
+      let lastChar = '';
       if (currentWriting === undefined && editor.state) {
         const { from } = editor.state.selection;
         const textBefore = editor.state.doc.textBetween(0, from, '\n', '\n');
         currentWriting = textBefore.length > 1000 ? textBefore.slice(-1000) : textBefore;
+        if (from > 0) {
+          lastChar = editor.state.doc.textBetween(from - 1, from, '\n', '\n');
+        }
       }
 
       const controller = new AbortController();
@@ -125,10 +130,20 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         );
 
         if (res?.suggestion) {
+          let suggestionText = res.suggestion;
+          if (
+            lastChar &&
+            !/[\s\n]/.test(lastChar) &&
+            !suggestionText.startsWith(' ') &&
+            !suggestionText.startsWith('\n')
+          ) {
+            suggestionText = ` ${suggestionText}`;
+          }
+
           if (insertDirectly) {
-            editor.chain().focus().clearAiSuggestion().insertContent(res.suggestion).run();
+            editor.chain().focus().clearAiSuggestion().insertContent(suggestionText).run();
           } else {
-            editor.commands.setAiSuggestion(res.suggestion);
+            editor.commands.setAiSuggestion(suggestionText);
           }
         } else {
           editor.commands.clearAiSuggestion();

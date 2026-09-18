@@ -34,6 +34,9 @@ export default function PostEditorTitleSection({
     onRequestTitleSuggestion?.(nextValue);
   };
 
+  const needsTitleSpace = Boolean(title && !title.endsWith(' ') && !titleSuggestion.startsWith(' '));
+  const formattedTitleSuggestion = needsTitleSpace ? ` ${titleSuggestion}` : titleSuggestion;
+
   const handleKeyDown = (event) => {
     if (event.nativeEvent?.isComposing) return;
 
@@ -42,7 +45,7 @@ export default function PostEditorTitleSection({
       if (onAcceptTitleSuggestion) {
         onAcceptTitleSuggestion(title);
       } else {
-        onTitleChange(`${title}${titleSuggestion}`);
+        onTitleChange(`${title}${formattedTitleSuggestion}`);
         onDismissTitleSuggestion?.();
       }
     } else if (event.key === 'Escape' && titleSuggestion) {
@@ -89,7 +92,7 @@ export default function PostEditorTitleSection({
                 className="pointer-events-none absolute inset-0 flex items-center border border-transparent px-3 text-lg font-semibold overflow-hidden select-none"
               >
                 <span className="invisible whitespace-pre">{title}</span>
-                <span className="text-muted-foreground/50 whitespace-pre">{titleSuggestion}</span>
+                <span className="text-muted-foreground/50 whitespace-pre">{formattedTitleSuggestion}</span>
                 <PostEditorAiBadge label="Tab" className="shrink-0" />
               </div>
             ) : null}
@@ -107,7 +110,7 @@ export default function PostEditorTitleSection({
                   if (onAcceptTitleSuggestion) {
                     onAcceptTitleSuggestion(title);
                   } else {
-                    onTitleChange(`${title}${titleSuggestion}`);
+                    onTitleChange(`${title}${formattedTitleSuggestion}`);
                     onDismissTitleSuggestion?.();
                   }
                 }}
@@ -115,7 +118,7 @@ export default function PostEditorTitleSection({
                 title="클릭하여 추천 제목 적용 (단축키: Tab)"
               >
                 &ldquo;{title}
-                {titleSuggestion}&rdquo;
+                {formattedTitleSuggestion}&rdquo;
               </button>
               <PostEditorAiBadge label="Tab 적용" className="shrink-0" />
               <button

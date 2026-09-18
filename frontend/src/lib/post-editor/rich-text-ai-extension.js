@@ -44,8 +44,16 @@ export const AiSuggestionExtension = Extension.create({
       acceptAiSuggestion:
         () =>
         ({ editor, commands }) => {
-          const suggestion = editor.storage.aiSuggestion.suggestion;
+          let suggestion = editor.storage.aiSuggestion.suggestion;
           if (!suggestion) return false;
+
+          const pos = editor.state.selection.from;
+          if (pos > 0) {
+            const charBefore = editor.state.doc.textBetween(pos - 1, pos);
+            if (!/[\s\n]/.test(charBefore) && !suggestion.startsWith(' ') && !suggestion.startsWith('\n')) {
+              suggestion = ` ${suggestion}`;
+            }
+          }
 
           commands.insertContent(suggestion);
           commands.clearAiSuggestion();
