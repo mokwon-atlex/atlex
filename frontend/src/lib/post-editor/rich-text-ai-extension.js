@@ -22,15 +22,24 @@ export const AiSuggestionExtension = Extension.create({
   addStorage() {
     return {
       suggestion: '',
+      isLoading: false,
     };
   },
 
   addCommands() {
     return {
+      setAiLoading:
+        (isLoading) =>
+        ({ editor, tr, dispatch }) => {
+          editor.storage.aiSuggestion.isLoading = isLoading;
+          if (dispatch) tr.setMeta(aiSuggestionPluginKey, { isLoading });
+          return true;
+        },
       setAiSuggestion:
         (suggestion) =>
         ({ editor, tr, dispatch }) => {
           editor.storage.aiSuggestion.suggestion = suggestion;
+          editor.storage.aiSuggestion.isLoading = false;
           if (dispatch) tr.setMeta(aiSuggestionPluginKey, { suggestion });
           return true;
         },
@@ -38,6 +47,7 @@ export const AiSuggestionExtension = Extension.create({
         () =>
         ({ editor, tr, dispatch }) => {
           editor.storage.aiSuggestion.suggestion = '';
+          editor.storage.aiSuggestion.isLoading = false;
           if (dispatch) tr.setMeta(aiSuggestionPluginKey, { suggestion: '' });
           return true;
         },
@@ -73,7 +83,7 @@ export const AiSuggestionExtension = Extension.create({
       },
       Escape: ({ editor }) => {
         const suggestion = editor.storage.aiSuggestion.suggestion;
-        if (!suggestion) {
+        if (!suggestion && !editor.storage.aiSuggestion.isLoading) {
           return false;
         }
         return editor.commands.clearAiSuggestion();
@@ -101,6 +111,22 @@ export const AiSuggestionExtension = Extension.create({
           apply(tr, oldSet) {
             const meta = tr.getMeta(aiSuggestionPluginKey);
             if (meta) {
+              if (meta.isLoading) {
+                const pos = tr.selection.from;
+                const widget = Decoration.widget(
+                  pos,
+                  () => {
+                    const badge = document.createElement('span');
+                    badge.className =
+                      'post-editor-ai-loading inline-flex items-center gap-1 select-none text-xs text-muted-foreground/80 rounded px-1.5 py-0.5 bg-muted/40 animate-pulse ml-1 align-middle pointer-events-none';
+                    badge.textContent = '✨ AI 작성 중...';
+                    return badge;
+                  },
+                  { side: 1 },
+                );
+                return DecorationSet.create(tr.doc, [widget]);
+              }
+
               const text = meta.suggestion;
               if (!text) return DecorationSet.empty;
 
@@ -137,8 +163,9 @@ export const AiSuggestionExtension = Extension.create({
               return DecorationSet.create(tr.doc, [widget]);
             }
             if (tr.docChanged || tr.selectionSet) {
-              // 본문이 바뀌거나 커서가 이동하면 추천 자동 제거
+              // 본문이 바뀌거나 커서가 이동하면 추천 및 로딩 자동 제거
               editor.storage.aiSuggestion.suggestion = '';
+              editor.storage.aiSuggestion.isLoading = false;
               return DecorationSet.empty;
             }
             return oldSet.map(tr.mapping, tr.doc);

@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchParagraphAiSuggestion, fetchTitleAiSuggestion } from '@/lib/api/ai';
+import { fetchDescriptionAiSuggestion, fetchParagraphAiSuggestion, fetchTitleAiSuggestion } from '@/lib/api/ai';
 
-const DEBOUNCE_DELAY_MS = 400;
+const DEBOUNCE_DELAY_MS = 600;
 
 /**
  * 게시글 에디터 내 AI 자동완성 및 단락 추천을 총괄하는 커스텀 훅입니다.
@@ -12,6 +12,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
   const [titleSuggestion, setTitleSuggestion] = useState('');
   const [isSuggestingTitle, setIsSuggestingTitle] = useState(false);
   const [isSuggestingParagraph, setIsSuggestingParagraph] = useState(false);
+  const [isSuggestingDescription, setIsSuggestingDescription] = useState(false);
   const [aiError, setAiError] = useState('');
 
   const clearAiError = useCallback(() => {
@@ -20,6 +21,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
 
   const titleAbortControllerRef = useRef(null);
   const paragraphAbortControllerRef = useRef(null);
+  const descriptionAbortControllerRef = useRef(null);
   const debounceTimerRef = useRef(null);
 
   // 1. 제목 자동완성 요청 (Debounce + AbortController)
@@ -117,6 +119,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
       paragraphAbortControllerRef.current = controller;
       setIsSuggestingParagraph(true);
       setAiError('');
+      editor.commands.setAiLoading?.(true);
 
       try {
         const res = await fetchParagraphAiSuggestion(
@@ -151,7 +154,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
       } catch (error) {
         if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
           editor.commands.clearAiSuggestion();
-          setAiError('AI 단락 제안을 불러오지 못했습니다.');
+          setAiError('AI 문장 제안을 불러오지 못했습니다.');
         }
       } finally {
         setIsSuggestingParagraph(false);
@@ -160,12 +163,51 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
     [category, editor, tags, title],
   );
 
+  // 5. 본문 요약(Description) 제안 요청
+  const requestDescriptionSuggestion = useCallback(
+    async ({ title: overrideTitle, content } = {}) => {
+      if (descriptionAbortControllerRef.current) {
+        descriptionAbortControllerRef.current.abort();
+      }
+
+      if (!content || !content.trim()) {
+        setAiError('요약할 본문 내용이 없습니다.');
+        return '';
+      }
+
+      const controller = new AbortController();
+      descriptionAbortControllerRef.current = controller;
+      setIsSuggestingDescription(true);
+      setAiError('');
+
+      try {
+        const res = await fetchDescriptionAiSuggestion(
+          {
+            content: content.trim(),
+            title: overrideTitle !== undefined ? overrideTitle : title,
+          },
+          controller.signal,
+        );
+        return res?.suggestion || '';
+      } catch (error) {
+        if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
+          setAiError('AI 요약 생성에 실패했습니다.');
+        }
+        return '';
+      } finally {
+        setIsSuggestingDescription(false);
+      }
+    },
+    [title],
+  );
+
   // 언마운트 시 미완료 타이머 및 요청 정리
   useEffect(() => {
     return () => {
       clearTimeout(debounceTimerRef.current);
       if (titleAbortControllerRef.current) titleAbortControllerRef.current.abort();
       if (paragraphAbortControllerRef.current) paragraphAbortControllerRef.current.abort();
+      if (descriptionAbortControllerRef.current) descriptionAbortControllerRef.current.abort();
     };
   }, []);
 
@@ -174,8 +216,10 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
     aiError,
     clearAiError,
     dismissTitleSuggestion,
+    isSuggestingDescription,
     isSuggestingParagraph,
     isSuggestingTitle,
+    requestDescriptionSuggestion,
     requestParagraphSuggestion,
     requestTitleSuggestion,
     setTitleSuggestion,

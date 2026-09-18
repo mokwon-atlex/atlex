@@ -16,4 +16,8 @@ public interface AiSuggestionControllerDocs {
 
     @Operation(summary = "게시글 본문 다음 단락 AI 추천", description = "게시글 제목, 태그, 직전 작성 문맥을 기반으로 다음 단락을 제안합니다.")
     ResponseEntity<ApiResponse<AiSuggestionResponse>> suggestParagraph(ParagraphSuggestionRequest request);
+
+    @Operation(summary = "게시글 요약(Description) AI 추천", description = "게시글 제목과 본문을 기반으로 1~2문장의 메타 요약문을 제안합니다.")
+    ResponseEntity<ApiResponse<AiSuggestionResponse>> suggestDescription(
+        com.example.atlex.domain.ai.dto.request.DescriptionSuggestionRequest request);
 }

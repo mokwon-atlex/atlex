@@ -170,6 +170,16 @@ public class GeminiClient {
             return titleFallbacks.get(seed % titleFallbacks.size());
         }
 
+        if (systemPrompt != null && systemPrompt.contains("메타 설명")) {
+            List<String> descriptionFallbacks = List.of(
+                "본문에서 다룬 주요 개념과 실무 적용 사례를 핵심 위주로 알기 쉽게 정리한 글입니다.",
+                "실제 구현 과정에서 마주친 트러블슈팅 경험과 성능 개선 노하우를 공유합니다.",
+                "기초 개념부터 실전 응용까지 단계별 가이드와 베스트 프랙티스를 제공합니다.");
+            int seed = Math
+                .abs((userPrompt != null ? userPrompt.hashCode() : 0) + (int)(System.currentTimeMillis() / 2000));
+            return descriptionFallbacks.get(seed % descriptionFallbacks.size());
+        }
+
         List<String> paragraphFallbacks = List.of(
             " 기술을 적용함으로써 전반적인 시스템 처리 속도와 사용자 경험을 크게 개선할 수 있었습니다.",
             " 이러한 구조를 도입할 때 주의해야 할 점과 실제 운영 환경에서 발생할 수 있는 예외 상황에 대해 짚어보겠습니다.",

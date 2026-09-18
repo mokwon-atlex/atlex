@@ -1,10 +1,13 @@
 package com.example.atlex.domain.ai.service;
 
+import com.example.atlex.domain.ai.dto.request.DescriptionSuggestionRequest;
 import com.example.atlex.domain.ai.dto.request.ParagraphSuggestionRequest;
 import com.example.atlex.domain.ai.dto.request.TitleSuggestionRequest;
 import com.example.atlex.domain.ai.dto.response.AiSuggestionResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class AiSuggestionService {
 
     private final GeminiClient geminiClient;
+    private final AiRateLimiter aiRateLimiter;
 
     private static final String TITLE_SYSTEM_PROMPT = """
         당신은 블로그 글 제목 자동완성 어시스턴트입니다.
@@ -38,10 +42,23 @@ public class AiSuggestionService {
         5. 바로 본문에 이어 붙여 읽어도 문맥, 띄어쓰기, 조사가 완벽하게 통하는 순수 본문 텍스트만 출력하세요.
         """;
 
+    private static final String DESCRIPTION_SYSTEM_PROMPT = """
+        당신은 블로그 글의 검색 및 SNS 공유용 메타 설명(Description)을 작성하는 전문 에디터입니다.
+        제공된 글의 제목과 본문을 분석하여, 독자의 흥미를 끌 수 있는 매력적이고 간결한 1~2문장의 핵심 요약문을 작성하세요.
+
+        [작성 규칙]
+        1. 분량: 1~2문장 (공백 포함 70자 ~ 130자 내외).
+        2. 어조: 정중하고 신뢰감 있는 문체 (~합니다, ~을 정리했습니다 등).
+        3. 금지 사항: 마크다운 기호(#, *, -), 따옴표, 제목 반복, 인사말, 해시태그를 절대 포함하지 마세요.
+        4. 바로 사용할 수 있는 순수 요약 본문 텍스트만 출력하세요.
+        """;
+
     /**
      * 게시글 제목 자동완성 텍스트를 제안합니다.
      */
     public AiSuggestionResponse suggestTitle(TitleSuggestionRequest request) {
+        aiRateLimiter.checkRateLimit(resolveCurrentUserKey());
+
         String currentTitle = request.getCurrentTitle() != null ? request.getCurrentTitle().trim() : "";
         if (currentTitle.length() < 2) {
             return AiSuggestionResponse.builder().suggestion("").build();
@@ -68,6 +85,8 @@ public class AiSuggestionService {
      * 게시글 본문 다음 문장을 제안합니다.
      */
     public AiSuggestionResponse suggestParagraph(ParagraphSuggestionRequest request) {
+        aiRateLimiter.checkRateLimit(resolveCurrentUserKey());
+
         StringBuilder userPrompt = new StringBuilder();
         if (request.getTitle() != null && !request.getTitle().isBlank()) {
             userPrompt.append("글 제목: ").append(request.getTitle()).append("\n");
@@ -79,7 +98,9 @@ public class AiSuggestionService {
             userPrompt.append("태그: ").append(String.join(", ", request.getTags())).append("\n");
         }
         if (request.getCurrentWriting() != null && !request.getCurrentWriting().isBlank()) {
-            userPrompt.append("직전 작성 내용: ").append(request.getCurrentWriting().trim()).append("\n");
+            userPrompt.append("직전 작성 내용:\n<current_writing>\n")
+                .append(request.getCurrentWriting().trim())
+                .append("\n</current_writing>\n");
         }
         if (userPrompt.isEmpty()) {
             userPrompt.append("새로운 블로그 글의 흥미로운 도입부 첫 문장을 작성해 주세요.\n");
@@ -93,14 +114,57 @@ public class AiSuggestionService {
             .build();
     }
 
+    /**
+     * 게시글 본문 내용을 바탕으로 메타 요약(Description)을 제안합니다.
+     */
+    public AiSuggestionResponse suggestDescription(DescriptionSuggestionRequest request) {
+        aiRateLimiter.checkRateLimit(resolveCurrentUserKey());
+
+        StringBuilder userPrompt = new StringBuilder();
+        if (request.getTitle() != null && !request.getTitle().isBlank()) {
+            userPrompt.append("글 제목: ").append(request.getTitle()).append("\n");
+        }
+        userPrompt.append("게시글 본문:\n<content>\n")
+            .append(request.getContent().trim())
+            .append("\n</content>\n");
+
+        String rawSuggestion = geminiClient.generateContent(DESCRIPTION_SYSTEM_PROMPT, userPrompt.toString(), 150);
+        String cleaned = cleanParagraphSuggestion(rawSuggestion);
+
+        return AiSuggestionResponse.builder()
+            .suggestion(cleaned)
+            .build();
+    }
+
     private String cleanTitleSuggestion(String suggestion, String currentTitle) {
         if (suggestion == null) {
             return "";
         }
         String cleaned = suggestion.replaceAll("[\"'\n\r`]", "").trim();
         if (cleaned.startsWith(currentTitle)) {
-            cleaned = cleaned.substring(currentTitle.length()).trim();
+            return cleaned.substring(currentTitle.length()).trim();
         }
+
+        // 공백 차이로 인한 중복 검사 (예: "스프링 부트로" vs "스프링부트로")
+        String normalizedTitle = currentTitle.replaceAll("\\s+", "");
+        String normalizedCleaned = cleaned.replaceAll("\\s+", "");
+        if (!normalizedTitle.isEmpty() && normalizedCleaned.startsWith(normalizedTitle)) {
+            int count = 0;
+            int cutIndex = 0;
+            for (int i = 0; i < cleaned.length(); i++) {
+                if (!Character.isWhitespace(cleaned.charAt(i))) {
+                    count++;
+                }
+                if (count == normalizedTitle.length()) {
+                    cutIndex = i + 1;
+                    break;
+                }
+            }
+            if (cutIndex > 0 && cutIndex <= cleaned.length()) {
+                return cleaned.substring(cutIndex).trim();
+            }
+        }
+
         return cleaned;
     }
 
@@ -111,5 +175,15 @@ public class AiSuggestionService {
         return suggestion.trim()
             .replaceAll("^[`\"'*#\\-]+|[`\"'*#\\-]+$", "")
             .trim();
+    }
+
+    private String resolveCurrentUserKey() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                return auth.getName();
+            }
+        } catch (Exception ignored) {}
+        return "anonymous";
     }
 }

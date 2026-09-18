@@ -103,4 +103,28 @@ class AiSuggestionControllerTest {
             .andExpect(jsonPath("$.code").value("SUCCESS"))
             .andExpect(jsonPath("$.data.suggestion").value("다음으로 서비스 계층을 구현합니다."));
     }
+
+    @Test
+    @DisplayName("POST /api/v1/ai/suggest/description - 유효한 본문 요청 시 200 OK와 요약 추천을 반환한다")
+    void suggestDescriptionSuccess() throws Exception {
+        // given
+        com.example.atlex.domain.ai.dto.request.DescriptionSuggestionRequest request = new com.example.atlex.domain.ai.dto.request.DescriptionSuggestionRequest(
+            "블로그 만들기",
+            "스프링 부트 환경에서 블로그 AI 서비스를 구축하는 내용입니다.");
+        AiSuggestionResponse response = AiSuggestionResponse.builder()
+            .suggestion("스프링 부트로 블로그 AI 코파일럿을 구축하는 핵심 가이드입니다.")
+            .build();
+
+        when(aiSuggestionService
+            .suggestDescription(any(com.example.atlex.domain.ai.dto.request.DescriptionSuggestionRequest.class)))
+            .thenReturn(response);
+
+        // when & then
+        mockMvc.perform(post("/api/v1/ai/suggest/description")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("SUCCESS"))
+            .andExpect(jsonPath("$.data.suggestion").value("스프링 부트로 블로그 AI 코파일럿을 구축하는 핵심 가이드입니다."));
+    }
 }

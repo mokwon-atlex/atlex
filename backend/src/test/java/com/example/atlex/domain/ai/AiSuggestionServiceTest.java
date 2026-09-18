@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import com.example.atlex.domain.ai.service.AiRateLimiter;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -28,11 +29,14 @@ class AiSuggestionServiceTest {
     @Mock
     private GeminiClient geminiClient;
 
+    @Mock
+    private AiRateLimiter aiRateLimiter;
+
     private AiSuggestionService aiSuggestionService;
 
     @BeforeEach
     void setUp() {
-        aiSuggestionService = new AiSuggestionService(geminiClient);
+        aiSuggestionService = new AiSuggestionService(geminiClient, aiRateLimiter);
     }
 
     @Nested
@@ -149,6 +153,49 @@ class AiSuggestionServiceTest {
 
             // then
             assertThat(response.getSuggestion()).isEqualTo("다음 단락 내용입니다.");
+        }
+    }
+
+    @Nested
+    @DisplayName("제목 자동완성 공백 정규화 중복 제거")
+    class WhitespaceTitleDeduplicationTest {
+
+        @Test
+        @DisplayName("입력 제목과 추천 텍스트 간 공백이 달라도 앞부분 중복을 정상 제거한다")
+        void removesDuplicatePrefixEvenWithDifferentWhitespace() {
+            // given: 사용자는 "스프링 부트로", AI는 "스프링부트로 블로그 만들기"
+            TitleSuggestionRequest request = new TitleSuggestionRequest("스프링 부트로", "개발", null);
+            when(geminiClient.generateContent(anyString(), anyString(), anyInt()))
+                .thenReturn("스프링부트로 블로그 만들기");
+
+            // when
+            AiSuggestionResponse response = aiSuggestionService.suggestTitle(request);
+
+            // then
+            assertThat(response.getSuggestion()).isEqualTo("블로그 만들기");
+        }
+    }
+
+    @Nested
+    @DisplayName("게시글 요약 제안 (suggestDescription)")
+    class SuggestDescriptionTest {
+
+        @Test
+        @DisplayName("본문 내용을 바탕으로 1~2문장의 요약 추천을 생성한다")
+        void returnsDescriptionSuggestionSuccessfully() {
+            // given
+            com.example.atlex.domain.ai.dto.request.DescriptionSuggestionRequest request = new com.example.atlex.domain.ai.dto.request.DescriptionSuggestionRequest(
+                "Spring AI 가이드",
+                "스프링 부트와 제미나이를 연동하여 블로그 자동완성을 구축하는 튜토리얼입니다.");
+            when(geminiClient.generateContent(anyString(), anyString(), anyInt()))
+                .thenReturn("Spring Boot와 Gemini를 연동하여 블로그 AI 코파일럿을 구축하는 전 과정을 정리했습니다.");
+
+            // when
+            AiSuggestionResponse response = aiSuggestionService.suggestDescription(request);
+
+            // then
+            assertThat(response.getSuggestion())
+                .isEqualTo("Spring Boot와 Gemini를 연동하여 블로그 AI 코파일럿을 구축하는 전 과정을 정리했습니다.");
         }
     }
 }

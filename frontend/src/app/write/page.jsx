@@ -87,7 +87,17 @@ export default function PostWritePage() {
   useEffect(() => {
     setValidationError('');
     if (createPost.isError) createPost.reset();
-  }, [title, description, richText.bodyText, categoryId, isPublic, createPost.isError]);
+    if (aiSuggestion.aiError) aiSuggestion.clearAiError();
+  }, [
+    title,
+    description,
+    richText.bodyText,
+    categoryId,
+    isPublic,
+    createPost.isError,
+    aiSuggestion.aiError,
+    aiSuggestion,
+  ]);
 
   function handlePublish() {
     // 게시 중 중복 클릭 방지 — 같은 글이 여러 번 생성되는 것을 막는다.
@@ -161,6 +171,14 @@ export default function PostWritePage() {
           onCategoryChange={setCategoryId}
           isPublic={isPublic}
           onIsPublicChange={setIsPublic}
+          isGeneratingDescription={aiSuggestion.isSuggestingDescription}
+          onRequestGenerateDescription={async () => {
+            const summary = await aiSuggestion.requestDescriptionSuggestion({
+              title,
+              content: richText.bodyText,
+            });
+            if (summary) setDescription(summary);
+          }}
         />
 
         {(validationError || createPost.isError || aiSuggestion.aiError) && (

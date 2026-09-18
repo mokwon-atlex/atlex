@@ -37,4 +37,13 @@ public class AiSuggestionController implements AiSuggestionControllerDocs {
         AiSuggestionResponse response = aiSuggestionService.suggestParagraph(request);
         return ResponseEntity.ok(ApiResponse.success(response, "단락 추천이 생성되었습니다."));
     }
+
+    @Override
+    @PostMapping("/description")
+    public ResponseEntity<ApiResponse<AiSuggestionResponse>> suggestDescription(
+        @Valid @RequestBody
+        com.example.atlex.domain.ai.dto.request.DescriptionSuggestionRequest request) {
+        AiSuggestionResponse response = aiSuggestionService.suggestDescription(request);
+        return ResponseEntity.ok(ApiResponse.success(response, "요약 추천이 생성되었습니다."));
+    }
 }
