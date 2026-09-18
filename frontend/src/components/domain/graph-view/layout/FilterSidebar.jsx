@@ -3,15 +3,17 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-import { tagMeta } from '@/components/domain/graph-view/lib/graph-view-utils';
+import { tagMeta } from '@/lib/graph-view/graph-view-utils';
 import { Avatar } from '@/components/domain/graph-view/ui/GraphViewBadges';
 import { FilterIcon, MiniConnectionIcon } from '@/components/domain/graph-view/ui/GraphViewIcons';
-import { PRIMARY } from '@/components/domain/graph-view/lib/graph-view-utils';
+import { PRIMARY } from '@/lib/graph-view/graph-view-utils';
 
+/** 작성자·태그·관계 조건으로 그래프 표시 범위를 좁히는 사이드바다. */
 export function FilterSidebar({
   activeAuthors,
   activeTags,
   authors,
+  hasExplicitEdges,
   minSharedTags,
   resetFilters,
   setMinSharedTags,
@@ -41,11 +43,13 @@ export function FilterSidebar({
       </div>
 
       <SidebarSection isOpen={openConnection} onToggle={() => setOpenConnection((value) => !value)} title="연결 기준">
-        <ToggleRow label="태그 연결" on={showTagEdges} onChange={setShowTagEdges} />
-        <ToggleRow label="명시적 링크" on={showExplicitEdges} onChange={setShowExplicitEdges} />
+        <ToggleRow label="키워드 연결" on={showTagEdges} onChange={setShowTagEdges} />
+        {hasExplicitEdges ? (
+          <ToggleRow label="명시적 링크" on={showExplicitEdges} onChange={setShowExplicitEdges} />
+        ) : null}
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="font-bold text-muted-foreground">최소 공통 태그</span>
+            <span className="font-bold text-muted-foreground">최소 공통 키워드</span>
             <span className="font-black text-foreground">{minSharedTags}개↑</span>
           </div>
           <input
@@ -61,7 +65,7 @@ export function FilterSidebar({
 
       <SidebarSection isOpen={openAuthors} onToggle={() => setOpenAuthors((value) => !value)} title="작성자">
         {authors.map((author) => {
-          const active = activeAuthors.has(author.name);
+          const active = activeAuthors.has(author.id);
 
           return (
             <label key={author.id} className="flex cursor-pointer items-center justify-between gap-3">
@@ -74,7 +78,7 @@ export function FilterSidebar({
                 <input
                   checked={active}
                   className="h-4 w-4 rounded accent-primary"
-                  onChange={() => toggleAuthor(author.name)}
+                  onChange={() => toggleAuthor(author.id)}
                   type="checkbox"
                 />
               </span>
@@ -127,6 +131,7 @@ export function FilterSidebar({
   );
 }
 
+/** 접고 펼칠 수 있는 필터 영역을 렌더링한다. */
 function SidebarSection({ children, isOpen, onToggle, title }) {
   return (
     <div className="border-b border-border">
@@ -143,6 +148,7 @@ function SidebarSection({ children, isOpen, onToggle, title }) {
   );
 }
 
+/** 관계 표시 여부를 전환하는 스위치 행이다. */
 function ToggleRow({ label, on, onChange }) {
   return (
     <div className="flex items-center justify-between gap-3">

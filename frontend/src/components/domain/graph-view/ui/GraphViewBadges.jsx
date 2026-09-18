@@ -1,4 +1,4 @@
-import { tagMeta } from '@/components/domain/graph-view/lib/graph-view-utils';
+import { tagMeta } from '@/lib/graph-view/graph-view-utils';
 import { cn } from '@/lib/utils';
 
 export function TagPill({ tag }) {
