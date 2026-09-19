@@ -18,6 +18,7 @@ import PostEditorShell from '@/components/domain/post-editor/layout/PostEditorSh
 import { postEditorCopy } from '@/data/post-editor/post-editor-copy';
 import { postEditorDrafts } from '@/data/post-editor/post-editor-drafts';
 import { postEditorToolCategories } from '@/data/post-editor/post-editor-tool-categories';
+import usePostEditorAiSuggestion from '@/hooks/post-editor/post-editor-ai-suggestion';
 import usePostEditorRichText from '@/hooks/post-editor/post-editor-rich-text';
 import usePostEditorTags from '@/hooks/post-editor/post-editor-tags';
 import { useCreatePost } from '@/hooks/queries/posts/useCreatePost';
@@ -42,6 +43,15 @@ export default function PostWritePage() {
 
   // 수동 태그 입력 + 본문 #해시태그 자동 감지를 통합 관리하는 훅
   const tagField = usePostEditorTags(richText.bodyText);
+
+  // AI 제목 자동완성 및 본문 단락 추천 훅
+  const selectedCategoryName = categories.find((c) => c.id === categoryId)?.name;
+  const aiSuggestion = usePostEditorAiSuggestion({
+    category: selectedCategoryName,
+    editor: richText.editor,
+    tags: tagField.combinedTags,
+    title,
+  });
 
   const createPost = useCreatePost();
 
@@ -73,11 +83,15 @@ export default function PostWritePage() {
     };
   }, [userId]);
 
+  const { clearAiError, abortParagraphSuggestion } = aiSuggestion;
+  const { reset: resetCreatePost } = createPost;
+
   // 사용자가 입력을 수정하기 시작하면 이전 검증/요청 에러를 지운다(에러가 계속 떠 있어 어색한 것 방지).
   useEffect(() => {
     setValidationError('');
-    if (createPost.isError) createPost.reset();
-  }, [title, description, richText.bodyText, categoryId, isPublic, createPost.isError]);
+    resetCreatePost();
+    clearAiError();
+  }, [title, description, richText.bodyText, categoryId, isPublic, clearAiError, resetCreatePost]);
 
   function handlePublish() {
     // 게시 중 중복 클릭 방지 — 같은 글이 여러 번 생성되는 것을 막는다.
@@ -133,6 +147,14 @@ export default function PostWritePage() {
           tagField={tagField}
           tagPlaceholder={postEditorCopy.tagPlaceholder}
           onTitleChange={setTitle}
+          titleSuggestion={aiSuggestion.titleSuggestion}
+          isSuggestingTitle={aiSuggestion.isSuggestingTitle}
+          onAcceptTitleSuggestion={(currentTitle) => {
+            const next = aiSuggestion.acceptTitleSuggestion(currentTitle);
+            if (next) setTitle(next);
+          }}
+          onDismissTitleSuggestion={aiSuggestion.dismissTitleSuggestion}
+          onRequestTitleSuggestion={aiSuggestion.requestTitleSuggestion}
         />
 
         <PostEditorMetaSection
@@ -143,13 +165,29 @@ export default function PostWritePage() {
           onCategoryChange={setCategoryId}
           isPublic={isPublic}
           onIsPublicChange={setIsPublic}
+          isGeneratingDescription={aiSuggestion.isSuggestingDescription}
+          onRequestGenerateDescription={async () => {
+            const descriptionBeforeRequest = description;
+            const summary = await aiSuggestion.requestDescriptionSuggestion({
+              title,
+              content: richText.bodyText,
+            });
+            if (summary) {
+              setDescription((current) => (current === descriptionBeforeRequest ? summary : current));
+            }
+          }}
         />
 
-        {(validationError || createPost.isError) && (
+        {(validationError || createPost.isError || aiSuggestion.aiError) && (
           <div className="px-5 pt-4 sm:px-7">
-            <Alert variant="destructive">
+            <Alert
+              variant={aiSuggestion.aiError && !validationError && !createPost.isError ? 'default' : 'destructive'}
+            >
               <AlertDescription>
-                {validationError || createPost.error?.message || '게시에 실패했습니다. 잠시 후 다시 시도해 주세요.'}
+                {validationError ||
+                  createPost.error?.message ||
+                  aiSuggestion.aiError ||
+                  '게시에 실패했습니다. 잠시 후 다시 시도해 주세요.'}
               </AlertDescription>
             </Alert>
           </div>
@@ -162,6 +200,12 @@ export default function PostWritePage() {
               bodyText={richText.bodyText}
               editor={richText.editor}
               isEditorEmpty={richText.isEditorEmpty}
+              isSuggestingParagraph={aiSuggestion.isSuggestingParagraph}
+              onRequestParagraphAi={() => {
+                richText.editor?.commands.focus();
+                aiSuggestion.requestParagraphSuggestion();
+              }}
+              onCancelParagraphAi={abortParagraphSuggestion}
             />
           }
           toolRail={
