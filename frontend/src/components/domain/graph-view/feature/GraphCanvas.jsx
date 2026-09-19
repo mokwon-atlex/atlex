@@ -79,7 +79,10 @@ export function GraphCanvas({
 
     return counts;
   }, [filteredPosts, renderedEdges]);
-  const focusedNodeIds = useMemo(() => new Set([hoveredId, selectedId].filter(Boolean)), [hoveredId, selectedId]);
+  const focusedNodeIds = useMemo(
+    () => new Set([hoveredId, selectedId].filter((id) => id && filteredPostIds.has(id))),
+    [filteredPostIds, hoveredId, selectedId],
+  );
   const focusedEdges = useMemo(
     () => renderedEdges.filter((edge) => focusedNodeIds.has(edge.from) || focusedNodeIds.has(edge.to)),
     [focusedNodeIds, renderedEdges],

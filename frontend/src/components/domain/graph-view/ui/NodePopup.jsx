@@ -13,6 +13,7 @@ export function NodePopup({ position, post }) {
       className="pointer-events-none absolute z-50 overflow-hidden rounded-xl border border-border bg-card shadow-2xl shadow-slate-900/15"
       style={{
         left: position.x,
+        maxHeight: position.maxHeight ?? 330,
         top: position.y,
         width: position.width ?? 288,
       }}

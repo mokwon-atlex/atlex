@@ -104,8 +104,10 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
 
   useEffect(() => {
     const popupPostId = selectedId ?? hoveredId;
+    const svg = svgRef.current;
+    const container = containerRef.current;
 
-    if (!popupPostId || !svgRef.current || !containerRef.current) {
+    if (!popupPostId || !svg || !container) {
       setPopupPos(null);
       return;
     }
@@ -117,27 +119,40 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
       return;
     }
 
-    const ctm = svgRef.current.getScreenCTM();
+    const updatePopupPosition = () => {
+      const ctm = svg.getScreenCTM();
 
-    if (!ctm) {
+      if (!ctm) {
+        return;
+      }
+
+      const containerRect = container.getBoundingClientRect();
+      const nodePositions = visiblePosts.map((visiblePost) => {
+        const point = svg.createSVGPoint();
+
+        point.x = visiblePost.x * zoom + pan.x;
+        point.y = visiblePost.y * zoom + pan.y;
+        const screenPoint = point.matrixTransform(ctm);
+
+        return {
+          x: screenPoint.x - containerRect.left,
+          y: screenPoint.y - containerRect.top,
+        };
+      });
+
+      setPopupPos(findLeastObstructivePopupPosition(containerRect, nodePositions));
+    };
+
+    updatePopupPosition();
+
+    if (typeof ResizeObserver === 'undefined') {
       return;
     }
 
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const nodePositions = visiblePosts.map((visiblePost) => {
-      const point = svgRef.current.createSVGPoint();
+    const resizeObserver = new ResizeObserver(updatePopupPosition);
 
-      point.x = visiblePost.x * zoom + pan.x;
-      point.y = visiblePost.y * zoom + pan.y;
-      const screenPoint = point.matrixTransform(ctm);
-
-      return {
-        x: screenPoint.x - containerRect.left,
-        y: screenPoint.y - containerRect.top,
-      };
-    });
-
-    setPopupPos(findLeastObstructivePopupPosition(containerRect, nodePositions));
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
   }, [hoveredId, pan, posts, selectedId, showPanel, showSidebar, visiblePosts, zoom]);
 
   /** 작성자 필터를 반전한다. */
@@ -308,7 +323,7 @@ function findLeastObstructivePopupPosition(containerRect, nodePositions) {
     { ...candidates[0], score: Number.POSITIVE_INFINITY },
   );
 
-  return { x: bestPosition.x, y: bestPosition.y, width: popupWidth };
+  return { maxHeight: popupHeight, width: popupWidth, x: bestPosition.x, y: bestPosition.y };
 }
 
 /** 카드 영역과 가까운 노드일수록 큰 점수를 부여해 가림이 적은 위치를 선택한다. */
