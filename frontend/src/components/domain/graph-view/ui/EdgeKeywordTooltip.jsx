@@ -1,4 +1,4 @@
-import { tagMeta } from '@/components/domain/graph-view/lib/graph-view-utils';
+import { tagMeta } from '@/lib/graph-view/graph-view-utils';
 
 export function EdgeKeywordTooltip({ edge, x, y }) {
   const tags = edge.isExplicit ? ['직접 연결'] : edge.sharedTags;
