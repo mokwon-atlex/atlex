@@ -39,12 +39,15 @@ export function splitNodeTitle(title, maxLineLength = 7) {
   return [firstLine, secondLine];
 }
 
-export function edgeWidth(edge) {
-  if (edge.isExplicit) {
-    return 2.25;
-  }
+export function edgeWidth() {
+  return 1.35;
+}
 
-  return [0, 2.75, 4.25, 5.5][edge.strength] ?? 2.75;
+/** 그래프에서 연결 수를 노드 반지름으로 자연스럽게 환산한다. */
+export function graphNodeRadius(connectionCount) {
+  const count = Math.max(0, Number(connectionCount) || 0);
+
+  return Math.min(20, Math.max(8, 8 + Math.log2(count + 1) * 3));
 }
 
 export function createArrowPoints(tipX, tipY, baseX, baseY, ux, uy) {

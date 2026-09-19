@@ -9,12 +9,12 @@ export function NodePopup({ position, post }) {
 
   return (
     <div
+      data-node-popup
       className="pointer-events-none absolute z-50 overflow-hidden rounded-xl border border-border bg-card shadow-2xl shadow-slate-900/15"
       style={{
         left: position.x,
         top: position.y,
-        transform: 'translate(-50%, 16px)',
-        width: 288,
+        width: position.width ?? 288,
       }}
     >
       <div className="flex h-24 items-center justify-center" style={{ background: `${color}18` }}>
