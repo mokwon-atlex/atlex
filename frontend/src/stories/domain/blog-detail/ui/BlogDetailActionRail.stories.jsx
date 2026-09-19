@@ -9,6 +9,7 @@ const meta = {
   argTypes: {
     likes: { control: 'number' },
     bookmarks: { control: 'number' },
+    comments: { control: 'number' },
   },
 };
 
@@ -18,6 +19,7 @@ export const Default = {
   args: {
     likes: 18,
     bookmarks: 7,
+    comments: 5,
   },
 };
 
@@ -25,6 +27,7 @@ export const HighEngagement = {
   args: {
     likes: 342,
     bookmarks: 87,
+    comments: 42,
   },
 };
 
@@ -32,5 +35,6 @@ export const LowEngagement = {
   args: {
     likes: 1,
     bookmarks: 0,
+    comments: 0,
   },
 };
