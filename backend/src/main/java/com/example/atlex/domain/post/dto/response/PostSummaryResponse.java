@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "게시글 목록 아이템 응답")
 @Getter
@@ -38,10 +39,16 @@ public class PostSummaryResponse {
     private Integer hits;
     @Schema(description = "좋아요 수", example = "7")
     private Integer likes;
+    @Schema(description = "태그 목록", example = "[\"Java\", \"Spring Boot\"]")
+    private List<String> tags;
     @Schema(description = "작성일시", example = "2024-01-15T10:30:00")
     private LocalDateTime createdAt;
 
     public static PostSummaryResponse from(Post post) {
+        return from(post, List.of());
+    }
+
+    public static PostSummaryResponse from(Post post, List<String> tags) {
         return PostSummaryResponse.builder()
             .id(post.getId())
             .categoryId(post.getCategory() != null ? post.getCategory().getId() : null)
@@ -54,6 +61,7 @@ public class PostSummaryResponse {
             .authorName(post.getUser().getName())
             .hits(post.getHits())
             .likes(post.getLikes())
+            .tags(tags != null ? tags : List.of())
             .createdAt(post.getCreatedAt())
             .build();
     }

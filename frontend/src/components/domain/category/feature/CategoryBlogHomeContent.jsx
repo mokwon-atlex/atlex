@@ -75,21 +75,34 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
     active: tag.id === selectedTagId,
   }));
   const resolvedFeed = useMemo(() => {
-    const filteredPosts = filterPostsByCategoryId(pageFeed.posts, categories, selectedCategoryId);
+    let filteredPosts = filterPostsByCategoryId(pageFeed.posts, categories, selectedCategoryId);
+    const selectedTag = tags.find((tag) => tag.id === selectedTagId);
+    const isAllTag = !selectedTag || selectedTag.id === ALL_TAG_ID;
+
+    if (!isAllTag && selectedTag?.label) {
+      const targetTag = selectedTag.label.toLowerCase();
+      filteredPosts = filteredPosts.filter(
+        (post) => Array.isArray(post.tags) && post.tags.some((t) => String(t).toLowerCase() === targetTag),
+      );
+    }
+
     const selectedCategory = findCategoryById(categories, selectedCategoryId);
     const selectedCategoryLabel = selectedCategory?.label ?? selectedCategory?.name ?? pageFeed.title;
     const isAllCategory = selectedCategoryId === ALL_CATEGORY_ID;
+    const isUnfiltered = isAllCategory && isAllTag;
+
+    const displayTitle = !isAllTag ? `#${selectedTag.label}` : isAllCategory ? pageFeed.title : selectedCategoryLabel;
 
     return {
       ...pageFeed,
       isLoading: isPageLoading,
-      onPageChange: isAllCategory ? handlePageChange : undefined,
-      pagination: isAllCategory ? pageFeed.pagination : [],
+      onPageChange: isUnfiltered ? handlePageChange : undefined,
+      pagination: isUnfiltered ? pageFeed.pagination : [],
       posts: filteredPosts,
-      title: isAllCategory ? pageFeed.title : selectedCategoryLabel,
-      totalCount: isAllCategory ? pageFeed.totalCount : filteredPosts.length,
+      title: displayTitle,
+      totalCount: isUnfiltered ? pageFeed.totalCount : filteredPosts.length,
     };
-  }, [pageFeed, categories, selectedCategoryId, isPageLoading]);
+  }, [pageFeed, categories, selectedCategoryId, tags, selectedTagId, isPageLoading]);
 
   useEffect(() => {
     setMounted(true);

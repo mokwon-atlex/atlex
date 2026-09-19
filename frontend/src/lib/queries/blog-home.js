@@ -1,5 +1,6 @@
 import { fetchProfileByUserId } from '@/lib/api/profiles';
 import { fetchUserBlogPosts } from '@/lib/api/posts';
+import { fetchUserTags } from '@/lib/api/tags';
 import { loadUserBlogCategories } from '@/lib/category/blog-categories';
 import { ALL_CATEGORY_ID } from '@/lib/category/category-picker';
 import { toBlogHomeProfile } from '@/lib/mappers/user';
@@ -57,10 +58,11 @@ export async function loadBlogHomeData(identifier) {
   // 백엔드 필터가 느슨하게 동작해도 화면에 다른 사용자의 글이 섞이지 않도록
   // 응답 후 authorUserId 기준으로 한 번 더 방어 필터링한다.
   // 프로필·게시글 조회는 서로 독립적이라 병렬로 요청해 SSR 응답을 줄인다.
-  const [profileData, postsPage, categories] = await Promise.all([
+  const [profileData, postsPage, categories, tagPage] = await Promise.all([
     fetchProfileByUserId(identifier),
     fetchUserBlogPosts({ page: 0, size: 10, userId: identifier }),
     loadBlogCategories(identifier),
+    fetchUserTags(identifier, { limit: 50 }).catch(() => null),
   ]);
 
   const profile = toBlogHomeProfile(profileData);
@@ -75,6 +77,17 @@ export async function loadBlogHomeData(identifier) {
     ownerPostContent.length === postContent.length
       ? (postsPage?.totalPages ?? Math.max(Math.ceil(totalCount / 10), 1))
       : Math.max(Math.ceil(totalCount / 10), 1);
+
+  const tagContent = Array.isArray(tagPage?.content) ? tagPage.content : [];
+  const tags = [
+    { id: 'all', label: '전체 글', count: totalCount, active: true },
+    ...tagContent.map((item) => ({
+      id: String(item.id),
+      label: item.name,
+      count: item.postCount ?? 0,
+      thumbnailUrl: item.thumbnailUrl ?? null,
+    })),
+  ];
 
   const feed = {
     page: 1,
@@ -93,6 +106,7 @@ export async function loadBlogHomeData(identifier) {
     profile,
     feed,
     categories: [createAllCategory(totalCount), ...categories],
+    tags,
   };
 }
 

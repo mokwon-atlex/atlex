@@ -9,6 +9,11 @@ import com.example.atlex.domain.graph.service.GraphIndexService;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.category.repository.CategoryRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
+import com.example.atlex.domain.tag.entity.PostTag;
+import com.example.atlex.domain.tag.entity.Tag;
+import com.example.atlex.domain.tag.repository.PostTagRepository;
+import com.example.atlex.domain.tag.repository.TagRepository;
+import com.example.atlex.domain.tag.repository.projection.PostTagNameProjection;
 import com.example.atlex.domain.user.entity.User;
 import com.example.atlex.domain.user.repository.UserRepository;
 import com.example.atlex.domain.category.exception.CategoryNotFoundException;
@@ -24,7 +29,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -35,6 +44,8 @@ public class PostService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final GraphIndexService graphIndexService;
+    private final PostTagRepository postTagRepository;
+    private final TagRepository tagRepository;
 
     @Transactional
     public PostResponse createPost(PostCreateRequest request, Long id) {
@@ -58,9 +69,10 @@ public class PostService {
             .build();
 
         Post savedPost = postRepository.save(post);
+        List<String> tags = syncPostTags(user, savedPost, request.getTags());
         graphIndexService.refreshPostGraph(savedPost.getId());
 
-        return PostResponse.from(savedPost);
+        return PostResponse.from(savedPost, tags);
     }
 
     @Transactional(readOnly = true)
@@ -70,8 +82,20 @@ public class PostService {
         Long categoryId,
         Pageable pageable,
         Long id) {
+        return getPostList(type, userId, categoryId, null, pageable, id);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PostSummaryResponse> getPostList(
+        String type,
+        String userId,
+        Long categoryId,
+        String tag,
+        Pageable pageable,
+        Long id) {
         String normalizedType = normalizeType(type);
         String normalizedUserId = normalizeUserId(userId);
+        String normalizedTag = normalizeTag(tag);
         Sort sort = "trending".equals(normalizedType)
             ? Sort.by(
                 Sort.Order.desc("likes"),
@@ -80,17 +104,14 @@ public class PostService {
             : Sort.by(Sort.Order.desc("createdAt"));
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        if (id != null) {
-            return postRepository.findAllVisibleTo(
-                id,
-                normalizedUserId,
-                categoryId,
-                sortedPageable).map(PostSummaryResponse::from);
-        }
-        return postRepository.findAllPublic(
-            normalizedUserId,
-            categoryId,
-            sortedPageable).map(PostSummaryResponse::from);
+        Page<Post> posts = (id != null)
+            ? postRepository.findAllVisibleTo(id, normalizedUserId, categoryId, normalizedTag, sortedPageable)
+            : postRepository.findAllPublic(normalizedUserId, categoryId, normalizedTag, sortedPageable);
+
+        List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
+        Map<Long, List<String>> tagMap = findTagNamesByPostIds(postIds);
+
+        return posts.map(post -> PostSummaryResponse.from(post, tagMap.getOrDefault(post.getId(), List.of())));
     }
 
     private String normalizeType(String type) {
@@ -105,6 +126,10 @@ public class PostService {
         return userId == null || userId.isBlank() ? null : userId.trim();
     }
 
+    private String normalizeTag(String tag) {
+        return tag == null || tag.isBlank() ? null : tag.trim();
+    }
+
     @Transactional(readOnly = true)
     public PostResponse getPost(Long postId, Long id) {
         Post post = postRepository.findWithUserById(postId)
@@ -116,7 +141,8 @@ public class PostService {
             throw new PostNotFoundException();
         }
 
-        return PostResponse.from(post);
+        List<String> tags = postTagRepository.findTagNamesByPostId(postId);
+        return PostResponse.from(post, tags);
     }
 
     @Transactional
@@ -142,8 +168,15 @@ public class PostService {
             request.getContent(),
             request.getThumbnailUrl(),
             request.getIsPublic());
+
+        if (request.getTags() != null) {
+            postTagRepository.deleteByPostId(post.getId());
+            syncPostTags(post.getUser(), post, request.getTags());
+        }
+
         graphIndexService.refreshPostGraph(post.getId());
-        return PostResponse.from(post);
+        List<String> tags = postTagRepository.findTagNamesByPostId(post.getId());
+        return PostResponse.from(post, tags);
     }
 
     @Transactional
@@ -157,5 +190,45 @@ public class PostService {
 
         post.softDelete();
         graphIndexService.removePostGraph(post.getId());
+    }
+
+    private List<String> syncPostTags(User user, Post post, List<String> rawTags) {
+        if (rawTags == null || rawTags.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> normalizedTags = rawTags.stream()
+            .filter(Objects::nonNull)
+            .map(String::trim)
+            .filter(tag -> !tag.isBlank())
+            .distinct()
+            .toList();
+
+        if (normalizedTags.isEmpty()) {
+            return List.of();
+        }
+
+        List<PostTag> postTags = new ArrayList<>(normalizedTags.size());
+        for (String tagName : normalizedTags) {
+            Tag tag = tagRepository.findByNameIgnoreCase(tagName)
+                .orElseGet(() -> tagRepository.save(Tag.of(tagName)));
+            postTags.add(PostTag.of(user, post, tag));
+        }
+        postTagRepository.saveAll(postTags);
+        return normalizedTags;
+    }
+
+    private Map<Long, List<String>> findTagNamesByPostIds(List<Long> postIds) {
+        if (postIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, List<String>> tagNamesByPostId = new LinkedHashMap<>();
+        for (PostTagNameProjection projection : postTagRepository.findTagNamesByPostIds(postIds)) {
+            tagNamesByPostId
+                .computeIfAbsent(projection.getPostId(), ignored -> new ArrayList<>())
+                .add(projection.getTagName());
+        }
+        return tagNamesByPostId;
     }
 }
