@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AiRateLimiter {
 
-    private static final int MAX_REQUESTS_PER_MINUTE = 30;
+    private static final int MAX_REQUESTS_PER_MINUTE = 10;
     private static final long ONE_MINUTE_MILLIS = 60_000L;
 
     private final Map<String, Deque<Long>> requestHistory = new ConcurrentHashMap<>();

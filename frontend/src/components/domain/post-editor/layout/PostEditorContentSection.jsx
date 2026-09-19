@@ -16,6 +16,7 @@ export default function PostEditorContentSection({
   isEditorEmpty,
   isSuggestingParagraph = false,
   onRequestParagraphAi,
+  onCancelParagraphAi,
 }) {
   const handleKeyDown = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
@@ -23,6 +24,12 @@ export default function PostEditorContentSection({
       if (!isSuggestingParagraph && onRequestParagraphAi) {
         onRequestParagraphAi();
       }
+    }
+  };
+
+  const handleKeyDownCapture = (e) => {
+    if (e.key === 'Escape') {
+      onCancelParagraphAi?.();
     }
   };
 
@@ -70,6 +77,7 @@ export default function PostEditorContentSection({
 
             <div
               onKeyDown={handleKeyDown}
+              onKeyDownCapture={handleKeyDownCapture}
               className="post-editor-prose h-full min-h-0 overflow-y-auto overflow-x-hidden break-words"
             >
               <EditorContent editor={editor} />

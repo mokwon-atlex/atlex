@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 public class DescriptionSuggestionRequest {
 
     @Schema(description = "게시글 제목 (선택)", example = "Spring Boot 4와 Gemini AI 연동 가이드")
+    @Size(max = 200, message = "제목은 200자 이하로 입력해주세요.")
     private String title;
 
     @Schema(description = "게시글 본문 텍스트", example = "이번 글에서는 스프링 부트 4 환경에서 Gemini API를 연동하여 블로그 AI 코파일럿을 구축하는 전 과정을 살펴봅니다.")

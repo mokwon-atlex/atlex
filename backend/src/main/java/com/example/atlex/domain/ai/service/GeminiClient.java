@@ -129,10 +129,8 @@ public class GeminiClient {
                 "maxOutputTokens", maxTokens));
 
         String responseString = geminiRestClient.post()
-            .uri(uriBuilder -> uriBuilder
-                .path("/v1beta/models/{model}:generateContent")
-                .queryParam("key", apiKey)
-                .build(targetModel))
+            .uri("/v1beta/models/{model}:generateContent", targetModel)
+            .header("x-goog-api-key", apiKey)
             .contentType(MediaType.APPLICATION_JSON)
             .body(requestPayload)
             .retrieve()

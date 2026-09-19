@@ -20,8 +20,10 @@ public class TitleSuggestionRequest {
     private String currentTitle;
 
     @Schema(description = "카테고리명 (선택)", example = "기술/개발")
+    @Size(max = 100, message = "카테고리명은 100자 이하로 입력해주세요.")
     private String category;
 
     @Schema(description = "태그 목록 (선택)", example = "[\"SpringBoot\", \"Gemini\"]")
-    private List<String> tags;
+    @Size(max = 10, message = "태그는 최대 10개까지 전달할 수 있습니다.")
+    private List<@Size(max = 100, message = "각 태그는 100자 이하로 입력해주세요.") String> tags;
 }

@@ -83,21 +83,15 @@ export default function PostWritePage() {
     };
   }, [userId]);
 
+  const { clearAiError, abortParagraphSuggestion } = aiSuggestion;
+  const { reset: resetCreatePost } = createPost;
+
   // 사용자가 입력을 수정하기 시작하면 이전 검증/요청 에러를 지운다(에러가 계속 떠 있어 어색한 것 방지).
   useEffect(() => {
     setValidationError('');
-    if (createPost.isError) createPost.reset();
-    if (aiSuggestion.aiError) aiSuggestion.clearAiError();
-  }, [
-    title,
-    description,
-    richText.bodyText,
-    categoryId,
-    isPublic,
-    createPost.isError,
-    aiSuggestion.aiError,
-    aiSuggestion,
-  ]);
+    resetCreatePost();
+    clearAiError();
+  }, [title, description, richText.bodyText, categoryId, isPublic, clearAiError, resetCreatePost]);
 
   function handlePublish() {
     // 게시 중 중복 클릭 방지 — 같은 글이 여러 번 생성되는 것을 막는다.
@@ -173,11 +167,14 @@ export default function PostWritePage() {
           onIsPublicChange={setIsPublic}
           isGeneratingDescription={aiSuggestion.isSuggestingDescription}
           onRequestGenerateDescription={async () => {
+            const descriptionBeforeRequest = description;
             const summary = await aiSuggestion.requestDescriptionSuggestion({
               title,
               content: richText.bodyText,
             });
-            if (summary) setDescription(summary);
+            if (summary) {
+              setDescription((current) => (current === descriptionBeforeRequest ? summary : current));
+            }
           }}
         />
 
@@ -208,6 +205,7 @@ export default function PostWritePage() {
                 richText.editor?.commands.focus();
                 aiSuggestion.requestParagraphSuggestion();
               }}
+              onCancelParagraphAi={abortParagraphSuggestion}
             />
           }
           toolRail={

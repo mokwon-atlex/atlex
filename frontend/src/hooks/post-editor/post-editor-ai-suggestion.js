@@ -163,6 +163,14 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
     [category, editor, tags, title],
   );
 
+  // 4-1. 본문 단락 추천 진행 중단 (Escape 등)
+  const abortParagraphSuggestion = useCallback(() => {
+    if (paragraphAbortControllerRef.current) {
+      paragraphAbortControllerRef.current.abort();
+    }
+    setIsSuggestingParagraph(false);
+  }, []);
+
   // 5. 본문 요약(Description) 제안 요청
   const requestDescriptionSuggestion = useCallback(
     async ({ title: overrideTitle, content } = {}) => {
@@ -212,6 +220,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
   }, []);
 
   return {
+    abortParagraphSuggestion,
     acceptTitleSuggestion,
     aiError,
     clearAiError,
