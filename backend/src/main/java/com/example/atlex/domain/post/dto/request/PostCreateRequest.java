@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Schema(description = "게시글 작성 요청")
 @Getter
 @NoArgsConstructor
@@ -33,6 +35,10 @@ public class PostCreateRequest {
 
     @Schema(description = "카테고리 ID (선택, 없으면 null)", example = "2")
     private Long categoryId;
+
+    @Schema(description = "태그 목록 (최대 10개, 선택)", example = "[\"Java\", \"Spring Boot\"]")
+    @Size(max = 10, message = "태그는 최대 10개까지 입력할 수 있습니다.")
+    private List<@NotBlank(message = "태그는 공백일 수 없습니다.") @Size(max = 50, message = "태그는 50자 이하로 입력해주세요.") String> tags;
 
     @Schema(description = "공개 여부 (기본값 true)", example = "true")
     private Boolean isPublic;

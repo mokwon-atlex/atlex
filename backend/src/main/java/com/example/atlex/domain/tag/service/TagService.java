@@ -4,6 +4,7 @@ import com.example.atlex.domain.tag.dto.response.TagListItemResponse;
 import com.example.atlex.domain.tag.dto.response.TagListResponse;
 import com.example.atlex.domain.tag.entity.Tag;
 import com.example.atlex.domain.tag.repository.PostTagRepository;
+import com.example.atlex.domain.tag.repository.TagRepository;
 import com.example.atlex.domain.tag.repository.projection.TagPostCountProjection;
 import com.example.atlex.domain.tag.repository.projection.TagThumbnailProjection;
 import com.example.atlex.domain.user.entity.User;
@@ -11,8 +12,10 @@ import com.example.atlex.domain.user.repository.UserRepository;
 import com.example.atlex.domain.user.exception.UserNotFoundException;
 import com.example.atlex.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -27,6 +30,7 @@ public class TagService {
     private static final int MAX_LIMIT = 50;
 
     private final PostTagRepository postTagRepository;
+    private final TagRepository tagRepository;
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
@@ -112,5 +116,25 @@ public class TagService {
         if (cursor != null && cursor <= 0) {
             throw new ValidationException();
         }
+    }
+
+    /**
+     * 태그명으로 태그를 조회하고, 없으면 새로 생성합니다.
+     * 동시성 경합으로 인한 유니크 제약 위반 시 재조회하여 원자적으로 반환합니다.
+     *
+     * @param tagName 태그명
+     * @return 조회되거나 생성된 Tag 엔티티
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Tag getOrCreateTag(String tagName) {
+        return tagRepository.findByNameIgnoreCase(tagName)
+            .orElseGet(() -> {
+                try {
+                    return tagRepository.saveAndFlush(Tag.of(tagName));
+                } catch (DataIntegrityViolationException e) {
+                    return tagRepository.findByNameIgnoreCase(tagName)
+                        .orElseThrow(() -> e);
+                }
+            });
     }
 }

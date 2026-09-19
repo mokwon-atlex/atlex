@@ -2,10 +2,13 @@ package com.example.atlex.domain.post.dto.request;
 
 import com.example.atlex.global.validation.anotation.NullOrNotBlank;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Schema(description = "게시글 수정 요청 (수정할 필드만 전송)")
 @Getter
@@ -33,6 +36,10 @@ public class PostUpdateRequest {
 
     @Schema(description = "변경할 카테고리 ID (선택)", example = "3")
     private Long categoryId;
+
+    @Schema(description = "변경할 태그 목록 (최대 10개, 선택, null이면 유지, 빈 리스트면 태그 전체 삭제)", example = "[\"Java\", \"Spring Boot\"]")
+    @Size(max = 10, message = "태그는 최대 10개까지 입력할 수 있습니다.")
+    private List<@NotBlank(message = "태그는 공백일 수 없습니다.") @Size(max = 50, message = "태그는 50자 이하로 입력해주세요.") String> tags;
 
     @Schema(description = "변경할 공개 여부 (선택)", example = "false")
     private Boolean isPublic;
