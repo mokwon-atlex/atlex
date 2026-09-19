@@ -14,6 +14,7 @@ import com.example.atlex.domain.tag.entity.Tag;
 import com.example.atlex.domain.tag.repository.PostTagRepository;
 import com.example.atlex.domain.tag.repository.TagRepository;
 import com.example.atlex.domain.tag.repository.projection.PostTagNameProjection;
+import com.example.atlex.domain.tag.service.TagService;
 import com.example.atlex.domain.user.entity.User;
 import com.example.atlex.domain.user.repository.UserRepository;
 import com.example.atlex.domain.category.exception.CategoryNotFoundException;
@@ -21,6 +22,7 @@ import com.example.atlex.domain.post.exception.PostDeleteForbiddenException;
 import com.example.atlex.domain.post.exception.PostNotFoundException;
 import com.example.atlex.domain.post.exception.PostUpdateForbiddenException;
 import com.example.atlex.domain.user.exception.UserNotFoundException;
+import com.example.atlex.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,6 +48,7 @@ public class PostService {
     private final GraphIndexService graphIndexService;
     private final PostTagRepository postTagRepository;
     private final TagRepository tagRepository;
+    private final TagService tagService;
 
     @Transactional
     public PostResponse createPost(PostCreateRequest request, Long id) {
@@ -197,21 +200,30 @@ public class PostService {
             return List.of();
         }
 
-        List<String> normalizedTags = rawTags.stream()
-            .filter(Objects::nonNull)
-            .map(String::trim)
-            .filter(tag -> !tag.isBlank())
-            .distinct()
-            .toList();
+        Map<String, String> distinctTags = new LinkedHashMap<>();
+        for (String rawTag : rawTags) {
+            if (rawTag == null) {
+                continue;
+            }
+            String trimmed = rawTag.trim();
+            if (trimmed.isBlank()) {
+                continue;
+            }
+            distinctTags.putIfAbsent(trimmed.toLowerCase(Locale.ROOT), trimmed);
+        }
 
+        List<String> normalizedTags = new ArrayList<>(distinctTags.values());
         if (normalizedTags.isEmpty()) {
             return List.of();
         }
 
+        if (normalizedTags.size() > 10) {
+            throw new ValidationException();
+        }
+
         List<PostTag> postTags = new ArrayList<>(normalizedTags.size());
         for (String tagName : normalizedTags) {
-            Tag tag = tagRepository.findByNameIgnoreCase(tagName)
-                .orElseGet(() -> tagRepository.save(Tag.of(tagName)));
+            Tag tag = tagService.getOrCreateTag(tagName);
             postTags.add(PostTag.of(user, post, tag));
         }
         postTagRepository.saveAll(postTags);

@@ -70,39 +70,34 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
 
   const graphHref = graphParams.size > 0 ? `/graph?${graphParams.toString()}` : '/graph';
 
+  const selectedTag = tags.find((tag) => tag.id === selectedTagId);
+  const isAllTag = !selectedTag || selectedTag.id === ALL_TAG_ID;
+  const currentTagLabel = isAllTag ? undefined : selectedTag?.label;
+
   const resolvedTags = tags.map((tag) => ({
     ...tag,
     active: tag.id === selectedTagId,
   }));
+
   const resolvedFeed = useMemo(() => {
     let filteredPosts = filterPostsByCategoryId(pageFeed.posts, categories, selectedCategoryId);
-    const selectedTag = tags.find((tag) => tag.id === selectedTagId);
-    const isAllTag = !selectedTag || selectedTag.id === ALL_TAG_ID;
-
-    if (!isAllTag && selectedTag?.label) {
-      const targetTag = selectedTag.label.toLowerCase();
-      filteredPosts = filteredPosts.filter(
-        (post) => Array.isArray(post.tags) && post.tags.some((t) => String(t).toLowerCase() === targetTag),
-      );
-    }
 
     const selectedCategory = findCategoryById(categories, selectedCategoryId);
     const selectedCategoryLabel = selectedCategory?.label ?? selectedCategory?.name ?? pageFeed.title;
     const isAllCategory = selectedCategoryId === ALL_CATEGORY_ID;
-    const isUnfiltered = isAllCategory && isAllTag;
 
     const displayTitle = !isAllTag ? `#${selectedTag.label}` : isAllCategory ? pageFeed.title : selectedCategoryLabel;
 
     return {
       ...pageFeed,
       isLoading: isPageLoading,
-      onPageChange: isUnfiltered ? handlePageChange : undefined,
-      pagination: isUnfiltered ? pageFeed.pagination : [],
+      onPageChange: handlePageChange,
+      pagination: pageFeed.pagination,
       posts: filteredPosts,
       title: displayTitle,
-      totalCount: isUnfiltered ? pageFeed.totalCount : filteredPosts.length,
+      totalCount: !isAllTag ? pageFeed.totalCount : isAllCategory ? pageFeed.totalCount : filteredPosts.length,
     };
-  }, [pageFeed, categories, selectedCategoryId, tags, selectedTagId, isPageLoading]);
+  }, [pageFeed, categories, selectedCategoryId, isAllTag, selectedTag, isPageLoading]);
 
   useEffect(() => {
     setMounted(true);
@@ -111,6 +106,15 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   useEffect(() => {
     setPageFeed(feed);
   }, [feed]);
+
+  // 태그 선택 변경 시 서버에서 해당 태그의 1페이지 게시글 목록을 조회한다.
+  useEffect(() => {
+    if (!mounted || !profile?.userId) return;
+    const selected = tags.find((t) => t.id === selectedTagId);
+    const isAll = !selected || selected.id === ALL_TAG_ID;
+    const targetTag = isAll ? undefined : selected?.label;
+    handlePageChange(1, targetTag);
+  }, [selectedTagId, mounted, profile?.userId]);
 
   const quickActionLinkClassName = cn(
     buttonVariants({ size: 'icon-lg', variant: 'outline' }),
@@ -121,7 +125,9 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
     setSelectedCategoryId(categoryId);
   }
 
-  async function handlePageChange(page) {
+  async function handlePageChange(page, tag = currentTagLabel) {
+    if (!profile?.userId) return;
+
     const pageSize = pageFeed.pageSize ?? 10;
 
     setIsPageLoading(true);
@@ -131,6 +137,7 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
         page: page - 1,
         size: pageSize,
         userId: profile.userId,
+        tag: tag || undefined,
       });
       const postContent = Array.isArray(postsPage?.content) ? postsPage.content : [];
       const ownerPostContent = postContent.filter((post) => isPostWrittenByUser(post, profile.userId));

@@ -58,6 +58,8 @@ class PostServiceTest {
     PostTagRepository postTagRepository;
     @Mock
     TagRepository tagRepository;
+    @Mock
+    com.example.atlex.domain.tag.service.TagService tagService;
 
     private PostService postService;
 
@@ -69,7 +71,8 @@ class PostServiceTest {
             categoryRepository,
             graphIndexService,
             postTagRepository,
-            tagRepository);
+            tagRepository,
+            tagService);
         lenient().when(postRepository.findAllPublic(any(), any(), any(), any(Pageable.class)))
             .thenReturn(Page.empty());
     }
@@ -301,11 +304,8 @@ class PostServiceTest {
             .build();
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(postRepository.save(any(Post.class))).thenReturn(savedPost);
-        when(tagRepository.findByNameIgnoreCase("Java"))
-            .thenReturn(Optional.of(com.example.atlex.domain.tag.entity.Tag.of("Java")));
-        when(tagRepository.findByNameIgnoreCase("Spring")).thenReturn(Optional.empty());
-        when(tagRepository.save(any(com.example.atlex.domain.tag.entity.Tag.class)))
-            .thenAnswer(inv -> inv.getArgument(0));
+        when(tagService.getOrCreateTag(any(String.class)))
+            .thenAnswer(inv -> com.example.atlex.domain.tag.entity.Tag.of(inv.getArgument(0)));
 
         com.example.atlex.domain.post.dto.response.PostResponse response = postService.createPost(request,
             user.getId());
@@ -418,10 +418,8 @@ class PostServiceTest {
             List.of("Backend", "Spring"),
             null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
-        when(tagRepository.findByNameIgnoreCase("Backend")).thenReturn(Optional.empty());
-        when(tagRepository.findByNameIgnoreCase("Spring")).thenReturn(Optional.empty());
-        when(tagRepository.save(any(com.example.atlex.domain.tag.entity.Tag.class)))
-            .thenAnswer(inv -> inv.getArgument(0));
+        when(tagService.getOrCreateTag(any()))
+            .thenAnswer(inv -> com.example.atlex.domain.tag.entity.Tag.of(inv.getArgument(0)));
         when(postTagRepository.findTagNamesByPostId(post.getId())).thenReturn(List.of("Backend", "Spring"));
 
         com.example.atlex.domain.post.dto.response.PostResponse response = postService.updatePost(post.getId(), request,
@@ -430,6 +428,68 @@ class PostServiceTest {
         verify(postTagRepository).deleteByPostId(post.getId());
         verify(postTagRepository).saveAll(any());
         assertEquals(List.of("Backend", "Spring"), response.getTags());
+    }
+
+    @Test
+    @DisplayName("게시글 태그 동기화 시 대소문자 무시 중복을 제거하고 최초 입력 표기를 유지한다")
+    void updatePost_caseInsensitiveDistinctTags() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder()
+            .id(100L)
+            .user(author)
+            .title("old")
+            .content("old content")
+            .isPublic(true)
+            .build();
+        PostUpdateRequest request = new PostUpdateRequest(
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of("Java", "java", "JAVA", "Spring", "spring"),
+            null);
+        when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
+        when(tagService.getOrCreateTag(any()))
+            .thenAnswer(inv -> com.example.atlex.domain.tag.entity.Tag.of(inv.getArgument(0)));
+        when(postTagRepository.findTagNamesByPostId(post.getId())).thenReturn(List.of("Java", "Spring"));
+
+        com.example.atlex.domain.post.dto.response.PostResponse response = postService.updatePost(post.getId(), request,
+            author.getId());
+
+        verify(tagService).getOrCreateTag("Java");
+        verify(tagService).getOrCreateTag("Spring");
+        verify(tagService, org.mockito.Mockito.never()).getOrCreateTag("java");
+        verify(tagService, org.mockito.Mockito.never()).getOrCreateTag("JAVA");
+        verify(tagService, org.mockito.Mockito.never()).getOrCreateTag("spring");
+        assertEquals(List.of("Java", "Spring"), response.getTags());
+    }
+
+    @Test
+    @DisplayName("게시글 태그 동기화 시 10개를 초과하면 ValidationException이 발생한다")
+    void updatePost_exceeds10Tags_throwsValidationException() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder()
+            .id(100L)
+            .user(author)
+            .title("old")
+            .content("old content")
+            .isPublic(true)
+            .build();
+        List<String> elevenTags = List.of("t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10", "t11");
+        PostUpdateRequest request = new PostUpdateRequest(
+            null,
+            null,
+            null,
+            null,
+            null,
+            elevenTags,
+            null);
+        when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
+
+        assertThrows(
+            com.example.atlex.global.exception.ValidationException.class,
+            () -> postService.updatePost(post.getId(), request, author.getId()));
     }
 
     @Test
