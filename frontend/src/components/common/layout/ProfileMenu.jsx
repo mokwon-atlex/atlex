@@ -65,6 +65,12 @@ export default function ProfileMenu() {
         )}
         <hr className="my-1 border-border" />
         <Link
+          href="/graph"
+          className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
+        >
+          그래프 뷰
+        </Link>
+        <Link
           href="/tag_list"
           className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
         >
