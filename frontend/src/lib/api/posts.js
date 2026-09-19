@@ -66,3 +66,26 @@ export function updatePost(postId, { categoryId, title, description, content, ta
     ...(isPublic !== undefined && { isPublic }),
   });
 }
+
+// GET /posts/favorites — 로그인한 사용자의 즐겨찾기 목록 조회.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function fetchFavoritePosts({ page = 0, size = 10 } = {}) {
+  return apiClient.get('/posts/favorites', {
+    params: {
+      page,
+      size,
+    },
+  });
+}
+
+// POST /posts/{postId}/favorites — 게시글 즐겨찾기 등록.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function addPostFavorite(postId) {
+  return apiClient.post(`/posts/${postId}/favorites`);
+}
+
+// DELETE /posts/{postId}/favorites — 게시글 즐겨찾기 해제.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function removePostFavorite(postId) {
+  return apiClient.delete(`/posts/${postId}/favorites`);
+}
