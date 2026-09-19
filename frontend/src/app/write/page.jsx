@@ -115,7 +115,7 @@ export default function PostWritePage() {
       description: description.trim() || undefined,
       categoryId, // null 이면 createPost 가 알아서 제외
       isPublic,
-      tags: tagField.combinedTags, // 백엔드 미구현이라 현재는 무시될 수 있음
+      tags: tagField.combinedTags,
     };
 
     createPost.mutate(payload, {

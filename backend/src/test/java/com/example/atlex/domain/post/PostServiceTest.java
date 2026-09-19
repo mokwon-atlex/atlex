@@ -31,6 +31,9 @@ import org.springframework.data.domain.Sort;
 import java.util.List;
 import java.util.Optional;
 
+import com.example.atlex.domain.tag.repository.PostTagRepository;
+import com.example.atlex.domain.tag.repository.TagRepository;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -51,13 +54,26 @@ class PostServiceTest {
     CategoryRepository categoryRepository;
     @Mock
     GraphIndexService graphIndexService;
+    @Mock
+    PostTagRepository postTagRepository;
+    @Mock
+    TagRepository tagRepository;
+    @Mock
+    com.example.atlex.domain.tag.service.TagService tagService;
 
     private PostService postService;
 
     @BeforeEach
     void setUp() {
-        postService = new PostService(postRepository, userRepository, categoryRepository, graphIndexService);
-        lenient().when(postRepository.findAllPublic(isNull(), isNull(), any(Pageable.class)))
+        postService = new PostService(
+            postRepository,
+            userRepository,
+            categoryRepository,
+            graphIndexService,
+            postTagRepository,
+            tagRepository,
+            tagService);
+        lenient().when(postRepository.findAllPublic(any(), any(), any(), any(Pageable.class)))
             .thenReturn(Page.empty());
     }
 
@@ -101,12 +117,12 @@ class PostServiceTest {
     @Test
     @DisplayName("로그인 사용자는 기존 visible 조회 정책을 사용한다")
     void getPostList_authenticatedUsesVisiblePolicy() {
-        when(postRepository.findAllVisibleTo(any(Long.class), isNull(), isNull(), any(Pageable.class)))
+        when(postRepository.findAllVisibleTo(any(Long.class), isNull(), isNull(), isNull(), any(Pageable.class)))
             .thenReturn(Page.empty());
 
         postService.getPostList("latest", null, null, PageRequest.of(0, 10), 1L);
 
-        verify(postRepository).findAllVisibleTo(any(Long.class), isNull(), isNull(), any(Pageable.class));
+        verify(postRepository).findAllVisibleTo(any(Long.class), isNull(), isNull(), isNull(), any(Pageable.class));
     }
 
     @Test
@@ -114,7 +130,24 @@ class PostServiceTest {
     void getPostList_blankUserIdUsesNoFilter() {
         postService.getPostList("latest", "   ", null, PageRequest.of(0, 10), null);
 
-        verify(postRepository).findAllPublic(isNull(), isNull(), any(Pageable.class));
+        verify(postRepository).findAllPublic(isNull(), isNull(), isNull(), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("tag가 주어지면 정규화하여 레포지토리에 전달한다")
+    void getPostList_withTag() {
+        postService.getPostList("latest", null, null, "  Java  ", PageRequest.of(0, 10), null);
+
+        verify(postRepository).findAllPublic(isNull(), isNull(), org.mockito.ArgumentMatchers.eq("Java"),
+            any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("빈 tag는 null로 정규화한다")
+    void getPostList_blankTagUsesNoFilter() {
+        postService.getPostList("latest", null, null, "   ", PageRequest.of(0, 10), null);
+
+        verify(postRepository).findAllPublic(isNull(), isNull(), isNull(), any(Pageable.class));
     }
 
     @Test
@@ -187,6 +220,7 @@ class PostServiceTest {
             "content",
             null,
             category.getId(),
+            null,
             true);
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(categoryRepository.findByIdAndUser_Id(category.getId(), user.getId()))
@@ -209,6 +243,7 @@ class PostServiceTest {
             "content",
             null,
             10L,
+            null,
             true);
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(categoryRepository.findByIdAndUser_Id(10L, user.getId()))
@@ -231,6 +266,7 @@ class PostServiceTest {
             "content",
             null,
             null,
+            null,
             true);
         Post savedPost = Post.builder()
             .id(100L)
@@ -245,6 +281,37 @@ class PostServiceTest {
         postService.createPost(request, user.getId());
 
         verify(graphIndexService).refreshPostGraph(savedPost.getId());
+    }
+
+    @Test
+    @DisplayName("게시글 작성 시 태그를 저장하고 응답에 포함한다")
+    void createPost_savesTags() {
+        User user = User.builder().id(1L).userId("owner").name("owner").build();
+        PostCreateRequest request = new PostCreateRequest(
+            "title",
+            null,
+            "content",
+            null,
+            null,
+            List.of("Java", " Spring ", "Java"),
+            true);
+        Post savedPost = Post.builder()
+            .id(100L)
+            .user(user)
+            .title("title")
+            .content("content")
+            .isPublic(true)
+            .build();
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(postRepository.save(any(Post.class))).thenReturn(savedPost);
+        when(tagService.getOrCreateTag(any(String.class)))
+            .thenAnswer(inv -> com.example.atlex.domain.tag.entity.Tag.of(inv.getArgument(0)));
+
+        com.example.atlex.domain.post.dto.response.PostResponse response = postService.createPost(request,
+            user.getId());
+
+        verify(postTagRepository).saveAll(any());
+        assertEquals(List.of("Java", "Spring"), response.getTags());
     }
 
     @Test
@@ -264,6 +331,7 @@ class PostServiceTest {
             null,
             null,
             category.getId(),
+            null,
             null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
         when(categoryRepository.findByIdAndUser_Id(category.getId(), author.getId()))
@@ -291,6 +359,7 @@ class PostServiceTest {
             null,
             null,
             10L,
+            null,
             null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
         when(categoryRepository.findByIdAndUser_Id(10L, author.getId()))
@@ -320,12 +389,127 @@ class PostServiceTest {
             "new content",
             null,
             null,
+            null,
             null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
 
         postService.updatePost(post.getId(), request, author.getId());
 
         verify(graphIndexService).refreshPostGraph(post.getId());
+    }
+
+    @Test
+    @DisplayName("게시글 수정 시 태그를 갱신한다")
+    void updatePost_updatesTags() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder()
+            .id(100L)
+            .user(author)
+            .title("old")
+            .content("old content")
+            .isPublic(true)
+            .build();
+        PostUpdateRequest request = new PostUpdateRequest(
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of("Backend", "Spring"),
+            null);
+        when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
+        when(tagService.getOrCreateTag(any()))
+            .thenAnswer(inv -> com.example.atlex.domain.tag.entity.Tag.of(inv.getArgument(0)));
+        when(postTagRepository.findTagNamesByPostId(post.getId())).thenReturn(List.of("Backend", "Spring"));
+
+        com.example.atlex.domain.post.dto.response.PostResponse response = postService.updatePost(post.getId(), request,
+            author.getId());
+
+        verify(postTagRepository).deleteByPostId(post.getId());
+        verify(postTagRepository).saveAll(any());
+        assertEquals(List.of("Backend", "Spring"), response.getTags());
+    }
+
+    @Test
+    @DisplayName("게시글 태그 동기화 시 대소문자 무시 중복을 제거하고 최초 입력 표기를 유지한다")
+    void updatePost_caseInsensitiveDistinctTags() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder()
+            .id(100L)
+            .user(author)
+            .title("old")
+            .content("old content")
+            .isPublic(true)
+            .build();
+        PostUpdateRequest request = new PostUpdateRequest(
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of("Java", "java", "JAVA", "Spring", "spring"),
+            null);
+        when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
+        when(tagService.getOrCreateTag(any()))
+            .thenAnswer(inv -> com.example.atlex.domain.tag.entity.Tag.of(inv.getArgument(0)));
+        when(postTagRepository.findTagNamesByPostId(post.getId())).thenReturn(List.of("Java", "Spring"));
+
+        com.example.atlex.domain.post.dto.response.PostResponse response = postService.updatePost(post.getId(), request,
+            author.getId());
+
+        verify(tagService).getOrCreateTag("Java");
+        verify(tagService).getOrCreateTag("Spring");
+        verify(tagService, org.mockito.Mockito.never()).getOrCreateTag("java");
+        verify(tagService, org.mockito.Mockito.never()).getOrCreateTag("JAVA");
+        verify(tagService, org.mockito.Mockito.never()).getOrCreateTag("spring");
+        assertEquals(List.of("Java", "Spring"), response.getTags());
+    }
+
+    @Test
+    @DisplayName("게시글 태그 동기화 시 10개를 초과하면 ValidationException이 발생한다")
+    void updatePost_exceeds10Tags_throwsValidationException() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder()
+            .id(100L)
+            .user(author)
+            .title("old")
+            .content("old content")
+            .isPublic(true)
+            .build();
+        List<String> elevenTags = List.of("t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10", "t11");
+        PostUpdateRequest request = new PostUpdateRequest(
+            null,
+            null,
+            null,
+            null,
+            null,
+            elevenTags,
+            null);
+        when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
+
+        assertThrows(
+            com.example.atlex.global.exception.ValidationException.class,
+            () -> postService.updatePost(post.getId(), request, author.getId()));
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 시 태그를 반환한다")
+    void getPost_returnsTags() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder()
+            .id(100L)
+            .user(author)
+            .title("title")
+            .content("content")
+            .isPublic(true)
+            .build();
+        when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
+        when(postTagRepository.findTagNamesByPostId(post.getId())).thenReturn(List.of("Java", "JPA"));
+
+        com.example.atlex.domain.post.dto.response.PostResponse response = postService.getPost(post.getId(),
+            author.getId());
+
+        assertEquals(List.of("Java", "JPA"), response.getTags());
     }
 
     @Test
@@ -359,7 +543,7 @@ class PostServiceTest {
             .description(description)
             .content(content)
             .build();
-        when(postRepository.findAllPublic(isNull(), isNull(), any(Pageable.class)))
+        when(postRepository.findAllPublic(isNull(), isNull(), isNull(), any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of(post)));
 
         return postService.getPostList(
@@ -375,7 +559,7 @@ class PostServiceTest {
 
     private Pageable captureAnonymousPageable() {
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(postRepository).findAllPublic(isNull(), isNull(), captor.capture());
+        verify(postRepository).findAllPublic(isNull(), isNull(), isNull(), captor.capture());
         return captor.getValue();
     }
 
