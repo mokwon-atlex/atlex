@@ -5,6 +5,8 @@ import com.example.atlex.domain.post.dto.response.PostSummaryResponse;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.post.entity.PostFavorite;
 import com.example.atlex.domain.post.repository.PostFavoriteRepository;
+import com.example.atlex.domain.tag.repository.PostTagRepository;
+import com.example.atlex.domain.tag.repository.projection.PostTagNameProjection;
 import com.example.atlex.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,6 +17,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class PostFavoriteService {
@@ -22,6 +29,7 @@ public class PostFavoriteService {
     private final PostFavoriteRepository postFavoriteRepository;
     private final UserRepository userRepository;
     private final PostAccessService postAccessService;
+    private final PostTagRepository postTagRepository;
 
     @Transactional
     public PostFavoriteResponse addFavorite(Long postId, Long userId) {
@@ -60,7 +68,28 @@ public class PostFavoriteService {
         Sort sort = Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        return postFavoriteRepository.findFavoritesByUserId(userId, sortedPageable)
-            .map(favorite -> PostSummaryResponse.from(favorite.getPost()));
+        Page<PostFavorite> favorites = postFavoriteRepository.findFavoritesByUserId(userId, sortedPageable);
+        List<Long> postIds = favorites.getContent().stream()
+            .map(favorite -> favorite.getPost().getId())
+            .toList();
+        Map<Long, List<String>> tagMap = findTagNamesByPostIds(postIds);
+
+        return favorites.map(favorite -> PostSummaryResponse.from(
+            favorite.getPost(),
+            tagMap.getOrDefault(favorite.getPost().getId(), List.of())));
+    }
+
+    private Map<Long, List<String>> findTagNamesByPostIds(List<Long> postIds) {
+        if (postIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, List<String>> tagNamesByPostId = new LinkedHashMap<>();
+        for (PostTagNameProjection projection : postTagRepository.findTagNamesByPostIds(postIds)) {
+            tagNamesByPostId
+                .computeIfAbsent(projection.getPostId(), ignored -> new ArrayList<>())
+                .add(projection.getTagName());
+        }
+        return tagNamesByPostId;
     }
 }

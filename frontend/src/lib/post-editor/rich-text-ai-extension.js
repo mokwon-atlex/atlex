@@ -1,0 +1,182 @@
+import { Extension } from '@tiptap/core';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
+
+export const aiSuggestionPluginKey = new PluginKey('aiSuggestionPlugin');
+
+/**
+ * Tiptap 에디터 내에서 커서 뒤에 반투명 회색 텍스트(Ghost Text)를 표시하고
+ * Tab 키를 눌렀을 때 실제 본문으로 삽입하는 커스텀 확장입니다.
+ */
+export const AiSuggestionExtension = Extension.create({
+  name: 'aiSuggestion',
+
+  addOptions() {
+    return {
+      onAccept: null,
+      onDismiss: null,
+      onRequestAi: null,
+    };
+  },
+
+  addStorage() {
+    return {
+      suggestion: '',
+      isLoading: false,
+    };
+  },
+
+  addCommands() {
+    return {
+      setAiLoading:
+        (isLoading) =>
+        ({ editor, tr, dispatch }) => {
+          editor.storage.aiSuggestion.isLoading = isLoading;
+          if (dispatch) tr.setMeta(aiSuggestionPluginKey, { isLoading });
+          return true;
+        },
+      setAiSuggestion:
+        (suggestion) =>
+        ({ editor, tr, dispatch }) => {
+          editor.storage.aiSuggestion.suggestion = suggestion;
+          editor.storage.aiSuggestion.isLoading = false;
+          if (dispatch) tr.setMeta(aiSuggestionPluginKey, { suggestion });
+          return true;
+        },
+      clearAiSuggestion:
+        () =>
+        ({ editor, tr, dispatch }) => {
+          editor.storage.aiSuggestion.suggestion = '';
+          editor.storage.aiSuggestion.isLoading = false;
+          if (dispatch) tr.setMeta(aiSuggestionPluginKey, { suggestion: '' });
+          return true;
+        },
+      acceptAiSuggestion:
+        () =>
+        ({ editor, commands }) => {
+          let suggestion = editor.storage.aiSuggestion.suggestion;
+          if (!suggestion) return false;
+
+          const pos = editor.state.selection.from;
+          if (pos > 0) {
+            const charBefore = editor.state.doc.textBetween(pos - 1, pos);
+            if (!/[\s\n]/.test(charBefore) && !suggestion.startsWith(' ') && !suggestion.startsWith('\n')) {
+              suggestion = ` ${suggestion}`;
+            }
+          }
+
+          commands.insertContent(suggestion);
+          commands.clearAiSuggestion();
+          return true;
+        },
+    };
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      Tab: ({ editor }) => {
+        const suggestion = editor.storage.aiSuggestion.suggestion;
+        if (!suggestion) {
+          return false; // 추천이 없으면 기본 브라우저/에디터 Tab 동작 유지
+        }
+        return editor.commands.acceptAiSuggestion();
+      },
+      Escape: ({ editor }) => {
+        const suggestion = editor.storage.aiSuggestion.suggestion;
+        if (!suggestion && !editor.storage.aiSuggestion.isLoading) {
+          return false;
+        }
+        return editor.commands.clearAiSuggestion();
+      },
+      'Mod-j': () => {
+        if (this.options.onRequestAi) {
+          this.options.onRequestAi();
+          return true;
+        }
+        return false;
+      },
+    };
+  },
+
+  addProseMirrorPlugins() {
+    const editor = this.editor;
+
+    return [
+      new Plugin({
+        key: aiSuggestionPluginKey,
+        state: {
+          init() {
+            return DecorationSet.empty;
+          },
+          apply(tr, oldSet) {
+            const meta = tr.getMeta(aiSuggestionPluginKey);
+            if (meta) {
+              if (meta.isLoading) {
+                const pos = tr.selection.from;
+                const widget = Decoration.widget(
+                  pos,
+                  () => {
+                    const badge = document.createElement('span');
+                    badge.className =
+                      'post-editor-ai-loading inline-flex items-center gap-1 select-none text-xs text-muted-foreground/80 rounded px-1.5 py-0.5 bg-muted/40 animate-pulse ml-1 align-middle pointer-events-none';
+                    badge.textContent = '✨ AI 작성 중...';
+                    return badge;
+                  },
+                  { side: 1 },
+                );
+                return DecorationSet.create(tr.doc, [widget]);
+              }
+
+              const text = meta.suggestion;
+              if (!text) return DecorationSet.empty;
+
+              const pos = tr.selection.from;
+              const widget = Decoration.widget(
+                pos,
+                () => {
+                  const container = document.createElement('span');
+                  container.className =
+                    'post-editor-ai-ghost inline cursor-pointer select-none rounded px-0.5 transition-colors hover:bg-muted/40';
+                  container.title = '클릭하거나 Tab 키를 눌러 바로 삽입 (취소: Esc)';
+                  container.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    editor.commands.acceptAiSuggestion();
+                    editor.commands.focus();
+                  });
+
+                  const textSpan = document.createElement('span');
+                  textSpan.className = 'text-muted-foreground/60 whitespace-pre-wrap';
+                  textSpan.textContent = text;
+                  container.appendChild(textSpan);
+
+                  const badge = document.createElement('span');
+                  badge.className =
+                    'ml-1.5 inline-flex items-center rounded border border-border/60 bg-muted/40 px-1 py-0.5 text-[9px] font-medium leading-none text-muted-foreground align-middle';
+                  badge.textContent = 'Tab';
+                  container.appendChild(badge);
+
+                  return container;
+                },
+                { side: 1 },
+              );
+              return DecorationSet.create(tr.doc, [widget]);
+            }
+            if (tr.docChanged || tr.selectionSet) {
+              // 본문이 바뀌거나 커서가 이동하면 추천 및 로딩 자동 제거
+              editor.storage.aiSuggestion.suggestion = '';
+              editor.storage.aiSuggestion.isLoading = false;
+              return DecorationSet.empty;
+            }
+            return oldSet.map(tr.mapping, tr.doc);
+          },
+        },
+        props: {
+          decorations(state) {
+            return this.getState(state);
+          },
+        },
+      }),
+    ];
+  },
+});

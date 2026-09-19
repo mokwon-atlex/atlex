@@ -7,21 +7,23 @@ import { apiClient } from '@/lib/api/client';
 // 게시글 목록 조회.
 // page, size 로 페이지네이션하고 authorUserId, type 이 있으면 해당 조건으로 필터링한다.
 // 응답 예시: { content: ApiPost[], totalElements, totalPages, ... }
-export function fetchPosts({ authorUserId, page = 0, size = 10, type } = {}) {
+export function fetchPosts({ authorUserId, page = 0, size = 10, type, tag } = {}) {
   return apiClient.get('/posts', {
     params: {
       page,
       size,
       ...(authorUserId && { authorUserId }),
       ...(type && { type }),
+      ...(tag && { tag }),
     },
   });
 }
 
-// GET /posts?userId={userId}&categoryId={categoryId}&tags={tags}&page={page}&size={size} — 특정 유저 게시글 목록 조회.
+// GET /posts?userId={userId}&categoryId={categoryId}&tag={tag}&page={page}&size={size} — 특정 유저 게시글 목록 조회.
 // Authorization 헤더는 필요 시 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
-// payload: { userId?, categoryId?, type?, tags?, page?, size? }
-export function fetchUserBlogPosts({ userId, categoryId, type, tags, page = 0, size = 10 } = {}) {
+// payload: { userId?, categoryId?, type?, tags?, tag?, page?, size? }
+export function fetchUserBlogPosts({ userId, categoryId, type, tags, tag, page = 0, size = 10 } = {}) {
+  const resolvedTag = tag ?? tags;
   return apiClient.get('/posts', {
     params: {
       page,
@@ -29,7 +31,7 @@ export function fetchUserBlogPosts({ userId, categoryId, type, tags, page = 0, s
       ...(userId && { userId }),
       ...(categoryId !== undefined && { categoryId }),
       ...(type && { type }),
-      ...(tags !== undefined && { tags }),
+      ...(resolvedTag !== undefined && { tag: resolvedTag }),
     },
   });
 }
@@ -65,4 +67,27 @@ export function updatePost(postId, { categoryId, title, description, content, ta
     ...(tags !== undefined && { tags }),
     ...(isPublic !== undefined && { isPublic }),
   });
+}
+
+// GET /posts/favorites — 로그인한 사용자의 즐겨찾기 목록 조회.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function fetchFavoritePosts({ page = 0, size = 10 } = {}) {
+  return apiClient.get('/posts/favorites', {
+    params: {
+      page,
+      size,
+    },
+  });
+}
+
+// POST /posts/{postId}/favorites — 게시글 즐겨찾기 등록.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function addPostFavorite(postId) {
+  return apiClient.post(`/posts/${postId}/favorites`);
+}
+
+// DELETE /posts/{postId}/favorites — 게시글 즐겨찾기 해제.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function removePostFavorite(postId) {
+  return apiClient.delete(`/posts/${postId}/favorites`);
 }

@@ -29,6 +29,7 @@ import java.util.Date;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.nullValue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = {
@@ -239,6 +240,40 @@ class PostControllerTest {
             .andExpect(jsonPath("$.data.content[0].categoryName").value(nullValue()));
     }
 
+    @Test
+    @DisplayName("tag 필터는 해당 태그가 달린 글만 조회")
+    void getList_filterByTag() throws Exception {
+        mockMvc.perform(post("/api/v1/posts")
+            .header("Authorization", "Bearer " + authorToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "title": "Spring 게시글",
+                  "content": "본문",
+                  "tags": ["Spring", "Java"]
+                }
+                """))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/posts")
+            .param("tag", "Spring"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.totalElements").value(1))
+            .andExpect(jsonPath("$.data.content[0].title").value("Spring 게시글"))
+            .andExpect(jsonPath("$.data.content[0].tags", hasItem("Spring")));
+
+        mockMvc.perform(get("/api/v1/posts")
+            .param("tag", "spring"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.totalElements").value(1))
+            .andExpect(jsonPath("$.data.content[0].title").value("Spring 게시글"));
+
+        mockMvc.perform(get("/api/v1/posts")
+            .param("tag", "NonExistentTag"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.totalElements").value(0));
+    }
+
     // ────────────────────────── 단건 조회 ──────────────────────────
 
     @Test
@@ -400,6 +435,24 @@ class PostControllerTest {
             .andExpect(jsonPath("$.code").value("CATEGORY_NOT_FOUND"));
     }
 
+    @Test
+    @DisplayName("게시글 작성 시 태그 10개 초과 -> 400")
+    void create_withMoreThan10Tags_returnsValidationError() throws Exception {
+        mockMvc.perform(post("/api/v1/posts")
+            .header("Authorization", "Bearer " + authorToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "title": "태그 초과 글",
+                  "content": "본문",
+                  "tags": ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10", "t11"]
+                }
+                """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.errors[0].data.key").value("tags"));
+    }
+
     // ────────────────────────── 수정 ──────────────────────────
 
     @Test
@@ -474,6 +527,22 @@ class PostControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.errors[0].data.key").value("thumbnailUrl"));
+    }
+
+    @Test
+    @DisplayName("게시글 수정 시 태그 10개 초과 -> 400")
+    void update_withMoreThan10Tags_returnsValidationError() throws Exception {
+        mockMvc.perform(patch("/api/v1/posts/{id}", publicPostId)
+            .header("Authorization", "Bearer " + authorToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "tags": ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10", "t11"]
+                }
+                """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.errors[0].data.key").value("tags"));
     }
 
     @Test
