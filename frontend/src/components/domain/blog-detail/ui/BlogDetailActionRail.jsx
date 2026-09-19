@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Bookmark, Loader2, Share2 } from 'lucide-react';
 
 import { Button } from '@/components/common/ui/button';
-import { usePostFavorite } from '@/hooks/queries/posts/usePostFavorite';
+import { FavoriteValidationError, usePostFavorite } from '@/hooks/queries/posts/usePostFavorite';
 import { cn } from '@/lib/utils';
 
 /**
@@ -101,7 +101,11 @@ export default function BlogDetailActionRail({
       const result = await favoriteHook.toggleFavorite();
       setLocalBookmarksDelta((prev) => (result.favorited ? prev + 1 : prev - 1));
     } catch (err) {
-      setErrorMessage(err?.message ?? '즐겨찾기 처리에 실패했습니다.');
+      if (err instanceof FavoriteValidationError || err?.isValidationError) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage('즐겨찾기 처리에 실패했습니다.');
+      }
     }
   }
 
