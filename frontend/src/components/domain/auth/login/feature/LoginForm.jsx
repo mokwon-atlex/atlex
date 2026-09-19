@@ -23,7 +23,8 @@ function getSavedUserId() {
   try {
     if (typeof window === 'undefined') return '';
     return localStorage.getItem(SAVED_USER_ID_KEY) ?? '';
-  } catch {
+  } catch (error) {
+    console.warn('[LoginForm] 저장된 아이디 조회 중 로컬 스토리지 예외 발생:', error);
     return '';
   }
 }
@@ -32,24 +33,37 @@ function getSavedUserId() {
  * 아이디를 로컬 스토리지에 안전하게 저장합니다.
  *
  * @param {string} id - 저장할 사용자 아이디
+ * @returns {boolean} 저장 성공 여부
  */
 function saveUserId(id) {
   try {
     if (typeof window !== 'undefined') {
       localStorage.setItem(SAVED_USER_ID_KEY, id);
+      return true;
     }
-  } catch {}
+    return false;
+  } catch (error) {
+    console.warn('[LoginForm] 아이디 저장 중 로컬 스토리지 예외 발생:', error);
+    return false;
+  }
 }
 
 /**
  * 저장된 아이디를 로컬 스토리지에서 안전하게 제거합니다.
+ *
+ * @returns {boolean} 삭제 성공 여부
  */
 function removeSavedUserId() {
   try {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(SAVED_USER_ID_KEY);
+      return true;
     }
-  } catch {}
+    return false;
+  } catch (error) {
+    console.warn('[LoginForm] 저장된 아이디 삭제 중 로컬 스토리지 예외 발생:', error);
+    return false;
+  }
 }
 
 /**
@@ -87,7 +101,10 @@ function LoginForm({ onSwitchMode }) {
     const nextChecked = checked === true;
     setRememberId(nextChecked);
     if (!nextChecked) {
-      removeSavedUserId();
+      const removed = removeSavedUserId();
+      if (!removed && typeof window !== 'undefined') {
+        console.warn('[LoginForm] 아이디 저장 해제 후 로컬 스토리지 삭제 실패');
+      }
     }
   }
 
@@ -104,9 +121,15 @@ function LoginForm({ onSwitchMode }) {
       await login({ userId, password });
       // 아이디 저장이 선택된 경우 아이디만 저장하고, 미선택 시 저장값 제거
       if (rememberId) {
-        saveUserId(userId.trim());
+        const saved = saveUserId(userId.trim());
+        if (!saved && typeof window !== 'undefined') {
+          console.warn('[LoginForm] 로그인 성공 후 아이디 저장 실패');
+        }
       } else {
-        removeSavedUserId();
+        const removed = removeSavedUserId();
+        if (!removed && typeof window !== 'undefined') {
+          console.warn('[LoginForm] 로그인 성공 후 기존 저장 아이디 삭제 실패');
+        }
       }
       router.push('/');
     } catch (err) {

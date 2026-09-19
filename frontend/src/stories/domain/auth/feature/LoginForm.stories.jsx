@@ -1,5 +1,6 @@
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, spyOn, userEvent, within } from 'storybook/test';
 
+import { apiClient } from '@/lib/api/client';
 import { LoginForm, SAVED_USER_ID_KEY } from '@/components/domain/auth/login/feature/LoginForm';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof LoginForm> } */
@@ -16,11 +17,17 @@ const meta = {
 export default meta;
 
 export const Default = {
-  render: (args) => (
-    <div className="w-[380px] rounded-3xl border border-border/60 bg-background p-6">
-      <LoginForm {...args} />
-    </div>
-  ),
+  render: (args) => {
+    // 마운트 전 로컬 스토리지에서 저장된 아이디 키를 제거하여 깨끗한 상태 보장
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(SAVED_USER_ID_KEY);
+    }
+    return (
+      <div className="w-[380px] rounded-3xl border border-border/60 bg-background p-6">
+        <LoginForm {...args} />
+      </div>
+    );
+  },
   args: {
     onSwitchMode: undefined,
   },
@@ -87,7 +94,9 @@ export const UncheckRemovesSavedId = {
 
 export const PasswordAndAuthTokensNotSaved = {
   render: (args) => {
-    window.localStorage.clear();
+    if (typeof window !== 'undefined') {
+      window.localStorage.clear();
+    }
     return (
       <div className="w-[380px] rounded-3xl border border-border/60 bg-background p-6">
         <LoginForm {...args} />
@@ -96,23 +105,45 @@ export const PasswordAndAuthTokensNotSaved = {
   },
   args: {},
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const idInput = canvas.getByPlaceholderText('아이디를 입력하세요');
-    const passwordInput = canvas.getByPlaceholderText('비밀번호 입력');
-    const checkbox = canvas.getByRole('checkbox', { name: /아이디 저장/i });
+    const postSpy = spyOn(apiClient, 'post').mockImplementation(async (url) => {
+      if (url === '/auth/login') {
+        return {
+          userId: 'secureUser',
+          accessToken: 'dummy-access-token',
+          refreshToken: 'dummy-refresh-token',
+        };
+      }
+      return {};
+    });
 
-    // 아이디 및 비밀번호 입력
-    await userEvent.type(idInput, 'secureUser');
-    await userEvent.type(passwordInput, 'SuperSecret123!');
+    try {
+      const canvas = within(canvasElement);
+      const idInput = canvas.getByPlaceholderText('아이디를 입력하세요');
+      const passwordInput = canvas.getByPlaceholderText('비밀번호 입력');
+      const checkbox = canvas.getByRole('checkbox', { name: /아이디 저장/i });
+      const submitButton = canvas.getByRole('button', { name: '로그인' });
 
-    // 아이디 저장 체크박스 선택
-    await userEvent.click(checkbox);
-    await expect(checkbox).toBeChecked();
+      // 아이디 및 비밀번호 입력
+      await userEvent.type(idInput, 'secureUser');
+      await userEvent.type(passwordInput, 'SuperSecret123!');
 
-    // 로컬 스토리지에 비밀번호나 인증 정보가 저장되지 않았는지 검증
-    const storageKeys = Object.keys(window.localStorage);
-    await expect(window.localStorage.getItem('password')).toBeNull();
-    await expect(storageKeys.some((k) => k.toLowerCase().includes('password'))).toBe(false);
-    await expect(storageKeys.some((k) => k.toLowerCase().includes('token'))).toBe(false);
+      // 아이디 저장 체크박스 선택
+      await userEvent.click(checkbox);
+      await expect(checkbox).toBeChecked();
+
+      // 로그인 폼 제출
+      await userEvent.click(submitButton);
+
+      // 로그인 성공 후 SAVED_USER_ID_KEY에 아이디만 정상 저장되었는지 검증
+      await expect(window.localStorage.getItem(SAVED_USER_ID_KEY)).toBe('secureUser');
+
+      // 로컬 스토리지에 비밀번호나 인증 정보가 저장되지 않았는지 검증
+      const storageKeys = Object.keys(window.localStorage);
+      await expect(window.localStorage.getItem('password')).toBeNull();
+      await expect(storageKeys.some((k) => k.toLowerCase().includes('password'))).toBe(false);
+      await expect(storageKeys.some((k) => k.toLowerCase().includes('token'))).toBe(false);
+    } finally {
+      postSpy.mockRestore();
+    }
   },
 };
