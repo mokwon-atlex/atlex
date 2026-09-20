@@ -32,7 +32,7 @@ export default async function BlogDetailPage({ params }) {
             <BlogDetailSidebar postId={postId} bookmarks={7} likes={18} />
           </div>
           <div className="order-1 xl:order-2">
-            <BlogDetailContent {...detail} />
+            <BlogDetailContent {...detail} postId={postId} />
           </div>
           <div aria-hidden="true" className="hidden xl:block xl:order-3" />
         </div>

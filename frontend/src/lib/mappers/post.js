@@ -57,6 +57,7 @@ export function toBlogDetail(apiPost) {
   const plainTextContent = getRichTextPlainText(sanitizedContent);
 
   return {
+    postId: apiPost.id,
     blogTitle: apiPost.authorUserId ? `${apiPost.authorUserId}.log` : 'blog',
     category: apiPost.categoryName ?? '미분류',
     title: apiPost.title,
