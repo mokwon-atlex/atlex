@@ -11,6 +11,7 @@ export default function BlogDetailHero({
   authorUserId,
   category,
   excerpt,
+  postId,
   publishedAt,
   readTime,
   title,
@@ -52,7 +53,7 @@ export default function BlogDetailHero({
             </Capsule>
           </div>
 
-          <AdminActions authorUserId={authorUserId} actions={adminActions} />
+          <AdminActions authorUserId={authorUserId} actions={adminActions} postId={postId} />
         </div>
       </div>
     </section>

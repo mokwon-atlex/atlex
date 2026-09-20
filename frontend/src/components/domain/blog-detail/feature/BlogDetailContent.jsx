@@ -9,6 +9,7 @@ export default function BlogDetailContent({
   category,
   contentBlocks,
   excerpt,
+  postId,
   publishedAt,
   readTime,
   title,
@@ -22,6 +23,7 @@ export default function BlogDetailContent({
         authorUserId={authorUserId}
         category={category}
         excerpt={excerpt}
+        postId={postId}
         publishedAt={publishedAt}
         readTime={readTime}
         title={title}

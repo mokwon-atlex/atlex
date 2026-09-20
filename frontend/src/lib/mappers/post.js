@@ -57,6 +57,8 @@ export function toBlogDetail(apiPost) {
   const plainTextContent = getRichTextPlainText(sanitizedContent);
 
   return {
+    // 수정 화면(/write/{postId}) 링크를 만드는 데 필요해 추가함.
+    postId: apiPost.id,
     blogTitle: apiPost.authorUserId ? `${apiPost.authorUserId}.log` : 'blog',
     category: apiPost.categoryName ?? '미분류',
     title: apiPost.title,
@@ -66,7 +68,6 @@ export function toBlogDetail(apiPost) {
     readTime: `${Math.max(1, Math.ceil(plainTextContent.length / 300))} min read`,
     visibilityLabel: apiPost.isPublic ? '공개' : '비공개',
     authorUserId: apiPost.authorUserId ?? null,
-    tags: apiPost.tags ?? [],
     adminActions: ['통계', '수정', '삭제'],
     contentBlocks: [
       ...(apiPost.thumbnailUrl ? [{ id: 'cover', type: 'image', src: apiPost.thumbnailUrl, caption: '' }] : []),
@@ -86,7 +87,7 @@ export function toBlogHomeFeedPost(apiPost) {
     excerpt: truncate(apiPost.content ?? apiPost.description, 120),
     // 카테고리명이 있을 때만 채운다(없으면 null → 카드에서 숨김).
     category: apiPost.categoryName ?? null,
-    tags: apiPost.tags ?? [],
+    tags: [],
     date: formatDotDate(apiPost.createdAt),
     likes: apiPost.likes ?? 0,
     comments: 0,
