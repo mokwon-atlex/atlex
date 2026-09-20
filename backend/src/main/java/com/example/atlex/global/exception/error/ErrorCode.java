@@ -37,6 +37,7 @@ public enum ErrorCode {
 
     // 429 Too Many Requests
     TOO_MANY_LOGIN_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "로그인 시도가 너무 많습니다. 30분 후 다시 시도해주세요."),
+    TOO_MANY_AI_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "AI 요청이 너무 빈번합니다. 잠시 후 다시 시도해주세요."),
 
     // JWT 토큰
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않거나 만료된 토큰입니다."),

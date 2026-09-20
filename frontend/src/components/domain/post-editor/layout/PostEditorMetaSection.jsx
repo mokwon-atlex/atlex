@@ -1,5 +1,6 @@
 // [Section] 게시 메타 입력 — 설명(description) · 카테고리 · 공개 여부(isPublic).
 // 모든 값/핸들러를 props 로 받는 controlled 컴포넌트. 상태는 상위(page.jsx)에서 관리한다.
+import { Loader2, Sparkles } from 'lucide-react';
 import { Field, FieldLabel } from '@/components/common/ui/field';
 import { Textarea } from '@/components/common/ui/textarea';
 import { Switch } from '@/components/common/ui/switch';
@@ -15,6 +16,8 @@ export default function PostEditorMetaSection({
   onCategoryChange,
   isPublic,
   onIsPublicChange,
+  isGeneratingDescription = false,
+  onRequestGenerateDescription,
 }) {
   const categoryOptions = [postEditorCategories[0], ...categories];
 
@@ -23,9 +26,27 @@ export default function PostEditorMetaSection({
       <div className="grid gap-6 px-5 py-6 sm:px-7">
         {/* 설명 (optional) */}
         <Field>
-          <FieldLabel htmlFor="post-editor-description" className={LABEL_CLASS}>
-            설명 (선택)
-          </FieldLabel>
+          <div className="flex items-center justify-between">
+            <FieldLabel htmlFor="post-editor-description" className={LABEL_CLASS}>
+              설명 (선택)
+            </FieldLabel>
+            {onRequestGenerateDescription ? (
+              <button
+                type="button"
+                onClick={onRequestGenerateDescription}
+                disabled={isGeneratingDescription}
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50 disabled:no-underline cursor-pointer transition-colors"
+                title="본문 내용을 분석하여 1~2문장의 메타 설명을 자동 생성합니다"
+              >
+                {isGeneratingDescription ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  <Sparkles className="size-3" />
+                )}
+                <span>{isGeneratingDescription ? 'AI 요약 중...' : 'AI 요약 생성'}</span>
+              </button>
+            ) : null}
+          </div>
           <Textarea
             id="post-editor-description"
             variant="filled"
