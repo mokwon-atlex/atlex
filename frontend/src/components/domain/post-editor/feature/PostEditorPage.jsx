@@ -161,7 +161,7 @@ export default function PostEditorPage({ postId }) {
               router.push(`/@${targetAuthorId}/${targetPostId}`);
             }
           },
-        }
+        },
       );
       return;
     }
@@ -196,13 +196,7 @@ export default function PostEditorPage({ postId }) {
           onPublish={handlePublish}
           publishDisabled={activeMutation.isPending}
           publishButtonLabel={
-            activeMutation.isPending
-              ? isEditMode
-                ? '수정 중…'
-                : '게시 중…'
-              : isEditMode
-                ? '수정 완료'
-                : '게시'
+            activeMutation.isPending ? (isEditMode ? '수정 중…' : '게시 중…') : isEditMode ? '수정 완료' : '게시'
           }
         />
 
