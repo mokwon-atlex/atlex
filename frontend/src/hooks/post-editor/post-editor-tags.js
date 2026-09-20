@@ -55,6 +55,9 @@ export default function usePostEditorTags(body, { initialManualTags = [] } = {})
     onRemoveTag: removeManualTag,
     onTagInputChange: handleTagInputChange,
     onTagInputKeyDown: handleTagInputKeyDown,
+    // 수정 화면에서 기존 게시글의 태그를 한 번에 채워 넣을 때 사용.
+    // (일반 태그 추가는 registerTags를 거치지만, 초기 반영은 파싱 없이 그대로 덮어써야 하므로 별도로 노출)
+    setManualTags,
     tagInput,
   };
 }
