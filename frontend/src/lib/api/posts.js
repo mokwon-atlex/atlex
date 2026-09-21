@@ -21,9 +21,9 @@ export function fetchPosts({ authorUserId, page = 0, size = 10, type, tag } = {}
 
 // GET /posts?userId={userId}&categoryId={categoryId}&tag={tag}&page={page}&size={size} — 특정 유저 게시글 목록 조회.
 // Authorization 헤더는 필요 시 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
-// payload: { userId?, categoryId?, type?, tags?, tag?, page?, size? }
-export function fetchUserBlogPosts({ userId, categoryId, type, tags, tag, page = 0, size = 10 } = {}) {
-  const resolvedTag = tag ?? tags;
+// payload: { userId?, categoryId?, type?, tag?, page?, size? }
+// tag 는 단일 태그 이름이며, 전체 태그 조회는 값을 넘기지 않는다.
+export function fetchUserBlogPosts({ userId, categoryId, type, tag, page = 0, size = 10 } = {}) {
   return apiClient.get('/posts', {
     params: {
       page,
@@ -31,7 +31,7 @@ export function fetchUserBlogPosts({ userId, categoryId, type, tags, tag, page =
       ...(userId && { userId }),
       ...(categoryId !== undefined && { categoryId }),
       ...(type && { type }),
-      ...(resolvedTag !== undefined && { tag: resolvedTag }),
+      ...(tag !== undefined && { tag }),
     },
   });
 }

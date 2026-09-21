@@ -8,7 +8,7 @@ import CategoryBlogHomeSidebarCategoryDialog from '@/components/domain/category/
 import BlogHomeFeed from '@/components/domain/blog-home/feature/BlogHomeFeed';
 import BlogHomeSidebar from '@/components/domain/blog-home/feature/BlogHomeSidebar';
 import BlogHomeBodyLayout from '@/components/domain/blog-home/layout/BlogHomeBodyLayout';
-import { ALL_CATEGORY_ID, findCategoryById, filterPostsByCategoryId } from '@/lib/category/category-picker';
+import { ALL_CATEGORY_ID, findCategoryById } from '@/lib/category/category-picker';
 import { fetchUserBlogPosts } from '@/lib/api/posts';
 import { toBlogHomeFeedPost } from '@/lib/mappers/post';
 import { cn } from '@/lib/utils';
@@ -80,22 +80,19 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   }));
 
   const resolvedFeed = useMemo(() => {
-    let filteredPosts = filterPostsByCategoryId(pageFeed.posts, categories, selectedCategoryId);
-
     const selectedCategory = findCategoryById(categories, selectedCategoryId);
     const selectedCategoryLabel = selectedCategory?.label ?? selectedCategory?.name ?? pageFeed.title;
     const isAllCategory = selectedCategoryId === ALL_CATEGORY_ID;
 
     const displayTitle = !isAllTag ? `#${selectedTag.label}` : isAllCategory ? pageFeed.title : selectedCategoryLabel;
 
+    // 태그와 카테고리를 모두 서버에서 필터링하므로 응답의 목록과 총 개수를 그대로 사용한다.
+    // 클라이언트에서 다시 거르면 페이지 단위로만 걸러져 totalCount, totalPages 가 실제와 어긋난다.
     return {
       ...pageFeed,
       isLoading: isPageLoading,
       onPageChange: handlePageChange,
-      pagination: pageFeed.pagination,
-      posts: filteredPosts,
       title: displayTitle,
-      totalCount: !isAllTag ? pageFeed.totalCount : isAllCategory ? pageFeed.totalCount : filteredPosts.length,
     };
   }, [pageFeed, categories, selectedCategoryId, isAllTag, selectedTag, isPageLoading]);
 
@@ -107,14 +104,14 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
     setPageFeed(feed);
   }, [feed]);
 
-  // 태그 선택 변경 시 서버에서 해당 태그의 1페이지 게시글 목록을 조회한다.
+  // 태그나 카테고리 선택이 바뀌면 서버에서 1페이지부터 다시 조회해 페이지네이션을 초기화한다.
   useEffect(() => {
     if (!mounted || !profile?.userId) return;
     const selected = tags.find((t) => t.id === selectedTagId);
     const isAll = !selected || selected.id === ALL_TAG_ID;
     const targetTag = isAll ? undefined : selected?.label;
-    handlePageChange(1, targetTag);
-  }, [selectedTagId, mounted, profile?.userId]);
+    handlePageChange(1, targetTag, selectedCategoryId);
+  }, [selectedTagId, selectedCategoryId, mounted, profile?.userId]);
 
   const quickActionLinkClassName = cn(
     buttonVariants({ size: 'icon-lg', variant: 'outline' }),
@@ -125,10 +122,19 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
     setSelectedCategoryId(categoryId);
   }
 
-  async function handlePageChange(page, tag = currentTagLabel) {
+  /**
+   * 선택한 페이지의 게시글 목록을 서버에서 조회해 피드 상태를 갱신한다.
+   *
+   * @param {number} page 1부터 시작하는 페이지 번호
+   * @param {string} [tag] 필터링할 태그 이름. 전체 태그면 undefined
+   * @param {string} [categoryId] 필터링할 카테고리 id. 전체 카테고리면 ALL_CATEGORY_ID
+   */
+  async function handlePageChange(page, tag = currentTagLabel, categoryId = selectedCategoryId) {
     if (!profile?.userId) return;
 
     const pageSize = pageFeed.pageSize ?? 10;
+    // 전체 카테고리는 조건 자체를 보내지 않아야 서버가 필터를 건너뛴다.
+    const targetCategoryId = categoryId === ALL_CATEGORY_ID ? undefined : categoryId;
 
     setIsPageLoading(true);
 
@@ -138,6 +144,7 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
         size: pageSize,
         userId: profile.userId,
         tag: tag || undefined,
+        categoryId: targetCategoryId,
       });
       const postContent = Array.isArray(postsPage?.content) ? postsPage.content : [];
       const ownerPostContent = postContent.filter((post) => isPostWrittenByUser(post, profile.userId));
