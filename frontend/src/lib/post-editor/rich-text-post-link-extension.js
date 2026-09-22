@@ -56,37 +56,38 @@ export const PostLinkExtension = Extension.create({
 
       insertPostLink:
         ({ title, href, range }) =>
-        ({ editor, commands }) => {
+        ({ chain, commands, state }) => {
           const cleanTitle = (title || '').trim();
           const cleanHref = (href || '').trim();
           if (!cleanHref) return false;
 
           const displayTitle = cleanTitle || cleanHref;
+          let step = chain().focus();
 
           if (range) {
-            commands.deleteRange(range);
-          } else if (editor.state.selection && !editor.state.selection.empty) {
-            // 선택된 텍스트가 있는 경우 해당 텍스트에 링크 적용
-            commands.extendMarkRange('link').setLink({ href: cleanHref });
+            step = step.deleteRange(range);
+          } else if (state.selection && !state.selection.empty) {
+            const success = step.extendMarkRange('link').setLink({ href: cleanHref }).run();
             commands.closePostLinkSearch();
-            return true;
+            return success;
           }
 
-          // 링크 텍스트 삽입 + 링크 마크 적용 + 뒤에 공백 1칸
-          commands.insertContent([
-            {
-              type: 'text',
-              text: displayTitle,
-              marks: [{ type: 'link', attrs: { href: cleanHref } }],
-            },
-            {
-              type: 'text',
-              text: ' ',
-            },
-          ]);
+          const success = step
+            .insertContent([
+              {
+                type: 'text',
+                text: displayTitle,
+                marks: [{ type: 'link', attrs: { href: cleanHref } }],
+              },
+              {
+                type: 'text',
+                text: ' ',
+              },
+            ])
+            .run();
 
           commands.closePostLinkSearch();
-          return true;
+          return success;
         },
     };
   },
@@ -135,6 +136,14 @@ export const PostLinkExtension = Extension.create({
               }
 
               const $from = selection.$from;
+              // 코드 블록 또는 인라인 코드 내부에서는 [[ 링크 트리거 비활성화
+              if ($from.parent.type.name === 'codeBlock' || editor.isActive('code')) {
+                if (storage?.isOpen && !storage?.isModalOpen) {
+                  editor.commands.closePostLinkSearch();
+                }
+                return;
+              }
+
               // 현재 블록 내 커서 앞쪽 텍스트 검사
               const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, '\ufffc');
               const match = /\[\[([^\]\n]*)$/.exec(textBefore);

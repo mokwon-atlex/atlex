@@ -31,6 +31,7 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
 
   const popoverRef = useRef(null);
   const inputRef = useRef(null);
+  const listContainerRef = useRef(null);
 
   // 내 게시글 목록 조회
   const { data: postsData, isLoading } = useQuery({
@@ -60,6 +61,16 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
   useEffect(() => {
     setSelectedIndex(0);
   }, [filteredPosts.length]);
+
+  // 키보드 이동 시 선택 항목이 스크롤 영역 안에 보이도록 자동 스크롤
+  useEffect(() => {
+    if (listContainerRef.current) {
+      const activeEl = listContainerRef.current.querySelector(`[data-index="${selectedIndex}"]`);
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [selectedIndex]);
 
   // 모달 모드 열릴 때 인풋에 포커스
   useEffect(() => {
@@ -193,13 +204,15 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
     }
 
     return (
-      <div className="max-h-60 overflow-y-auto space-y-1 p-1">
+      <div ref={listContainerRef} className="max-h-60 overflow-y-auto space-y-1 p-1">
         {filteredPosts.map((post, index) => {
           const isSelected = index === selectedIndex;
           return (
             <button
               key={post.id}
               type="button"
+              data-index={index}
+              onMouseDown={(e) => e.preventDefault()}
               onMouseEnter={() => setSelectedIndex(index)}
               onClick={() => handleSelectPost(post)}
               className={cn(

@@ -45,6 +45,11 @@ export default function BlogDetailArticle({ contentBlocks }) {
     const href = anchor.getAttribute('href');
     if (!href) return;
 
+    // 새 탭 열기(Ctrl, Cmd, Shift, Alt, 휠 클릭)는 기본 동작 유지
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) {
+      return;
+    }
+
     // 내부 라우팅 대상: /@username/postId 또는 /u/username/postId 등
     if (href.startsWith('/') && !href.startsWith('//')) {
       e.preventDefault();
