@@ -1,5 +1,6 @@
 package com.example.atlex.domain.graph.service;
 
+import com.example.atlex.domain.graph.config.GraphProperties;
 import com.example.atlex.domain.graph.dto.response.GraphEdgeResponse;
 import com.example.atlex.domain.graph.dto.response.GraphNodeResponse;
 import com.example.atlex.domain.graph.dto.response.PostGraphResponse;
@@ -25,13 +26,13 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class GraphService {
 
-    private static final double DEFAULT_MIN_SCORE = 0.15;
     private static final int DEFAULT_CENTER_LIMIT = 10;
     private static final int MAX_CENTER_LIMIT = 50;
 
     private final PostRepository postRepository;
     private final PostTagRepository postTagRepository;
     private final PostRelationRepository postRelationRepository;
+    private final GraphProperties graphProperties;
 
     @Transactional(readOnly = true)
     public PostGraphResponse getGraph(String userId, Long categoryId, Double minScore, Long viewerId) {
@@ -46,7 +47,8 @@ public class GraphService {
             ? List.of()
             : postRelationRepository.findVisibleEdges(
                 visiblePostIds,
-                minScore == null ? DEFAULT_MIN_SCORE : minScore).stream().map(GraphEdgeResponse::from).toList();
+                minScore == null ? graphProperties.getMinScore() : minScore).stream().map(GraphEdgeResponse::from)
+                .toList();
 
         return PostGraphResponse.builder()
             .nodes(nodes)
@@ -66,7 +68,7 @@ public class GraphService {
         List<PostRelation> relations = Boolean.TRUE.equals(centerPost.getIsPublic())
             ? postRelationRepository.findVisibleCenteredEdges(
                 postId,
-                minScore == null ? DEFAULT_MIN_SCORE : minScore,
+                minScore == null ? graphProperties.getMinScore() : minScore,
                 PageRequest.of(0, normalizeLimit(limit)))
             : List.of();
 
