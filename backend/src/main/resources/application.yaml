@@ -26,6 +26,23 @@ gemini:
   api-key: ${GEMINI_API_KEY:}
   model: ${GEMINI_MODEL:gemini-3.5-flash-lite}
 
+# 그래프 키워드 가중치와 관계 계산 기준. 값을 바꾸면 이후 인덱싱부터 반영된다.
+graph:
+  weight:
+    # 필드별 등장 횟수에 곱하는 배수
+    title: ${GRAPH_WEIGHT_TITLE:1.5}
+    content: ${GRAPH_WEIGHT_CONTENT:1.0}
+    tag: ${GRAPH_WEIGHT_TAG:2.0}
+  relation:
+    # 관계 계산에 사용할 소스 글의 상위 키워드 수
+    max-source-keywords: ${GRAPH_MAX_SOURCE_KEYWORDS:8}
+    # 키워드를 공유하는 후보 글 조회 상한
+    max-candidates: ${GRAPH_MAX_CANDIDATES:50}
+    # 글 하나가 가질 수 있는 최대 연결 수
+    max-per-post: ${GRAPH_MAX_RELATIONS_PER_POST:5}
+    # 관계로 저장·조회할 최소 연관도. 인덱싱과 조회가 같은 값을 쓴다.
+    min-score: ${GRAPH_MIN_SCORE:0.15}
+
 ---
 # 운영(EC2 + RDS MySQL) 프로파일: SPRING_PROFILES_ACTIVE=prod
 spring:

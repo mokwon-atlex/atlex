@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class KeywordExtractorTest {
 
@@ -31,6 +32,35 @@ class KeywordExtractorTest {
         assertEquals(0, result.get("jpa").titleCount());
         assertEquals(1, result.get("jpa").contentCount());
         assertEquals(1, result.get("jpa").tagCount());
+    }
+
+    @Test
+    @DisplayName("본문 HTML 의 마크업은 키워드에서 제외하고 평문만 계산한다")
+    void excludesHtmlMarkupFromContent() {
+        Map<String, KeywordOccurrence> result = extractor.extract(
+            "Graph",
+            "<div class=\"note\"><p>spring boot</p><a href=\"https://example.com\">link</a></div>",
+            List.of());
+
+        assertEquals(1, result.get("spring").contentCount());
+        assertEquals(1, result.get("boot").contentCount());
+        assertFalse(result.containsKey("div"));
+        assertFalse(result.containsKey("class"));
+        assertFalse(result.containsKey("href"));
+    }
+
+    @Test
+    @DisplayName("본문 HTML 의 style 내용과 엔티티는 키워드에서 제외한다")
+    void excludesStyleContentAndEntities() {
+        Map<String, KeywordOccurrence> result = extractor.extract(
+            "Graph",
+            "<style>.note{color:red}</style><p>spring&nbsp;boot</p>",
+            List.of());
+
+        assertEquals(1, result.get("spring").contentCount());
+        assertEquals(1, result.get("boot").contentCount());
+        assertFalse(result.containsKey("color"));
+        assertFalse(result.containsKey("nbsp"));
     }
 
     @Test

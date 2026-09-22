@@ -1,6 +1,7 @@
 package com.example.atlex.domain.graph.keyword;
 
 import com.example.atlex.domain.graph.keyword.entity.KeywordOccurrence;
+import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -17,7 +18,7 @@ public class KeywordExtractor {
     public Map<String, KeywordOccurrence> extract(String title, String content, List<String> tags) {
         Map<String, MutableOccurrence> occurrences = new LinkedHashMap<>();
         addText(occurrences, title, Field.TITLE);
-        addText(occurrences, content, Field.CONTENT);
+        addText(occurrences, toPlainText(content), Field.CONTENT);
 
         if (tags != null) {
             for (String tag : tags) {
@@ -45,6 +46,21 @@ public class KeywordExtractor {
             MutableOccurrence occurrence = occurrences.computeIfAbsent(token, ignored -> new MutableOccurrence());
             occurrence.increment(field);
         }
+    }
+
+    /**
+     * 본문은 리치 텍스트 에디터가 저장한 HTML 이다.
+     * 원문을 그대로 토큰화하면 div, class, href 같은 마크업이 키워드로 섞이므로 평문만 추출한다.
+     *
+     * @param html 게시글 본문 HTML
+     * @return 태그와 엔티티를 제거한 평문. 입력이 비어 있으면 빈 문자열
+     */
+    private String toPlainText(String html) {
+        if (html == null || html.isBlank()) {
+            return "";
+        }
+
+        return Jsoup.parse(html).text();
     }
 
     private String normalizeTag(String tag) {

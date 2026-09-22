@@ -6,11 +6,27 @@ function MetaItem({ children }) {
   return <span className="text-[0.95rem] text-muted-foreground">{children}</span>;
 }
 
+/**
+ * 블로그 게시글 상세 상단 영역(카테고리, 제목, 요약, 발행일자 및 관리자 액션)을 렌더링합니다.
+ *
+ * @param {object} props
+ * @param {string[]} [props.adminActions] - 관리자 액션 목록
+ * @param {string} [props.authorUserId] - 작성자 유저 ID
+ * @param {string} [props.category] - 카테고리명
+ * @param {string} [props.excerpt] - 게시글 요약문
+ * @param {string | number} [props.postId] - 게시글 ID
+ * @param {string} [props.publishedAt] - 발행 일자 텍스트
+ * @param {string} [props.readTime] - 예상 읽기 시간 텍스트
+ * @param {string} [props.title] - 게시글 제목
+ * @param {string} [props.updatedAt] - 수정 일자 텍스트
+ * @param {string} [props.visibilityLabel] - 공개 여부 라벨
+ */
 export default function BlogDetailHero({
   adminActions,
   authorUserId,
   category,
   excerpt,
+  postId,
   publishedAt,
   readTime,
   title,
@@ -52,7 +68,7 @@ export default function BlogDetailHero({
             </Capsule>
           </div>
 
-          <AdminActions authorUserId={authorUserId} actions={adminActions} />
+          <AdminActions authorUserId={authorUserId} postId={postId} actions={adminActions} />
         </div>
       </div>
     </section>

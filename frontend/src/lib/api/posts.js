@@ -91,3 +91,9 @@ export function addPostFavorite(postId) {
 export function removePostFavorite(postId) {
   return apiClient.delete(`/posts/${postId}/favorites`);
 }
+
+// DELETE /posts/{postId} — 게시글 삭제.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function deletePost(postId) {
+  return apiClient.delete(`/posts/${postId}`);
+}
