@@ -37,11 +37,11 @@ public class GraphProperties {
         int maxRelationsPerPost,
         @Value("${graph.relation.min-score:0.15}")
         double minScore) {
-        // 후보 조회는 PageRequest 의 페이지 크기로 쓰여 1 미만이면 관계 갱신 트랜잭션이 실패한다.
+        // 세 값 모두 1 미만이면 관계 갱신이 실패하거나 조용히 아무 관계도 만들지 않는다.
         // 설정 오류는 요청 시점이 아니라 애플리케이션 시작 시점에 드러나야 한다.
-        if (maxCandidates < 1) {
-            throw new IllegalArgumentException("graph.relation.max-candidates 는 1 이상이어야 합니다.");
-        }
+        requireAtLeastOne(maxSourceKeywords, "graph.relation.max-source-keywords");
+        requireAtLeastOne(maxCandidates, "graph.relation.max-candidates");
+        requireAtLeastOne(maxRelationsPerPost, "graph.relation.max-per-post");
 
         this.titleWeight = titleWeight;
         this.contentWeight = contentWeight;
@@ -50,5 +50,11 @@ public class GraphProperties {
         this.maxCandidates = maxCandidates;
         this.maxRelationsPerPost = maxRelationsPerPost;
         this.minScore = minScore;
+    }
+
+    private static void requireAtLeastOne(int value, String property) {
+        if (value < 1) {
+            throw new IllegalArgumentException(property + " 는 1 이상이어야 합니다.");
+        }
     }
 }
