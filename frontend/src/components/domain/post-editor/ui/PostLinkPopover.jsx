@@ -2,10 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { BookOpen, FileText, Loader2, Search } from 'lucide-react';
+import { BookOpen, FileText, Loader2, Search, X } from 'lucide-react';
 
 import { Button } from '@/components/common/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/common/ui/dialog';
 import { fetchUserBlogPosts } from '@/lib/api/posts';
 import { postDetailHref } from '@/lib/url/handle';
 import { cn } from '@/lib/utils';
@@ -93,6 +92,41 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
     if (isOpen && isModal && inputRef.current) {
       inputRef.current.focus();
     }
+  }, [isOpen, isModal]);
+
+  // 포커스 트랩 (모달 모드)
+  useEffect(() => {
+    if (!isOpen || !isModal || !popoverRef.current) return;
+
+    const handleFocusTrap = (e) => {
+      if (e.key !== 'Tab') return;
+
+      const focusableEls = popoverRef.current.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusableEls.length) return;
+
+      const firstEl = focusableEls[0];
+      const lastEl = focusableEls[focusableEls.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstEl) {
+          e.preventDefault();
+          lastEl.focus();
+        }
+      } else {
+        if (document.activeElement === lastEl) {
+          e.preventDefault();
+          firstEl.focus();
+        }
+      }
+    };
+
+    const container = popoverRef.current;
+    container.addEventListener('keydown', handleFocusTrap);
+    return () => {
+      container.removeEventListener('keydown', handleFocusTrap);
+    };
   }, [isOpen, isModal]);
 
   // 게시글 선택 및 링크 삽입
@@ -311,24 +345,39 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
     );
   };
 
-  // 모달 모드 (툴바 클릭 시) - 접근성 높은 Dialog 컴포넌트 사용
+  // 모달 모드 (툴바 클릭 시) - 접근성 높은 Dialog 구조 적용
   if (isModal) {
     return (
-      <Dialog
-        open={isOpen && isModal}
-        onOpenChange={(open) => {
-          if (!open) handleClose();
-        }}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="post-link-dialog-title"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        onClick={handleClose}
       >
-        <DialogContent size="md" className="p-4 space-y-3" showCloseButton>
-          <DialogHeader className="gap-1 border-b border-border/60 pb-2.5">
-            <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
-              <BookOpen className="size-4 text-primary" />내 게시글 링크 삽입
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              작성한 게시글을 검색하여 본문에 링크로 삽입합니다.
-            </DialogDescription>
-          </DialogHeader>
+        <div
+          ref={popoverRef}
+          className="w-full max-w-md rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl p-4 space-y-3"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+            <div className="flex items-center gap-2">
+              <BookOpen className="size-4 text-primary" />
+              <h2 id="post-link-dialog-title" className="text-sm font-semibold">
+                내 게시글 링크 삽입
+              </h2>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label="닫기"
+              onClick={handleClose}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
 
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
@@ -350,8 +399,8 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
             <span>방향키(↑↓)로 이동하고 Enter로 선택</span>
             <span>Esc로 닫기</span>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
     );
   }
 
@@ -362,7 +411,7 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
   return (
     <div
       ref={popoverRef}
-      className="fixed z-50 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-popover text-popover-foreground shadow-xl p-2 space-y-1.5 animate-in fade-in zoom-in-95 duration-100"
+      className="fixed z-50 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-popover text-popover-foreground shadow-xl p-2 space-y-1.5"
       style={{
         top: `${topPos}px`,
         left: `${leftPos}px`,
