@@ -1,5 +1,6 @@
 import BlogDetailActionRail from '@/components/domain/blog-detail/ui/BlogDetailActionRail';
 import { expect, userEvent, within } from 'storybook/test';
+import { useAuthStore } from '@/store/authStore';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof BlogDetailActionRail> } */
 const meta = {
@@ -63,12 +64,26 @@ export const Loading = {
 };
 
 export const UnauthenticatedClickShowsAlert = {
+  decorators: [
+    (Story) => {
+      useAuthStore.getState().logout();
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem('auth-storage');
+      }
+      return <Story />;
+    },
+  ],
   args: {
     likes: 18,
     bookmarks: 7,
     postId: 999,
   },
   play: async ({ canvasElement }) => {
+    useAuthStore.getState().logout();
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('auth-storage');
+    }
+
     const canvas = within(canvasElement);
     const saveButton = canvas.getByRole('button', { name: /즐겨찾기 저장/i });
 

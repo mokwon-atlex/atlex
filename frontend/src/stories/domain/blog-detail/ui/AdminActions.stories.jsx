@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test';
 
 import { AdminActions } from '@/components/domain/blog-detail/ui/AdminActions';
@@ -12,6 +12,9 @@ function resetAuthStore() {
     accessToken: null,
     refreshToken: null,
   });
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.removeItem('auth-storage');
+  }
 }
 
 function AdminActionsWrapper({
@@ -24,7 +27,7 @@ function AdminActionsWrapper({
   onDeleteSuccess,
   onDeleteError,
 }) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     useAuthStore.setState({
       isLoggedIn,
       user: isLoggedIn ? { userId: currentUserId } : null,
@@ -57,18 +60,6 @@ const meta = {
   component: AdminActionsWrapper,
   tags: ['autodocs'],
   parameters: { layout: 'centered' },
-  decorators: [
-    (Story, context) => {
-      const { isLoggedIn = true, currentUserId = 'author1' } = context.args;
-      useAuthStore.setState({
-        isLoggedIn,
-        user: isLoggedIn ? { userId: currentUserId } : null,
-        accessToken: isLoggedIn ? 'dummy-token' : null,
-        refreshToken: null,
-      });
-      return <Story />;
-    },
-  ],
 };
 
 export default meta;
