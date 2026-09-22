@@ -32,6 +32,7 @@ export const SIMPLE_TOOLBAR_ACTIONS = {
   '실행 취소': (editor) => editor.chain().focus().undo().run(),
   '다시 실행': (editor) => editor.chain().focus().redo().run(),
   '서식 제거': (editor) => editor.chain().focus().unsetAllMarks().clearNodes().run(),
+  '내 글 링크': (editor) => editor.commands.openPostLinkSearch?.(),
 };
 
 // 사이드바 버튼이 눌린 상태인지 판단하는 규칙도 같은 라벨 기준으로 관리한다.
@@ -54,6 +55,7 @@ const TOOLBAR_ACTIVE_CHECKERS = {
   인용문: (editor) => editor.isActive('blockquote'),
   캡션: (editor) => editor.isActive('captionParagraph'),
   링크: (editor) => editor.isActive('link'),
+  '내 글 링크': (editor) => editor.storage.postLink?.isOpen ?? false,
   이미지: (editor) => editor.isActive('image'),
   표: (editor) => editor.isActive('table'),
   '코드 블록': (editor) => editor.isActive('codeBlock'),
