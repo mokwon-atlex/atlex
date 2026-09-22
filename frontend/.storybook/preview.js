@@ -1,6 +1,20 @@
-import { createElement } from 'react';
+import { createElement, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useAuthStore } from '../src/store/authStore';
 import '../src/app/globals.css';
+
+function AuthCleanUpWrapper({ children }) {
+  useEffect(() => {
+    return () => {
+      useAuthStore.getState().logout();
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem('auth-storage');
+      }
+    };
+  }, []);
+
+  return children;
+}
 
 /** @type { import('@storybook/nextjs-vite').Preview } */
 const preview = {
@@ -31,7 +45,11 @@ const preview = {
         },
       });
 
-      return createElement(QueryClientProvider, { client: queryClient }, createElement(Story));
+      return createElement(
+        QueryClientProvider,
+        { client: queryClient },
+        createElement(AuthCleanUpWrapper, null, createElement(Story)),
+      );
     },
   ],
 };
