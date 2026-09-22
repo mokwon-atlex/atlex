@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { buttonVariants } from '@/components/common/ui/button';
 import CategoryBlogHomeSidebarCategoryDialog from '@/components/domain/category/layout/CategoryBlogHomeSidebarCategoryDialog';
@@ -54,6 +54,7 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   const [mounted, setMounted] = useState(false);
   const [pageFeed, setPageFeed] = useState(feed);
   const [isPageLoading, setIsPageLoading] = useState(false);
+  const latestRequestIdRef = useRef(0);
   const quickActions = profile.quickActions ?? [];
   const [selectedTagId, setSelectedTagId] = useState(() => getInitialSelectedTagId(tags));
   const [selectedCategoryId, setSelectedCategoryId] = useState(ALL_CATEGORY_ID);
@@ -136,6 +137,11 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
     // 전체 카테고리는 조건 자체를 보내지 않아야 서버가 필터를 건너뛴다.
     const targetCategoryId = categoryId === ALL_CATEGORY_ID ? undefined : categoryId;
 
+    // 필터를 빠르게 바꾸면 이전 요청이 뒤늦게 끝나 최신 선택의 결과를 덮어쓴다.
+    // 요청마다 순번을 부여해 마지막 요청의 응답만 상태에 반영한다.
+    const requestId = latestRequestIdRef.current + 1;
+    latestRequestIdRef.current = requestId;
+
     setIsPageLoading(true);
 
     try {
@@ -146,6 +152,9 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
         tag: tag || undefined,
         categoryId: targetCategoryId,
       });
+
+      if (requestId !== latestRequestIdRef.current) return;
+
       const postContent = Array.isArray(postsPage?.content) ? postsPage.content : [];
       const ownerPostContent = postContent.filter((post) => isPostWrittenByUser(post, profile.userId));
       const totalCount =
@@ -167,9 +176,14 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
         totalPages,
       }));
     } catch (error) {
+      if (requestId !== latestRequestIdRef.current) return;
+
       console.error('Failed to fetch user blog posts:', error);
     } finally {
-      setIsPageLoading(false);
+      // 뒤처진 요청이 로딩 상태를 먼저 해제하면 진행 중인 최신 요청이 로딩으로 보이지 않는다.
+      if (requestId === latestRequestIdRef.current) {
+        setIsPageLoading(false);
+      }
     }
   }
 
