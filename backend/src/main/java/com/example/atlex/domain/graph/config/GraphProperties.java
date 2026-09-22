@@ -37,6 +37,12 @@ public class GraphProperties {
         int maxRelationsPerPost,
         @Value("${graph.relation.min-score:0.15}")
         double minScore) {
+        // 후보 조회는 PageRequest 의 페이지 크기로 쓰여 1 미만이면 관계 갱신 트랜잭션이 실패한다.
+        // 설정 오류는 요청 시점이 아니라 애플리케이션 시작 시점에 드러나야 한다.
+        if (maxCandidates < 1) {
+            throw new IllegalArgumentException("graph.relation.max-candidates 는 1 이상이어야 합니다.");
+        }
+
         this.titleWeight = titleWeight;
         this.contentWeight = contentWeight;
         this.tagWeight = tagWeight;
