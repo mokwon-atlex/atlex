@@ -45,8 +45,16 @@ export default function BlogDetailArticle({ contentBlocks }) {
     const href = anchor.getAttribute('href');
     if (!href) return;
 
-    // 새 탭 열기(Ctrl, Cmd, Shift, Alt, 휠 클릭)는 기본 동작 유지
-    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) {
+    // target="_blank" 또는 새 탭 열기(Ctrl, Cmd, Shift, Alt, 휠 클릭)는 기본 동작 유지
+    if (
+      anchor.target === '_blank' ||
+      e.defaultPrevented ||
+      e.button !== 0 ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.altKey ||
+      e.shiftKey
+    ) {
       return;
     }
 

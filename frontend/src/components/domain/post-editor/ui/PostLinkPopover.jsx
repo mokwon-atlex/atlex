@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen, FileText, Loader2, Search, X } from 'lucide-react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { BookOpen, FileText, Loader2, Search } from 'lucide-react';
 
 import { Button } from '@/components/common/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/common/ui/dialog';
 import { fetchUserBlogPosts } from '@/lib/api/posts';
 import { postDetailHref } from '@/lib/url/handle';
 import { cn } from '@/lib/utils';
@@ -33,17 +34,32 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
   const inputRef = useRef(null);
   const listContainerRef = useRef(null);
 
-  // 내 게시글 목록 조회
-  const { data: postsData, isLoading } = useQuery({
+  // 내 게시글 목록 무한 스크롤 조회 (50개 단위)
+  const {
+    data: postsPagesData,
+    isLoading,
+    isError,
+    refetch,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
     queryKey: ['my-posts-for-link', effectiveUserId],
-    queryFn: () => fetchUserBlogPosts({ userId: effectiveUserId, size: 50 }),
+    queryFn: ({ pageParam = 0 }) => fetchUserBlogPosts({ userId: effectiveUserId, page: pageParam, size: 50 }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage) return undefined;
+      const isLast = lastPage.last ?? lastPage.number + 1 >= lastPage.totalPages;
+      if (isLast) return undefined;
+      return (lastPage.number ?? 0) + 1;
+    },
     enabled: Boolean(isOpen && effectiveUserId),
     staleTime: 1000 * 60 * 2, // 2분 캐시
   });
 
   const posts = useMemo(() => {
-    return postsData?.content ?? [];
-  }, [postsData]);
+    return postsPagesData?.pages?.flatMap((p) => p?.content ?? []) ?? [];
+  }, [postsPagesData]);
 
   // 검색어에 따른 게시글 필터링
   const filteredPosts = useMemo(() => {
@@ -105,7 +121,34 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
     }
   };
 
-  // TipTap 에디터 이벤트 구독
+  // 모달 검색창 키보드 조작 핸들러
+  const handleInputKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex((prev) => (filteredPosts.length ? (prev + 1) % filteredPosts.length : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex((prev) => (filteredPosts.length ? (prev - 1 + filteredPosts.length) % filteredPosts.length : 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filteredPosts[selectedIndex]) {
+        handleSelectPost(filteredPosts[selectedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleClose();
+    }
+  };
+
+  // 스크롤 시 하단 도달하면 다음 페이지 로드
+  const handleListScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop - clientHeight < 40 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  // TipTap 에디터 이벤트 구독 (인라인 모드 키보드 처리)
   useEffect(() => {
     if (!editor) return;
 
@@ -126,7 +169,7 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
     };
 
     const onKeyDown = ({ key, preventDefault }) => {
-      if (!isOpen) return;
+      if (!isOpen || isModal) return;
 
       if (key === 'ArrowDown') {
         preventDefault();
@@ -156,9 +199,9 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
       editor.off('postLinkClose', onClose);
       editor.off('postLinkKeyDown', onKeyDown);
     };
-  }, [editor, isOpen, filteredPosts, selectedIndex, effectiveUserId, range]);
+  }, [editor, isOpen, isModal, filteredPosts, selectedIndex, effectiveUserId, range]);
 
-  // 외부 클릭 시 닫기 (비모달 모드)
+  // 외부 클릭 시 닫기 (인라인 플로팅 모드 전용)
   useEffect(() => {
     if (!isOpen || isModal) return;
 
@@ -193,6 +236,17 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
       );
     }
 
+    if (isError) {
+      return (
+        <div className="py-6 text-center text-xs space-y-2">
+          <p className="text-destructive">게시글 목록을 불러오지 못했습니다.</p>
+          <Button type="button" variant="outline" size="xs" onClick={() => refetch()} className="text-xs">
+            다시 시도
+          </Button>
+        </div>
+      );
+    }
+
     if (posts.length === 0) {
       return <div className="py-6 text-center text-xs text-muted-foreground">작성된 게시글이 없습니다.</div>;
     }
@@ -204,7 +258,7 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
     }
 
     return (
-      <div ref={listContainerRef} className="max-h-60 overflow-y-auto space-y-1 p-1">
+      <div ref={listContainerRef} onScroll={handleListScroll} className="max-h-60 overflow-y-auto space-y-1 p-1">
         {filteredPosts.map((post, index) => {
           const isSelected = index === selectedIndex;
           return (
@@ -232,45 +286,59 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
             </button>
           );
         })}
+
+        {hasNextPage && (
+          <div className="p-1 text-center">
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              disabled={isFetchingNextPage}
+              onClick={() => fetchNextPage()}
+              className="text-[11px] text-muted-foreground w-full"
+            >
+              {isFetchingNextPage ? (
+                <span className="flex items-center justify-center gap-1">
+                  <Loader2 className="size-3 animate-spin" /> 불러오는 중...
+                </span>
+              ) : (
+                '이전 글 더 불러오기'
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     );
   };
 
-  // 모달 모드 (툴바 클릭 시)
+  // 모달 모드 (툴바 클릭 시) - 접근성 높은 Dialog 컴포넌트 사용
   if (isModal) {
     return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-100"
-        onClick={handleClose}
+      <Dialog
+        open={isOpen && isModal}
+        onOpenChange={(open) => {
+          if (!open) handleClose();
+        }}
       >
-        <div
-          ref={popoverRef}
-          className="w-full max-w-md rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl p-4 space-y-3"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
-            <div className="flex items-center gap-2">
-              <BookOpen className="size-4 text-primary" />
-              <h3 className="text-sm font-semibold">내 게시글 링크 삽입</h3>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              onClick={handleClose}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="size-3.5" />
-            </Button>
-          </div>
+        <DialogContent size="md" className="p-4 space-y-3" showCloseButton>
+          <DialogHeader className="gap-1 border-b border-border/60 pb-2.5">
+            <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
+              <BookOpen className="size-4 text-primary" />내 게시글 링크 삽입
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              작성한 게시글을 검색하여 본문에 링크로 삽입합니다.
+            </DialogDescription>
+          </DialogHeader>
 
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
             <input
               ref={inputRef}
               type="text"
+              aria-label="게시글 제목 검색"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleInputKeyDown}
               placeholder="게시글 제목 검색..."
               className="w-full rounded-lg border border-border bg-background pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             />
@@ -279,11 +347,11 @@ export default function PostLinkPopover({ editor, userId: propUserId }) {
           {renderPostList()}
 
           <div className="flex items-center justify-between border-t border-border/60 pt-2 text-[10px] text-muted-foreground">
-            <span>방향키로 이동하고 Enter로 선택</span>
+            <span>방향키(↑↓)로 이동하고 Enter로 선택</span>
             <span>Esc로 닫기</span>
           </div>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
