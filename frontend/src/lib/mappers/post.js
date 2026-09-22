@@ -87,7 +87,7 @@ export function toBlogHomeFeedPost(apiPost) {
     excerpt: truncate(apiPost.content ?? apiPost.description, 120),
     // 카테고리명이 있을 때만 채운다(없으면 null → 카드에서 숨김).
     category: apiPost.categoryName ?? null,
-    tags: [],
+    tags: apiPost.tags ?? [],
     date: formatDotDate(apiPost.createdAt),
     likes: apiPost.likes ?? 0,
     comments: 0,

@@ -5,6 +5,7 @@
 import { useParams } from 'next/navigation';
 import PostEditorPage from '@/components/domain/post-editor/feature/PostEditorPage';
 
+/** 게시글 수정 페이지. 동적 경로의 postId를 공용 컴포넌트 PostEditorPage에 전달한다. */
 export default function PostEditPage() {
   const { postId } = useParams();
   return <PostEditorPage postId={postId} />;

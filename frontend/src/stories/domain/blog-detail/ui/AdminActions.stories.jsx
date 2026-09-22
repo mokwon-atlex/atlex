@@ -38,33 +38,43 @@ export const AsAuthor = {
     await expect(editLink).toHaveAttribute('href', `/write/${args.postId}`);
 
     // 아직 목적지가 없는 액션들은 링크가 아닌 일반 버튼으로 남아 있어야 한다.
+    // (Button이 Link 안에 중첩되면 getByRole('button')도 통과해 버리므로, 링크로는
+    //  렌더링되지 않았는지도 함께 확인해 회귀를 잡는다)
     await expect(canvas.getByRole('button', { name: '통계' })).toBeVisible();
+    await expect(canvas.queryByRole('link', { name: '통계' })).not.toBeInTheDocument();
     await expect(canvas.getByRole('button', { name: '삭제' })).toBeVisible();
+    await expect(canvas.queryByRole('link', { name: '삭제' })).not.toBeInTheDocument();
   },
 };
 
 // 로그인은 했지만 작성자 본인이 아닐 때: 아무 것도 렌더링되지 않아야 한다.
 export const AsOtherUser = {
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement, args }) => {
     useAuthStore.setState({ isLoggedIn: true, user: { userId: 'someone-else' } });
 
     const canvas = within(canvasElement);
 
     await waitFor(() => {
-      expect(canvas.queryByRole('link', { name: '수정' })).not.toBeInTheDocument();
+      for (const action of args.actions) {
+        expect(canvas.queryByRole('button', { name: action })).not.toBeInTheDocument();
+        expect(canvas.queryByRole('link', { name: action })).not.toBeInTheDocument();
+      }
     });
   },
 };
 
 // 비로그인 상태: 마찬가지로 아무 것도 렌더링되지 않아야 한다.
 export const LoggedOut = {
-  play: async ({ canvasElement }) => {
+  play: async ({ canvasElement, args }) => {
     useAuthStore.setState({ isLoggedIn: false, user: null });
 
     const canvas = within(canvasElement);
 
     await waitFor(() => {
-      expect(canvas.queryByRole('link', { name: '수정' })).not.toBeInTheDocument();
+      for (const action of args.actions) {
+        expect(canvas.queryByRole('button', { name: action })).not.toBeInTheDocument();
+        expect(canvas.queryByRole('link', { name: action })).not.toBeInTheDocument();
+      }
     });
   },
 };

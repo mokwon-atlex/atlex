@@ -11,6 +11,17 @@ const ACTION_HREF_BUILDERS = {
   수정: (postId) => `/write/${postId}`,
 };
 
+/**
+ * 게시글 작성자 전용 액션 버튼 목록(통계·수정·삭제 등).
+ * 로그인한 사용자가 작성자 본인일 때만 렌더링되며, postId가 있는 액션(수정)은
+ * `/write/{postId}` 링크로, 그 외에는 목적지 없는 버튼으로 렌더링된다.
+ *
+ * @param {object} props
+ * @param {string|number|null} props.authorUserId - 게시글 작성자 ID.
+ * @param {string|number} [props.postId] - 게시글 ID. 수정 링크 생성에 사용된다.
+ * @param {string[]} [props.actions] - 표시할 액션 라벨 목록.
+ * @returns {JSX.Element|null} 작성자 전용 액션 버튼 그룹, 작성자가 아니면 null.
+ */
 export function AdminActions({ authorUserId, postId, actions = [] }) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const user = useAuthStore((s) => s.user);
@@ -23,21 +34,19 @@ export function AdminActions({ authorUserId, postId, actions = [] }) {
         const buildHref = ACTION_HREF_BUILDERS[action];
         const href = postId != null ? buildHref?.(postId) : null;
 
-        const button = (
-          <Button type="button" variant="ghost" size="sm" className="rounded-full px-4">
-            {action}
-          </Button>
-        );
-
         if (href) {
           return (
-            <Link key={action} href={href}>
-              {button}
-            </Link>
+            <Button key={action} variant="ghost" size="sm" className="rounded-full px-4" render={<Link href={href} />}>
+              {action}
+            </Button>
           );
         }
 
-        return <span key={action}>{button}</span>;
+        return (
+          <Button key={action} type="button" variant="ghost" size="sm" className="rounded-full px-4">
+            {action}
+          </Button>
+        );
       })}
     </div>
   );

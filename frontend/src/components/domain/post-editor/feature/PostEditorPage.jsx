@@ -27,6 +27,12 @@ import { usePost } from '@/hooks/queries/posts/usePost';
 import { loadUserBlogCategories } from '@/lib/category/blog-categories';
 import { useAuthStore } from '@/store/authStore';
 
+/**
+ * 게시글 작성/수정 공용 화면.
+ *
+ * @param {object} props
+ * @param {string|number} [props.postId] - 수정할 게시글 ID. 없으면 작성 모드로 동작한다.
+ */
 export default function PostEditorPage({ postId }) {
   const isEditMode = Boolean(postId);
   const router = useRouter();
@@ -97,18 +103,19 @@ export default function PostEditorPage({ postId }) {
   }, [isEditMode, existingPost, userId, router]);
 
   // 수정 모드: 기존 게시글 데이터를 폼 상태와 에디터에 최초 1회 반영.
+  // existingPost가 richText.editor보다 먼저 준비될 수 있으므로, editor가 없으면
+  // isInitialized를 설정하지 않고 보류한다(이후 editor가 준비되면 effect가 재실행된다).
   useEffect(() => {
     if (!isEditMode || !existingPost || isInitialized) return;
+    if (!richText.editor) return;
 
     setTitle(existingPost.title ?? '');
     setDescription(existingPost.description ?? '');
     setCategoryId(existingPost.categoryId ?? null);
     setIsPublic(existingPost.isPublic ?? true);
 
-    // tiptap 에디터에 기존 본문 HTML을 채워 넣는다.
-    if (richText.editor && existingPost.content) {
-      richText.editor.commands.setContent(existingPost.content);
-    }
+    // tiptap 에디터에 기존 본문 HTML을 채워 넣는다(본문이 비어 있어도 명시적으로 적용).
+    richText.editor.commands.setContent(existingPost.content ?? '');
 
     // 기존 태그를 수동 태그 목록에 반영한다.
     tagField.setManualTags(existingPost.tags ?? []);
@@ -117,11 +124,13 @@ export default function PostEditorPage({ postId }) {
   }, [isEditMode, existingPost, isInitialized, richText.editor]);
 
   // 사용자가 입력을 수정하기 시작하면 이전 검증/요청 에러를 지운다.
+  // (createPost.isError/updatePost.isError는 의존성에서 제외 — mutation 실패 자체가 아니라
+  //  입력값이 바뀔 때만 실행되어야 한다)
   useEffect(() => {
     setValidationError('');
     if (createPost.isError) createPost.reset();
     if (updatePost.isError) updatePost.reset();
-  }, [title, description, richText.bodyText, categoryId, isPublic, createPost.isError, updatePost.isError]);
+  }, [title, description, richText.bodyText, categoryId, isPublic]);
 
   const activeMutation = isEditMode ? updatePost : createPost;
 

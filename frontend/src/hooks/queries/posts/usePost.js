@@ -7,6 +7,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchPostById } from '@/lib/api/posts';
 
+/**
+ * 게시글 단건 조회 쿼리 훅.
+ *
+ * @param {string|number|undefined} postId - 조회할 게시글 ID. 없으면 쿼리를 비활성화한다.
+ * @returns {import('@tanstack/react-query').UseQueryResult} 게시글 조회 결과(data/isLoading/isError 등).
+ */
 export function usePost(postId) {
   return useQuery({
     queryKey: ['post', postId],

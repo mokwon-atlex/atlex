@@ -11,6 +11,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updatePost } from '@/lib/api/posts';
 
+/**
+ * 게시글 수정 mutation 훅.
+ *
+ * @param {object} [options] - `useMutation`에 전달할 옵션(예: onSuccess). mutate 입력은
+ *   `{ postId, ...payload }` 형태이며 payload는 `{ title?, content?, description?, categoryId?, isPublic?, tags? }`.
+ * @returns {import('@tanstack/react-query').UseMutationResult} 게시글 수정 mutation 결과.
+ */
 export function useUpdatePost(options) {
   const queryClient = useQueryClient();
 
