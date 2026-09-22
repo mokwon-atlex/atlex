@@ -149,7 +149,9 @@ export const OpenAndCancelDeleteModal = {
 
       const body = within(canvasElement.ownerDocument.body);
       const dialogTitle = await body.findByText('게시글을 삭제하시겠습니까?');
-      await expect(dialogTitle).toBeVisible();
+      await waitFor(() => {
+        expect(dialogTitle).toBeVisible();
+      });
 
       // 취소 버튼 클릭하여 모달 닫기
       const cancelButton = body.getByRole('button', { name: '취소' });
@@ -251,13 +253,17 @@ export const ConfirmDeleteFailure = {
 
       // 에러 메시지가 모달 내에 표시되는지 검증
       const errorMessage = await body.findByText('게시글 삭제 권한이 없거나 이미 삭제되었습니다.');
-      await expect(errorMessage).toBeVisible();
+      await waitFor(() => {
+        expect(errorMessage).toBeVisible();
+      });
 
       // 에러 콜백 호출 검증
       await expect(args.onDeleteError).toHaveBeenCalled();
 
       // 모달이 닫히지 않고 여전히 화면에 남아있는지 검증
-      await expect(body.getByText('게시글을 삭제하시겠습니까?')).toBeVisible();
+      await waitFor(() => {
+        expect(body.getByText('게시글을 삭제하시겠습니까?')).toBeVisible();
+      });
     } finally {
       deleteSpy.mockRestore();
       resetAuthStore();
