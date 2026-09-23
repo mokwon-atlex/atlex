@@ -7,6 +7,7 @@ import com.example.atlex.domain.graph.repository.projection.KeywordDocumentFrequ
 import com.example.atlex.domain.graph.repository.KeywordRepository;
 import com.example.atlex.domain.graph.repository.PostKeywordRepository;
 import com.example.atlex.domain.graph.repository.PostRelationRepository;
+import com.example.atlex.domain.graph.config.GraphProperties;
 import com.example.atlex.domain.graph.service.GraphIndexService;
 import com.example.atlex.domain.graph.keyword.KeywordExtractor;
 import com.example.atlex.domain.graph.keyword.KeywordWeightCalculator;
@@ -162,6 +163,8 @@ class GraphIndexServiceTest {
     }
 
     private GraphIndexService newService(TransactionOperations transactionOperations) {
+        GraphProperties graphProperties = defaultGraphProperties();
+
         return new GraphIndexService(
             postRepository,
             postTagRepository,
@@ -169,8 +172,14 @@ class GraphIndexServiceTest {
             postKeywordRepository,
             postRelationRepository,
             new KeywordExtractor(),
-            new KeywordWeightCalculator(),
-            transactionOperations);
+            new KeywordWeightCalculator(graphProperties),
+            transactionOperations,
+            graphProperties);
+    }
+
+    /** application.yaml 의 기본값과 같은 설정. */
+    private GraphProperties defaultGraphProperties() {
+        return new GraphProperties(1.5, 1.0, 2.0, 8, 50, 5, 0.15);
     }
 
     private record TestKeywordDocumentFrequency(
