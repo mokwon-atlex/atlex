@@ -286,3 +286,24 @@ export const BlocksToggleWhenLikeStateFails = {
     await waitFor(() => expect(canvas.getByRole('button', { name: '다시 시도' })).toBeInTheDocument());
   },
 };
+
+/** 좋아요 토글은 목록 캐시만 무효화하고, 댓글 쿼리는 다시 조회하지 않는다. */
+export const DoesNotRefetchComments = {
+  args: { likes: 18, bookmarks: 7, comments: 5, postId: 10 },
+  decorators: [createAuthDecorator()],
+  beforeEach: setupLikeRequests({ liked: false, likes: 18 }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const likeButton = await canvas.findByRole('button', { name: '좋아요 하기' });
+    await waitFor(() => expect(likeButton).toBeEnabled());
+
+    detailSpy.mockClear();
+    await userEvent.click(likeButton);
+    await waitFor(() => expect(likeSpy).toHaveBeenCalled());
+
+    // ['posts'] 전체를 무효화하면 댓글 쿼리까지 재조회된다.
+    const commentRequests = detailSpy.mock.calls.filter(([url]) => String(url).includes('/comments'));
+    expect(commentRequests).toHaveLength(0);
+  },
+};

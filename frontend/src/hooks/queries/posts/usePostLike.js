@@ -122,8 +122,16 @@ export function usePostLike(postId, { initialLiked = false, initialLikes = 0 } =
         liked: Boolean(response?.liked),
         likes: response?.likes ?? variables.likes,
       });
-      // 목록 캐시는 비활성 상태면 재요청 없이 stale 로만 표시돼, 목록으로 돌아갈 때 최신 수치를 받는다.
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      // ['posts'] 접두사에는 댓글(['posts', postId, 'comments'])과
+      // 즐겨찾기(['posts', 'favorites', ...])도 걸린다. 좋아요 수가 바뀌는 것은
+      // 목록 쿼리뿐이므로, 두 번째 키가 조건 객체인 목록만 골라 무효화한다.
+      // 비활성 상태면 재요청 없이 stale 로만 표시돼, 목록으로 돌아갈 때 최신 수치를 받는다.
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const [scope, params] = query.queryKey;
+          return scope === 'posts' && typeof params === 'object' && params !== null;
+        },
+      });
     },
   });
 
