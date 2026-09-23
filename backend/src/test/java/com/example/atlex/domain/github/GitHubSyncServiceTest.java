@@ -136,4 +136,44 @@ class GitHubSyncServiceTest {
         GitHubSyncConfig refreshedConfig = gitHubSyncConfigRepository.findByUser_Id(user.getId()).orElseThrow();
         assertThat(refreshedConfig.getSyncStatus()).isEqualTo(SyncStatus.FAILED);
     }
+
+    @Test
+    @DisplayName("제목이 변경되어 파일명이 달라진 경우 이전 파일을 deleteFile로 정리한다")
+    void syncPostDeletesOldFileOnRename() {
+        // given: 이전에 다른 파일명으로 성공한 동기화 로그 기록
+        String oldPath = "posts/999-old-title.md";
+        gitHubSyncLogRepository.save(GitHubSyncLog.builder()
+            .userId(user.getId())
+            .postId(post.getId())
+            .postTitle("이전 제목")
+            .syncType(SyncType.CREATE)
+            .targetPath(oldPath)
+            .status(SyncLogStatus.SUCCESS)
+            .commitSha("old-sha-111")
+            .build());
+
+        given(gitHubApiClient.getFileSha(anyString(), eq("gh-username/my-blog"), eq(oldPath), eq("main")))
+            .willReturn(Optional.of("old-file-blob-sha"));
+
+        given(gitHubApiClient.getFileSha(anyString(), eq("gh-username/my-blog"), argThat(p -> !p.equals(oldPath)),
+            eq("main")))
+            .willReturn(Optional.empty());
+
+        given(gitHubApiClient.createOrUpdateFile(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+            .willReturn("new-commit-sha-222");
+
+        // when: 새 제목으로 글 수정 동기화 실행
+        gitHubSyncService.syncPost(post.getId(), user.getId(), SyncType.UPDATE);
+
+        // then: 구버전 파일 삭제가 호출되었는지 검증
+        verify(gitHubApiClient).deleteFile(
+            eq("dummy-gh-token"),
+            eq("gh-username/my-blog"),
+            eq(oldPath),
+            eq("main"),
+            contains("rename/delete"),
+            eq("old-file-blob-sha"),
+            eq("gh-username"),
+            eq("grass-email@github.com"));
+    }
 }

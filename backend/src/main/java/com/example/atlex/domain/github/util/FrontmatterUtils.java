@@ -43,6 +43,10 @@ public final class FrontmatterUtils {
             }
         }
 
+        if (post.getThumbnailUrl() != null && !post.getThumbnailUrl().isBlank()) {
+            sb.append("thumbnail: \"").append(escapeYaml(post.getThumbnailUrl())).append("\"\n");
+        }
+
         if (post.getCreatedAt() != null) {
             sb.append("date: ").append(post.getCreatedAt().format(ISO_FORMATTER)).append("\n");
         }

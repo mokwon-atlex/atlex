@@ -72,6 +72,37 @@ public class GitHubSyncService {
 
         try {
             String rawToken = AesEncryptionUtils.decrypt(config.getEncryptedAccessToken(), encryptionKey);
+
+            // 제목 변경 등으로 이전 동기화 경로와 달라진 경우 이전 파일 정리
+            Optional<GitHubSyncLog> lastSuccessLog = gitHubSyncLogRepository
+                .findTopByUserIdAndPostIdAndStatusOrderByCreatedAtDesc(userId, postId, SyncLogStatus.SUCCESS);
+            if (lastSuccessLog.isPresent()) {
+                String previousPath = lastSuccessLog.get().getTargetPath();
+                if (previousPath != null && !previousPath.equals(fullPath)) {
+                    try {
+                        Optional<String> prevSha = gitHubApiClient.getFileSha(
+                            rawToken,
+                            config.getRepositoryName(),
+                            previousPath,
+                            config.getBranchName());
+                        if (prevSha.isPresent()) {
+                            gitHubApiClient.deleteFile(
+                                rawToken,
+                                config.getRepositoryName(),
+                                previousPath,
+                                config.getBranchName(),
+                                String.format("docs: rename/delete old file for '%s' [Atlex Sync]", post.getTitle()),
+                                prevSha.get(),
+                                config.getGithubUsername(),
+                                config.getGithubEmail());
+                            log.info("이전 백업 파일 정리 완료: previousPath={}", previousPath);
+                        }
+                    } catch (Exception e) {
+                        log.warn("이전 파일 정리 실패 (새 파일 커밋은 계속 진행): {}", e.getMessage());
+                    }
+                }
+            }
+
             Optional<String> existingSha = gitHubApiClient.getFileSha(
                 rawToken,
                 config.getRepositoryName(),

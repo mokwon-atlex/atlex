@@ -99,16 +99,27 @@ public class GitHubSyncConfig {
         String directoryPath,
         DeleteOption deleteOption,
         Boolean isEnabled) {
-        if (repositoryName != null) {
-            this.repositoryName = repositoryName.trim();
+        if (repositoryName != null && !repositoryName.isBlank()) {
+            String trimmed = repositoryName.trim();
+            if (!trimmed.matches("^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$")) {
+                throw new IllegalArgumentException("저장소 이름은 'owner/repo' 형식이어야 합니다.");
+            }
+            this.repositoryName = trimmed;
         }
         if (branchName != null && !branchName.isBlank()) {
             this.branchName = branchName.trim();
         }
         if (directoryPath != null) {
             String sanitized = directoryPath.trim().replace("\\", "/");
+            if (sanitized.contains("..") || sanitized.startsWith("/")) {
+                sanitized = sanitized.replaceAll("\\.\\.", "").replaceAll("^/+", "");
+            }
+            sanitized = sanitized.replaceAll("[^a-zA-Z0-9가-힣._/-]", "");
             if (!sanitized.endsWith("/") && !sanitized.isEmpty()) {
                 sanitized += "/";
+            }
+            if (sanitized.isBlank()) {
+                sanitized = "posts/";
             }
             this.directoryPath = sanitized;
         }

@@ -27,6 +27,7 @@ export default function BlogOptionGitHubSync() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const oauthCode = searchParams.get('code');
+  const oauthState = searchParams.get('state');
 
   const [config, setConfig] = useState(null);
   const [repositories, setRepositories] = useState([]);
@@ -60,12 +61,12 @@ export default function BlogOptionGitHubSync() {
       if (oauthCode) {
         setIsConnecting(true);
         try {
-          const connectedConfig = await connectGitHub(oauthCode);
+          const connectedConfig = await connectGitHub(oauthCode, oauthState);
           if (!cancelled) {
             setConfig(connectedConfig);
             applyConfigToForm(connectedConfig);
             setNoticeMessage('GitHub 계정이 성공적으로 연동되었습니다.');
-            // URL에서 code 파라미터 정리
+            // URL에서 code, state 파라미터 정리
             router.replace('/blog_option');
           }
         } catch (error) {
@@ -340,7 +341,18 @@ export default function BlogOptionGitHubSync() {
 
             {/* 저장소 선택 */}
             <Field>
-              <FieldLabel>동기화 대상 Repository</FieldLabel>
+              <div className="flex items-center justify-between">
+                <FieldLabel>동기화 대상 Repository</FieldLabel>
+                <a
+                  href="https://github.com/new"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  <ExternalLink className="size-3" />
+                  새 저장소 만들기
+                </a>
+              </div>
               {repositories.length > 0 ? (
                 <div className="space-y-2">
                   <select
@@ -366,7 +378,9 @@ export default function BlogOptionGitHubSync() {
                   disabled={isSaving}
                 />
               )}
-              <FieldDescription>글이 커밋될 사용자의 GitHub 저장소 전체 이름(owner/repo)입니다.</FieldDescription>
+              <FieldDescription>
+                글이 커밋될 사용자의 GitHub 저장소 전체 이름(owner/repo)입니다. 원하는 저장소가 없으면 GitHub에서 새로 생성해 주세요.
+              </FieldDescription>
             </Field>
 
             {/* 브랜치 및 디렉터리 경로 */}

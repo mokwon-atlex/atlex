@@ -294,6 +294,36 @@ public class GitHubApiClient {
         }
     }
 
+    /**
+     * 연동 해제 시 GitHub 원격 OAuth App 인가를 즉시 폐기(Revoke)합니다.
+     */
+    public void revokeAppGrant(String clientId, String clientSecret, String accessToken) {
+        if (clientId == null || clientId.isBlank() || clientSecret == null || clientSecret.isBlank()) {
+            return;
+        }
+
+        String uri = String.format("%s/applications/%s/grant", GITHUB_API_BASE_URL, clientId);
+        String authHeader = "Basic " + Base64.getEncoder().encodeToString(
+            (clientId + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));
+
+        Map<String, String> body = Map.of("access_token", accessToken);
+
+        try {
+            restClient.method(org.springframework.http.HttpMethod.DELETE)
+                .uri(uri)
+                .header(HttpHeaders.AUTHORIZATION, authHeader)
+                .header(HttpHeaders.ACCEPT, "application/vnd.github+json")
+                .header("X-GitHub-Api-Version", GITHUB_API_VERSION)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .toBodilessEntity();
+            log.info("GitHub 원격 OAuth App 인가 폐기(Revoke) 성공");
+        } catch (Exception e) {
+            log.warn("GitHub 원격 인가 폐기 실패 (이미 취소되었거나 오류): {}", e.getMessage());
+        }
+    }
+
     @Getter
     @NoArgsConstructor
     public static class GitHubUserProfile {

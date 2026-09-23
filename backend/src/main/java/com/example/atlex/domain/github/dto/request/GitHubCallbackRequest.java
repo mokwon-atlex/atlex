@@ -17,7 +17,15 @@ public class GitHubCallbackRequest {
     @NotBlank(message = "인가 코드는 필수입니다.")
     private String code;
 
+    @Schema(description = "OAuth CSRF 방지용 state 토큰", example = "ENCRYPTED_STATE_TOKEN")
+    private String state;
+
     public GitHubCallbackRequest(String code) {
         this.code = code;
+    }
+
+    public GitHubCallbackRequest(String code, String state) {
+        this.code = code;
+        this.state = state;
     }
 }

@@ -13,12 +13,13 @@ export function fetchGitHubOAuthUrl() {
 }
 
 /**
- * GitHub OAuth 인가 코드(code)로 연동을 완료합니다.
+ * GitHub OAuth 인가 코드(code) 및 CSRF 방지 state로 연동을 완료합니다.
  * @param {string} code GitHub 인가 코드
+ * @param {string} [state] CSRF 방어용 state 토큰
  * @returns {Promise<import('./github').GitHubConfig>}
  */
-export function connectGitHub(code) {
-  return apiClient.post('/github/oauth/callback', { code });
+export function connectGitHub(code, state) {
+  return apiClient.post('/github/oauth/callback', { code, state });
 }
 
 /**

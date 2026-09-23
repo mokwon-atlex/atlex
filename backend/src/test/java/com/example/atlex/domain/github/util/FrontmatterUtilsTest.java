@@ -43,6 +43,26 @@ class FrontmatterUtilsTest {
     }
 
     @Test
+    @DisplayName("썸네일 URL이 있는 경우 Frontmatter에 thumbnail이 포함된다")
+    void buildMarkdownWithThumbnail() {
+        // given
+        User user = User.builder().userId("tester").build();
+        Post post = Post.builder()
+            .user(user)
+            .title("썸네일 테스트 글")
+            .content("내용")
+            .thumbnailUrl("https://image.atlex.com/thumb.png")
+            .isPublic(true)
+            .build();
+
+        // when
+        String markdown = FrontmatterUtils.buildMarkdown(post, List.of());
+
+        // then
+        assertThat(markdown).contains("thumbnail: \"https://image.atlex.com/thumb.png\"");
+    }
+
+    @Test
     @DisplayName("특수문자가 포함된 제목이라도 안전한 파일명을 생성한다")
     void generateSafeFilenameSuccess() {
         // given

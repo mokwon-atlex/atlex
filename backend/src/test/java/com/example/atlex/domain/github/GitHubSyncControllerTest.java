@@ -76,7 +76,9 @@ class GitHubSyncControllerTest {
             .andExpect(jsonPath("$.code").value("SUCCESS"))
             .andExpect(jsonPath("$.data.url").exists())
             .andExpect(
-                jsonPath("$.data.url").value(org.hamcrest.Matchers.containsString("github.com/login/oauth/authorize")));
+                jsonPath("$.data.url").value(org.hamcrest.Matchers.containsString("github.com/login/oauth/authorize")))
+            .andExpect(
+                jsonPath("$.data.url").value(org.hamcrest.Matchers.containsString("state=")));
     }
 
     @Test
@@ -142,6 +144,36 @@ class GitHubSyncControllerTest {
             .andExpect(jsonPath("$.data.branchName").value("master"))
             .andExpect(jsonPath("$.data.directoryPath").value("articles/"))
             .andExpect(jsonPath("$.data.deleteOption").value("KEEP_FILE"));
+    }
+
+    @Test
+    @DisplayName("저장소 이름이 'owner/repo' 형식이 아니면 400 유효성 에러를 반환한다")
+    void updateConfigInvalidRepoName() throws Exception {
+        GitHubConfigUpdateRequest request = GitHubConfigUpdateRequest.builder()
+            .repositoryName("invalid_repo_name_without_slash")
+            .build();
+
+        mockMvc.perform(patch("/api/v1/github/config")
+            .header("Authorization", token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    @DisplayName("디렉터리 경로에 상위 경로 이동(..)이 포함되면 400 유효성 에러를 반환한다")
+    void updateConfigPathTraversal() throws Exception {
+        GitHubConfigUpdateRequest request = GitHubConfigUpdateRequest.builder()
+            .directoryPath("../../etc/passwd")
+            .build();
+
+        mockMvc.perform(patch("/api/v1/github/config")
+            .header("Authorization", token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
 
     @Test

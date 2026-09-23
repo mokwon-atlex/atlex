@@ -17,12 +17,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GitHubConfigUpdateRequest {
 
+    @jakarta.validation.constraints.Pattern(regexp = "^([a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)?$", message = "저장소 이름은 '소유자/저장소명' 형식이어야 합니다.")
     @Schema(description = "백업 대상 GitHub 저장소 (owner/repo)", example = "octocat/my-blog-posts")
     private String repositoryName;
 
     @Schema(description = "백업 브랜치명", example = "main")
     private String branchName;
 
+    @jakarta.validation.constraints.Pattern(regexp = "^(?!.*\\.\\.)([a-zA-Z0-9_./-]+)?$", message = "디렉터리 경로에 올바르지 않은 문자가 포함되어 있습니다.")
     @Schema(description = "저장소 내 디렉터리 경로", example = "posts/")
     private String directoryPath;
 

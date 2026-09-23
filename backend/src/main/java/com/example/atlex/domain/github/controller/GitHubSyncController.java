@@ -31,8 +31,10 @@ public class GitHubSyncController implements GitHubSyncControllerDocs {
 
     @Override
     @GetMapping("/oauth/url")
-    public ResponseEntity<ApiResponse<GitHubOAuthUrlResponse>> getOAuthUrl() {
-        GitHubOAuthUrlResponse response = gitHubOAuthService.getOAuthLoginUrl();
+    public ResponseEntity<ApiResponse<GitHubOAuthUrlResponse>> getOAuthUrl(
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails) {
+        GitHubOAuthUrlResponse response = gitHubOAuthService.getOAuthLoginUrl(principalDetails.user().getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -45,7 +47,8 @@ public class GitHubSyncController implements GitHubSyncControllerDocs {
         GitHubCallbackRequest request) {
         GitHubConfigResponse response = gitHubOAuthService.handleCallback(
             principalDetails.user().getId(),
-            request.getCode());
+            request.getCode(),
+            request.getState());
         return ResponseEntity.ok(ApiResponse.success(response, "GitHub 계정이 성공적으로 연동되었습니다."));
     }
 

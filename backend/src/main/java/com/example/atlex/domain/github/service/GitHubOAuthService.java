@@ -11,6 +11,7 @@ import com.example.atlex.domain.github.exception.GitHubOAuthFailedException;
 import com.example.atlex.domain.github.exception.GitHubSyncNotConfiguredException;
 import com.example.atlex.domain.github.repository.GitHubSyncConfigRepository;
 import com.example.atlex.domain.github.util.AesEncryptionUtils;
+import com.example.atlex.domain.github.util.OAuthStateUtils;
 import com.example.atlex.domain.user.entity.User;
 import com.example.atlex.domain.user.exception.UserNotFoundException;
 import com.example.atlex.domain.user.repository.UserRepository;
@@ -49,28 +50,35 @@ public class GitHubOAuthService {
     private String encryptionKey;
 
     /**
-     * 사용자를 GitHub OAuth 로그인 창으로 안내하기 위한 인가 URL을 생성합니다.
+     * 사용자를 GitHub OAuth 로그인 창으로 안내하기 위한 인가 URL을 생성합니다. (CSRF 방지 state 토큰 포함)
      */
-    public GitHubOAuthUrlResponse getOAuthLoginUrl() {
+    public GitHubOAuthUrlResponse getOAuthLoginUrl(Long userId) {
         if (clientId == null || clientId.isBlank()) {
             throw new GitHubOAuthFailedException("GitHub Client ID가 설정되지 않았습니다. 환경 변수를 확인해주세요.");
         }
 
         String encodedRedirect = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
+        String state = OAuthStateUtils.generateState(userId, encryptionKey);
+
         String url = String.format(
-            "https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&scope=repo,user:email",
+            "https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&scope=repo,user:email&state=%s",
             clientId,
-            encodedRedirect);
+            encodedRedirect,
+            state);
         return new GitHubOAuthUrlResponse(url);
     }
 
     /**
-     * OAuth 인가 코드를 받아 토큰을 발급받고 사용자의 GitHub 정보를 안전하게 암호화하여 저장합니다.
+     * OAuth 인가 코드와 state를 받아 토큰을 발급받고 사용자의 GitHub 정보를 안전하게 암호화하여 저장합니다.
      */
     @Transactional
-    public GitHubConfigResponse handleCallback(Long userId, String code) {
+    public GitHubConfigResponse handleCallback(Long userId, String code, String state) {
         User user = userRepository.findById(userId)
             .orElseThrow(UserNotFoundException::new);
+
+        if (state != null && !state.isBlank()) {
+            OAuthStateUtils.validateState(state, userId, encryptionKey);
+        }
 
         String rawAccessToken = gitHubApiClient.exchangeAccessToken(clientId, clientSecret, code, redirectUri);
         GitHubUserProfile profile = gitHubApiClient.getUserProfile(rawAccessToken);
@@ -126,14 +134,20 @@ public class GitHubOAuthService {
     }
 
     /**
-     * GitHub 연동을 해제하고 저장된 토큰 정보를 완전히 파기합니다.
+     * GitHub 연동을 해제하고 저장된 토큰 정보를 완전히 파기합니다. 원격 인가도 함께 폐기(Revoke)합니다.
      */
     @Transactional
     public void disconnect(Long userId) {
-        if (gitHubSyncConfigRepository.existsByUser_Id(userId)) {
+        gitHubSyncConfigRepository.findByUser_Id(userId).ifPresent(config -> {
+            try {
+                String rawToken = AesEncryptionUtils.decrypt(config.getEncryptedAccessToken(), encryptionKey);
+                gitHubApiClient.revokeAppGrant(clientId, clientSecret, rawToken);
+            } catch (Exception e) {
+                log.warn("GitHub 원격 토큰 폐기 중 예외 (로컬 토큰 삭제는 계속 진행): {}", e.getMessage());
+            }
             gitHubSyncConfigRepository.deleteByUser_Id(userId);
             log.info("GitHub 연동 해제 및 토큰 파기 완료: userId={}", userId);
-        }
+        });
     }
 
     /**

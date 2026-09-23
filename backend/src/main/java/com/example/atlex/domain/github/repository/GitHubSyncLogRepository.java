@@ -1,6 +1,7 @@
 package com.example.atlex.domain.github.repository;
 
 import com.example.atlex.domain.github.entity.GitHubSyncLog;
+import com.example.atlex.domain.github.entity.SyncLogStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,4 +15,9 @@ public interface GitHubSyncLogRepository extends JpaRepository<GitHubSyncLog, Lo
     List<GitHubSyncLog> findTop20ByUserIdOrderByCreatedAtDesc(Long userId);
 
     Optional<GitHubSyncLog> findByIdAndUserId(Long id, Long userId);
+
+    Optional<GitHubSyncLog> findTopByUserIdAndPostIdAndStatusOrderByCreatedAtDesc(
+        Long userId,
+        Long postId,
+        SyncLogStatus status);
 }

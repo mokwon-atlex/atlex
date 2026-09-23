@@ -21,7 +21,7 @@ import java.util.List;
 public interface GitHubSyncControllerDocs {
 
     @Operation(summary = "GitHub OAuth 로그인 URL 발급", description = "GitHub 계정 연동을 위한 OAuth 인가 URL을 조회합니다.")
-    ResponseEntity<ApiResponse<GitHubOAuthUrlResponse>> getOAuthUrl();
+    ResponseEntity<ApiResponse<GitHubOAuthUrlResponse>> getOAuthUrl(PrincipalDetails principalDetails);
 
     @Operation(summary = "GitHub OAuth 연동 완료 (콜백)", description = "GitHub OAuth 인가 코드로 액세스 토큰을 발급받아 암호화 저장합니다.")
     ResponseEntity<ApiResponse<GitHubConfigResponse>> connectGitHub(
