@@ -97,3 +97,24 @@ export function removePostFavorite(postId) {
 export function deletePost(postId) {
   return apiClient.delete(`/posts/${postId}`);
 }
+
+// GET /posts/{postId}/export/markdown — 게시글 YAML Frontmatter 포함 마크다운 데이터 조회
+export function fetchPostMarkdown(postId) {
+  return apiClient.get(`/posts/${postId}/export/markdown`);
+}
+
+// 브라우저에서 게시글을 .md 파일로 즉시 다운로드 실행
+export async function downloadPostMarkdown(postId, fallbackFilename = 'post.md') {
+  const data = await fetchPostMarkdown(postId);
+  if (typeof window === 'undefined') return data;
+  const blob = new Blob([data.content], { type: 'text/markdown;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = data.filename || fallbackFilename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  return data;
+}

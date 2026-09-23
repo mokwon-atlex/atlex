@@ -1,0 +1,139 @@
+package com.example.atlex.domain.github;
+
+import com.example.atlex.domain.github.client.GitHubApiClient;
+import com.example.atlex.domain.github.dto.response.GitHubSyncLogResponse;
+import com.example.atlex.domain.github.entity.*;
+import com.example.atlex.domain.github.repository.GitHubSyncConfigRepository;
+import com.example.atlex.domain.github.repository.GitHubSyncLogRepository;
+import com.example.atlex.domain.github.service.GitHubSyncService;
+import com.example.atlex.domain.github.util.AesEncryptionUtils;
+import com.example.atlex.domain.post.entity.Post;
+import com.example.atlex.domain.post.repository.PostRepository;
+import com.example.atlex.domain.user.entity.User;
+import com.example.atlex.domain.user.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+
+@SpringBootTest(properties = {
+    "spring.datasource.url=jdbc:h2:mem:testdb_sync_svc;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+    "github.encryption-key=test-encryption-key-for-unit-test!"
+})
+@Transactional
+class GitHubSyncServiceTest {
+
+    @Autowired
+    GitHubSyncService gitHubSyncService;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    PostRepository postRepository;
+    @Autowired
+    GitHubSyncConfigRepository gitHubSyncConfigRepository;
+    @Autowired
+    GitHubSyncLogRepository gitHubSyncLogRepository;
+
+    @MockitoBean
+    GitHubApiClient gitHubApiClient;
+
+    private User user;
+    private Post post;
+    private GitHubSyncConfig config;
+
+    @BeforeEach
+    void setUp() {
+        user = userRepository.save(User.builder()
+            .userId("syncuser")
+            .email("syncuser@example.com")
+            .password("password")
+            .name("동기화유저")
+            .termsAgreed(true)
+            .privacyAgreed(true)
+            .build());
+
+        post = postRepository.save(Post.builder()
+            .user(user)
+            .title("테스트 포스트")
+            .content("본문 내용")
+            .isPublic(true)
+            .build());
+
+        String encryptedToken = AesEncryptionUtils.encrypt("dummy-gh-token", "test-encryption-key-for-unit-test!");
+
+        config = gitHubSyncConfigRepository.save(GitHubSyncConfig.builder()
+            .user(user)
+            .encryptedAccessToken(encryptedToken)
+            .githubUsername("gh-username")
+            .githubEmail("grass-email@github.com")
+            .repositoryName("gh-username/my-blog")
+            .branchName("main")
+            .directoryPath("posts/")
+            .deleteOption(DeleteOption.DELETE_FILE)
+            .isEnabled(true)
+            .build());
+    }
+
+    @Test
+    @DisplayName("글 발행 시 GitHubApiClient를 호출하여 커밋·푸시하고 성공 로그를 남긴다")
+    void syncPostSuccess() {
+        // given
+        given(gitHubApiClient.getFileSha(anyString(), eq("gh-username/my-blog"), anyString(), eq("main")))
+            .willReturn(Optional.empty());
+
+        given(gitHubApiClient.createOrUpdateFile(
+            eq("dummy-gh-token"),
+            eq("gh-username/my-blog"),
+            anyString(),
+            eq("main"),
+            contains("publish"),
+            anyString(),
+            isNull(),
+            eq("gh-username"),
+            eq("grass-email@github.com"))).willReturn("commit-sha-12345");
+
+        // when
+        gitHubSyncService.syncPost(post.getId(), user.getId(), SyncType.CREATE);
+
+        // then
+        List<GitHubSyncLogResponse> logs = gitHubSyncService.getRecentLogs(user.getId());
+        assertThat(logs).isNotEmpty();
+        assertThat(logs.get(0).getStatus()).isEqualTo(SyncLogStatus.SUCCESS);
+        assertThat(logs.get(0).getCommitSha()).isEqualTo("commit-sha-12345");
+
+        GitHubSyncConfig refreshedConfig = gitHubSyncConfigRepository.findByUser_Id(user.getId()).orElseThrow();
+        assertThat(refreshedConfig.getSyncStatus()).isEqualTo(SyncStatus.SUCCESS);
+    }
+
+    @Test
+    @DisplayName("API 호출 실패 시 실패 로그를 기록하고 config 상태를 FAILED로 갱신한다")
+    void syncPostFailure() {
+        // given
+        given(gitHubApiClient.createOrUpdateFile(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+            .willThrow(new RuntimeException("GitHub API 503 Service Unavailable"));
+
+        // when
+        gitHubSyncService.syncPost(post.getId(), user.getId(), SyncType.CREATE);
+
+        // then
+        List<GitHubSyncLogResponse> logs = gitHubSyncService.getRecentLogs(user.getId());
+        assertThat(logs).isNotEmpty();
+        assertThat(logs.get(0).getStatus()).isEqualTo(SyncLogStatus.FAILED);
+        assertThat(logs.get(0).getErrorMessage()).contains("503");
+
+        GitHubSyncConfig refreshedConfig = gitHubSyncConfigRepository.findByUser_Id(user.getId()).orElseThrow();
+        assertThat(refreshedConfig.getSyncStatus()).isEqualTo(SyncStatus.FAILED);
+    }
+}

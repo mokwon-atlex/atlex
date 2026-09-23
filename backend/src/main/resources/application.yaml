@@ -43,6 +43,14 @@ graph:
     # 관계로 저장·조회할 최소 연관도. 인덱싱과 조회가 같은 값을 쓴다.
     min-score: ${GRAPH_MIN_SCORE:0.15}
 
+# GitHub 연동 설정
+github:
+  client-id: ${GITHUB_CLIENT_ID:}
+  client-secret: ${GITHUB_CLIENT_SECRET:}
+  redirect-uri: ${GITHUB_REDIRECT_URI:http://localhost:3000/blog_option}
+  encryption-key: ${GITHUB_TOKEN_ENCRYPTION_KEY:atlex-default-github-encrypt-key-32b!}
+
+
 ---
 # 운영(EC2 + RDS MySQL) 프로파일: SPRING_PROFILES_ACTIVE=prod
 spring:
