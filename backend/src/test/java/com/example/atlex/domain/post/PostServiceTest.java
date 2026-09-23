@@ -563,8 +563,8 @@ class PostServiceTest {
             .thenReturn(new PageImpl<>(List.of(liked, notLiked)));
         when(postLikeRepository.findLikedPostIds(2L, List.of(10L, 11L))).thenReturn(List.of(10L));
 
-        List<com.example.atlex.domain.post.dto.response.PostSummaryResponse> content =
-            postService.getPostList("latest", null, null, PageRequest.of(0, 10), 2L).getContent();
+        List<com.example.atlex.domain.post.dto.response.PostSummaryResponse> content = postService
+            .getPostList("latest", null, null, PageRequest.of(0, 10), 2L).getContent();
 
         assertTrue(content.get(0).isLiked());
         assertFalse(content.get(1).isLiked());
