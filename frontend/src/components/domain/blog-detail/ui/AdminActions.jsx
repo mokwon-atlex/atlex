@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { Button } from '@/components/common/ui/button';
+import { Button, buttonVariants } from '@/components/common/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/common/ui/dialog';
 import { useDeletePost } from '@/hooks/queries/posts/useDeletePost';
+import { cn } from '@/lib/utils';
 
 // postId 를 알아야 이동시킬 수 있는 액션들의 경로 매핑.
 // '통계' 등 아직 목적지가 없는 액션은 여기 없으면 기존처럼 버튼만 렌더링된다.
@@ -120,15 +121,14 @@ export function AdminActions({ authorUserId, postId, actions = [], onDelete, onD
 
           if (href) {
             return (
-              <Button
+              // 페이지 이동이므로 버튼이 아닌 링크 시맨틱을 유지하고 스타일만 버튼과 맞춘다.
+              <Link
                 key={action}
-                variant="ghost"
-                size="sm"
-                className="rounded-full px-4"
-                render={<Link href={href} />}
+                href={href}
+                className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'rounded-full px-4')}
               >
                 {action}
-              </Button>
+              </Link>
             );
           }
 
