@@ -1,80 +1,328 @@
+import { useLayoutEffect } from 'react';
+import { expect, fn, spyOn, userEvent, waitFor, within } from 'storybook/test';
+
 import { AdminActions } from '@/components/domain/blog-detail/ui/AdminActions';
+import { apiClient } from '@/lib/api/client';
 import { useAuthStore } from '@/store/authStore';
-import { expect, waitFor, within } from 'storybook/test';
 
-// NOTE: useAuthStore 는 zustand 전역 스토어라 컴포넌트에 prop 으로 주입할 수 없다.
-// play() 안에서 useAuthStore.setState(...) 로 직접 값을 바꿔 로그인/작성자 상태를 재현한다.
-// setState 이후 리렌더링은 즉시 반영되지 않을 수 있어, 단순 getByRole/queryByRole 대신
-// findByRole(자동 재시도) 또는 waitFor 로 감싸서 리렌더링을 기다린 뒤 검증한다.
+function resetAuthStore() {
+  useAuthStore.setState({
+    isLoggedIn: false,
+    user: null,
+    accessToken: null,
+    refreshToken: null,
+  });
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.removeItem('auth-storage');
+  }
+}
 
-/** @type { import('@storybook/nextjs-vite').Meta<typeof AdminActions> } */
+function AdminActionsWrapper({
+  isLoggedIn = true,
+  currentUserId = 'author1',
+  authorUserId = 'author1',
+  postId = '123',
+  actions = ['통계', '수정', '삭제'],
+  onDelete,
+  onDeleteSuccess,
+  onDeleteError,
+}) {
+  useLayoutEffect(() => {
+    useAuthStore.setState({
+      isLoggedIn,
+      user: isLoggedIn ? { userId: currentUserId } : null,
+      accessToken: isLoggedIn ? 'dummy-token' : null,
+      refreshToken: null,
+    });
+
+    return () => {
+      resetAuthStore();
+    };
+  }, [isLoggedIn, currentUserId]);
+
+  return (
+    <div className="flex min-h-64 w-full items-center justify-center p-8">
+      <AdminActions
+        authorUserId={authorUserId}
+        postId={postId}
+        actions={actions}
+        onDelete={onDelete}
+        onDeleteSuccess={onDeleteSuccess}
+        onDeleteError={onDeleteError}
+      />
+    </div>
+  );
+}
+
+/** @type { import('@storybook/nextjs-vite').Meta<typeof AdminActionsWrapper> } */
 const meta = {
   title: 'Domain/BlogDetail/UI/AdminActions',
-  component: AdminActions,
+  component: AdminActionsWrapper,
   tags: ['autodocs'],
   parameters: { layout: 'centered' },
-  argTypes: {
-    authorUserId: { control: 'text' },
-    postId: { control: 'number' },
-  },
-  args: {
-    authorUserId: 'john123',
-    postId: 42,
-    actions: ['통계', '수정', '삭제'],
-  },
 };
 
 export default meta;
 
-// 로그인한 본인 글일 때: 수정 버튼이 /write/{postId} 로 가는 링크로 렌더링되는지 확인.
-export const AsAuthor = {
-  play: async ({ canvasElement, args }) => {
-    useAuthStore.setState({ isLoggedIn: true, user: { userId: args.authorUserId } });
+/**
+ * 작성자가 조회할 때 관리자 액션 버튼들이 노출되는 기본 스토리입니다.
+ */
+export const AuthorView = {
+  args: {
+    isLoggedIn: true,
+    currentUserId: 'author1',
+    authorUserId: 'author1',
+    postId: '123',
+  },
+  play: async ({ canvasElement }) => {
+    try {
+      const canvas = within(canvasElement);
 
-    const canvas = within(canvasElement);
-    // findByRole 은 리렌더링이 반영될 때까지 자동으로 재시도한다.
-    const editLink = await canvas.findByRole('link', { name: '수정' });
+      // 수정은 /write/{postId} 로 이동하는 링크로 렌더링되어야 한다.
+      const editLink = await canvas.findByRole('link', { name: '수정' });
+      await expect(editLink).toHaveAttribute('href', '/write/123');
 
-    await expect(editLink).toHaveAttribute('href', `/write/${args.postId}`);
-
-    // 아직 목적지가 없는 액션들은 링크가 아닌 일반 버튼으로 남아 있어야 한다.
-    // (Button이 Link 안에 중첩되면 getByRole('button')도 통과해 버리므로, 링크로는
-    //  렌더링되지 않았는지도 함께 확인해 회귀를 잡는다)
-    await expect(canvas.getByRole('button', { name: '통계' })).toBeVisible();
-    await expect(canvas.queryByRole('link', { name: '통계' })).not.toBeInTheDocument();
-    await expect(canvas.getByRole('button', { name: '삭제' })).toBeVisible();
-    await expect(canvas.queryByRole('link', { name: '삭제' })).not.toBeInTheDocument();
+      // 목적지가 없는 액션(통계)과 삭제는 링크가 아닌 일반 버튼으로 남아 있어야 한다.
+      await expect(canvas.getByRole('button', { name: '삭제' })).toBeVisible();
+      await expect(canvas.queryByRole('link', { name: '삭제' })).not.toBeInTheDocument();
+      await expect(canvas.getByRole('button', { name: '통계' })).toBeVisible();
+      await expect(canvas.queryByRole('link', { name: '통계' })).not.toBeInTheDocument();
+    } finally {
+      resetAuthStore();
+    }
   },
 };
 
-// 로그인은 했지만 작성자 본인이 아닐 때: 아무 것도 렌더링되지 않아야 한다.
-export const AsOtherUser = {
-  play: async ({ canvasElement, args }) => {
-    useAuthStore.setState({ isLoggedIn: true, user: { userId: 'someone-else' } });
+/**
+ * 작성자가 아닌 다른 로그인 유저에게는 관리자 액션이 노출되지 않는 스토리입니다.
+ */
+export const NonAuthorView = {
+  args: {
+    isLoggedIn: true,
+    currentUserId: 'otherUser',
+    authorUserId: 'author1',
+    postId: '123',
+  },
+  play: async ({ canvasElement }) => {
+    try {
+      const canvas = within(canvasElement);
 
-    const canvas = within(canvasElement);
-
-    await waitFor(() => {
-      for (const action of args.actions) {
-        expect(canvas.queryByRole('button', { name: action })).not.toBeInTheDocument();
-        expect(canvas.queryByRole('link', { name: action })).not.toBeInTheDocument();
-      }
-    });
+      await expect(canvas.queryByRole('button', { name: '삭제' })).toBeNull();
+    } finally {
+      resetAuthStore();
+    }
   },
 };
 
-// 비로그인 상태: 마찬가지로 아무 것도 렌더링되지 않아야 한다.
-export const LoggedOut = {
+/**
+ * 비로그인 사용자에게는 관리자 액션이 노출되지 않는 스토리입니다.
+ */
+export const LoggedOutView = {
+  args: {
+    isLoggedIn: false,
+    currentUserId: null,
+    authorUserId: 'author1',
+    postId: '123',
+  },
+  play: async ({ canvasElement }) => {
+    try {
+      const canvas = within(canvasElement);
+
+      await expect(canvas.queryByRole('button', { name: '삭제' })).toBeNull();
+    } finally {
+      resetAuthStore();
+    }
+  },
+};
+
+/**
+ * 삭제 버튼 클릭 시 확인 모달이 열리고 취소 시 모달이 닫히며 화면이 유지되는 스토리입니다.
+ */
+export const OpenAndCancelDeleteModal = {
+  args: {
+    isLoggedIn: true,
+    currentUserId: 'author1',
+    authorUserId: 'author1',
+    postId: '123',
+  },
+  play: async ({ canvasElement }) => {
+    try {
+      const canvas = within(canvasElement);
+      const deleteButton = canvas.getByRole('button', { name: '삭제' });
+
+      // 삭제 버튼 클릭하여 확인 모달 열기
+      await userEvent.click(deleteButton);
+
+      const body = within(canvasElement.ownerDocument.body);
+      const dialogTitle = await body.findByText('게시글을 삭제하시겠습니까?');
+      await waitFor(() => {
+        expect(dialogTitle).toBeVisible();
+      });
+
+      // 취소 버튼 클릭하여 모달 닫기
+      const cancelButton = body.getByRole('button', { name: '취소' });
+      await userEvent.click(cancelButton);
+
+      // 모달이 닫히고 기존 화면(삭제 버튼)이 유지되는지 검증
+      await waitFor(() => {
+        expect(body.queryByText('게시글을 삭제하시겠습니까?')).toBeNull();
+      });
+      await expect(canvas.getByRole('button', { name: '삭제' })).toBeVisible();
+    } finally {
+      resetAuthStore();
+    }
+  },
+};
+
+/**
+ * 삭제 확인 모달에서 삭제 버튼을 누르면 API 호출 및 성공 콜백이 수행되는 스토리입니다.
+ */
+export const ConfirmDeleteSuccess = {
+  args: {
+    isLoggedIn: true,
+    currentUserId: 'author1',
+    authorUserId: 'author1',
+    postId: '123',
+    onDeleteSuccess: fn(),
+  },
   play: async ({ canvasElement, args }) => {
-    useAuthStore.setState({ isLoggedIn: false, user: null });
-
-    const canvas = within(canvasElement);
-
-    await waitFor(() => {
-      for (const action of args.actions) {
-        expect(canvas.queryByRole('button', { name: action })).not.toBeInTheDocument();
-        expect(canvas.queryByRole('link', { name: action })).not.toBeInTheDocument();
+    const deleteSpy = spyOn(apiClient, 'delete').mockImplementation(async (url) => {
+      if (url === '/posts/123') {
+        return {};
       }
+      return {};
     });
+
+    try {
+      const canvas = within(canvasElement);
+      const deleteTrigger = canvas.getByRole('button', { name: '삭제' });
+
+      // 삭제 모달 열기
+      await userEvent.click(deleteTrigger);
+
+      const body = within(canvasElement.ownerDocument.body);
+      const confirmButton = await body.findByRole('button', { name: '삭제' });
+
+      // 확인 모달의 삭제 버튼 클릭
+      await userEvent.click(confirmButton);
+
+      // API 호출 검증
+      await waitFor(() => {
+        expect(deleteSpy).toHaveBeenCalledWith('/posts/123');
+      });
+
+      // 성공 콜백 호출 검증
+      await waitFor(() => {
+        expect(args.onDeleteSuccess).toHaveBeenCalled();
+      });
+
+      // 모달이 닫혔는지 검증
+      await waitFor(() => {
+        expect(body.queryByText('게시글을 삭제하시겠습니까?')).toBeNull();
+      });
+    } finally {
+      deleteSpy.mockRestore();
+      resetAuthStore();
+    }
+  },
+};
+
+/**
+ * 삭제 실패 시 모달이 닫히지 않고 오류 안내 메시지가 표시되며 화면이 유지되는 스토리입니다.
+ */
+export const ConfirmDeleteFailure = {
+  args: {
+    isLoggedIn: true,
+    currentUserId: 'author1',
+    authorUserId: 'author1',
+    postId: '123',
+    onDeleteError: fn(),
+  },
+  play: async ({ canvasElement, args }) => {
+    const deleteSpy = spyOn(apiClient, 'delete').mockImplementation(async () => {
+      const error = new Error('게시글 삭제 권한이 없거나 이미 삭제되었습니다.');
+      throw error;
+    });
+
+    try {
+      const canvas = within(canvasElement);
+      const deleteTrigger = canvas.getByRole('button', { name: '삭제' });
+
+      // 삭제 모달 열기
+      await userEvent.click(deleteTrigger);
+
+      const body = within(canvasElement.ownerDocument.body);
+      const confirmButton = await body.findByRole('button', { name: '삭제' });
+
+      // 확인 모달의 삭제 버튼 클릭
+      await userEvent.click(confirmButton);
+
+      // 에러 메시지가 모달 내에 표시되는지 검증
+      const errorMessage = await body.findByText('게시글 삭제 권한이 없거나 이미 삭제되었습니다.');
+      await waitFor(() => {
+        expect(errorMessage).toBeVisible();
+      });
+
+      // 에러 콜백 호출 검증
+      await expect(args.onDeleteError).toHaveBeenCalled();
+
+      // 모달이 닫히지 않고 여전히 화면에 남아있는지 검증
+      await waitFor(() => {
+        expect(body.getByText('게시글을 삭제하시겠습니까?')).toBeVisible();
+      });
+    } finally {
+      deleteSpy.mockRestore();
+      resetAuthStore();
+    }
+  },
+};
+
+/**
+ * 삭제 요청 진행 중일 때 버튼이 비활성화되고 '삭제 중...' 텍스트가 표시되는 스토리입니다.
+ */
+export const DeletingStateShowsPendingStatus = {
+  args: {
+    isLoggedIn: true,
+    currentUserId: 'author1',
+    authorUserId: 'author1',
+    postId: '123',
+  },
+  play: async ({ canvasElement }) => {
+    let resolveDelete;
+    const deletePromise = new Promise((resolve) => {
+      resolveDelete = resolve;
+    });
+
+    const deleteSpy = spyOn(apiClient, 'delete').mockImplementation(() => deletePromise);
+
+    try {
+      const canvas = within(canvasElement);
+      const deleteTrigger = canvas.getByRole('button', { name: '삭제' });
+      await userEvent.click(deleteTrigger);
+
+      const body = within(canvasElement.ownerDocument.body);
+      const confirmButton = await body.findByRole('button', { name: '삭제' });
+      const cancelButton = body.getByRole('button', { name: '취소' });
+
+      // 삭제 확인 버튼 클릭
+      await userEvent.click(confirmButton);
+
+      // 처리 중 상태 검증: 버튼 텍스트 변경 및 disabled 상태
+      await waitFor(() => {
+        expect(body.getByRole('button', { name: '삭제 중...' })).toBeDisabled();
+      });
+      await expect(cancelButton).toBeDisabled();
+
+      // 요청 완료
+      resolveDelete({});
+
+      // 완료 후 모달이 닫히는지 검증
+      await waitFor(() => {
+        expect(body.queryByText('게시글을 삭제하시겠습니까?')).toBeNull();
+      });
+    } finally {
+      deleteSpy.mockRestore();
+      resetAuthStore();
+    }
   },
 };

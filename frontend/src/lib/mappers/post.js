@@ -57,6 +57,7 @@ export function toBlogDetail(apiPost) {
   const plainTextContent = getRichTextPlainText(sanitizedContent);
 
   return {
+    id: apiPost.id,
     // 수정 화면(/write/{postId}) 링크를 만드는 데 필요해 추가함.
     postId: apiPost.id,
     blogTitle: apiPost.authorUserId ? `${apiPost.authorUserId}.log` : 'blog',

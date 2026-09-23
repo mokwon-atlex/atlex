@@ -1,5 +1,6 @@
 import BlogDetailArticle from '@/components/domain/blog-detail/ui/BlogDetailArticle';
 import BlogDetailAuthorCard from '@/components/domain/blog-detail/ui/BlogDetailAuthorCard';
+import { BlogDetailComments } from '@/components/domain/blog-detail/ui/BlogDetailComments';
 import BlogDetailHero from '@/components/domain/blog-detail/ui/BlogDetailHero';
 
 /**
@@ -28,6 +29,7 @@ export default function BlogDetailContent({
   category,
   contentBlocks,
   excerpt,
+  id,
   postId,
   publishedAt,
   readTime,
@@ -35,6 +37,7 @@ export default function BlogDetailContent({
   updatedAt,
   visibilityLabel,
 }) {
+  const currentPostId = postId ?? id;
   return (
     <div className="mx-auto w-full max-w-[820px] space-y-12">
       <BlogDetailHero
@@ -42,7 +45,7 @@ export default function BlogDetailContent({
         authorUserId={authorUserId}
         category={category}
         excerpt={excerpt}
-        postId={postId}
+        postId={currentPostId}
         publishedAt={publishedAt}
         readTime={readTime}
         title={title}
@@ -53,6 +56,8 @@ export default function BlogDetailContent({
       <BlogDetailArticle contentBlocks={contentBlocks ?? []} />
 
       {authorCard ? <BlogDetailAuthorCard authorCard={authorCard} /> : null}
+
+      {currentPostId ? <BlogDetailComments postId={currentPostId} postAuthorUserId={authorUserId} /> : null}
     </div>
   );
 }

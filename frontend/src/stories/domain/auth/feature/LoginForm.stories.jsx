@@ -2,6 +2,7 @@ import { expect, spyOn, userEvent, within } from 'storybook/test';
 
 import { apiClient } from '@/lib/api/client';
 import { LoginForm, SAVED_USER_ID_KEY } from '@/components/domain/auth/login/feature/LoginForm';
+import { useAuthStore } from '@/store/authStore';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof LoginForm> } */
 const meta = {
@@ -144,6 +145,10 @@ export const PasswordAndAuthTokensNotSaved = {
       await expect(storageKeys.some((k) => k.toLowerCase().includes('token'))).toBe(false);
     } finally {
       postSpy.mockRestore();
+      useAuthStore.getState().logout();
+      if (typeof window !== 'undefined') {
+        window.localStorage.clear();
+      }
     }
   },
 };
