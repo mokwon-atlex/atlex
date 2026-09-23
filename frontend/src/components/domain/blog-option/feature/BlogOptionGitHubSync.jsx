@@ -349,8 +349,7 @@ export default function BlogOptionGitHubSync() {
                   rel="noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
                 >
-                  <ExternalLink className="size-3" />
-                  새 저장소 만들기
+                  <ExternalLink className="size-3" />새 저장소 만들기
                 </a>
               </div>
               {repositories.length > 0 ? (
@@ -379,7 +378,8 @@ export default function BlogOptionGitHubSync() {
                 />
               )}
               <FieldDescription>
-                글이 커밋될 사용자의 GitHub 저장소 전체 이름(owner/repo)입니다. 원하는 저장소가 없으면 GitHub에서 새로 생성해 주세요.
+                글이 커밋될 사용자의 GitHub 저장소 전체 이름(owner/repo)입니다. 원하는 저장소가 없으면 GitHub에서 새로
+                생성해 주세요.
               </FieldDescription>
             </Field>
 
