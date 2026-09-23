@@ -52,8 +52,9 @@ class OAuthStateUtilsTest {
         long expiredTime = System.currentTimeMillis() - (16 * 60 * 1000L);
         String payload = "12345:" + expiredTime + ":uuid-test";
         String encrypted = AesEncryptionUtils.encrypt(payload, TEST_KEY);
+        String encoded = java.net.URLEncoder.encode(encrypted, java.nio.charset.StandardCharsets.UTF_8);
 
-        assertThatThrownBy(() -> OAuthStateUtils.validateState(encrypted, 12345L, TEST_KEY))
+        assertThatThrownBy(() -> OAuthStateUtils.validateState(encoded, 12345L, TEST_KEY))
             .isInstanceOf(GitHubOAuthFailedException.class)
             .hasMessageContaining("만료");
     }

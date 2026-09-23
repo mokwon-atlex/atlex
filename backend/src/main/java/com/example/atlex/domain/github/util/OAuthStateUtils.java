@@ -37,7 +37,12 @@ public final class OAuthStateUtils {
 
         try {
             String encrypted = URLDecoder.decode(encodedState, StandardCharsets.UTF_8);
-            String payload = AesEncryptionUtils.decrypt(encrypted, secretKey);
+            String payload;
+            try {
+                payload = AesEncryptionUtils.decrypt(encrypted, secretKey);
+            } catch (Exception e) {
+                payload = AesEncryptionUtils.decrypt(encrypted.replace(' ', '+'), secretKey);
+            }
             String[] parts = payload.split(":");
 
             if (parts.length < 3) {
