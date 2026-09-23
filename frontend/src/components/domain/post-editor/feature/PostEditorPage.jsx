@@ -153,7 +153,8 @@ export default function PostEditorPage({ postId }) {
     const payload = {
       title: title.trim(),
       content: richText.getHTML(), // 서식 보존을 위해 HTML 로 저장
-      description: description.trim() || undefined,
+      // 수정 모드에서는 빈 문자열도 보내야 기존 설명을 비울 수 있다(undefined 면 PATCH 에서 제외되어 기존 값 유지).
+      description: isEditMode ? description.trim() : description.trim() || undefined,
       categoryId, // null 이면 각 mutation 이 알아서 제외
       isPublic,
       tags: tagField.combinedTags, // 백엔드 미구현이라 현재는 무시될 수 있음
