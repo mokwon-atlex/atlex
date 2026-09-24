@@ -13,12 +13,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.*;
 
 /**
@@ -26,15 +31,31 @@ import java.util.*;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class GitHubApiClient {
 
     private static final String GITHUB_OAUTH_TOKEN_URL = "https://github.com/login/oauth/access_token";
     private static final String GITHUB_API_BASE_URL = "https://api.github.com";
     private static final String GITHUB_API_VERSION = "2022-11-28";
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(15);
 
     private final ObjectMapper objectMapper;
-    private final RestClient restClient = RestClient.builder().build();
+    private final RestClient restClient;
+
+    /**
+     * GitHubApiClient 생성자입니다. RestClient에 연결 및 읽기 타임아웃을 설정합니다.
+     *
+     * @param objectMapper JSON 직렬화 및 역직렬화를 위한 ObjectMapper
+     */
+    public GitHubApiClient(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(CONNECT_TIMEOUT);
+        requestFactory.setReadTimeout(READ_TIMEOUT);
+        this.restClient = RestClient.builder()
+            .requestFactory(requestFactory)
+            .build();
+    }
 
     /**
      * GitHub OAuth 인가 코드(code)로 Access Token을 교환합니다.
@@ -165,11 +186,19 @@ public class GitHubApiClient {
 
     /**
      * 대상 저장소 브랜치 내 파일의 기존 SHA 값을 조회합니다. 파일이 없으면 Optional.empty()를 반환합니다.
+     * 404 외의 오류(인증 실패, 권한 부족, 네트워크 오류 등) 발생 시 도메인 예외를 던집니다.
+     *
+     * @param accessToken GitHub Access Token
+     * @param ownerAndRepo 저장소 소유자 및 저장소명 (owner/repo)
+     * @param path 파일 경로
+     * @param branch 대상 브랜치명
+     * @return 파일 SHA 값 (파일이 없으면 Optional.empty())
      */
     public Optional<String> getFileSha(String accessToken, String ownerAndRepo, String path, String branch) {
         String cleanPath = path.startsWith("/") ? path.substring(1) : path;
+        String encodedBranch = URLEncoder.encode(branch, StandardCharsets.UTF_8);
         String uri = String.format("%s/repos/%s/contents/%s?ref=%s", GITHUB_API_BASE_URL, ownerAndRepo, cleanPath,
-            branch);
+            encodedBranch);
 
         try {
             String response = restClient.get()
@@ -184,9 +213,12 @@ public class GitHubApiClient {
             return Optional.ofNullable(node.path("sha").asText(null));
         } catch (HttpClientErrorException.NotFound e) {
             return Optional.empty();
+        } catch (RestClientResponseException e) {
+            log.error("GitHub 파일 SHA 조회 실패 (HTTP {}): {} / {}", e.getStatusCode(), ownerAndRepo, cleanPath, e);
+            throw new GitHubApiException(resolveErrorMessage(e.getStatusCode(), "GitHub 파일 정보 조회에 실패했습니다."));
         } catch (Exception e) {
-            log.warn("GitHub 파일 SHA 조회 실패 (신규 파일로 간주): {}", e.getMessage());
-            return Optional.empty();
+            log.error("GitHub 파일 SHA 조회 중 예기치 않은 오류 발생: {} / {}", ownerAndRepo, cleanPath, e);
+            throw new GitHubApiException("GitHub 파일 정보 조회 통신 중 오류가 발생했습니다.");
         }
     }
 
@@ -240,9 +272,12 @@ public class GitHubApiClient {
 
             JsonNode node = objectMapper.readTree(response);
             return node.path("commit").path("sha").asText();
+        } catch (RestClientResponseException e) {
+            log.error("GitHub 파일 커밋 푸시 실패 (HTTP {}): {} / {}", e.getStatusCode(), ownerAndRepo, cleanPath, e);
+            throw new GitHubApiException(resolveErrorMessage(e.getStatusCode(), "GitHub 파일 커밋에 실패했습니다."));
         } catch (Exception e) {
-            log.error("GitHub 파일 커밋 푸시 실패: {} / {}", ownerAndRepo, cleanPath, e);
-            throw new GitHubApiException("GitHub 파일 커밋에 실패했습니다: " + e.getMessage());
+            log.error("GitHub 파일 커밋 푸시 중 예기치 않은 오류 발생: {} / {}", ownerAndRepo, cleanPath, e);
+            throw new GitHubApiException("GitHub 파일 커밋 통신 중 오류가 발생했습니다.");
         }
     }
 
@@ -288,10 +323,47 @@ public class GitHubApiClient {
 
             JsonNode node = objectMapper.readTree(response);
             return node.path("commit").path("sha").asText();
+        } catch (RestClientResponseException e) {
+            log.error("GitHub 파일 삭제 실패 (HTTP {}): {} / {}", e.getStatusCode(), ownerAndRepo, cleanPath, e);
+            throw new GitHubApiException(resolveErrorMessage(e.getStatusCode(), "GitHub 파일 삭제에 실패했습니다."));
         } catch (Exception e) {
-            log.error("GitHub 파일 삭제 실패: {} / {}", ownerAndRepo, cleanPath, e);
-            throw new GitHubApiException("GitHub 파일 삭제에 실패했습니다: " + e.getMessage());
+            log.error("GitHub 파일 삭제 중 예기치 않은 오류 발생: {} / {}", ownerAndRepo, cleanPath, e);
+            throw new GitHubApiException("GitHub 파일 삭제 통신 중 오류가 발생했습니다.");
         }
+    }
+
+    /**
+     * HTTP 응답 상태 코드에 따른 안전한 도메인 에러 메시지를 반환합니다.
+     * 내부 구현 정보나 원본 GitHub 응답 본문의 노출을 방지합니다.
+     *
+     * @param status HTTP 상태 코드
+     * @param defaultMessage 기본 대체 메시지
+     * @return 도메인 에러 메시지
+     */
+    private String resolveErrorMessage(HttpStatusCode status, String defaultMessage) {
+        int code = status.value();
+        if (code == 401) {
+            return "GitHub 인증이 만료되었거나 토큰이 유효하지 않습니다.";
+        }
+        if (code == 403) {
+            return "GitHub 저장소 접근 또는 쓰기 권한이 없습니다.";
+        }
+        if (code == 404) {
+            return "GitHub 저장소 또는 파일 경로를 찾을 수 없습니다.";
+        }
+        if (code == 409) {
+            return "GitHub 파일 충돌이 발생했습니다.";
+        }
+        if (code == 422) {
+            return "GitHub 요청 데이터가 유효하지 않습니다.";
+        }
+        if (code == 429) {
+            return "GitHub API 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.";
+        }
+        if (code >= 500) {
+            return "GitHub 서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+        }
+        return defaultMessage;
     }
 
     /**
