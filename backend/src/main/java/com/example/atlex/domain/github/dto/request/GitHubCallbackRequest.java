@@ -17,6 +17,7 @@ public class GitHubCallbackRequest {
     @NotBlank(message = "인가 코드는 필수입니다.")
     private String code;
 
+    @NotBlank(message = "OAuth state 값은 필수입니다.")
     @Schema(description = "OAuth CSRF 방지용 state 토큰", example = "ENCRYPTED_STATE_TOKEN")
     private String state;
 

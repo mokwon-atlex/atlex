@@ -46,7 +46,7 @@ public class GitHubOAuthService {
     @Value("${github.redirect-uri:http://localhost:3000/blog_option}")
     private String redirectUri;
 
-    @Value("${github.encryption-key:atlex-default-github-encrypt-key-32b!}")
+    @Value("${github.encryption-key}")
     private String encryptionKey;
 
     /**
@@ -76,9 +76,10 @@ public class GitHubOAuthService {
         User user = userRepository.findById(userId)
             .orElseThrow(UserNotFoundException::new);
 
-        if (state != null && !state.isBlank()) {
-            OAuthStateUtils.validateState(state, userId, encryptionKey);
+        if (state == null || state.isBlank()) {
+            throw new GitHubOAuthFailedException("OAuth state 값이 누락되었습니다.");
         }
+        OAuthStateUtils.validateState(state, userId, encryptionKey);
 
         String rawAccessToken = gitHubApiClient.exchangeAccessToken(clientId, clientSecret, code, redirectUri);
         GitHubUserProfile profile = gitHubApiClient.getUserProfile(rawAccessToken);

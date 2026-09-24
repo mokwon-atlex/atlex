@@ -107,7 +107,11 @@ public class GitHubSyncConfig {
             this.repositoryName = trimmed;
         }
         if (branchName != null && !branchName.isBlank()) {
-            this.branchName = branchName.trim();
+            String trimmedBranch = branchName.trim();
+            if (!trimmedBranch.matches("^(?!/)(?!.*//)(?!.*\\.\\.)[a-zA-Z0-9_./-]+(?<!/)$")) {
+                throw new IllegalArgumentException("올바른 브랜치명 형식이 아닙니다.");
+            }
+            this.branchName = trimmedBranch;
         }
         if (directoryPath != null) {
             String sanitized = directoryPath.trim().replace("\\", "/");

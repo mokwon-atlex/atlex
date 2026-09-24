@@ -1,5 +1,6 @@
 package com.example.atlex.domain.github;
 
+import com.example.atlex.domain.github.dto.request.GitHubCallbackRequest;
 import com.example.atlex.domain.github.dto.request.GitHubConfigUpdateRequest;
 import com.example.atlex.domain.github.entity.DeleteOption;
 import com.example.atlex.domain.github.entity.GitHubSyncConfig;
@@ -169,6 +170,34 @@ class GitHubSyncControllerTest {
             .build();
 
         mockMvc.perform(patch("/api/v1/github/config")
+            .header("Authorization", token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    @DisplayName("브랜치명에 허용되지 않은 특수문자가 포함되면 400 유효성 에러를 반환한다")
+    void updateConfigInvalidBranchName() throws Exception {
+        GitHubConfigUpdateRequest request = GitHubConfigUpdateRequest.builder()
+            .branchName("main&malicious=true#frag")
+            .build();
+
+        mockMvc.perform(patch("/api/v1/github/config")
+            .header("Authorization", token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    @DisplayName("OAuth 콜백 요청 시 state가 누락되면 400 유효성 에러를 반환한다")
+    void connectGitHubMissingState() throws Exception {
+        GitHubCallbackRequest request = new GitHubCallbackRequest("test-auth-code");
+
+        mockMvc.perform(post("/api/v1/github/oauth/callback")
             .header("Authorization", token)
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
