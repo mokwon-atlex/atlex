@@ -315,6 +315,7 @@ export default function BlogOptionGitHubSync() {
                       href={`https://github.com/${config.githubUsername}`}
                       target="_blank"
                       rel="noreferrer"
+                      aria-label={`${config.githubUsername}의 GitHub 프로필 보기 (새 창)`}
                       className="text-muted-foreground transition hover:text-foreground"
                     >
                       <ExternalLink className="size-3.5" />
