@@ -77,4 +77,32 @@ class FrontmatterUtilsTest {
         assertThat(filename).endsWith(".md");
         assertThat(filename).doesNotContain(":", "?", "/", "\\", "(", ")", " ");
     }
+
+    @Test
+    @DisplayName("제목이나 설명에 개행 문자 및 Frontmatter 구분선 주입 시도가 있어도 한 줄 내에서 이스케이프된다")
+    void buildMarkdownEscapesNewlinesAndInjection() {
+        // given
+        User user = User.builder().userId("tester").build();
+        Post post = Post.builder()
+            .user(user)
+            .title("첫 줄 제목\n---\n주입 시도")
+            .description("설명 1줄\r\n설명 2줄\t\"따옴표\"")
+            .content("정상 본문")
+            .isPublic(true)
+            .build();
+
+        // when
+        String markdown = FrontmatterUtils.buildMarkdown(post, List.of("태그\n1"));
+
+        // then
+        assertThat(markdown).contains("title: \"첫 줄 제목\\n---\\n주입 시도\"");
+        assertThat(markdown).contains("description: \"설명 1줄\\r\\n설명 2줄\\t\\\"따옴표\\\"\"");
+        assertThat(markdown).contains("  - \"태그\\n1\"");
+        // Frontmatter 영역(처음 두 '---') 사이에 원시 개행에 의한 별도 --- 경계선 라인이 생성되지 않아야 함
+        String frontmatterPart = markdown.substring(0, markdown.indexOf("---\n\n") + 3);
+        long boundaryCount = frontmatterPart.lines()
+            .filter(line -> line.trim().equals("---"))
+            .count();
+        assertThat(boundaryCount).isEqualTo(2);
+    }
 }
