@@ -3,6 +3,7 @@ package com.example.atlex.domain.github;
 import com.example.atlex.domain.github.client.GitHubApiClient;
 import com.example.atlex.domain.github.dto.response.GitHubSyncLogResponse;
 import com.example.atlex.domain.github.entity.*;
+import com.example.atlex.domain.github.exception.GitHubApiException;
 import com.example.atlex.domain.github.repository.GitHubSyncConfigRepository;
 import com.example.atlex.domain.github.repository.GitHubSyncLogRepository;
 import com.example.atlex.domain.github.service.GitHubSyncService;
@@ -175,5 +176,86 @@ class GitHubSyncServiceTest {
             eq("old-file-blob-sha"),
             eq("gh-username"),
             eq("grass-email@github.com"));
+    }
+
+    @Test
+    @DisplayName("실패한 동기화 로그를 재시도하면 커밋을 수행하고 원본 로그의 retryCount와 status를 갱신하여 반환한다")
+    void retrySyncSuccess() {
+        // given
+        GitHubSyncLog failedLog = gitHubSyncLogRepository.save(GitHubSyncLog.builder()
+            .userId(user.getId())
+            .postId(post.getId())
+            .postTitle(post.getTitle())
+            .syncType(SyncType.CREATE)
+            .targetPath("posts/fail.md")
+            .status(SyncLogStatus.FAILED)
+            .errorMessage("이전 실패 사유")
+            .build());
+
+        given(gitHubApiClient.getFileSha(anyString(), eq("gh-username/my-blog"), anyString(), eq("main")))
+            .willReturn(Optional.empty());
+
+        given(gitHubApiClient.createOrUpdateFile(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+            .willReturn("retry-commit-sha-777");
+
+        // when
+        GitHubSyncLogResponse response = gitHubSyncService.retrySync(failedLog.getId(), user.getId());
+
+        // then
+        assertThat(response.getId()).isEqualTo(failedLog.getId());
+        assertThat(response.getStatus()).isEqualTo(SyncLogStatus.SUCCESS);
+        assertThat(response.getCommitSha()).isEqualTo("retry-commit-sha-777");
+        assertThat(response.getRetryCount()).isEqualTo(1);
+        assertThat(response.getErrorMessage()).isNull();
+
+        GitHubSyncLog refreshed = gitHubSyncLogRepository.findById(failedLog.getId()).orElseThrow();
+        assertThat(refreshed.getStatus()).isEqualTo(SyncLogStatus.SUCCESS);
+        assertThat(refreshed.getCommitSha()).isEqualTo("retry-commit-sha-777");
+        assertThat(refreshed.getRetryCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("실패(FAILED) 상태가 아닌 동기화 로그를 재시도하면 예외가 발생한다")
+    void retrySyncRejectsNonFailedLog() {
+        // given
+        GitHubSyncLog successLog = gitHubSyncLogRepository.save(GitHubSyncLog.builder()
+            .userId(user.getId())
+            .postId(post.getId())
+            .postTitle(post.getTitle())
+            .syncType(SyncType.CREATE)
+            .targetPath("posts/success.md")
+            .status(SyncLogStatus.SUCCESS)
+            .commitSha("sha-already-done")
+            .build());
+
+        // when & then
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> gitHubSyncService.retrySync(successLog.getId(), user.getId()))
+            .isInstanceOf(GitHubApiException.class)
+            .hasMessageContaining("실패한 동기화 로그만 재시도할 수 있습니다");
+    }
+
+    @Test
+    @DisplayName("GitHub 연동이 비활성화되어 있는 경우 재시도 시 예외가 발생한다")
+    void retrySyncFailsWhenDisabled() {
+        // given
+        config.updateConfig("gh-username/my-blog", "main", "posts/", DeleteOption.DELETE_FILE, false);
+        gitHubSyncConfigRepository.save(config);
+
+        GitHubSyncLog failedLog = gitHubSyncLogRepository.save(GitHubSyncLog.builder()
+            .userId(user.getId())
+            .postId(post.getId())
+            .postTitle(post.getTitle())
+            .syncType(SyncType.CREATE)
+            .targetPath("posts/fail.md")
+            .status(SyncLogStatus.FAILED)
+            .errorMessage("이전 실패 사유")
+            .build());
+
+        // when & then
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> gitHubSyncService.retrySync(failedLog.getId(), user.getId()))
+            .isInstanceOf(GitHubApiException.class)
+            .hasMessageContaining("비활성화");
     }
 }
