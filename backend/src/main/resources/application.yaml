@@ -48,7 +48,7 @@ github:
   client-id: ${GITHUB_CLIENT_ID:}
   client-secret: ${GITHUB_CLIENT_SECRET:}
   redirect-uri: ${GITHUB_REDIRECT_URI:http://localhost:3000/blog_option}
-  encryption-key: ${GITHUB_TOKEN_ENCRYPTION_KEY:atlex-default-github-encrypt-key-32b!}
+  encryption-key: ${GITHUB_TOKEN_ENCRYPTION_KEY}
 
 
 ---

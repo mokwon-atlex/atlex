@@ -13,7 +13,7 @@ class AesEncryptionUtilsTest {
     @DisplayName("문자열을 암호화한 뒤 복호화하면 원본 문자열과 일치한다")
     void encryptAndDecryptSuccess() {
         // given
-        String originalToken = "gho_16C7e42F292c6912E7710c838347Ae178B4a";
+        String originalToken = "sample-secret-token-value-12345";
 
         // when
         String encrypted = AesEncryptionUtils.encrypt(originalToken, SECRET_KEY);
