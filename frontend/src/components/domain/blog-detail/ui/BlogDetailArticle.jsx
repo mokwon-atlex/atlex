@@ -1,3 +1,6 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
 import { textfieldVariants } from '@/components/common/ui/textfield';
 import styles from './BlogDetailArticle.module.css';
 
@@ -20,11 +23,12 @@ function ArticleImage({ src, caption }) {
 
 /**
  * 정제된 게시글 HTML을 서식이 유지된 상태로 렌더링한다.
- * @param {{ html: string }} props 저장된 게시글 HTML
+ * 내부 링크 클릭 시 클라이언트 라우터로 페이지를 전환한다.
+ * @param {{ html: string, onLinkClick?: (e: React.MouseEvent<HTMLDivElement>) => void }} props 저장된 게시글 HTML
  * @returns {React.ReactElement} 리치 텍스트 본문
  */
-function RichTextArticle({ html }) {
-  return <div className={styles.richText} dangerouslySetInnerHTML={{ __html: html }} />;
+function RichTextArticle({ html, onLinkClick }) {
+  return <div className={styles.richText} onClick={onLinkClick} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 /**
@@ -33,6 +37,36 @@ function RichTextArticle({ html }) {
  * @returns {React.ReactElement} 게시글 본문
  */
 export default function BlogDetailArticle({ contentBlocks }) {
+  const router = useRouter();
+
+  const handleLinkClick = (e) => {
+    const anchor = e.target.closest('a');
+    if (!anchor) return;
+    const href = anchor.getAttribute('href');
+    if (!href) return;
+
+    // target="_blank" 또는 새 탭 열기(Ctrl, Cmd, Shift, Alt, 휠 클릭)는 기본 동작 유지
+    if (
+      anchor.target === '_blank' ||
+      e.defaultPrevented ||
+      e.button !== 0 ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.altKey ||
+      e.shiftKey
+    ) {
+      return;
+    }
+
+    // 내부 라우팅 대상: /@username/postId 또는 /u/username/postId 등
+    if (href.startsWith('/') && !href.startsWith('//')) {
+      e.preventDefault();
+      if (router?.push) {
+        router.push(href);
+      }
+    }
+  };
+
   return (
     <article className="space-y-8">
       {contentBlocks.map((block) => {
@@ -42,7 +76,7 @@ export default function BlogDetailArticle({ contentBlocks }) {
         }
 
         if (block.type === 'rich-text') {
-          return <RichTextArticle key={block.id} html={block.html} />;
+          return <RichTextArticle key={block.id} html={block.html} onLinkClick={handleLinkClick} />;
         }
 
         // 그 외 블록은 현재 기본 문단 스타일로 처리합니다.
