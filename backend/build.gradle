@@ -67,6 +67,7 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    environment 'GITHUB_TOKEN_ENCRYPTION_KEY', 'test-encryption-key-for-unit-test!'
 }
 
 spotless {

@@ -13,9 +13,11 @@ async function verifySingleExtensionRegistration() {
   const resolvedExtensions = resolveExtensions(editorExtensions);
   const linkExtensions = resolvedExtensions.filter(({ name }) => name === 'link');
   const underlineExtensions = resolvedExtensions.filter(({ name }) => name === 'underline');
+  const postLinkExtensions = resolvedExtensions.filter(({ name }) => name === 'postLink');
 
   await expect(linkExtensions).toHaveLength(1);
   await expect(underlineExtensions).toHaveLength(1);
+  await expect(postLinkExtensions).toHaveLength(1);
   await expect(linkExtensions[0].options).toMatchObject({
     autolink: true,
     defaultProtocol: 'https',

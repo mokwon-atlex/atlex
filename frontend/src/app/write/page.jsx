@@ -206,6 +206,7 @@ export default function PostWritePage() {
                 aiSuggestion.requestParagraphSuggestion();
               }}
               onCancelParagraphAi={abortParagraphSuggestion}
+              userId={userId}
             />
           }
           toolRail={

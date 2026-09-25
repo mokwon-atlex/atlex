@@ -8,6 +8,7 @@ import com.example.atlex.domain.category.entity.Category;
 import com.example.atlex.domain.graph.service.GraphIndexService;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.category.repository.CategoryRepository;
+import com.example.atlex.domain.post.repository.PostLikeRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.tag.entity.PostTag;
 import com.example.atlex.domain.tag.entity.Tag;
@@ -24,6 +25,8 @@ import com.example.atlex.domain.post.exception.PostUpdateForbiddenException;
 import com.example.atlex.domain.user.exception.UserNotFoundException;
 import com.example.atlex.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
+import com.example.atlex.domain.github.event.PostGitHubSyncEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -46,9 +50,11 @@ public class PostService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final GraphIndexService graphIndexService;
+    private final PostLikeRepository postLikeRepository;
     private final PostTagRepository postTagRepository;
     private final TagRepository tagRepository;
     private final TagService tagService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PostResponse createPost(PostCreateRequest request, Long id) {
@@ -74,6 +80,7 @@ public class PostService {
         Post savedPost = postRepository.save(post);
         List<String> tags = syncPostTags(user, savedPost, request.getTags());
         graphIndexService.refreshPostGraph(savedPost.getId());
+        eventPublisher.publishEvent(PostGitHubSyncEvent.create(savedPost.getId(), user.getId()));
 
         return PostResponse.from(savedPost, tags);
     }
@@ -113,8 +120,12 @@ public class PostService {
 
         List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
         Map<Long, List<String>> tagMap = findTagNamesByPostIds(postIds);
+        Set<Long> likedPostIds = findLikedPostIds(id, postIds);
 
-        return posts.map(post -> PostSummaryResponse.from(post, tagMap.getOrDefault(post.getId(), List.of())));
+        return posts.map(post -> PostSummaryResponse.from(
+            post,
+            tagMap.getOrDefault(post.getId(), List.of()),
+            likedPostIds.contains(post.getId())));
     }
 
     private String normalizeType(String type) {
@@ -145,7 +156,8 @@ public class PostService {
         }
 
         List<String> tags = postTagRepository.findTagNamesByPostId(postId);
-        return PostResponse.from(post, tags);
+        boolean liked = id != null && postLikeRepository.existsByPost_IdAndUser_Id(postId, id);
+        return PostResponse.from(post, tags, liked);
     }
 
     @Transactional
@@ -178,8 +190,11 @@ public class PostService {
         }
 
         graphIndexService.refreshPostGraph(post.getId());
+        eventPublisher.publishEvent(PostGitHubSyncEvent.update(post.getId(), id));
         List<String> tags = postTagRepository.findTagNamesByPostId(post.getId());
-        return PostResponse.from(post, tags);
+        // 수정 응답으로 상세 화면을 갱신해도 좋아요 상태가 풀리지 않도록 함께 내려준다.
+        boolean liked = postLikeRepository.existsByPost_IdAndUser_Id(post.getId(), id);
+        return PostResponse.from(post, tags, liked);
     }
 
     @Transactional
@@ -191,8 +206,10 @@ public class PostService {
             throw new PostDeleteForbiddenException();
         }
 
+        String postTitle = post.getTitle();
         post.softDelete();
         graphIndexService.removePostGraph(post.getId());
+        eventPublisher.publishEvent(PostGitHubSyncEvent.delete(postId, postTitle, id));
     }
 
     private List<String> syncPostTags(User user, Post post, List<String> rawTags) {
@@ -228,6 +245,15 @@ public class PostService {
         }
         postTagRepository.saveAll(postTags);
         return normalizedTags;
+    }
+
+    // 비로그인이거나 조회 결과가 비면 조회 없이 빈 집합을 돌려준다.
+    private Set<Long> findLikedPostIds(Long userId, List<Long> postIds) {
+        if (userId == null || postIds.isEmpty()) {
+            return Set.of();
+        }
+
+        return Set.copyOf(postLikeRepository.findLikedPostIds(userId, postIds));
     }
 
     private Map<Long, List<String>> findTagNamesByPostIds(List<Long> postIds) {

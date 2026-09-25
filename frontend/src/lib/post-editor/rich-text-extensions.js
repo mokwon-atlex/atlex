@@ -6,6 +6,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TextAlign from '@tiptap/extension-text-align';
 import StarterKit from '@tiptap/starter-kit';
 import { AiSuggestionExtension } from '@/lib/post-editor/rich-text-ai-extension';
+import { PostLinkExtension } from '@/lib/post-editor/rich-text-post-link-extension';
 import { createBlockContent } from '@/lib/post-editor/rich-text-utils';
 
 function createParagraphVariant(name, dataType) {
@@ -257,4 +258,5 @@ export const editorExtensions = [
   SectionBlock,
   MathBlock,
   AiSuggestionExtension,
+  PostLinkExtension,
 ];
