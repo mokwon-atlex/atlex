@@ -8,6 +8,7 @@ import com.example.atlex.domain.post.dto.request.PostUpdateRequest;
 import com.example.atlex.domain.category.entity.Category;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.category.repository.CategoryRepository;
+import com.example.atlex.domain.post.repository.PostLikeRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.post.service.PostService;
 import com.example.atlex.domain.user.entity.User;
@@ -35,11 +36,15 @@ import com.example.atlex.domain.tag.repository.PostTagRepository;
 import com.example.atlex.domain.tag.repository.TagRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,6 +59,8 @@ class PostServiceTest {
     CategoryRepository categoryRepository;
     @Mock
     GraphIndexService graphIndexService;
+    @Mock
+    PostLikeRepository postLikeRepository;
     @Mock
     PostTagRepository postTagRepository;
     @Mock
@@ -72,6 +79,7 @@ class PostServiceTest {
             userRepository,
             categoryRepository,
             graphIndexService,
+            postLikeRepository,
             postTagRepository,
             tagRepository,
             tagService,
@@ -513,6 +521,71 @@ class PostServiceTest {
             author.getId());
 
         assertEquals(List.of("Java", "JPA"), response.getTags());
+    }
+
+    @Test
+    @DisplayName("상세 조회는 로그인 사용자가 좋아요한 경우 liked=true를 반환한다")
+    void getPost_likedByCurrentUser() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder().id(100L).user(author).title("t").content("c").isPublic(true).build();
+        when(postRepository.findWithUserById(100L)).thenReturn(Optional.of(post));
+        when(postLikeRepository.existsByPost_IdAndUser_Id(100L, 2L)).thenReturn(true);
+
+        assertTrue(postService.getPost(100L, 2L).isLiked());
+    }
+
+    @Test
+    @DisplayName("상세 조회는 좋아요하지 않은 경우 liked=false를 반환한다")
+    void getPost_notLikedByCurrentUser() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder().id(100L).user(author).title("t").content("c").isPublic(true).build();
+        when(postRepository.findWithUserById(100L)).thenReturn(Optional.of(post));
+        when(postLikeRepository.existsByPost_IdAndUser_Id(100L, 2L)).thenReturn(false);
+
+        assertFalse(postService.getPost(100L, 2L).isLiked());
+    }
+
+    @Test
+    @DisplayName("비로그인 상세 조회는 좋아요를 조회하지 않고 liked=false를 반환한다")
+    void getPost_anonymousIsNotLiked() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder().id(100L).user(author).title("t").content("c").isPublic(true).build();
+        when(postRepository.findWithUserById(100L)).thenReturn(Optional.of(post));
+
+        assertFalse(postService.getPost(100L, null).isLiked());
+        verify(postLikeRepository, never()).existsByPost_IdAndUser_Id(any(), any());
+    }
+
+    @Test
+    @DisplayName("목록 조회는 좋아요한 게시글만 liked=true로 표시한다")
+    void getPostList_marksLikedPostsOnly() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post liked = Post.builder().id(10L).user(author).title("t1").content("c1").build();
+        Post notLiked = Post.builder().id(11L).user(author).title("t2").content("c2").build();
+        when(postRepository.findAllVisibleTo(eq(2L), isNull(), isNull(), isNull(), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(liked, notLiked)));
+        when(postLikeRepository.findLikedPostIds(2L, List.of(10L, 11L))).thenReturn(List.of(10L));
+
+        List<com.example.atlex.domain.post.dto.response.PostSummaryResponse> content = postService
+            .getPostList("latest", null, null, PageRequest.of(0, 10), 2L).getContent();
+
+        assertTrue(content.get(0).isLiked());
+        assertFalse(content.get(1).isLiked());
+    }
+
+    @Test
+    @DisplayName("비로그인 목록 조회는 좋아요를 조회하지 않고 전부 liked=false로 반환한다")
+    void getPostList_anonymousIsNotLiked() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder().id(10L).user(author).title("t1").content("c1").build();
+        when(postRepository.findAllPublic(isNull(), isNull(), isNull(), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(post)));
+
+        assertFalse(postService.getPostList("latest", null, null, PageRequest.of(0, 10), null)
+            .getContent()
+            .get(0)
+            .isLiked());
+        verify(postLikeRepository, never()).findLikedPostIds(any(), any());
     }
 
     @Test

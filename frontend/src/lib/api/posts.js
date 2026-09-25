@@ -92,6 +92,18 @@ export function removePostFavorite(postId) {
   return apiClient.delete(`/posts/${postId}/favorites`);
 }
 
+// POST /posts/{postId}/likes — 게시글 좋아요 등록.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function addPostLike(postId) {
+  return apiClient.post(`/posts/${postId}/likes`);
+}
+
+// DELETE /posts/{postId}/likes — 게시글 좋아요 해제.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function removePostLike(postId) {
+  return apiClient.delete(`/posts/${postId}/likes`);
+}
+
 // DELETE /posts/{postId} — 게시글 삭제.
 // Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
 export function deletePost(postId) {

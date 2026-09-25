@@ -11,8 +11,9 @@ export default function BlogDetailSidebar({
   asideNote,
   bookmarks = 7,
   comments,
+  initialLiked = false,
   keywords,
-  likes = 18,
+  likes = 0,
   pageSignals,
   postId,
   publishedAt,
@@ -32,7 +33,13 @@ export default function BlogDetailSidebar({
 
   return (
     <aside className="flex flex-col items-end gap-6 xl:sticky xl:top-1/2 xl:-translate-y-1/2">
-      <BlogDetailActionRail bookmarks={bookmarks} comments={comments} likes={likes} postId={postId} />
+      <BlogDetailActionRail
+        bookmarks={bookmarks}
+        comments={comments}
+        initialLiked={initialLiked}
+        likes={likes}
+        postId={postId}
+      />
 
       {shouldRenderMetaAside ? (
         <BlogDetailMetaAside
