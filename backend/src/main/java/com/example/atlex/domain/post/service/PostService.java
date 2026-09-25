@@ -25,6 +25,8 @@ import com.example.atlex.domain.post.exception.PostUpdateForbiddenException;
 import com.example.atlex.domain.user.exception.UserNotFoundException;
 import com.example.atlex.global.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
+import com.example.atlex.domain.github.event.PostGitHubSyncEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -52,6 +54,7 @@ public class PostService {
     private final PostTagRepository postTagRepository;
     private final TagRepository tagRepository;
     private final TagService tagService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PostResponse createPost(PostCreateRequest request, Long id) {
@@ -77,6 +80,7 @@ public class PostService {
         Post savedPost = postRepository.save(post);
         List<String> tags = syncPostTags(user, savedPost, request.getTags());
         graphIndexService.refreshPostGraph(savedPost.getId());
+        eventPublisher.publishEvent(PostGitHubSyncEvent.create(savedPost.getId(), user.getId()));
 
         return PostResponse.from(savedPost, tags);
     }
@@ -186,6 +190,7 @@ public class PostService {
         }
 
         graphIndexService.refreshPostGraph(post.getId());
+        eventPublisher.publishEvent(PostGitHubSyncEvent.update(post.getId(), id));
         List<String> tags = postTagRepository.findTagNamesByPostId(post.getId());
         // 수정 응답으로 상세 화면을 갱신해도 좋아요 상태가 풀리지 않도록 함께 내려준다.
         boolean liked = postLikeRepository.existsByPost_IdAndUser_Id(post.getId(), id);
@@ -201,8 +206,10 @@ public class PostService {
             throw new PostDeleteForbiddenException();
         }
 
+        String postTitle = post.getTitle();
         post.softDelete();
         graphIndexService.removePostGraph(post.getId());
+        eventPublisher.publishEvent(PostGitHubSyncEvent.delete(postId, postTitle, id));
     }
 
     private List<String> syncPostTags(User user, Post post, List<String> rawTags) {
