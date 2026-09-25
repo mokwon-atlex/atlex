@@ -62,7 +62,7 @@ export default function BlogMainPostCard({ post }) {
         </p>
 
         <p className="inline-flex items-center gap-1 font-semibold text-foreground">
-          <Heart className="h-3 w-3 fill-current" />
+          <Heart className={`h-3 w-3 ${post.liked ? 'fill-current' : ''}`} />
           <span>{post.likes}</span>
         </p>
       </CardFooter>
