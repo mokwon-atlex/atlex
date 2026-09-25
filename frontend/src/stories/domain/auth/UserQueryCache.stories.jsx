@@ -86,6 +86,8 @@ export const RefetchActiveQueryOnLogout = {
 
         useAuthStore.getState().logout();
 
+        // 로그아웃 직후 재조회 완료 전에도 이전 사용자 데이터가 비워져 있어야 한다.
+        await expect(observer.getCurrentResult().data).toBeUndefined();
         await waitFor(() => expect(observer.getCurrentResult().data).toEqual({ favorited: false }));
         // 재조회 전에 이전 사용자 데이터가 다시 노출되지 않아야 한다.
         await expect(results).not.toContainEqual({ favorited: true });
