@@ -1,10 +1,11 @@
 package com.example.atlex.domain.post.dto.request;
 
 import com.example.atlex.global.validation.anotation.NullOrNotBlank;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -13,7 +14,6 @@ import java.util.List;
 @Schema(description = "게시글 수정 요청 (수정할 필드만 전송)")
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 public class PostUpdateRequest {
 
     @Schema(description = "변경할 제목 (최대 200자, 선택)", example = "수정된 Spring Boot 가이드")
@@ -34,8 +34,13 @@ public class PostUpdateRequest {
     @Size(max = 255, message = "썸네일 URL은 255자 이하로 입력해주세요.")
     private String thumbnailUrl;
 
-    @Schema(description = "변경할 카테고리 ID (선택)", example = "3")
+    @Schema(description = "변경할 카테고리 ID (선택, 생략하면 유지, null이면 카테고리 해제)", example = "3", nullable = true)
     private Long categoryId;
+
+    // PATCH 에서 categoryId 생략(유지)과 명시적 null(해제)을 구분하기 위한 값.
+    // Jackson 은 요청 본문에 필드가 있을 때만 setter 를 호출하므로, setter 호출 여부로 전송 여부를 판단한다.
+    @JsonIgnore
+    private boolean categoryIdPresent;
 
     @Schema(description = "변경할 태그 목록 (최대 10개, 선택, null이면 유지, 빈 리스트면 태그 전체 삭제)", example = "[\"Java\", \"Spring Boot\"]")
     @Size(max = 10, message = "태그는 최대 10개까지 입력할 수 있습니다.")
@@ -43,4 +48,36 @@ public class PostUpdateRequest {
 
     @Schema(description = "변경할 공개 여부 (선택)", example = "false")
     private Boolean isPublic;
+
+    // 코드에서 직접 생성할 때만 사용한다. Jackson 이 이 생성자로 역직렬화하면 setter 가 호출되지 않아
+    // categoryId 전송 여부를 구분할 수 없으므로 역직렬화 대상에서 제외한다.
+    @JsonCreator(mode = JsonCreator.Mode.DISABLED)
+    public PostUpdateRequest(
+        String title,
+        String description,
+        String content,
+        String thumbnailUrl,
+        Long categoryId,
+        List<String> tags,
+        Boolean isPublic) {
+        this.title = title;
+        this.description = description;
+        this.content = content;
+        this.thumbnailUrl = thumbnailUrl;
+        this.categoryId = categoryId;
+        this.categoryIdPresent = categoryId != null;
+        this.tags = tags;
+        this.isPublic = isPublic;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+        this.categoryIdPresent = true;
+    }
+
+    /** 요청 본문에 categoryId 가 명시적 null 로 전송되어 카테고리를 해제해야 하는지 여부. */
+    @JsonIgnore
+    public boolean isCategoryCleared() {
+        return categoryIdPresent && categoryId == null;
+    }
 }

@@ -52,8 +52,13 @@ export function toBlogMainPost(apiPost) {
   };
 }
 
-// input: fetchPostById 응답 (ApiPost)
-// output: 상세 페이지 shape (BlogDetailContent 에서 소비)
+/**
+ * 게시글 단건 응답을 상세 페이지 shape 로 변환한다(BlogDetailContent 에서 소비).
+ * `postId` 는 작성자 전용 수정 링크(`/write/{postId}`) 생성에 사용된다.
+ *
+ * @param {object} apiPost - fetchPostById 응답(ApiPost).
+ * @returns {object} 상세 페이지 표시용 데이터.
+ */
 export function toBlogDetail(apiPost) {
   const content = apiPost.content ?? '';
   const sanitizedContent = sanitizeRichTextHtml(content);
@@ -61,6 +66,7 @@ export function toBlogDetail(apiPost) {
 
   return {
     id: apiPost.id,
+    // 수정 화면(/write/{postId}) 링크를 만드는 데 필요해 추가함.
     postId: apiPost.id,
     blogTitle: apiPost.authorUserId ? `${apiPost.authorUserId}.log` : 'blog',
     category: apiPost.categoryName ?? '미분류',
@@ -74,7 +80,6 @@ export function toBlogDetail(apiPost) {
     // SSR 응답에는 인증 헤더가 없어 항상 false 다. 화면에서 usePostLike 가 보정한다.
     liked: Boolean(apiPost.liked),
     authorUserId: apiPost.authorUserId ?? null,
-    tags: apiPost.tags ?? [],
     adminActions: ['통계', '수정', '삭제'],
     contentBlocks: [
       ...(apiPost.thumbnailUrl ? [{ id: 'cover', type: 'image', src: apiPost.thumbnailUrl, caption: '' }] : []),
