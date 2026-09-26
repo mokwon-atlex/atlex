@@ -62,6 +62,11 @@ public enum ErrorCode {
     COMMENT_UPDATE_FORBIDDEN(HttpStatus.FORBIDDEN, "본인이 작성한 댓글만 수정할 수 있습니다."),
     COMMENT_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "댓글을 삭제할 권한이 없습니다."),
 
+    // GitHub 연동
+    GITHUB_OAUTH_FAILED(HttpStatus.BAD_GATEWAY, "GitHub 인증에 실패했습니다."),
+    GITHUB_SYNC_NOT_CONFIGURED(HttpStatus.NOT_FOUND, "GitHub 연동 설정이 되어있지 않습니다."),
+    GITHUB_API_ERROR(HttpStatus.BAD_GATEWAY, "GitHub API 호출 중 오류가 발생했습니다."),
+
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생하였습니다.");
 

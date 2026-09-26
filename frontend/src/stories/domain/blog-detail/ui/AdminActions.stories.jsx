@@ -78,9 +78,15 @@ export const AuthorView = {
     try {
       const canvas = within(canvasElement);
 
+      // 수정은 /write/{postId} 로 이동하는 링크로 렌더링되어야 한다.
+      const editLink = await canvas.findByRole('link', { name: '수정' });
+      await expect(editLink).toHaveAttribute('href', '/write/123');
+
+      // 목적지가 없는 액션(통계)과 삭제는 링크가 아닌 일반 버튼으로 남아 있어야 한다.
       await expect(canvas.getByRole('button', { name: '삭제' })).toBeVisible();
-      await expect(canvas.getByRole('button', { name: '수정' })).toBeVisible();
+      await expect(canvas.queryByRole('link', { name: '삭제' })).not.toBeInTheDocument();
       await expect(canvas.getByRole('button', { name: '통계' })).toBeVisible();
+      await expect(canvas.queryByRole('link', { name: '통계' })).not.toBeInTheDocument();
     } finally {
       resetAuthStore();
     }

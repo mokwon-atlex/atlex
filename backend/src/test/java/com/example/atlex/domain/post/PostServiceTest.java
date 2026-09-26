@@ -67,6 +67,8 @@ class PostServiceTest {
     TagRepository tagRepository;
     @Mock
     com.example.atlex.domain.tag.service.TagService tagService;
+    @Mock
+    org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     private PostService postService;
 
@@ -80,7 +82,8 @@ class PostServiceTest {
             postLikeRepository,
             postTagRepository,
             tagRepository,
-            tagService);
+            tagService,
+            eventPublisher);
         lenient().when(postRepository.findAllPublic(any(), any(), any(), any(Pageable.class)))
             .thenReturn(Page.empty());
     }

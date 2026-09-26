@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { Button } from '@/components/common/ui/button';
+import { Button, buttonVariants } from '@/components/common/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -13,18 +14,28 @@ import {
   DialogTitle,
 } from '@/components/common/ui/dialog';
 import { useDeletePost } from '@/hooks/queries/posts/useDeletePost';
+import { cn } from '@/lib/utils';
+
+// postId 를 알아야 이동시킬 수 있는 액션들의 경로 매핑.
+// '통계' 등 아직 목적지가 없는 액션은 여기 없으면 기존처럼 버튼만 렌더링된다.
+// '삭제'는 확인 모달을 여는 별도 흐름으로 처리한다.
+const ACTION_HREF_BUILDERS = {
+  수정: (postId) => `/write/${postId}`,
+};
 
 /**
- * 게시글 관리자 전용 액션 바 컴포넌트입니다.
- * 작성자 본인에게만 노출되며, 게시글 삭제 시 확인 모달을 통한 안전한 삭제 흐름을 제공합니다.
+ * 게시글 작성자 전용 액션 바 컴포넌트(통계·수정·삭제 등).
+ * 로그인한 사용자가 작성자 본인일 때만 렌더링되며, 수정은 `/write/{postId}` 링크로,
+ * 삭제는 확인 모달을 통한 안전한 삭제 흐름으로, 그 외에는 목적지 없는 버튼으로 렌더링된다.
  *
  * @param {object} props
- * @param {string} props.authorUserId - 작성자의 유저 ID
- * @param {string | number} [props.postId] - 게시글 ID
- * @param {string[]} [props.actions] - 액션 버튼 목록 (기본: [])
+ * @param {string|number|null} props.authorUserId - 게시글 작성자 ID.
+ * @param {string|number} [props.postId] - 게시글 ID. 수정 링크 생성 및 삭제에 사용된다.
+ * @param {string[]} [props.actions] - 표시할 액션 라벨 목록 (기본: []).
  * @param {(postId: string | number) => Promise<void>} [props.onDelete] - 커스텀 삭제 핸들러 (미지정 시 useDeletePost 호출)
  * @param {() => void} [props.onDeleteSuccess] - 삭제 성공 시 콜백 (미지정 시 작성자 블로그 홈으로 이동)
  * @param {(error: Error) => void} [props.onDeleteError] - 삭제 실패 시 콜백
+ * @returns {JSX.Element|null} 작성자 전용 액션 버튼 그룹, 작성자가 아니면 null.
  */
 export function AdminActions({ authorUserId, postId, actions = [], onDelete, onDeleteSuccess, onDeleteError }) {
   const router = useRouter();
@@ -102,6 +113,22 @@ export function AdminActions({ authorUserId, postId, actions = [], onDelete, onD
               >
                 {action}
               </Button>
+            );
+          }
+
+          const buildHref = ACTION_HREF_BUILDERS[action];
+          const href = postId != null ? buildHref?.(postId) : null;
+
+          if (href) {
+            return (
+              // 페이지 이동이므로 버튼이 아닌 링크 시맨틱을 유지하고 스타일만 버튼과 맞춘다.
+              <Link
+                key={action}
+                href={href}
+                className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'rounded-full px-4')}
+              >
+                {action}
+              </Link>
             );
           }
 

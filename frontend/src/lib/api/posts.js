@@ -58,6 +58,7 @@ export function createPost({ categoryId, title, description, content, tags, isPu
 // PATCH /posts/{postId} — 게시글 수정.
 // Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
 // payload: { categoryId?, title?, description?, content?, tags?, isPublic? }
+// categoryId: undefined 면 기존 카테고리 유지, null 이면 카테고리 해제.
 export function updatePost(postId, { categoryId, title, description, content, tags, isPublic } = {}) {
   return apiClient.patch(`/posts/${postId}`, {
     ...(categoryId !== undefined && { categoryId }),
@@ -108,4 +109,25 @@ export function removePostLike(postId) {
 // Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
 export function deletePost(postId) {
   return apiClient.delete(`/posts/${postId}`);
+}
+
+// GET /posts/{postId}/export/markdown — 게시글 YAML Frontmatter 포함 마크다운 데이터 조회
+export function fetchPostMarkdown(postId) {
+  return apiClient.get(`/posts/${postId}/export/markdown`);
+}
+
+// 브라우저에서 게시글을 .md 파일로 즉시 다운로드 실행
+export async function downloadPostMarkdown(postId, fallbackFilename = 'post.md') {
+  const data = await fetchPostMarkdown(postId);
+  if (typeof window === 'undefined') return data;
+  const blob = new Blob([data.content], { type: 'text/markdown;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = data.filename || fallbackFilename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  return data;
 }
