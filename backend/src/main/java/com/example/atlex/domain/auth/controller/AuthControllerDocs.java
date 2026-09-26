@@ -35,7 +35,8 @@ public interface AuthControllerDocs {
               "data": {
                 "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
                 "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
-                "userId": "john123"
+                "userId": "john123",
+                "role": "USER"
               },
               "errors": null
             }"""))),
@@ -80,7 +81,8 @@ public interface AuthControllerDocs {
               "data": {
                 "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
                 "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
-                "userId": "john123"
+                "userId": "john123",
+                "role": "USER"
               },
               "errors": null
             }"""))),
