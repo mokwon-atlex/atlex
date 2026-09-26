@@ -58,6 +58,7 @@ export function createPost({ categoryId, title, description, content, tags, isPu
 // PATCH /posts/{postId} — 게시글 수정.
 // Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
 // payload: { categoryId?, title?, description?, content?, tags?, isPublic? }
+// categoryId: undefined 면 기존 카테고리 유지, null 이면 카테고리 해제.
 export function updatePost(postId, { categoryId, title, description, content, tags, isPublic } = {}) {
   return apiClient.patch(`/posts/${postId}`, {
     ...(categoryId !== undefined && { categoryId }),

@@ -485,6 +485,28 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("게시글 수정 시 categoryId를 null로 보내면 카테고리를 해제한다")
+    void update_explicitNullCategory_clearsCategory() throws Exception {
+        mockMvc.perform(patch("/api/v1/posts/{id}", publicPostId)
+            .header("Authorization", "Bearer " + authorToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"categoryId\":null}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.categoryId").value(nullValue()));
+    }
+
+    @Test
+    @DisplayName("게시글 수정 시 categoryId를 생략하면 기존 카테고리를 유지한다")
+    void update_omittedCategory_keepsCategory() throws Exception {
+        mockMvc.perform(patch("/api/v1/posts/{id}", publicPostId)
+            .header("Authorization", "Bearer " + authorToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"title\":\"updated\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.categoryId").value(category.getId()));
+    }
+
+    @Test
     @DisplayName("게시글 수정 시 description과 thumbnailUrl 변경")
     void update_descriptionAndThumbnail() throws Exception {
         mockMvc.perform(patch("/api/v1/posts/{id}", publicPostId)
