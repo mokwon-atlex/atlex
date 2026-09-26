@@ -175,6 +175,8 @@ public class PostService {
                 post.getUser().getId())
                 .orElseThrow(CategoryNotFoundException::new);
             post.updateCategory(category);
+        } else if (request.isCategoryCleared()) {
+            post.updateCategory(null);
         }
 
         post.update(
