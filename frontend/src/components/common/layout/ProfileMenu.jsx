@@ -54,6 +54,15 @@ export default function ProfileMenu() {
             >
               설정
             </Link>
+            {/* 관리자 메뉴 노출 여부만 판단한다. 실제 접근 권한은 서버가 검사한다. */}
+            {user?.role === 'ADMIN' && (
+              <Link
+                href="/admin/reports"
+                className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
+              >
+                신고 관리
+              </Link>
+            )}
           </>
         ) : (
           <Link

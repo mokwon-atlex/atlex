@@ -7,6 +7,7 @@ import com.example.atlex.domain.auth.exception.TooManyLoginAttemptsException;
 import com.example.atlex.domain.auth.repository.RefreshTokenRepository;
 import com.example.atlex.domain.auth.service.AuthService;
 import com.example.atlex.domain.user.entity.User;
+import com.example.atlex.domain.user.entity.UserRole;
 import com.example.atlex.domain.user.repository.UserRepository;
 import com.example.atlex.global.security.jwt.JwtProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,6 +97,28 @@ class AuthServiceTest {
 
         assertEquals(0, user.getFailCount());
         assertNull(user.getLockedUntil());
+    }
+
+    @Test
+    @DisplayName("로그인 성공 응답에 사용자 권한을 포함한다")
+    void 로그인_성공시_권한_반환() {
+        User admin = User.builder()
+            .id(1L)
+            .userId("testUser")
+            .password("encoded")
+            .active(true)
+            .failCount(0)
+            .role(UserRole.ADMIN)
+            .build();
+        when(userRepository.findByUserId("testUser")).thenReturn(Optional.of(admin));
+        when(passwordEncoder.matches("correct", "encoded")).thenReturn(true);
+        when(jwtProvider.createAccessToken(1L)).thenReturn("access");
+        when(jwtProvider.createRefreshToken(1L)).thenReturn("refresh");
+        when(tokenRepository.findById(1L)).thenReturn(Optional.empty());
+
+        TokenResponse response = authService.login("testUser", "correct");
+
+        assertEquals(UserRole.ADMIN, response.getRole());
     }
 
     @Test
