@@ -8,6 +8,7 @@ import { Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/common/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/common/ui/card';
 import { Textfield } from '@/components/common/ui/textfield';
+import PostLinkPopover from '@/components/domain/post-editor/ui/PostLinkPopover';
 
 export default function PostEditorContentSection({
   bodyPlaceholder,
@@ -17,6 +18,7 @@ export default function PostEditorContentSection({
   isSuggestingParagraph = false,
   onRequestParagraphAi,
   onCancelParagraphAi,
+  userId,
 }) {
   const handleKeyDown = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
@@ -82,6 +84,8 @@ export default function PostEditorContentSection({
             >
               <EditorContent editor={editor} />
             </div>
+
+            <PostLinkPopover editor={editor} userId={userId} />
           </CardContent>
         </Card>
       </div>

@@ -38,7 +38,7 @@ public interface PostFavoriteControllerDocs {
                     "title": "Spring Boot 입문 가이드",
                     "description": "Spring Boot를 처음 시작하는 분들을 위한 가이드입니다.",
                     "thumbnailUrl": null, "authorId": 1, "authorUserId": "john123",
-                    "authorName": "홍길동", "hits": 42, "likes": 7,
+                    "authorName": "홍길동", "hits": 42, "likes": 7, "liked": false,
                     "createdAt": "2024-01-15T10:30:00"
                   }
                 ],

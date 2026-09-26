@@ -20,11 +20,17 @@ import { useEffect, useRef } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchPosts } from '@/lib/api/posts';
 import { toBlogMainPost } from '@/lib/mappers/post';
+import { useAuthStore } from '@/store/authStore';
 
 export function useInfinitePosts({ pageSize = 10, authorUserId, initialPosts, totalPages } = {}) {
+  // 목록 응답의 liked 는 조회한 사용자 기준 값이다.
+  // authorUserId 는 글을 쓴 사람이라 이것만으로는 계정을 바꿔도 같은 캐시를 본다.
+  // 그래서 조회 주체(viewerId)를 키에 포함해 계정별로 분리한다.
+  const viewerId = useAuthStore((s) => s.user?.userId ?? null);
+
   const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    // queryKey: 이 배열이 같으면 같은 캐시를 바라본다. pageSize/authorUserId 가 바뀌면 새 요청을 보낸다.
-    queryKey: ['posts', { authorUserId, pageSize }],
+    // queryKey: 이 배열이 같으면 같은 캐시를 바라본다. pageSize/authorUserId/viewerId 가 바뀌면 새 요청을 보낸다.
+    queryKey: ['posts', { authorUserId, pageSize, viewerId: viewerId ?? 'anonymous' }],
 
     // queryFn: 다음 페이지를 실제로 가져오는 함수. pageParam 은 TanStack 이 주입해주는 페이지 번호.
     queryFn: async ({ pageParam }) => {

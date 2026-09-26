@@ -42,6 +42,9 @@ export function toBlogMainPost(apiPost) {
     author: apiPost.authorName,
     authorUserId: apiPost.authorUserId,
     likes: apiPost.likes ?? 0,
+    // 조회한 사용자 기준 값. SSR 응답에는 인증 헤더가 없어 false 로 내려오고,
+    // 마운트 후 클라이언트 재요청에서 실제 값으로 바뀜다.
+    liked: Boolean(apiPost.liked),
     comments: 0,
     publishedAt: formatKoreanDate(apiPost.createdAt),
     eyebrow: apiPost.categoryName ?? 'post',
@@ -68,6 +71,9 @@ export function toBlogDetail(apiPost) {
     updatedAt: formatKoreanDate(apiPost.updatedAt),
     readTime: `${Math.max(1, Math.ceil(plainTextContent.length / 300))} min read`,
     visibilityLabel: apiPost.isPublic ? '공개' : '비공개',
+    likes: apiPost.likes ?? 0,
+    // SSR 응답에는 인증 헤더가 없어 항상 false 다. 화면에서 usePostLike 가 보정한다.
+    liked: Boolean(apiPost.liked),
     authorUserId: apiPost.authorUserId ?? null,
     adminActions: ['통계', '수정', '삭제'],
     contentBlocks: [
@@ -93,7 +99,7 @@ export function toBlogHomeFeedPost(apiPost) {
     likes: apiPost.likes ?? 0,
     comments: 0,
     bookmarks: 0,
-    isLiked: false,
+    isLiked: Boolean(apiPost.liked),
     thumbnailUrl: apiPost.thumbnailUrl ?? undefined,
     // 목록 응답엔 isPublic 이 없다(상세에만 있음). 값이 없으면 공개로 본다 — 명시적 false 일 때만 비공개.
     isPrivate: apiPost.isPublic === false,

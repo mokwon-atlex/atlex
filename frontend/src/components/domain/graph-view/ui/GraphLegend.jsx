@@ -1,10 +1,6 @@
-/** API 관계의 공통 키워드 수에 따른 간선 굵기 기준을 안내한다. */
+/** 게시글 링크와 노드별 연결 강조 방식을 안내한다. */
 export function GraphLegend() {
-  const items = [
-    { label: '공통 키워드 1개', width: 2.5 },
-    { label: '공통 키워드 2개', width: 4 },
-    { label: '공통 키워드 3개 이상', width: 5.5 },
-  ];
+  const items = [{ label: '게시글 링크', width: 1.35 }];
 
   return (
     <div className="absolute bottom-20 left-6 hidden flex-col gap-1.5 rounded-xl border border-border bg-card/90 px-5 py-3 shadow-md backdrop-blur-sm md:flex">
@@ -18,7 +14,7 @@ export function GraphLegend() {
           </div>
         );
       })}
-      <p className="pt-1 text-[11px] font-bold text-muted-foreground">간선 hover 시 연결 키워드 표시</p>
+      <p className="pt-1 text-[11px] font-bold text-muted-foreground">노드에 올리면 연결 강조와 게시글 미리보기 표시</p>
     </div>
   );
 }
