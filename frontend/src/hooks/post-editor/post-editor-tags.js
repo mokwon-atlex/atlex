@@ -3,6 +3,15 @@
 import { useState } from 'react';
 import { extractBodyTags, mergeTags, parseTagInput } from '@/lib/post-editor/tags';
 
+/**
+ * 게시글 태그 입력 훅. 수동 입력 태그와 본문의 #해시태그를 합쳐 관리한다.
+ *
+ * @param {string} body - 해시태그를 추출할 본문 텍스트.
+ * @param {object} [options]
+ * @param {string[]} [options.initialManualTags] - 수동 태그 초기값(기본: []).
+ * @returns {object} 태그 목록(`manualTags`, `bodyTags`, `combinedTags`), 입력값(`tagInput`)과
+ *   입력·삭제 핸들러, 수정 화면에서 기존 태그를 덮어쓸 때 쓰는 `setManualTags`.
+ */
 export default function usePostEditorTags(body, { initialManualTags = [] } = {}) {
   const [tagInput, setTagInput] = useState('');
   const [manualTags, setManualTags] = useState(initialManualTags);

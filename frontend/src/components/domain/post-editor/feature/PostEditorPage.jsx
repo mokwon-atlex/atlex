@@ -147,6 +147,10 @@ export default function PostEditorPage({ postId }) {
 
   const activeMutation = isEditMode ? updatePost : createPost;
 
+  /**
+   * 게시/수정 버튼 핸들러. 제목·본문을 검증한 뒤 작성 모드면 createPost, 수정 모드면 updatePost 를 호출하고
+   * 성공 시 게시글 상세로 이동한다.
+   */
   function handlePublish() {
     // 중복 클릭 방지 — 같은 글이 여러 번 생성/수정되는 것을 막는다.
     if (activeMutation.isPending) return;

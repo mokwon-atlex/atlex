@@ -52,8 +52,13 @@ export function toBlogMainPost(apiPost) {
   };
 }
 
-// input: fetchPostById 응답 (ApiPost)
-// output: 상세 페이지 shape (BlogDetailContent 에서 소비)
+/**
+ * 게시글 단건 응답을 상세 페이지 shape 로 변환한다(BlogDetailContent 에서 소비).
+ * `postId` 는 작성자 전용 수정 링크(`/write/{postId}`) 생성에 사용된다.
+ *
+ * @param {object} apiPost - fetchPostById 응답(ApiPost).
+ * @returns {object} 상세 페이지 표시용 데이터.
+ */
 export function toBlogDetail(apiPost) {
   const content = apiPost.content ?? '';
   const sanitizedContent = sanitizeRichTextHtml(content);
