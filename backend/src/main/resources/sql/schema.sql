@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS reports;
 DROP TABLE IF EXISTS post_relations;
 DROP TABLE IF EXISTS post_keywords;
 DROP TABLE IF EXISTS post_tags;
@@ -201,3 +202,26 @@ CREATE TABLE post_favorites (
 
 CREATE INDEX idx_post_favorites_user_created
     ON post_favorites(user_id, created_at, id);
+
+CREATE TABLE reports (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    reporter_id BIGINT NOT NULL,
+    target_type VARCHAR(20) NOT NULL,
+    target_id BIGINT NOT NULL,
+    reason VARCHAR(20) NOT NULL,
+    description VARCHAR(500),
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    processed_by BIGINT,
+    result_memo VARCHAR(500),
+    processed_at DATETIME,
+    created_at DATETIME,
+    CONSTRAINT fk_reports_reporter
+        FOREIGN KEY (reporter_id) REFERENCES users(id),
+    CONSTRAINT fk_reports_processed_by
+        FOREIGN KEY (processed_by) REFERENCES users(id),
+    CONSTRAINT uk_reports_reporter_target
+        UNIQUE (reporter_id, target_type, target_id)
+);
+
+CREATE INDEX idx_reports_status_created
+    ON reports(status, created_at);

@@ -67,6 +67,14 @@ public enum ErrorCode {
     GITHUB_SYNC_NOT_CONFIGURED(HttpStatus.NOT_FOUND, "GitHub 연동 설정이 되어있지 않습니다."),
     GITHUB_API_ERROR(HttpStatus.BAD_GATEWAY, "GitHub API 호출 중 오류가 발생했습니다."),
 
+    // 신고
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 신고를 찾을 수 없습니다."),
+    DUPLICATE_REPORT(HttpStatus.CONFLICT, "이미 신고한 대상입니다."),
+    SELF_REPORT_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "본인이 작성한 콘텐츠는 신고할 수 없습니다."),
+    REPORT_DESCRIPTION_REQUIRED(HttpStatus.BAD_REQUEST, "기타 사유를 선택한 경우 추가 설명을 입력해주세요."),
+    INVALID_REPORT_STATUS(HttpStatus.BAD_REQUEST, "처리 결과는 조치 완료 또는 기각만 선택할 수 있습니다."),
+    REPORT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "이미 처리된 신고입니다."),
+
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생하였습니다.");
 
