@@ -68,8 +68,11 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   // 좋아요 요청이 진행 중인 계정·게시글 키. 같은 글의 중복 요청을 막는다.
   const [pendingLikeKeys, setPendingLikeKeys] = useState(() => new Set());
   const latestRequestIdRef = useRef(0);
-  // 목록 조회 결과로 피드를 교체할 때마다 올린다. 좋아요 실패 복구가 더 최신 목록 값을 덮어쓰지 않게 비교한다.
+  // 목록 조회 결과로 피드를 교체할 때마다 올린다. 좋아요 응답·실패 복구가 더 최신 목록 값을 덮어쓰지 않게 비교한다.
   const feedRevisionRef = useRef(0);
+  // 좋아요 요청이 끝난 시점의 페이지와 필터로 다시 조회하기 위해 최신 렌더의 재조회 함수를 유지한다.
+  const reloadFeedRef = useRef(null);
+  reloadFeedRef.current = () => handlePageChange(pageFeed.page ?? 1);
   // 요청 완료 시점에 계정이 바뀌었는지 비교하기 위해 최신 사용자를 ref 로도 유지한다.
   const currentUserIdRef = useRef(currentUserId ?? null);
   currentUserIdRef.current = currentUserId ?? null;
@@ -262,6 +265,12 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
 
       // 요청 중 계정이 바뀌면 이전 사용자의 결과를 목록에 쓰지 않는다. 재조회 결과가 기준이다.
       if (requestUserId !== currentUserIdRef.current) return;
+
+      // 요청 중 목록이 새로 조회됐다면 응답과 목록 중 무엇이 최신인지 알 수 없어 현재 조건으로 다시 조회한다.
+      if (requestFeedRevision !== feedRevisionRef.current) {
+        reloadFeedRef.current();
+        return;
+      }
 
       updateFeedPost(postId, {
         isLiked: Boolean(response?.liked),
