@@ -1,6 +1,7 @@
 import { Capsule } from '@/components/common/ui/capsule';
 import { textfieldVariants } from '@/components/common/ui/textfield';
 import { AdminActions } from '@/components/domain/blog-detail/ui/AdminActions';
+import { ReportButton } from '@/components/domain/report/ui/ReportButton';
 
 function MetaItem({ children }) {
   return <span className="text-[0.95rem] text-muted-foreground">{children}</span>;
@@ -8,7 +9,8 @@ function MetaItem({ children }) {
 
 /**
  * 게시글 상세 상단 영역(제목·요약·메타 정보). postId를 AdminActions로 전달해
- * 작성자 전용 수정 버튼의 이동 경로(`/write/{postId}`)를 만들 수 있게 한다.
+ * 작성자 전용 수정 버튼의 이동 경로(`/write/{postId}`)를 만들 수 있게 하고,
+ * 작성자가 아닌 로그인 사용자에게는 게시글 신고 버튼을 제공한다.
  *
  * @param {object} props
  * @param {string[]} [props.adminActions] - 작성자에게 노출할 액션 라벨 목록.
@@ -70,7 +72,11 @@ export default function BlogDetailHero({
             </Capsule>
           </div>
 
-          <AdminActions authorUserId={authorUserId} actions={adminActions} postId={postId} />
+          <div className="flex items-center gap-2">
+            <AdminActions authorUserId={authorUserId} actions={adminActions} postId={postId} />
+            {/* 작성자가 아닌 로그인 사용자에게만 신고 버튼이 노출된다. */}
+            <ReportButton targetType="POST" targetId={postId} authorUserId={authorUserId} />
+          </div>
         </div>
       </div>
     </section>

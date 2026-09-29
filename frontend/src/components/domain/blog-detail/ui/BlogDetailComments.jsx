@@ -1,7 +1,8 @@
 'use client';
 
 // 게시글 상세 화면의 댓글 섹션 컴포넌트.
-// 댓글 목록 조회, 신규 댓글 등록, 작성자 본인 댓글의 인라인 수정 및 삭제(다이얼로그 확인) 기능을 제공한다.
+// 댓글 목록 조회, 신규 댓글 등록, 작성자 본인 댓글의 인라인 수정 및 삭제(다이얼로그 확인),
+// 타인 댓글 신고 기능을 제공한다.
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -17,6 +18,7 @@ import {
 } from '@/components/common/ui/dialog';
 import { Textarea } from '@/components/common/ui/textarea';
 import { useComments } from '@/hooks/queries/comments/useComments';
+import { ReportButton } from '@/components/domain/report/ui/ReportButton';
 import { useAuthStore } from '@/store/authStore';
 
 const MAX_COMMENT_LENGTH = 1000;
@@ -316,6 +318,16 @@ export function BlogDetailComments({ postId, postAuthorUserId }) {
                         <span className="ml-1">삭제</span>
                       </Button>
                     </div>
+                  )}
+
+                  {/* 타인 댓글 신고 버튼 (본인 댓글·미로그인 시 ReportButton이 렌더링하지 않음) */}
+                  {!isAuthor && (
+                    <ReportButton
+                      targetType="COMMENT"
+                      targetId={comment.id}
+                      authorUserId={comment.authorUserId}
+                      size="xs"
+                    />
                   )}
                 </div>
 

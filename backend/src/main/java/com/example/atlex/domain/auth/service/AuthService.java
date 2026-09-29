@@ -75,6 +75,7 @@ public class AuthService {
             .accessToken(accessToken)
             .refreshToken(refreshToken)
             .userId(userId)
+            .role(user.getRole())
             .build();
     }
 
@@ -115,6 +116,7 @@ public class AuthService {
             .accessToken(newAccessToken)
             .refreshToken(newRefreshToken)
             .userId(user.getUserId())
+            .role(user.getRole())
             .build();
     }
 
