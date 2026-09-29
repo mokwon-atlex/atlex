@@ -450,15 +450,123 @@ export const AnonymousLikeRedirectsToLogin = {
   },
 };
 
-/** 좋아요 버튼을 눌러도 카드 링크를 통한 상세 페이지 이동이 일어나지 않는다. */
+/** 좋아요 버튼을 눌러도 상세 페이지로 이동하지 않고, 버튼 밖의 카드 영역은 상세 링크로 남는다. */
 export const LikeClickDoesNotNavigate = {
   args: serverFilterArgs,
   beforeEach: setupLikeRequests(),
   play: async ({ canvasElement }) => {
     const title = '좋아요 안 한 게시글';
 
+    // Given: 로그인 사용자 기준 목록이 준비된 피드와, 카드 링크에 도달한 클릭 기록
     await waitFor(() => expect(getLikeButton(canvasElement, title)).toBeEnabled());
-    // 좋아요 버튼은 카드 링크의 자손이 아니어야 한다.
-    expect(getLikeButton(canvasElement, title).closest('a')).toBeNull();
+    const card = within(canvasElement).getByText(title).closest('article');
+    const cardLink = within(card).getByRole('link', { name: title });
+    const linkClicks = [];
+    // 링크에 도달한 클릭은 기록만 하고 실제 이동은 막는다. 테스트 화면이 이동하면 실행이 끊긴다.
+    const recordLinkClick = (event) => {
+      event.preventDefault();
+      linkClicks.push(event);
+    };
+    cardLink.addEventListener('click', recordLinkClick);
+
+    try {
+      // When: 좋아요 버튼을 누르면
+      await userEvent.click(getLikeButton(canvasElement, title));
+
+      // Then: 좋아요 요청만 나가고 클릭이 상세 링크로 전달되지 않는다.
+      await waitFor(() => expect(likeSpy).toHaveBeenCalledWith('/posts/2/likes'));
+      expect(linkClicks).toHaveLength(0);
+    } finally {
+      cardLink.removeEventListener('click', recordLinkClick);
+    }
+
+    // 실제 화면 좌표로 가리킨 요소를 확인해, 버튼은 링크 위에 있고 날짜 영역은 링크로 덮여 있는지 본다.
+    const pickElementAt = (element) => {
+      const rect = element.getBoundingClientRect();
+      return document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    };
+    const likeButton = getLikeButton(canvasElement, title);
+
+    expect(likeButton.contains(pickElementAt(likeButton))).toBe(true);
+    expect(pickElementAt(within(card).getByText('2024.05.10'))).toBe(cardLink);
+  },
+};
+
+// 계정 전환 검증용 응답. 같은 글에 대해 다른 계정은 반대의 좋아요 상태를 갖는다.
+const mockOtherAccountLikeApiPosts = [
+  { ...mockLikeApiPosts[0], liked: false },
+  { ...mockLikeApiPosts[1], liked: true },
+];
+
+/** 다른 계정의 목록 응답을 play 함수에서 원하는 시점에 돌려주기 위한 함수. */
+let releaseOtherAccountList;
+
+/**
+ * viewer 로 로그인한 상태에서 시작하고, other-viewer 의 목록 응답은 명시적으로 풀어줄 때까지 지연한다.
+ *
+ * @returns {() => void} 스토리 종료 시 스파이와 로그인 상태를 되돌리는 정리 함수
+ */
+function setupAccountSwitchRequests() {
+  let resolveOtherAccountList;
+  const otherAccountList = new Promise((resolve) => {
+    resolveOtherAccountList = resolve;
+  });
+  releaseOtherAccountList = () =>
+    resolveOtherAccountList({ content: mockOtherAccountLikeApiPosts, totalElements: 2, totalPages: 1 });
+
+  useAuthStore.setState({ isLoggedIn: true, user: { userId: 'viewer' }, accessToken: 'mock-token' });
+
+  postListSpy = spyOn(apiClient, 'get').mockImplementation(async () => {
+    if (useAuthStore.getState().user?.userId === 'other-viewer') return otherAccountList;
+    return { content: mockLikeApiPosts, totalElements: 2, totalPages: 1 };
+  });
+  likeSpy = spyOn(apiClient, 'post').mockImplementation(async () => ({ liked: true, likes: 4 }));
+  unlikeSpy = spyOn(apiClient, 'delete').mockImplementation(async () => ({ liked: false, likes: 4 }));
+
+  return () => {
+    releaseOtherAccountList();
+    postListSpy.mockRestore();
+    likeSpy.mockRestore();
+    unlikeSpy.mockRestore();
+    postListSpy = undefined;
+    likeSpy = undefined;
+    unlikeSpy = undefined;
+    releaseOtherAccountList = undefined;
+    useAuthStore.setState({ isLoggedIn: false, user: null, accessToken: null });
+  };
+}
+
+/** 계정을 바꾸면 새 계정 기준 목록이 올 때까지 이전 좋아요를 숨기고 토글을 막은 뒤, 새 상태로 갱신한다. */
+export const AccountSwitchReloadsLikeState = {
+  args: serverFilterArgs,
+  beforeEach: setupAccountSwitchRequests,
+  play: async ({ canvasElement }) => {
+    const likedTitle = '좋아요한 게시글';
+    const unlikedTitle = '좋아요 안 한 게시글';
+
+    // Given: viewer 기준으로 첫 번째 글에 좋아요가 표시된 피드
+    await waitFor(() => expect(getLikeButton(canvasElement, likedTitle)).toHaveAttribute('aria-pressed', 'true'));
+
+    // When: other-viewer 로 계정을 바꾸면
+    useAuthStore.setState({ isLoggedIn: true, user: { userId: 'other-viewer' }, accessToken: 'other-token' });
+
+    // Then: 새 목록이 오기 전에는 이전 계정의 좋아요를 숨기고 버튼을 막는다.
+    await waitFor(() => {
+      expect(getLikeButton(canvasElement, likedTitle)).toHaveAttribute('aria-pressed', 'false');
+      expect(getLikeButton(canvasElement, likedTitle)).toBeDisabled();
+      expect(getLikeButton(canvasElement, unlikedTitle)).toBeDisabled();
+    });
+    expect(likeSpy).not.toHaveBeenCalled();
+    expect(unlikeSpy).not.toHaveBeenCalled();
+
+    // When: other-viewer 기준 목록이 도착하면
+    releaseOtherAccountList();
+
+    // Then: 새 계정의 좋아요 상태로 갱신되고 다시 토글할 수 있다.
+    await waitFor(() => {
+      expect(getLikeButton(canvasElement, likedTitle)).toHaveAttribute('aria-pressed', 'false');
+      expect(getLikeButton(canvasElement, unlikedTitle)).toHaveAttribute('aria-pressed', 'true');
+      expect(getLikeButton(canvasElement, unlikedTitle)).toBeEnabled();
+    });
   },
 };
