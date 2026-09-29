@@ -60,7 +60,8 @@ export default function BlogHomeFeedItemFooterLayout({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Textfield className="text-xs font-semibold text-muted-foreground">{date}</Textfield>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {/* 카드 전체를 덮는 상세 링크 위로 버튼만 올린다. 날짜 등 나머지 영역은 링크로 남긴다. */}
+        <div className="relative z-10 flex flex-wrap items-center gap-2">
           <ReactionButton
             active={isLiked}
             disabled={isLikeDisabled}

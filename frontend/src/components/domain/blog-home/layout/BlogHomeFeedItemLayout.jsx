@@ -45,7 +45,7 @@ export default function BlogHomeFeedItemLayout({
     >
       {href ? (
         // 링크 안에 버튼을 넣을 수 없어 카드 전체를 덮는 링크를 형제로 두고,
-        // 반응 버튼이 있는 푸터만 링크 위로 올려 클릭이 상세 이동으로 새지 않게 한다.
+        // 반응 버튼만 링크 위로 올려(푸터 레이아웃) 버튼 클릭이 상세 이동으로 새지 않게 한다.
         <Link
           href={href}
           aria-label={title}
@@ -68,17 +68,15 @@ export default function BlogHomeFeedItemLayout({
             tags={tags}
             title={title}
           />
-          <div className="relative z-10">
-            <BlogHomeFeedItemFooterLayout
-              bookmarks={bookmarks}
-              comments={comments}
-              date={date}
-              isLikeDisabled={isLikeDisabled}
-              isLiked={isLiked}
-              likes={likes}
-              onLikeToggle={onLikeToggle}
-            />
-          </div>
+          <BlogHomeFeedItemFooterLayout
+            bookmarks={bookmarks}
+            comments={comments}
+            date={date}
+            isLikeDisabled={isLikeDisabled}
+            isLiked={isLiked}
+            likes={likes}
+            onLikeToggle={onLikeToggle}
+          />
         </div>
       </div>
     </article>

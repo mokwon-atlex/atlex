@@ -39,6 +39,11 @@ function createPagination(currentPage, totalPages) {
   ];
 }
 
+/** 좋아요 진행 상태를 계정별로 구분하는 키. 다른 계정의 요청 완료가 현재 계정의 진행 상태를 지우지 않게 한다. */
+function getLikeRequestKey(userId, postId) {
+  return `${userId ?? ''}:${postId}`;
+}
+
 function isPostWrittenByUser(post, userId) {
   const postAuthorUserId = post?.authorUserId ?? post?.userId ?? post?.author?.userId ?? post?.user?.userId;
 
@@ -60,9 +65,11 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   // 현재 목록의 liked 가 누구 기준으로 조회된 값인지 기록한다.
   // SSR 요청에는 토큰이 붙지 않으므로 초기 목록은 비로그인(null) 기준이다.
   const [likeStateUserId, setLikeStateUserId] = useState(null);
-  // 좋아요 요청이 진행 중인 게시글 id. 같은 글의 중복 요청을 막는다.
-  const [pendingLikePostIds, setPendingLikePostIds] = useState(() => new Set());
+  // 좋아요 요청이 진행 중인 계정·게시글 키. 같은 글의 중복 요청을 막는다.
+  const [pendingLikeKeys, setPendingLikeKeys] = useState(() => new Set());
   const latestRequestIdRef = useRef(0);
+  // 목록 조회 결과로 피드를 교체할 때마다 올린다. 좋아요 실패 복구가 더 최신 목록 값을 덮어쓰지 않게 비교한다.
+  const feedRevisionRef = useRef(0);
   // 요청 완료 시점에 계정이 바뀌었는지 비교하기 위해 최신 사용자를 ref 로도 유지한다.
   const currentUserIdRef = useRef(currentUserId ?? null);
   currentUserIdRef.current = currentUserId ?? null;
@@ -109,7 +116,7 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
         ...post,
         // 다른 사용자 기준 상태가 남아 있으면 보정 조회가 끝날 때까지 채워진 하트를 숨긴다.
         isLiked: isLikeStateReady && post.isLiked,
-        isLikeDisabled: !isLikeStateReady || pendingLikePostIds.has(post.id),
+        isLikeDisabled: !isLikeStateReady || pendingLikeKeys.has(getLikeRequestKey(currentUserId, post.id)),
         onLikeToggle: () => handleLikeToggle(post),
       })),
       isLoading: isPageLoading,
@@ -124,7 +131,8 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
     selectedTag,
     isPageLoading,
     isLikeStateReady,
-    pendingLikePostIds,
+    pendingLikeKeys,
+    currentUserId,
   ]);
 
   useEffect(() => {
@@ -132,6 +140,7 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   }, []);
 
   useEffect(() => {
+    feedRevisionRef.current += 1;
     setPageFeed(feed);
     // 새로 받은 SSR 목록은 비로그인 기준이므로 보정 조회가 끝날 때까지 liked 를 신뢰하지 않는다.
     setLikeStateUserId(null);
@@ -200,6 +209,7 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
           ? (postsPage?.totalPages ?? Math.max(Math.ceil(totalCount / pageSize), 1))
           : Math.max(Math.ceil(totalCount / pageSize), 1);
 
+      feedRevisionRef.current += 1;
       setPageFeed((previousFeed) => ({
         ...previousFeed,
         page,
@@ -233,12 +243,15 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
       router.push('/auth/login');
       return;
     }
-    if (!isLikeStateReady || pendingLikePostIds.has(post.id)) return;
-
     const requestUserId = currentUserIdRef.current;
     const { id: postId, isLiked: previousLiked, likes: previousLikes } = post;
+    const likeRequestKey = getLikeRequestKey(requestUserId, postId);
 
-    setPendingLikePostIds((previous) => new Set(previous).add(postId));
+    if (!isLikeStateReady || pendingLikeKeys.has(likeRequestKey)) return;
+
+    const requestFeedRevision = feedRevisionRef.current;
+
+    setPendingLikeKeys((previous) => new Set(previous).add(likeRequestKey));
     updateFeedPost(postId, {
       isLiked: !previousLiked,
       likes: Math.max(0, previousLikes + (previousLiked ? -1 : 1)),
@@ -255,14 +268,15 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
         likes: response?.likes ?? previousLikes,
       });
     } catch (error) {
-      if (requestUserId === currentUserIdRef.current) {
+      // 요청 중 목록이 새로 조회됐다면 그 값이 더 최신이므로 이전 값으로 되돌리지 않는다.
+      if (requestUserId === currentUserIdRef.current && requestFeedRevision === feedRevisionRef.current) {
         updateFeedPost(postId, { isLiked: previousLiked, likes: previousLikes });
       }
       console.error('Failed to toggle post like:', error);
     } finally {
-      setPendingLikePostIds((previous) => {
+      setPendingLikeKeys((previous) => {
         const next = new Set(previous);
-        next.delete(postId);
+        next.delete(likeRequestKey);
         return next;
       });
     }
