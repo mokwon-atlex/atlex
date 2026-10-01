@@ -4,13 +4,14 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import ProfileMenu from '@/components/common/layout/ProfileMenu';
 import { useAuthStore } from '@/store/authStore';
 
-const loggedInUser = { userId: 'atlex' };
+const loggedInUser = { userId: 'atlex', role: 'USER' };
+const adminUser = { userId: 'atlex', role: 'ADMIN' };
 
-function ProfileMenuWithAuth({ isLoggedIn }) {
+function ProfileMenuWithAuth({ isLoggedIn, isAdmin = false }) {
   useEffect(() => {
     useAuthStore.setState({
       isLoggedIn,
-      user: isLoggedIn ? loggedInUser : null,
+      user: isLoggedIn ? (isAdmin ? adminUser : loggedInUser) : null,
       accessToken: null,
       refreshToken: null,
     });
@@ -23,7 +24,7 @@ function ProfileMenuWithAuth({ isLoggedIn }) {
         refreshToken: null,
       });
     };
-  }, [isLoggedIn]);
+  }, [isLoggedIn, isAdmin]);
 
   return (
     <div className="flex min-h-48 min-w-72 justify-end p-8">
@@ -56,6 +57,19 @@ export const LoggedIn = {
 
     await waitFor(() => expect(screen.getByRole('link', { name: '내 블로그' })).toHaveAttribute('href', '/@atlex'));
     await expect(screen.getByRole('link', { name: '그래프 뷰' })).toHaveAttribute('href', '/graph');
+    // 일반 사용자에게는 관리자 메뉴를 노출하지 않는다.
+    await expect(screen.queryByRole('link', { name: '신고 관리' })).toBeNull();
+  },
+};
+
+export const LoggedInAdmin = {
+  args: { isLoggedIn: true, isAdmin: true },
+  play: async ({ canvasElement }) => {
+    const screen = await openProfileMenu(canvasElement);
+
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: '신고 관리' })).toHaveAttribute('href', '/admin/reports'),
+    );
   },
 };
 
