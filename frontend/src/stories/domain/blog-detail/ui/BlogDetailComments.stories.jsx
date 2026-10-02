@@ -196,3 +196,34 @@ export const SubmitReply = {
     await waitFor(() => expect(canvas.queryByLabelText('답글 작성')).toBeNull());
   },
 };
+
+/** 답글 등록 중에도 최상위 댓글 입력창은 잠기지 않는다. */
+export const ReplyPendingKeepsCommentForm = {
+  decorators: [createQueryDecorator(mockCommentsWithReplies, { isLoggedIn: true, userId: 'my-account' })],
+  beforeEach: () => {
+    // 답글 등록 요청을 응답하지 않은 상태로 유지해 등록 중 화면을 확인한다.
+    const postSpy = spyOn(apiClient, 'post').mockImplementation(() => new Promise(() => {}));
+    // 마운트 시 재조회는 기존 목록을 그대로 돌려준다.
+    const getSpy = spyOn(apiClient, 'get').mockImplementation(async () => mockCommentsWithReplies);
+    return () => {
+      postSpy.mockRestore();
+      getSpy.mockRestore();
+    };
+  },
+  render: () => (
+    <div className="w-[780px]">
+      <BlogDetailComments postId="10" postAuthorUserId="tech-guru" />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole('button', { name: '답글' }));
+    await userEvent.type(canvas.getByLabelText('답글 작성'), '답글 내용');
+    await userEvent.click(canvas.getByRole('button', { name: '답글 등록' }));
+
+    await expect(await canvas.findByRole('button', { name: '등록 중...' })).toBeDisabled();
+    await expect(canvas.getByLabelText('댓글 작성')).toBeEnabled();
+    await expect(canvas.getByRole('button', { name: '댓글 등록' })).toBeVisible();
+  },
+};
