@@ -60,6 +60,8 @@ export function BlogDetailComments({ postId, postAuthorUserId }) {
     refetch,
     createComment,
     isCreating,
+    createReply,
+    isCreatingReply,
     updateComment,
     isUpdating,
     deleteComment,
@@ -120,11 +122,11 @@ export function BlogDetailComments({ postId, postAuthorUserId }) {
   const handleReplySubmit = async (e, parentId) => {
     e.preventDefault();
     const trimmed = replyContent.trim();
-    if (!trimmed || isCreating) return;
+    if (!trimmed || isCreatingReply) return;
 
     setReplyErrorMessage('');
     try {
-      await createComment({ content: trimmed, parentId });
+      await createReply({ parentId, content: trimmed });
       setReplyingCommentId(null);
       setReplyContent('');
     } catch (err) {
@@ -390,7 +392,7 @@ export function BlogDetailComments({ postId, postAuthorUserId }) {
         onChange={(e) => setReplyContent(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
         onKeyDown={(e) => handleReplyKeyDown(e, parentId)}
         maxLength={MAX_COMMENT_LENGTH}
-        disabled={isCreating}
+        disabled={isCreatingReply}
         rows={2}
         autoFocus
         className="w-full resize-none bg-background text-sm placeholder:text-muted-foreground/70"
@@ -405,12 +407,12 @@ export function BlogDetailComments({ postId, postAuthorUserId }) {
             variant="ghost"
             size="sm"
             onClick={() => handleToggleReply(parentId)}
-            disabled={isCreating}
+            disabled={isCreatingReply}
           >
             취소
           </Button>
-          <Button type="submit" size="sm" disabled={!replyContent.trim() || isCreating}>
-            {isCreating ? '등록 중...' : '답글 등록'}
+          <Button type="submit" size="sm" disabled={!replyContent.trim() || isCreatingReply}>
+            {isCreatingReply ? '등록 중...' : '답글 등록'}
           </Button>
         </div>
       </div>

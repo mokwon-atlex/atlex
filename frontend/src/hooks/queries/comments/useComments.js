@@ -31,7 +31,15 @@ export function useComments(postId) {
   });
 
   const createMutation = useMutation({
-    mutationFn: ({ content, parentId }) => createComment(postId, { content, parentId }),
+    mutationFn: ({ content }) => createComment(postId, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  // 답글은 별도 mutation으로 두어 최상위 댓글 입력창과 등록 중 상태를 공유하지 않는다.
+  const replyMutation = useMutation({
+    mutationFn: ({ parentId, content }) => createComment(postId, { content, parentId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
     },
@@ -61,10 +69,14 @@ export function useComments(postId) {
     isError: commentsQuery.isError,
     error: commentsQuery.error,
     refetch: commentsQuery.refetch,
-    // 생성 mutation (parentId를 지정하면 답글 작성)
+    // 최상위 댓글 생성 mutation
     createComment: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
     createError: createMutation.error,
+    // 답글 생성 mutation
+    createReply: replyMutation.mutateAsync,
+    isCreatingReply: replyMutation.isPending,
+    createReplyError: replyMutation.error,
     // 수정 mutation
     updateComment: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
