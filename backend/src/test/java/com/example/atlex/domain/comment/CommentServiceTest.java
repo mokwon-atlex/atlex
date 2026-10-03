@@ -4,6 +4,7 @@ import com.example.atlex.domain.comment.dto.request.CommentCreateRequest;
 import com.example.atlex.domain.comment.dto.request.CommentUpdateRequest;
 import com.example.atlex.domain.comment.dto.response.CommentResponse;
 import com.example.atlex.domain.comment.entity.Comment;
+import com.example.atlex.domain.comment.event.CommentCreatedEvent;
 import com.example.atlex.domain.comment.repository.CommentRepository;
 import com.example.atlex.domain.comment.service.CommentService;
 import com.example.atlex.domain.post.entity.Post;
@@ -16,9 +17,11 @@ import com.example.atlex.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +45,8 @@ class CommentServiceTest {
     PostAccessService postAccessService;
     @Mock
     UserRepository userRepository;
+    @Mock
+    ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     CommentService commentService;
@@ -110,6 +115,47 @@ class CommentServiceTest {
 
         assertEquals(100L, response.getParentId());
         assertNull(response.getReplies());
+    }
+
+    @Test
+    @DisplayName("최상위 댓글을 작성하면 게시글 작성자 정보를 담은 댓글 작성 이벤트를 발행한다")
+    void createComment_publishesCommentCreatedEvent() {
+        User postAuthor = user(1L, "author");
+        User commenter = user(2L, "commenter");
+        Post post = post(10L, postAuthor, true);
+        when(postAccessService.getAccessiblePost(10L, 2L)).thenReturn(post);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(commenter));
+        when(commentRepository.save(any(Comment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        commentService.createComment(10L, new CommentCreateRequest("댓글"), 2L);
+
+        ArgumentCaptor<CommentCreatedEvent> captor = ArgumentCaptor.forClass(CommentCreatedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        CommentCreatedEvent event = captor.getValue();
+        assertEquals(10L, event.postId());
+        assertEquals(2L, event.actorId());
+        assertEquals(1L, event.postAuthorId());
+        assertNull(event.parentAuthorId());
+    }
+
+    @Test
+    @DisplayName("답글을 작성하면 부모 댓글 작성자 정보를 담은 댓글 작성 이벤트를 발행한다")
+    void createReply_publishesEventWithParentAuthor() {
+        User postAuthor = user(1L, "author");
+        User parentAuthor = user(2L, "parent");
+        User replier = user(3L, "replier");
+        Post post = post(10L, postAuthor, true);
+        Comment parent = comment(100L, post, parentAuthor, "부모");
+        when(postAccessService.getAccessiblePost(10L, 3L)).thenReturn(post);
+        when(userRepository.findById(3L)).thenReturn(Optional.of(replier));
+        when(commentRepository.findActiveWithAuthorById(100L)).thenReturn(Optional.of(parent));
+        when(commentRepository.save(any(Comment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        commentService.createComment(10L, new CommentCreateRequest("답글", 100L), 3L);
+
+        ArgumentCaptor<CommentCreatedEvent> captor = ArgumentCaptor.forClass(CommentCreatedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertEquals(2L, captor.getValue().parentAuthorId());
     }
 
     @Test
