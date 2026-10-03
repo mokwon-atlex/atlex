@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Download, Heart, LoaderCircle, MessageSquare, Share2 } from 'lucide-react';
+import { Bookmark, Download, Heart, LoaderCircle, MessageSquare, Share2 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/common/ui/button';
 import { useComments } from '@/hooks/queries/comments/useComments';
+import { usePostFavorite } from '@/hooks/queries/posts/usePostFavorite';
 import { usePostLike } from '@/hooks/queries/posts/usePostLike';
 import { downloadPostMarkdown } from '@/lib/api/posts';
 
@@ -28,7 +29,6 @@ function ActionButton({ label, count, icon, onClick, disabled, pressed, 'aria-la
 }
 
 export default function BlogDetailActionRail({
-  bookmarks = 7,
   comments: propComments,
   initialLiked = false,
   likes = 0,
@@ -38,8 +38,10 @@ export default function BlogDetailActionRail({
   const { comments = [] } = useComments(postId);
   const commentCount = propComments ?? (postId ? comments.length : 0);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [needsLogin, setNeedsLogin] = useState(false);
+  // 로그인이 필요한 동작 이름('좋아요' | '즐겨찾기'). null 이면 안내를 숨긴다.
+  const [loginRequiredFor, setLoginRequiredFor] = useState(null);
   const [likeError, setLikeError] = useState(null);
+  const [favoriteError, setFavoriteError] = useState(null);
   const {
     isLoggedIn,
     isLiked,
@@ -51,11 +53,18 @@ export default function BlogDetailActionRail({
     toggleLike,
   } = usePostLike(postId, { initialLiked, initialLikes: likes });
 
+  const {
+    isFavorited,
+    isStateReady: isFavoriteStateReady,
+    isPending: isFavoritePending,
+    toggleFavorite,
+  } = usePostFavorite(postId);
+
   const handleLikeClick = async () => {
     setLikeError(null);
-    setNeedsLogin(false);
+    setLoginRequiredFor(null);
     if (!isLoggedIn) {
-      setNeedsLogin(true);
+      setLoginRequiredFor('좋아요');
       return;
     }
 
@@ -63,6 +72,21 @@ export default function BlogDetailActionRail({
       await toggleLike();
     } catch (error) {
       setLikeError(error?.message ?? '좋아요 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    }
+  };
+
+  const handleFavoriteClick = async () => {
+    setFavoriteError(null);
+    setLoginRequiredFor(null);
+    if (!isLoggedIn) {
+      setLoginRequiredFor('즐겨찾기');
+      return;
+    }
+
+    try {
+      await toggleFavorite();
+    } catch (error) {
+      setFavoriteError(error?.message ?? '즐겨찾기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.');
     }
   };
 
@@ -100,7 +124,16 @@ export default function BlogDetailActionRail({
         pressed={isLiked}
         aria-label={isLiked ? '좋아요 취소하기' : '좋아요 하기'}
       />
-      <ActionButton label="Save" count={bookmarks} />
+      <ActionButton
+        label="Save"
+        icon={
+          <Bookmark className={`size-3.5 ${isFavorited ? 'fill-current text-foreground' : 'text-muted-foreground'}`} />
+        }
+        onClick={handleFavoriteClick}
+        disabled={isFavoritePending || !isFavoriteStateReady}
+        pressed={isFavorited}
+        aria-label={isFavorited ? '즐겨찾기 해제하기' : '즐겨찾기에 저장하기'}
+      />
       <ActionButton
         label="Comment"
         count={commentCount}
@@ -123,9 +156,9 @@ export default function BlogDetailActionRail({
       />
       <ActionButton label="Share" icon={<Share2 className="size-3.5 text-muted-foreground" />} />
 
-      {needsLogin ? (
+      {loginRequiredFor ? (
         <p role="alert" className="text-xs text-muted-foreground xl:w-full">
-          좋아요는 로그인 후 사용할 수 있습니다.{' '}
+          {loginRequiredFor}는 로그인 후 사용할 수 있습니다.{' '}
           <Link href="/auth/login" className={buttonVariants({ variant: 'link', size: 'sm' })}>
             로그인하기
           </Link>
@@ -144,6 +177,12 @@ export default function BlogDetailActionRail({
       {likeError ? (
         <p role="alert" className="text-xs text-destructive xl:w-full">
           {likeError}
+        </p>
+      ) : null}
+
+      {favoriteError ? (
+        <p role="alert" className="text-xs text-destructive xl:w-full">
+          {favoriteError}
         </p>
       ) : null}
     </div>

@@ -12,6 +12,11 @@ export function updateUser(userId, body) {
   return apiClient.put(`/users/${userId}`, body);
 }
 
+// GET /admin/users — 관리자 전체 회원 목록(페이지 없이 전체 배열).
+export function fetchAdminUsers() {
+  return apiClient.get('/admin/users');
+}
+
 // DELETE /users/{userId}
 export function deleteUser(userId) {
   return apiClient.delete(`/users/${userId}`);

@@ -8,6 +8,7 @@ import com.example.atlex.domain.post.dto.request.PostUpdateRequest;
 import com.example.atlex.domain.category.entity.Category;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.category.repository.CategoryRepository;
+import com.example.atlex.domain.post.repository.PostFavoriteRepository;
 import com.example.atlex.domain.post.repository.PostLikeRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.post.service.PostService;
@@ -62,6 +63,8 @@ class PostServiceTest {
     @Mock
     PostLikeRepository postLikeRepository;
     @Mock
+    PostFavoriteRepository postFavoriteRepository;
+    @Mock
     PostTagRepository postTagRepository;
     @Mock
     TagRepository tagRepository;
@@ -80,6 +83,7 @@ class PostServiceTest {
             categoryRepository,
             graphIndexService,
             postLikeRepository,
+            postFavoriteRepository,
             postTagRepository,
             tagRepository,
             tagService,
@@ -554,6 +558,28 @@ class PostServiceTest {
 
         assertFalse(postService.getPost(100L, null).isLiked());
         verify(postLikeRepository, never()).existsByPost_IdAndUser_Id(any(), any());
+    }
+
+    @Test
+    @DisplayName("상세 조회는 로그인 사용자가 즐겨찾기한 경우 favorited=true를 반환한다")
+    void getPost_favoritedByCurrentUser() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder().id(100L).user(author).title("t").content("c").isPublic(true).build();
+        when(postRepository.findWithUserById(100L)).thenReturn(Optional.of(post));
+        when(postFavoriteRepository.existsByPost_IdAndUser_Id(100L, 2L)).thenReturn(true);
+
+        assertTrue(postService.getPost(100L, 2L).isFavorited());
+    }
+
+    @Test
+    @DisplayName("비로그인 상세 조회는 즐겨찾기를 조회하지 않고 favorited=false를 반환한다")
+    void getPost_anonymousIsNotFavorited() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder().id(100L).user(author).title("t").content("c").isPublic(true).build();
+        when(postRepository.findWithUserById(100L)).thenReturn(Optional.of(post));
+
+        assertFalse(postService.getPost(100L, null).isFavorited());
+        verify(postFavoriteRepository, never()).existsByPost_IdAndUser_Id(any(), any());
     }
 
     @Test
