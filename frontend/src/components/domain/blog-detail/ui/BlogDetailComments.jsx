@@ -1,12 +1,12 @@
 'use client';
 
 // 게시글 상세 화면의 댓글 섹션 컴포넌트.
-// 댓글 목록 조회, 신규 댓글 등록, 작성자 본인 댓글의 인라인 수정 및 삭제(다이얼로그 확인),
-// 타인 댓글 신고 기능을 제공한다.
+// 댓글 목록 조회, 신규 댓글 등록, 최상위 댓글의 1단계 답글 작성,
+// 작성자 본인 댓글의 인라인 수정 및 삭제(다이얼로그 확인), 타인 댓글 신고 기능을 제공한다.
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { MessageSquare, Pencil, Trash2 } from 'lucide-react';
+import { CornerDownRight, MessageSquare, Pencil, Trash2 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/common/ui/button';
 import {
   Dialog,
@@ -22,6 +22,8 @@ import { ReportButton } from '@/components/domain/report/ui/ReportButton';
 import { useAuthStore } from '@/store/authStore';
 
 const MAX_COMMENT_LENGTH = 1000;
+// 답글이 남은 삭제 댓글 자리에 표시하는 안내 문구
+const DELETED_COMMENT_MESSAGE = '삭제된 댓글입니다.';
 
 /**
  * ISO 날짜 문자열을 한국어 날짜와 시간 형식으로 변환합니다.
@@ -52,11 +54,14 @@ export function BlogDetailComments({ postId, postAuthorUserId }) {
 
   const {
     comments,
+    commentCount,
     isLoading,
     isError,
     refetch,
     createComment,
     isCreating,
+    createReply,
+    isCreatingReply,
     updateComment,
     isUpdating,
     deleteComment,
@@ -66,6 +71,11 @@ export function BlogDetailComments({ postId, postAuthorUserId }) {
   // 신규 댓글 입력 상태
   const [newCommentContent, setNewCommentContent] = useState('');
   const [createErrorMessage, setCreateErrorMessage] = useState('');
+
+  // 답글 입력 상태 (한 번에 하나의 최상위 댓글에만 답글 폼을 연다)
+  const [replyingCommentId, setReplyingCommentId] = useState(null);
+  const [replyContent, setReplyContent] = useState('');
+  const [replyErrorMessage, setReplyErrorMessage] = useState('');
 
   // 인라인 수정 상태
   const [editingCommentId, setEditingCommentId] = useState(null);
@@ -98,6 +108,36 @@ export function BlogDetailComments({ postId, postAuthorUserId }) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
       handleCreateSubmit(e);
+    }
+  };
+
+  // 답글 폼 열기·닫기 (같은 댓글의 답글 버튼을 다시 누르면 닫음)
+  const handleToggleReply = (commentId) => {
+    setReplyingCommentId((current) => (current === commentId ? null : commentId));
+    setReplyContent('');
+    setReplyErrorMessage('');
+  };
+
+  // 답글 등록 처리
+  const handleReplySubmit = async (e, parentId) => {
+    e.preventDefault();
+    const trimmed = replyContent.trim();
+    if (!trimmed || isCreatingReply) return;
+
+    setReplyErrorMessage('');
+    try {
+      await createReply({ parentId, content: trimmed });
+      setReplyingCommentId(null);
+      setReplyContent('');
+    } catch (err) {
+      setReplyErrorMessage(err?.message || '답글 등록에 실패했습니다. 다시 시도해 주세요.');
+    }
+  };
+
+  // 단축키로 답글 등록
+  const handleReplyKeyDown = (e, parentId) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      handleReplySubmit(e, parentId);
     }
   };
 
@@ -151,13 +191,246 @@ export function BlogDetailComments({ postId, postAuthorUserId }) {
     }
   };
 
+  /**
+   * 살아있는 댓글 또는 답글 한 건을 렌더링합니다.
+   * @param {import('@/lib/api/comments').Comment} comment - 렌더링할 댓글
+   * @param {boolean} isReply - 답글 여부 (답글에는 답글 버튼을 노출하지 않음)
+   * @returns {JSX.Element} 댓글 카드
+   */
+  const renderComment = (comment, isReply) => {
+    const isAuthor = Boolean(
+      currentUser?.userId && comment.authorUserId && currentUser.userId === comment.authorUserId,
+    );
+    const isPostAuthor = Boolean(postAuthorUserId && comment.authorUserId && postAuthorUserId === comment.authorUserId);
+    const isEditing = editingCommentId === comment.id;
+    const hasBeenEdited = comment.updatedAt && comment.updatedAt !== comment.createdAt;
+    const authorInitial = (comment.authorName || comment.authorUserId || '?')[0].toUpperCase();
+
+    return (
+      <article
+        key={comment.id}
+        aria-label={isReply ? '답글' : '댓글'}
+        className="rounded-lg border border-border/60 bg-card p-4 transition-colors hover:border-border"
+      >
+        {/* 작성자 정보 헤더 */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3">
+            {comment.authorUserId ? (
+              <Link
+                href={`/@${comment.authorUserId}`}
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary transition-opacity hover:opacity-80"
+                aria-label={`${comment.authorName || comment.authorUserId}의 블로그로 이동`}
+              >
+                {authorInitial}
+              </Link>
+            ) : (
+              <div
+                aria-hidden="true"
+                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary"
+              >
+                {authorInitial}
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {comment.authorUserId ? (
+                  <Link
+                    href={`/@${comment.authorUserId}`}
+                    className="text-sm font-medium text-foreground hover:underline"
+                  >
+                    {comment.authorName || comment.authorUserId}
+                  </Link>
+                ) : (
+                  <span className="text-sm font-medium text-foreground">
+                    {comment.authorName || comment.authorUserId}
+                  </span>
+                )}
+                {isPostAuthor && (
+                  <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.6875rem] font-semibold text-primary">
+                    작성자
+                  </span>
+                )}
+                {comment.authorUserId && <span className="text-xs text-muted-foreground">@{comment.authorUserId}</span>}
+              </div>
+              <div className="flex items-center gap-1 text-[0.75rem] text-muted-foreground">
+                <time dateTime={comment.createdAt}>{formatCommentDate(comment.createdAt)}</time>
+                {hasBeenEdited && <span>(수정됨)</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* 작성자 본인 제어 버튼 (수정 모드가 아닐 때 노출) */}
+          {isAuthor && !isEditing && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={() => handleStartEdit(comment)}
+                aria-label="댓글 수정"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Pencil className="size-3.5" />
+                <span className="ml-1">수정</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={() => setDeletingCommentId(comment.id)}
+                aria-label="댓글 삭제"
+                className="text-destructive/80 hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="size-3.5" />
+                <span className="ml-1">삭제</span>
+              </Button>
+            </div>
+          )}
+
+          {/* 타인 댓글 신고 버튼 (본인 댓글·미로그인 시 ReportButton이 렌더링하지 않음) */}
+          {!isAuthor && (
+            <ReportButton targetType="COMMENT" targetId={comment.id} authorUserId={comment.authorUserId} size="xs" />
+          )}
+        </div>
+
+        {/* 댓글 내용 또는 수정 폼 */}
+        <div className="mt-3">
+          {isEditing ? (
+            <div className="space-y-2">
+              <label htmlFor={`edit-comment-${comment.id}`} className="sr-only">
+                댓글 내용 수정
+              </label>
+              <Textarea
+                id={`edit-comment-${comment.id}`}
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
+                onKeyDown={(e) => handleEditKeyDown(e, comment.id)}
+                maxLength={MAX_COMMENT_LENGTH}
+                disabled={isUpdating}
+                rows={3}
+                className="w-full resize-none bg-background text-sm"
+              />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>
+                    {editContent.length} / {MAX_COMMENT_LENGTH}자
+                  </span>
+                  <span className="hidden text-[0.6875rem] text-muted-foreground/60 sm:inline">
+                    (Ctrl+Enter로 수정 완료)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={handleCancelEdit} disabled={isUpdating}>
+                    취소
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleUpdateSubmit(comment.id)}
+                    disabled={!editContent.trim() || isUpdating}
+                  >
+                    {isUpdating ? '수정 중...' : '수정 완료'}
+                  </Button>
+                </div>
+              </div>
+              {updateErrorMessage && (
+                <p role="alert" className="text-xs text-destructive">
+                  {updateErrorMessage}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">{comment.content}</p>
+          )}
+        </div>
+
+        {/* 최상위 댓글 답글 버튼 (답글에는 답글을 달 수 없음) */}
+        {!isReply && isLoggedIn && !isEditing && (
+          <div className="mt-2">
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() => handleToggleReply(comment.id)}
+              aria-expanded={replyingCommentId === comment.id}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <CornerDownRight className="size-3.5" />
+              <span className="ml-1">답글</span>
+            </Button>
+          </div>
+        )}
+      </article>
+    );
+  };
+
+  /**
+   * 답글이 남아 자리만 유지하는 삭제 댓글을 렌더링합니다.
+   * @param {import('@/lib/api/comments').Comment} comment - 삭제 상태 댓글
+   * @returns {JSX.Element} 삭제 안내 카드
+   */
+  const renderDeletedComment = (comment) => (
+    <article
+      key={comment.id}
+      aria-label="삭제된 댓글"
+      className="rounded-lg border border-dashed border-border/60 bg-muted/30 p-4"
+    >
+      <p className="text-sm text-muted-foreground">{DELETED_COMMENT_MESSAGE}</p>
+    </article>
+  );
+
+  /**
+   * 최상위 댓글에 답글을 작성하는 폼을 렌더링합니다.
+   * @param {number} parentId - 답글을 작성할 최상위 댓글 ID
+   * @returns {JSX.Element} 답글 작성 폼
+   */
+  const renderReplyForm = (parentId) => (
+    <form onSubmit={(e) => handleReplySubmit(e, parentId)} className="space-y-2">
+      <label htmlFor={`reply-input-${parentId}`} className="sr-only">
+        답글 작성
+      </label>
+      <Textarea
+        id={`reply-input-${parentId}`}
+        placeholder="답글을 남겨보세요 (최대 1,000자)"
+        value={replyContent}
+        onChange={(e) => setReplyContent(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
+        onKeyDown={(e) => handleReplyKeyDown(e, parentId)}
+        maxLength={MAX_COMMENT_LENGTH}
+        disabled={isCreatingReply}
+        rows={2}
+        autoFocus
+        className="w-full resize-none bg-background text-sm placeholder:text-muted-foreground/70"
+      />
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">
+          {replyContent.length} / {MAX_COMMENT_LENGTH}자
+        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => handleToggleReply(parentId)}
+            disabled={isCreatingReply}
+          >
+            취소
+          </Button>
+          <Button type="submit" size="sm" disabled={!replyContent.trim() || isCreatingReply}>
+            {isCreatingReply ? '등록 중...' : '답글 등록'}
+          </Button>
+        </div>
+      </div>
+      {replyErrorMessage && (
+        <p role="alert" className="text-xs text-destructive">
+          {replyErrorMessage}
+        </p>
+      )}
+    </form>
+  );
+
   return (
     <section id="comments" aria-labelledby="comments-heading" className="mt-14 border-t border-border/80 pt-10">
       {/* 헤더: 댓글 수 */}
       <div className="flex items-center gap-2 mb-6">
         <MessageSquare className="size-5 text-muted-foreground" aria-hidden="true" />
         <h3 id="comments-heading" className="text-lg font-semibold text-foreground">
-          댓글 <span className="text-primary">{comments.length}</span>
+          댓글 <span className="text-primary">{commentCount}</span>
         </h3>
       </div>
 
@@ -230,159 +503,21 @@ export function BlogDetailComments({ postId, postAuthorUserId }) {
           </div>
         ) : (
           comments.map((comment) => {
-            const isAuthor = Boolean(
-              currentUser?.userId && comment.authorUserId && currentUser.userId === comment.authorUserId,
-            );
-            const isPostAuthor = Boolean(
-              postAuthorUserId && comment.authorUserId && postAuthorUserId === comment.authorUserId,
-            );
-            const isEditing = editingCommentId === comment.id;
-            const hasBeenEdited = comment.updatedAt && comment.updatedAt !== comment.createdAt;
-            const authorInitial = (comment.authorName || comment.authorUserId || '?')[0].toUpperCase();
+            const replies = comment.replies ?? [];
+            // 삭제 상태 댓글에는 답글을 작성할 수 없으므로 열려 있던 답글 폼도 숨긴다.
+            const isReplying = !comment.deleted && replyingCommentId === comment.id;
 
             return (
-              <article
-                key={comment.id}
-                className="rounded-lg border border-border/60 bg-card p-4 transition-colors hover:border-border"
-              >
-                {/* 작성자 정보 헤더 */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    {comment.authorUserId ? (
-                      <Link
-                        href={`/@${comment.authorUserId}`}
-                        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary transition-opacity hover:opacity-80"
-                        aria-label={`${comment.authorName || comment.authorUserId}의 블로그로 이동`}
-                      >
-                        {authorInitial}
-                      </Link>
-                    ) : (
-                      <div
-                        aria-hidden="true"
-                        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary"
-                      >
-                        {authorInitial}
-                      </div>
-                    )}
-                    <div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {comment.authorUserId ? (
-                          <Link
-                            href={`/@${comment.authorUserId}`}
-                            className="text-sm font-medium text-foreground hover:underline"
-                          >
-                            {comment.authorName || comment.authorUserId}
-                          </Link>
-                        ) : (
-                          <span className="text-sm font-medium text-foreground">
-                            {comment.authorName || comment.authorUserId}
-                          </span>
-                        )}
-                        {isPostAuthor && (
-                          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[0.6875rem] font-semibold text-primary">
-                            작성자
-                          </span>
-                        )}
-                        {comment.authorUserId && (
-                          <span className="text-xs text-muted-foreground">@{comment.authorUserId}</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 text-[0.75rem] text-muted-foreground">
-                        <time dateTime={comment.createdAt}>{formatCommentDate(comment.createdAt)}</time>
-                        {hasBeenEdited && <span>(수정됨)</span>}
-                      </div>
-                    </div>
+              <div key={comment.id} className="space-y-3">
+                {comment.deleted ? renderDeletedComment(comment) : renderComment(comment, false)}
+                {/* 답글 목록과 답글 작성 폼은 부모 댓글 아래에 들여써서 표시 */}
+                {(replies.length > 0 || isReplying) && (
+                  <div className="ml-6 space-y-3 border-l-2 border-border/60 pl-4 sm:ml-10">
+                    {replies.map((reply) => renderComment(reply, true))}
+                    {isReplying && renderReplyForm(comment.id)}
                   </div>
-
-                  {/* 작성자 본인 제어 버튼 (수정 모드가 아닐 때 노출) */}
-                  {isAuthor && !isEditing && (
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        onClick={() => handleStartEdit(comment)}
-                        aria-label="댓글 수정"
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <Pencil className="size-3.5" />
-                        <span className="ml-1">수정</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        onClick={() => setDeletingCommentId(comment.id)}
-                        aria-label="댓글 삭제"
-                        className="text-destructive/80 hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="size-3.5" />
-                        <span className="ml-1">삭제</span>
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* 타인 댓글 신고 버튼 (본인 댓글·미로그인 시 ReportButton이 렌더링하지 않음) */}
-                  {!isAuthor && (
-                    <ReportButton
-                      targetType="COMMENT"
-                      targetId={comment.id}
-                      authorUserId={comment.authorUserId}
-                      size="xs"
-                    />
-                  )}
-                </div>
-
-                {/* 댓글 내용 또는 수정 폼 */}
-                <div className="mt-3">
-                  {isEditing ? (
-                    <div className="space-y-2">
-                      <label htmlFor={`edit-comment-${comment.id}`} className="sr-only">
-                        댓글 내용 수정
-                      </label>
-                      <Textarea
-                        id={`edit-comment-${comment.id}`}
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value.slice(0, MAX_COMMENT_LENGTH))}
-                        onKeyDown={(e) => handleEditKeyDown(e, comment.id)}
-                        maxLength={MAX_COMMENT_LENGTH}
-                        disabled={isUpdating}
-                        rows={3}
-                        className="w-full resize-none bg-background text-sm"
-                      />
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>
-                            {editContent.length} / {MAX_COMMENT_LENGTH}자
-                          </span>
-                          <span className="hidden text-[0.6875rem] text-muted-foreground/60 sm:inline">
-                            (Ctrl+Enter로 수정 완료)
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={handleCancelEdit} disabled={isUpdating}>
-                            취소
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateSubmit(comment.id)}
-                            disabled={!editContent.trim() || isUpdating}
-                          >
-                            {isUpdating ? '수정 중...' : '수정 완료'}
-                          </Button>
-                        </div>
-                      </div>
-                      {updateErrorMessage && (
-                        <p role="alert" className="text-xs text-destructive">
-                          {updateErrorMessage}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">
-                      {comment.content}
-                    </p>
-                  )}
-                </div>
-              </article>
+                )}
+              </div>
             );
           })
         )}

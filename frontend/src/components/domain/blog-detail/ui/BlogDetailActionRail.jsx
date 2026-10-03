@@ -35,8 +35,8 @@ export default function BlogDetailActionRail({
   onCommentClick,
   postId,
 }) {
-  const { comments = [] } = useComments(postId);
-  const commentCount = propComments ?? (postId ? comments.length : 0);
+  const { commentCount: fetchedCommentCount } = useComments(postId);
+  const commentCount = propComments ?? (postId ? fetchedCommentCount : 0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [likeError, setLikeError] = useState(null);
