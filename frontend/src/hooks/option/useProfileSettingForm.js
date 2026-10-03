@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { checkUserEmail, getUser, updateUser } from '@/lib/api/users';
+import { updateProfile } from '@/lib/api/profiles';
 import { useAuthStore } from '@/store/authStore';
 
 const THEME_OPTIONS = [
@@ -118,18 +119,38 @@ export function useProfileSettingForm() {
 
       const trimmedNickname = form.nickname.trim();
       const trimmedEmail = form.email.trim();
-      const payload = {
-        name: trimmedNickname,
-        profileImage: form.profileImage || null,
-        email: trimmedEmail,
-      };
+      let updatedUser = null;
 
-      const userResponse = await updateUser(userId, payload);
+      // 사용자 기본 정보(닉네임, 이메일) 변경 확인
+      const hasUserChanges =
+        trimmedNickname !== initialValues.nickname.trim() || trimmedEmail !== initialValues.email.trim();
+
+      if (hasUserChanges) {
+        const userPayload = {};
+        if (trimmedNickname !== initialValues.nickname.trim()) {
+          userPayload.name = trimmedNickname;
+        }
+        if (trimmedEmail !== initialValues.email.trim()) {
+          userPayload.email = trimmedEmail;
+        }
+        updatedUser = await updateUser(userId, userPayload);
+      }
+
+      // 프로필 이미지 변경 확인 (별도 Profile API 호출)
+      const hasImageChanges = form.profileImage !== initialValues.profileImage;
+      if (hasImageChanges) {
+        if (form.profileImage && form.profileImage.startsWith('data:')) {
+          throw new Error('이미지 파일 직접 업로드는 서버 저장소 연동 준비 중입니다. 웹 이미지 URL 형식만 지원됩니다.');
+        }
+        await updateProfile(userId, { profileImage: form.profileImage || null });
+      }
 
       return (
-        userResponse ?? {
+        updatedUser ?? {
           ...settingsQuery.data,
-          ...payload,
+          name: trimmedNickname,
+          email: trimmedEmail,
+          profileImage: form.profileImage || null,
         }
       );
     },

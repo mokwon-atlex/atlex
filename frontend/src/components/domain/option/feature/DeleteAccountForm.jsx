@@ -1,7 +1,11 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -16,8 +20,41 @@ import { Button } from '@/components/common/ui/button';
 import { Input } from '@/components/common/ui/input';
 import { Textarea } from '@/components/common/ui/textarea';
 import { Field, FieldLabel } from '@/components/common/ui/field';
+import { deleteUser } from '@/lib/api/users';
+import { useAuthStore } from '@/store/authStore';
 
 function DeleteAccountForm() {
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+
+  const [reason, setReason] = useState('');
+  const [password, setPassword] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleDelete = async () => {
+    if (!user?.userId) {
+      setError('로그인 정보를 확인할 수 없습니다.');
+      return;
+    }
+
+    setIsDeleting(true);
+    setError(null);
+
+    try {
+      await deleteUser(user.userId);
+      logout();
+      setIsOpen(false);
+      router.push('/');
+    } catch (err) {
+      setError(err?.message ?? '회원 탈퇴 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <Card className="rounded-3xl border-destructive/20 bg-card/80 shadow-sm backdrop-blur">
       <CardHeader>
@@ -35,16 +72,32 @@ function DeleteAccountForm() {
             resize="none"
             placeholder="탈퇴 사유를 입력해주세요"
             className="min-h-28 rounded-2xl"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
           />
         </Field>
 
         <Field>
           <FieldLabel>비밀번호 확인</FieldLabel>
 
-          <Input type="password" variant="outline" size="lg" placeholder="비밀번호 입력" className="h-11 rounded-xl" />
+          <Input
+            type="password"
+            variant="outline"
+            size="lg"
+            placeholder="비밀번호 입력"
+            className="h-11 rounded-xl"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </Field>
 
-        <Dialog>
+        {error ? (
+          <p role="alert" className="text-xs text-destructive">
+            {error}
+          </p>
+        ) : null}
+
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger render={<Button variant="destructive" />}>회원 탈퇴</DialogTrigger>
 
           <DialogContent variant="destructive">
@@ -55,9 +108,11 @@ function DeleteAccountForm() {
             </DialogHeader>
 
             <DialogFooter>
-              <Button variant="outline">취소</Button>
+              <DialogClose render={<Button variant="outline" />}>취소</DialogClose>
 
-              <Button variant="destructive">탈퇴하기</Button>
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                {isDeleting ? '탈퇴 처리 중...' : '탈퇴하기'}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -1,10 +1,13 @@
 package com.example.atlex.domain.tag.service;
 
+import com.example.atlex.domain.tag.dto.response.PlatformTagItemResponse;
 import com.example.atlex.domain.tag.dto.response.TagListItemResponse;
 import com.example.atlex.domain.tag.dto.response.TagListResponse;
 import com.example.atlex.domain.tag.entity.Tag;
 import com.example.atlex.domain.tag.repository.PostTagRepository;
 import com.example.atlex.domain.tag.repository.TagRepository;
+import com.example.atlex.domain.tag.repository.projection.PlatformTagProjection;
+import org.springframework.data.domain.Page;
 import com.example.atlex.domain.tag.repository.projection.TagPostCountProjection;
 import com.example.atlex.domain.tag.repository.projection.TagThumbnailProjection;
 import com.example.atlex.domain.user.entity.User;
@@ -97,6 +100,36 @@ public class TagService {
             .hasLast(!hasNext)
             .nextCursor(hasNext ? tags.get(tags.size() - 1).getId() : null)
             .build();
+    }
+
+    /**
+     * 플랫폼 전체 공개 태그 목록을 정렬 및 검색 조건에 따라 페이징 조회합니다.
+     *
+     * @param sort 정렬 기준 (popular, alphabet, trending)
+     * @param keyword 태그 검색 키워드
+     * @param page 페이지 번호 (0부터 시작)
+     * @param size 페이지당 개수
+     * @return 태그 페이징 결과
+     */
+    @Transactional(readOnly = true)
+    public Page<PlatformTagItemResponse> getAllTags(
+        String sort,
+        String keyword,
+        int page,
+        int size) {
+        String normalizedKeyword = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        int safePage = Math.max(0, page);
+        int safeSize = (size <= 0 || size > 100) ? 12 : size;
+        PageRequest pageRequest = PageRequest.of(safePage, safeSize);
+
+        Page<PlatformTagProjection> result = "alphabet".equalsIgnoreCase(sort)
+            ? postTagRepository.findPlatformTagsAlphabet(normalizedKeyword, pageRequest)
+            : postTagRepository.findPlatformTagsPopular(normalizedKeyword, pageRequest);
+
+        return result.map(p -> PlatformTagItemResponse.builder()
+            .name(p.getName())
+            .postCount(p.getPostCount() != null ? p.getPostCount() : 0L)
+            .build());
     }
 
     private User findActiveUser(String userId) {

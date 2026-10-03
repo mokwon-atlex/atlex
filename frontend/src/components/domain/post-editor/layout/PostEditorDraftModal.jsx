@@ -5,7 +5,7 @@ import { Textfield } from '@/components/common/ui/textfield';
 import PostEditorDraftCard from '@/components/domain/post-editor/ui/PostEditorDraftCard';
 
 export default function PostEditorDraftModal({
-  drafts,
+  drafts = [],
   isOpen,
   onClose,
   onLoadDraft, // (draft) => void — 로드 버튼 핸들러
@@ -27,9 +27,13 @@ export default function PostEditorDraftModal({
         </DialogHeader>
 
         <div className="mt-2 space-y-4">
-          {drafts.map((draft) => (
-            <PostEditorDraftCard key={draft.id} draft={draft} onLoad={onLoadDraft} onDelete={onDeleteDraft} />
-          ))}
+          {drafts.length > 0 ? (
+            drafts.map((draft) => (
+              <PostEditorDraftCard key={draft.id} draft={draft} onLoad={onLoadDraft} onDelete={onDeleteDraft} />
+            ))
+          ) : (
+            <div className="py-8 text-center text-sm text-muted-foreground">저장된 임시 글이 없습니다.</div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
