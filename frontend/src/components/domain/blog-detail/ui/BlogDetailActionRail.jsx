@@ -139,7 +139,9 @@ export default function BlogDetailActionRail({
       <ActionButton
         label="Save"
         count={bookmarks}
-        icon={<Bookmark className={`size-3.5 ${isFavorited ? 'fill-current text-foreground' : 'text-muted-foreground'}`} />}
+        icon={
+          <Bookmark className={`size-3.5 ${isFavorited ? 'fill-current text-foreground' : 'text-muted-foreground'}`} />
+        }
         onClick={handleFavoriteClick}
         disabled={isFavoritePending || isFavoritesLoading}
         pressed={isFavorited}
@@ -167,7 +169,13 @@ export default function BlogDetailActionRail({
       />
       <ActionButton
         label={isCopied ? 'Copied' : 'Share'}
-        icon={isCopied ? <Check className="size-3.5 text-emerald-600" /> : <Share2 className="size-3.5 text-muted-foreground" />}
+        icon={
+          isCopied ? (
+            <Check className="size-3.5 text-emerald-600" />
+          ) : (
+            <Share2 className="size-3.5 text-muted-foreground" />
+          )
+        }
         onClick={handleShareClick}
         aria-label="게시글 링크 복사"
       />
