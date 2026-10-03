@@ -7,9 +7,9 @@ export function getUser(userId) {
   return apiClient.get(`/users/${userId}`);
 }
 
-// PUT /users/{userId}
+// PATCH /users/{userId}
 export function updateUser(userId, body) {
-  return apiClient.put(`/users/${userId}`, body);
+  return apiClient.patch(`/users/${userId}`, body);
 }
 
 // DELETE /users/{userId}

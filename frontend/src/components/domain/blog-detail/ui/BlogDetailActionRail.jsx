@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Download, Heart, LoaderCircle, MessageSquare, Share2 } from 'lucide-react';
+import { Bookmark, Check, Download, Heart, LoaderCircle, MessageSquare, Share2 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/common/ui/button';
 import { useComments } from '@/hooks/queries/comments/useComments';
 import { usePostLike } from '@/hooks/queries/posts/usePostLike';
+import { usePostFavorite } from '@/hooks/queries/posts/usePostFavorite';
 import { downloadPostMarkdown } from '@/lib/api/posts';
 
 function ActionButton({ label, count, icon, onClick, disabled, pressed, 'aria-label': ariaLabel }) {
@@ -28,7 +29,7 @@ function ActionButton({ label, count, icon, onClick, disabled, pressed, 'aria-la
 }
 
 export default function BlogDetailActionRail({
-  bookmarks = 7,
+  bookmarks,
   comments: propComments,
   initialLiked = false,
   likes = 0,
@@ -40,6 +41,9 @@ export default function BlogDetailActionRail({
   const [isDownloading, setIsDownloading] = useState(false);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [likeError, setLikeError] = useState(null);
+  const [favoriteError, setFavoriteError] = useState(null);
+  const [isCopied, setIsCopied] = useState(false);
+
   const {
     isLoggedIn,
     isLiked,
@@ -50,6 +54,38 @@ export default function BlogDetailActionRail({
     isPending: isLikePending,
     toggleLike,
   } = usePostLike(postId, { initialLiked, initialLikes: likes });
+
+  const {
+    isFavorited,
+    isPending: isFavoritePending,
+    isLoading: isFavoritesLoading,
+    toggleFavorite,
+  } = usePostFavorite(postId);
+
+  const handleFavoriteClick = async () => {
+    setFavoriteError(null);
+    setNeedsLogin(false);
+    if (!isLoggedIn) {
+      setNeedsLogin(true);
+      return;
+    }
+    try {
+      await toggleFavorite();
+    } catch (err) {
+      setFavoriteError(err?.message ?? '즐겨찾기 처리에 실패했습니다.');
+    }
+  };
+
+  const handleShareClick = async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      // fallback
+    }
+  };
 
   const handleLikeClick = async () => {
     setLikeError(null);
@@ -100,7 +136,17 @@ export default function BlogDetailActionRail({
         pressed={isLiked}
         aria-label={isLiked ? '좋아요 취소하기' : '좋아요 하기'}
       />
-      <ActionButton label="Save" count={bookmarks} />
+      <ActionButton
+        label="Save"
+        count={bookmarks}
+        icon={
+          <Bookmark className={`size-3.5 ${isFavorited ? 'fill-current text-foreground' : 'text-muted-foreground'}`} />
+        }
+        onClick={handleFavoriteClick}
+        disabled={isFavoritePending || isFavoritesLoading}
+        pressed={isFavorited}
+        aria-label={isFavorited ? '즐겨찾기 취소하기' : '즐겨찾기 추가하기'}
+      />
       <ActionButton
         label="Comment"
         count={commentCount}
@@ -121,14 +167,31 @@ export default function BlogDetailActionRail({
         disabled={isDownloading}
         aria-label="마크다운(.md) 파일 다운로드"
       />
-      <ActionButton label="Share" icon={<Share2 className="size-3.5 text-muted-foreground" />} />
+      <ActionButton
+        label={isCopied ? 'Copied' : 'Share'}
+        icon={
+          isCopied ? (
+            <Check className="size-3.5 text-emerald-600" />
+          ) : (
+            <Share2 className="size-3.5 text-muted-foreground" />
+          )
+        }
+        onClick={handleShareClick}
+        aria-label="게시글 링크 복사"
+      />
 
       {needsLogin ? (
         <p role="alert" className="text-xs text-muted-foreground xl:w-full">
-          좋아요는 로그인 후 사용할 수 있습니다.{' '}
-          <Link href="/auth/login" className={buttonVariants({ variant: 'link', size: 'sm' })}>
+          좋아요 및 즐겨찾기는 로그인 후 사용할 수 있습니다.{' '}
+          <Link href="/account" className={buttonVariants({ variant: 'link', size: 'sm' })}>
             로그인하기
           </Link>
+        </p>
+      ) : null}
+
+      {favoriteError ? (
+        <p role="alert" className="text-xs text-destructive xl:w-full">
+          {favoriteError}
         </p>
       ) : null}
 

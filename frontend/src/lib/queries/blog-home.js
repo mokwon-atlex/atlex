@@ -96,7 +96,7 @@ export async function loadBlogHomeData(identifier) {
     totalCount,
     filterLabel: '이번 주',
     sortLabel: '최신순',
-    helperText: '제목과 본문은 카드형 목록으로 유지하고, 피드 중심의 배치로 재정렬한 정적 목업입니다.',
+    helperText: '작성된 게시글 목록입니다.',
     pageSizeLabel: '한 페이지에 최대 10개',
     posts,
     pagination: createPagination(1, totalPages),

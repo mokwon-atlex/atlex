@@ -206,7 +206,7 @@ export function BlogDetailComments({ postId, postAuthorUserId }) {
         ) : (
           <div className="rounded-lg border border-border/70 bg-muted/40 p-4 text-center">
             <p className="text-sm text-muted-foreground mb-2">댓글을 작성하려면 로그인이 필요합니다.</p>
-            <Link href="/auth/login" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+            <Link href="/account" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
               로그인하기
             </Link>
           </div>

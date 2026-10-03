@@ -2,9 +2,11 @@ package com.example.atlex.domain.tag.repository;
 
 import com.example.atlex.domain.tag.entity.Tag;
 import com.example.atlex.domain.tag.entity.PostTag;
+import com.example.atlex.domain.tag.repository.projection.PlatformTagProjection;
 import com.example.atlex.domain.tag.repository.projection.PostTagNameProjection;
 import com.example.atlex.domain.tag.repository.projection.TagPostCountProjection;
 import com.example.atlex.domain.tag.repository.projection.TagThumbnailProjection;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -84,4 +86,40 @@ public interface PostTagRepository extends JpaRepository<PostTag, Long> {
     @Query("DELETE FROM PostTag pt WHERE pt.post.id = :postId")
     void deleteByPostId(@Param("postId")
     Long postId);
+
+    @Query(value = """
+        SELECT pt.tag.name AS name, COUNT(DISTINCT pt.post.id) AS postCount
+        FROM PostTag pt
+        WHERE pt.post.isDeleted = false AND pt.post.isPublic = true
+          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+        GROUP BY pt.tag.name
+        ORDER BY COUNT(DISTINCT pt.post.id) DESC, pt.tag.name ASC
+        """, countQuery = """
+        SELECT COUNT(DISTINCT pt.tag.name)
+        FROM PostTag pt
+        WHERE pt.post.isDeleted = false AND pt.post.isPublic = true
+          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+        """)
+    Page<PlatformTagProjection> findPlatformTagsPopular(
+        @Param("keyword")
+        String keyword,
+        Pageable pageable);
+
+    @Query(value = """
+        SELECT pt.tag.name AS name, COUNT(DISTINCT pt.post.id) AS postCount
+        FROM PostTag pt
+        WHERE pt.post.isDeleted = false AND pt.post.isPublic = true
+          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+        GROUP BY pt.tag.name
+        ORDER BY pt.tag.name ASC
+        """, countQuery = """
+        SELECT COUNT(DISTINCT pt.tag.name)
+        FROM PostTag pt
+        WHERE pt.post.isDeleted = false AND pt.post.isPublic = true
+          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+        """)
+    Page<PlatformTagProjection> findPlatformTagsAlphabet(
+        @Param("keyword")
+        String keyword,
+        Pageable pageable);
 }

@@ -3,7 +3,7 @@
 
 // input: fetchProfileByUserId 응답 (ApiProfile: { id, userId, name, profileImage, info, ... })
 // output: 유저 블로그 홈 프로필 shape (CategoryBlogHomeContent 의 profile)
-// 미구현 필드(stats: 팔로워/팔로잉 등, quickActions)는 임시 mock 값으로 채워둔다 — 백엔드 추가 시 교체.
+// 미구현 필드(stats: 팔로워/팔로잉 등)는 런타임 오류 방지를 위해 기본값('0')을 제공한다. 백엔드 기능 추가 시 연동 필요.
 export function toBlogHomeProfile(apiProfile) {
   return {
     userId: apiProfile.userId,
