@@ -128,7 +128,6 @@ const meta = {
   parameters: { layout: 'centered' },
   argTypes: {
     likes: { control: 'number' },
-    bookmarks: { control: 'number' },
     comments: { control: 'number' },
     initialLiked: { control: 'boolean' },
   },
@@ -139,7 +138,6 @@ export default meta;
 export const Default = {
   args: {
     likes: 18,
-    bookmarks: 7,
     comments: 5,
   },
 };
@@ -147,7 +145,6 @@ export const Default = {
 export const HighEngagement = {
   args: {
     likes: 342,
-    bookmarks: 87,
     comments: 42,
   },
 };
@@ -155,7 +152,6 @@ export const HighEngagement = {
 export const LowEngagement = {
   args: {
     likes: 1,
-    bookmarks: 0,
     comments: 0,
   },
 };
@@ -164,7 +160,6 @@ export const LowEngagement = {
 export const Liked = {
   args: {
     likes: 19,
-    bookmarks: 7,
     comments: 5,
     initialLiked: true,
   },
@@ -172,7 +167,7 @@ export const Liked = {
 
 /** 좋아요를 누르면 등록 요청이 나가고 수치가 즉시 1 올라간다. */
 export const LikeTogglesOn = {
-  args: { likes: 18, bookmarks: 7, comments: 5, postId: 10 },
+  args: { likes: 18, comments: 5, postId: 10 },
   decorators: [createAuthDecorator()],
   beforeEach: setupLikeRequests({ liked: false, likes: 18 }),
   play: async ({ canvasElement }) => {
@@ -189,7 +184,7 @@ export const LikeTogglesOn = {
 
 /** 이미 좋아요한 글에서 다시 누르면 해제 요청이 나가고 수치가 1 내려간다. */
 export const LikeTogglesOff = {
-  args: { likes: 19, bookmarks: 7, comments: 5, postId: 10, initialLiked: true },
+  args: { likes: 19, comments: 5, postId: 10, initialLiked: true },
   decorators: [createAuthDecorator()],
   beforeEach: setupLikeRequests({ liked: true, likes: 19 }),
   play: async ({ canvasElement }) => {
@@ -206,7 +201,7 @@ export const LikeTogglesOff = {
 
 /** 비로그인 사용자가 누르면 요청 없이 로그인 안내만 보여준다. */
 export const RequiresLogin = {
-  args: { likes: 18, bookmarks: 7, comments: 5, postId: 10 },
+  args: { likes: 18, comments: 5, postId: 10 },
   decorators: [createAuthDecorator({ isLoggedIn: false })],
   beforeEach: setupLikeRequests({ liked: false, likes: 18 }),
   play: async ({ canvasElement }) => {
@@ -222,7 +217,7 @@ export const RequiresLogin = {
 
 /** 요청이 실패하면 낙관적으로 올렸던 수치와 상태를 원래대로 되돌린다. */
 export const RollsBackOnFailure = {
-  args: { likes: 18, bookmarks: 7, comments: 5, postId: 10 },
+  args: { likes: 18, comments: 5, postId: 10 },
   decorators: [createAuthDecorator()],
   beforeEach: setupLikeRequests({ liked: false, likes: 18, failToggle: true }),
   play: async ({ canvasElement }) => {
@@ -238,7 +233,7 @@ export const RollsBackOnFailure = {
 
 /** 새로고침 직후 SSR 값은 false 지만, 인증된 보정 조회가 끝나면 하트가 채워진다. */
 export const RestoresLikedStateAfterReload = {
-  args: { likes: 18, bookmarks: 7, comments: 5, postId: 10, initialLiked: false },
+  args: { likes: 18, comments: 5, postId: 10, initialLiked: false },
   decorators: [createAuthDecorator()],
   beforeEach: setupLikeRequests({ liked: true, likes: 19 }),
   play: async ({ canvasElement }) => {
@@ -251,7 +246,7 @@ export const RestoresLikedStateAfterReload = {
 
 /** 보정 조회가 끝나기 전에는 버튼이 잠겨, 초기 false 를 기준으로 반대 요청을 보내지 않는다. */
 export const BlocksClickBeforeLikeStateResolves = {
-  args: { likes: 18, bookmarks: 7, comments: 5, postId: 10, initialLiked: false },
+  args: { likes: 18, comments: 5, postId: 10, initialLiked: false },
   decorators: [createAuthDecorator()],
   beforeEach: setupSlowLikeStateRequest(),
   play: async ({ canvasElement }) => {
@@ -270,7 +265,7 @@ export const BlocksClickBeforeLikeStateResolves = {
 
 /** 상태 조회가 실패하면 버튼이 풀리지 않고, 안내와 재시도만 제공한다. */
 export const BlocksToggleWhenLikeStateFails = {
-  args: { likes: 18, bookmarks: 7, comments: 5, postId: 10, initialLiked: false },
+  args: { likes: 18, comments: 5, postId: 10, initialLiked: false },
   decorators: [createAuthDecorator()],
   beforeEach: setupFailingLikeStateRequest(),
   play: async ({ canvasElement }) => {
@@ -289,7 +284,7 @@ export const BlocksToggleWhenLikeStateFails = {
 
 /** 좋아요 토글은 목록 캐시만 무효화하고, 댓글 쿼리는 다시 조회하지 않는다. */
 export const DoesNotRefetchComments = {
-  args: { likes: 18, bookmarks: 7, comments: 5, postId: 10 },
+  args: { likes: 18, comments: 5, postId: 10 },
   decorators: [createAuthDecorator()],
   beforeEach: setupLikeRequests({ liked: false, likes: 18 }),
   play: async ({ canvasElement }) => {
@@ -305,5 +300,114 @@ export const DoesNotRefetchComments = {
     // ['posts'] 전체를 무효화하면 댓글 쿼리까지 재조회된다.
     const commentRequests = detailSpy.mock.calls.filter(([url]) => String(url).includes('/comments'));
     expect(commentRequests).toHaveLength(0);
+  },
+};
+
+let favoriteSpy;
+let unfavoriteSpy;
+
+/**
+ * 즐겨찾기 등록/해제 요청과 상태 보정용 상세 조회를 고정한다.
+ *
+ * @param {Object} [options] - 응답 옵션
+ * @param {boolean} [options.favorited=false] - 서버가 내려줄 현재 즐겨찾기 여부
+ * @param {boolean} [options.failToggle=false] - 토글 요청을 실패시킬지 여부
+ * @returns {() => void} 스토리 종료 시 스파이를 되돌리는 정리 함수
+ */
+function setupFavoriteRequests({ favorited = false, failToggle = false } = {}) {
+  return () => {
+    detailSpy = spyOn(apiClient, 'get').mockImplementation(async () => ({
+      id: 10,
+      liked: false,
+      likes: 18,
+      favorited,
+    }));
+
+    favoriteSpy = spyOn(apiClient, 'post').mockImplementation(async () => {
+      if (failToggle) throw new Error('즐겨찾기 처리에 실패했습니다.');
+      return { postId: 10, favorited: true };
+    });
+
+    unfavoriteSpy = spyOn(apiClient, 'delete').mockImplementation(async () => {
+      if (failToggle) throw new Error('즐겨찾기 처리에 실패했습니다.');
+      return { postId: 10, favorited: false };
+    });
+
+    return () => {
+      detailSpy.mockRestore();
+      favoriteSpy.mockRestore();
+      unfavoriteSpy.mockRestore();
+      detailSpy = undefined;
+      favoriteSpy = undefined;
+      unfavoriteSpy = undefined;
+    };
+  };
+}
+
+/** 저장 버튼을 누르면 등록 요청이 나가고 눌린 상태로 바뀐다. */
+export const FavoriteTogglesOn = {
+  args: { likes: 18, comments: 5, postId: 10 },
+  decorators: [createAuthDecorator()],
+  beforeEach: setupFavoriteRequests({ favorited: false }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const saveButton = await canvas.findByRole('button', { name: '즐겨찾기에 저장하기' });
+    await waitFor(() => expect(saveButton).toBeEnabled());
+    await userEvent.click(saveButton);
+
+    await waitFor(() => expect(favoriteSpy).toHaveBeenCalledWith('/posts/10/favorites'));
+    await waitFor(() =>
+      expect(canvas.getByRole('button', { name: '즐겨찾기 해제하기' })).toHaveAttribute('aria-pressed', 'true'),
+    );
+  },
+};
+
+/** SSR 값은 false 여도 보정 조회 결과가 저장됨이면 해제 요청을 보낸다. */
+export const FavoriteTogglesOffAfterRestore = {
+  args: { likes: 18, comments: 5, postId: 10 },
+  decorators: [createAuthDecorator()],
+  beforeEach: setupFavoriteRequests({ favorited: true }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const saveButton = await canvas.findByRole('button', { name: '즐겨찾기 해제하기' });
+    await waitFor(() => expect(saveButton).toBeEnabled());
+    await userEvent.click(saveButton);
+
+    await waitFor(() => expect(unfavoriteSpy).toHaveBeenCalledWith('/posts/10/favorites'));
+    await waitFor(() => expect(canvas.getByRole('button', { name: '즐겨찾기에 저장하기' })).toBeInTheDocument());
+  },
+};
+
+/** 비로그인 사용자가 저장을 누르면 요청 없이 로그인 안내만 보여준다. */
+export const FavoriteRequiresLogin = {
+  args: { likes: 18, comments: 5, postId: 10 },
+  decorators: [createAuthDecorator({ isLoggedIn: false })],
+  beforeEach: setupFavoriteRequests(),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole('button', { name: '즐겨찾기에 저장하기' }));
+
+    await waitFor(() => expect(canvas.getByRole('alert')).toHaveTextContent('즐겨찾기는 로그인 후 사용할 수 있습니다'));
+    expect(favoriteSpy).not.toHaveBeenCalled();
+  },
+};
+
+/** 요청이 실패하면 오류를 안내하고 저장 전 상태를 유지한다. */
+export const FavoriteShowsErrorOnFailure = {
+  args: { likes: 18, comments: 5, postId: 10 },
+  decorators: [createAuthDecorator()],
+  beforeEach: setupFavoriteRequests({ failToggle: true }),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const saveButton = await canvas.findByRole('button', { name: '즐겨찾기에 저장하기' });
+    await waitFor(() => expect(saveButton).toBeEnabled());
+    await userEvent.click(saveButton);
+
+    await waitFor(() => expect(canvas.getByRole('alert')).toHaveTextContent('즐겨찾기 처리에 실패했습니다.'));
+    expect(canvas.getByRole('button', { name: '즐겨찾기에 저장하기' })).toHaveAttribute('aria-pressed', 'false');
   },
 };
