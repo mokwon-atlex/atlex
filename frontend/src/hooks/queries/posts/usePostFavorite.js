@@ -70,6 +70,8 @@ export function useFavorites({ page = 0, size = 10 } = {}) {
  *   isFavorited: boolean,
  *   isStateReady: boolean,
  *   isPending: boolean,
+ *   stateError: Error | null,
+ *   retryFavoriteState: () => void,
  *   toggleFavorite: () => Promise<unknown>,
  *   error: Error | null
  * }}
@@ -126,6 +128,8 @@ export function usePostFavorite(postId, { initialFavorited = false } = {}) {
     isLoggedIn,
     isFavorited,
     isStateReady,
+    stateError: isLoggedIn ? (favoriteStateQuery.error ?? null) : null,
+    retryFavoriteState: favoriteStateQuery.refetch,
     isPending: toggleMutation.isPending,
     toggleFavorite,
     error: toggleMutation.error,

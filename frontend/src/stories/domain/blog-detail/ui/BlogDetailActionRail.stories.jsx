@@ -411,3 +411,33 @@ export const FavoriteShowsErrorOnFailure = {
     expect(canvas.getByRole('button', { name: '즐겨찾기에 저장하기' })).toHaveAttribute('aria-pressed', 'false');
   },
 };
+
+/** 상세 조회 실패 여부. 스토리 도중 false 로 바꿔 재시도가 성공하게 한다. */
+let failDetailRequest = true;
+
+/** 저장 버튼 상태 조회가 실패하면 버튼을 잠근 채 안내하고, 재시도가 성공하면 다시 누를 수 있다. */
+export const FavoriteRetriesWhenStateFails = {
+  args: { likes: 18, comments: 5, postId: 10 },
+  decorators: [createAuthDecorator()],
+  beforeEach: () => {
+    const restore = setupFavoriteRequests({ favorited: true })();
+    failDetailRequest = true;
+    detailSpy.mockImplementation(async () => {
+      if (failDetailRequest) throw new Error('상태 조회 실패');
+      return { id: 10, liked: false, likes: 18, favorited: true };
+    });
+    return restore;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const retryButton = await canvas.findByRole('button', { name: '즐겨찾기 상태 다시 불러오기' });
+    expect(canvas.getByRole('button', { name: '즐겨찾기에 저장하기' })).toBeDisabled();
+
+    failDetailRequest = false;
+    await userEvent.click(retryButton);
+
+    await waitFor(() => expect(canvas.getByRole('button', { name: '즐겨찾기 해제하기' })).toBeEnabled());
+    expect(canvas.queryByRole('button', { name: '즐겨찾기 상태 다시 불러오기' })).toBeNull();
+  },
+};

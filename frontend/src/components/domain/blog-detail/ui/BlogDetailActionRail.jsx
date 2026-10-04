@@ -56,6 +56,8 @@ export default function BlogDetailActionRail({
   const {
     isFavorited,
     isStateReady: isFavoriteStateReady,
+    stateError: favoriteStateError,
+    retryFavoriteState,
     isPending: isFavoritePending,
     toggleFavorite,
   } = usePostFavorite(postId);
@@ -169,6 +171,20 @@ export default function BlogDetailActionRail({
         <p role="alert" className="text-xs text-destructive xl:w-full">
           좋아요 상태를 불러오지 못했습니다.{' '}
           <button type="button" onClick={() => retryLikeState()} className="font-semibold underline">
+            다시 시도
+          </button>
+        </p>
+      ) : null}
+
+      {favoriteStateError ? (
+        <p role="alert" className="text-xs text-destructive xl:w-full">
+          즐겨찾기 상태를 불러오지 못했습니다.{' '}
+          <button
+            type="button"
+            onClick={() => retryFavoriteState()}
+            aria-label="즐겨찾기 상태 다시 불러오기"
+            className="font-semibold underline"
+          >
             다시 시도
           </button>
         </p>

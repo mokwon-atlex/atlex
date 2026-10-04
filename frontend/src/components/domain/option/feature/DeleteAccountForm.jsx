@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { isAxiosError } from 'axios';
 
 import {
   Dialog,
@@ -52,7 +53,9 @@ function DeleteAccountForm() {
       // 클라이언트 라우터 대신 문서 이동으로 홈에 보낸다.
       window.location.replace('/');
     } catch (error) {
-      setErrorMessage(error?.message ?? '회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      // 백엔드가 code 와 함께 내려준 도메인 오류만 그대로 보여주고, 네트워크 오류 등은 일반 안내로 대체한다.
+      const isDomainError = Boolean(error?.code) && !isAxiosError(error);
+      setErrorMessage(isDomainError ? error.message : '회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해 주세요.');
       setIsDeleting(false);
     }
   }
