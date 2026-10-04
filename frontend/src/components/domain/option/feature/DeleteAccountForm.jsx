@@ -77,19 +77,7 @@ function DeleteAccountForm() {
           />
         </Field>
 
-        <Field>
-          <FieldLabel>비밀번호 확인</FieldLabel>
 
-          <Input
-            type="password"
-            variant="outline"
-            size="lg"
-            placeholder="비밀번호 입력"
-            className="h-11 rounded-xl"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Field>
 
         {error ? (
           <p role="alert" className="text-xs text-destructive">

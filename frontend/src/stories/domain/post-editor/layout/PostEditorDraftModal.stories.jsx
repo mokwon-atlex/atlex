@@ -6,8 +6,8 @@ import { Button } from '@/components/common/ui/button';
 import PostEditorDraftModal from '@/components/domain/post-editor/layout/PostEditorDraftModal';
 
 const mockDrafts = [
-  { id: '1', title: '첫 번째 임시저장 글', savedAt: '2024-03-20T10:00:00Z' },
-  { id: '2', title: '두 번째 임시저장 글', savedAt: '2024-03-21T15:30:00Z' },
+  { id: '1', title: '첫 번째 임시저장 글', updatedAt: '2024-03-20T10:00:00Z', body: '첫 번째 임시저장 글의 본문 미리보기입니다.' },
+  { id: '2', title: '두 번째 임시저장 글', updatedAt: '2024-03-21T15:30:00Z', body: '두 번째 임시저장 글의 본문 미리보기입니다.' },
 ];
 
 function DraftModalDemo({ drafts = mockDrafts }) {

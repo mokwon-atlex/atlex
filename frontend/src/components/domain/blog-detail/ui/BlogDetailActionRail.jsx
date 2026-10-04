@@ -82,8 +82,8 @@ export default function BlogDetailActionRail({
       await navigator.clipboard.writeText(window.location.href);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
-    } catch {
-      // fallback
+    } catch (error) {
+      alert('링크 복사에 실패했습니다.');
     }
   };
 

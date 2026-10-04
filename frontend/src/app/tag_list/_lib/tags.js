@@ -47,10 +47,6 @@ export async function fetchTags({ sort, keyword = '', page }) {
     };
   } catch (error) {
     console.error('Failed to fetch platform tags:', error);
-    return {
-      items: [],
-      totalCount: 0,
-      hasMore: false,
-    };
+    throw error;
   }
 }

@@ -91,14 +91,14 @@ public interface PostTagRepository extends JpaRepository<PostTag, Long> {
         SELECT pt.tag.name AS name, COUNT(DISTINCT pt.post.id) AS postCount
         FROM PostTag pt
         WHERE pt.post.isDeleted = false AND pt.post.isPublic = true
-          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(REPLACE(:keyword, '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
         GROUP BY pt.tag.name
         ORDER BY COUNT(DISTINCT pt.post.id) DESC, pt.tag.name ASC
         """, countQuery = """
         SELECT COUNT(DISTINCT pt.tag.name)
         FROM PostTag pt
         WHERE pt.post.isDeleted = false AND pt.post.isPublic = true
-          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(REPLACE(:keyword, '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
         """)
     Page<PlatformTagProjection> findPlatformTagsPopular(
         @Param("keyword")
@@ -109,14 +109,14 @@ public interface PostTagRepository extends JpaRepository<PostTag, Long> {
         SELECT pt.tag.name AS name, COUNT(DISTINCT pt.post.id) AS postCount
         FROM PostTag pt
         WHERE pt.post.isDeleted = false AND pt.post.isPublic = true
-          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(REPLACE(:keyword, '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
         GROUP BY pt.tag.name
         ORDER BY pt.tag.name ASC
         """, countQuery = """
         SELECT COUNT(DISTINCT pt.tag.name)
         FROM PostTag pt
         WHERE pt.post.isDeleted = false AND pt.post.isPublic = true
-          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(REPLACE(:keyword, '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
         """)
     Page<PlatformTagProjection> findPlatformTagsAlphabet(
         @Param("keyword")

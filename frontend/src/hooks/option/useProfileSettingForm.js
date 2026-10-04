@@ -119,7 +119,7 @@ export function useProfileSettingForm() {
 
       const trimmedNickname = form.nickname.trim();
       const trimmedEmail = form.email.trim();
-      let updatedUser = null;
+      let currentUserData = settingsQuery.data;
 
       // 사용자 기본 정보(닉네임, 이메일) 변경 확인
       const hasUserChanges =
@@ -133,26 +133,20 @@ export function useProfileSettingForm() {
         if (trimmedEmail !== initialValues.email.trim()) {
           userPayload.email = trimmedEmail;
         }
-        updatedUser = await updateUser(userId, userPayload);
+        const updatedUser = await updateUser(userId, userPayload);
+        currentUserData = updatedUser;
+        // 부분 성공을 반영하기 위해 캐시 즉시 업데이트
+        queryClient.setQueryData(['user-settings', userId], currentUserData);
       }
 
       // 프로필 이미지 변경 확인 (별도 Profile API 호출)
       const hasImageChanges = form.profileImage !== initialValues.profileImage;
       if (hasImageChanges) {
-        if (form.profileImage && form.profileImage.startsWith('data:')) {
-          throw new Error('이미지 파일 직접 업로드는 서버 저장소 연동 준비 중입니다. 웹 이미지 URL 형식만 지원됩니다.');
-        }
         await updateProfile(userId, { profileImage: form.profileImage || null });
+        currentUserData = { ...currentUserData, profileImage: form.profileImage || null };
       }
 
-      return (
-        updatedUser ?? {
-          ...settingsQuery.data,
-          name: trimmedNickname,
-          email: trimmedEmail,
-          profileImage: form.profileImage || null,
-        }
-      );
+      return currentUserData;
     },
     onSuccess: (nextUser) => {
       queryClient.setQueryData(['user-settings', userId], nextUser);
