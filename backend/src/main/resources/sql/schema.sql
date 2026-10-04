@@ -133,6 +133,7 @@ CREATE TABLE comments (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     post_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
+    parent_id BIGINT,
     content VARCHAR(1000) NOT NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at DATETIME,
@@ -140,7 +141,9 @@ CREATE TABLE comments (
     CONSTRAINT fk_comments_post
         FOREIGN KEY (post_id) REFERENCES posts(id),
     CONSTRAINT fk_comments_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
+        FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_comments_parent
+        FOREIGN KEY (parent_id) REFERENCES comments(id)
 );
 
 CREATE INDEX idx_comments_post_id
