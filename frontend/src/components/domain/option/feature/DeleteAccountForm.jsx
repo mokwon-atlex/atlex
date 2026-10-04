@@ -79,12 +79,6 @@ function DeleteAccountForm() {
 
 
 
-        {error ? (
-          <p role="alert" className="text-xs text-destructive">
-            {error}
-          </p>
-        ) : null}
-
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger render={<Button variant="destructive" />}>회원 탈퇴</DialogTrigger>
 
@@ -94,6 +88,12 @@ function DeleteAccountForm() {
 
               <DialogDescription>탈퇴 시 계정 정보와 작성한 일부 데이터는 복구할 수 없습니다.</DialogDescription>
             </DialogHeader>
+
+            {error ? (
+              <p role="alert" className="text-xs text-destructive">
+                {error}
+              </p>
+            ) : null}
 
             <DialogFooter>
               <DialogClose render={<Button variant="outline" />}>취소</DialogClose>

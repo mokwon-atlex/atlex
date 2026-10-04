@@ -25,18 +25,21 @@ function loadStoredDrafts() {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(DRAFTS_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
 function saveStoredDrafts(drafts) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') return false;
   try {
     localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+    return true;
   } catch {
-    // ignore quota error
+    return false;
   }
 }
 import usePostEditorAiSuggestion from '@/hooks/post-editor/post-editor-ai-suggestion';
@@ -195,9 +198,13 @@ export default function PostEditorPage({ postId }) {
     };
 
     const nextDrafts = [newDraft, ...drafts.filter((d) => d.id !== newDraft.id)].slice(0, 30);
-    setDrafts(nextDrafts);
-    saveStoredDrafts(nextDrafts);
-    alert('임시 저장이 완료되었습니다.');
+    const success = saveStoredDrafts(nextDrafts);
+    if (success) {
+      setDrafts(nextDrafts);
+      alert('임시 저장이 완료되었습니다.');
+    } else {
+      setValidationError('임시 저장에 실패했습니다. 브라우저 저장소 용량을 확인해 주세요.');
+    }
   }
 
   function handleLoadDraft(draft) {
