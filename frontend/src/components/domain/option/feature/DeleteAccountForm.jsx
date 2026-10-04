@@ -77,8 +77,6 @@ function DeleteAccountForm() {
           />
         </Field>
 
-
-
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger render={<Button variant="destructive" />}>회원 탈퇴</DialogTrigger>
 
