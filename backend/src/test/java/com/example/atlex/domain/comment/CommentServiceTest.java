@@ -118,7 +118,6 @@ class CommentServiceTest {
     }
 
     @Test
-
     @DisplayName("최상위 댓글을 작성하면 게시글 작성자 정보를 담은 댓글 작성 이벤트를 발행한다")
     void createComment_publishesCommentCreatedEvent() {
         User postAuthor = user(1L, "author");
@@ -139,6 +138,24 @@ class CommentServiceTest {
         assertNull(event.parentAuthorId());
     }
 
+    @Test
+    @DisplayName("답글을 작성하면 부모 댓글 작성자 정보를 담은 댓글 작성 이벤트를 발행한다")
+    void createReply_publishesEventWithParentAuthor() {
+        User postAuthor = user(1L, "author");
+        User parentAuthor = user(2L, "parent");
+        User replier = user(3L, "replier");
+        Post post = post(10L, postAuthor, true);
+        Comment parent = comment(100L, post, parentAuthor, "부모");
+        when(postAccessService.getAccessiblePost(10L, 3L)).thenReturn(post);
+        when(userRepository.findById(3L)).thenReturn(Optional.of(replier));
+        when(commentRepository.findActiveWithAuthorById(100L)).thenReturn(Optional.of(parent));
+        when(commentRepository.save(any(Comment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        commentService.createComment(10L, new CommentCreateRequest("답글", 100L), 3L);
+
+        ArgumentCaptor<CommentCreatedEvent> captor = ArgumentCaptor.forClass(CommentCreatedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertEquals(2L, captor.getValue().parentAuthorId());
     }
 
     @Test
