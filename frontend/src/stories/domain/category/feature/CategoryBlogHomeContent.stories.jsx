@@ -445,7 +445,7 @@ export const AnonymousLikeRedirectsToLogin = {
     await waitFor(() => expect(getLikeButton(canvasElement, title)).toBeEnabled());
     await userEvent.click(getLikeButton(canvasElement, title));
 
-    await waitFor(() => expect(getRouter().push).toHaveBeenCalledWith('/auth/login'));
+    await waitFor(() => expect(getRouter().push).toHaveBeenCalledWith('/account'));
     expect(likeSpy).not.toHaveBeenCalled();
   },
 };

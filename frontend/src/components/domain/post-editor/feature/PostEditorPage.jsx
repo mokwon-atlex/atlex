@@ -17,8 +17,31 @@ import PostEditorTopBar from '@/components/domain/post-editor/layout/PostEditorT
 import PostEditorCanvasLayout from '@/components/domain/post-editor/layout/PostEditorCanvasLayout';
 import PostEditorShell from '@/components/domain/post-editor/layout/PostEditorShell';
 import { postEditorCopy } from '@/data/post-editor/post-editor-copy';
-import { postEditorDrafts } from '@/data/post-editor/post-editor-drafts';
 import { postEditorToolCategories } from '@/data/post-editor/post-editor-tool-categories';
+
+const DRAFTS_STORAGE_KEY = 'atlex_post_editor_drafts';
+
+function loadStoredDrafts() {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(DRAFTS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredDrafts(drafts) {
+  if (typeof window === 'undefined') return false;
+  try {
+    localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+    return true;
+  } catch {
+    return false;
+  }
+}
 import usePostEditorAiSuggestion from '@/hooks/post-editor/post-editor-ai-suggestion';
 import usePostEditorRichText from '@/hooks/post-editor/post-editor-rich-text';
 import usePostEditorTags from '@/hooks/post-editor/post-editor-tags';
@@ -40,6 +63,7 @@ export default function PostEditorPage({ postId }) {
   const userId = useAuthStore((state) => state.user?.userId);
 
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
+  const [drafts, setDrafts] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState(null);
@@ -49,6 +73,10 @@ export default function PostEditorPage({ postId }) {
   const [validationError, setValidationError] = useState('');
   // 수정 모드에서 기존 데이터를 폼에 이미 반영했는지 여부(중복 반영 방지용)
   const [isInitialized, setIsInitialized] = useState(!isEditMode);
+
+  useEffect(() => {
+    setDrafts(loadStoredDrafts());
+  }, []);
 
   // tiptap 에디터 인스턴스·본문 텍스트·툴바 실행을 한 번에 관리하는 훅
   const richText = usePostEditorRichText();
@@ -147,6 +175,59 @@ export default function PostEditorPage({ postId }) {
 
   const activeMutation = isEditMode ? updatePost : createPost;
 
+  function handleSaveDraft() {
+    if (!title.trim() && richText.isEditorEmpty) {
+      setValidationError('임시 저장할 제목이나 본문을 입력해 주세요.');
+      return;
+    }
+
+    const newDraft = {
+      id: `draft-${Date.now()}`,
+      title: title.trim() || '제목 없는 초안',
+      body: (richText.bodyText || '').slice(0, 100),
+      content: richText.getHTML(),
+      description,
+      categoryId,
+      tags: tagField.combinedTags,
+      updatedAt: new Date().toLocaleDateString('ko-KR', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    };
+
+    const nextDrafts = [newDraft, ...drafts.filter((d) => d.id !== newDraft.id)].slice(0, 30);
+    const success = saveStoredDrafts(nextDrafts);
+    if (success) {
+      setDrafts(nextDrafts);
+      alert('임시 저장이 완료되었습니다.');
+    } else {
+      setValidationError('임시 저장에 실패했습니다. 브라우저 저장소 용량을 확인해 주세요.');
+    }
+  }
+
+  function handleLoadDraft(draft) {
+    if (!draft) return;
+    if (draft.title) setTitle(draft.title);
+    if (draft.description) setDescription(draft.description);
+    if (draft.categoryId) setCategoryId(draft.categoryId);
+    if (draft.content && richText.editor) {
+      richText.editor.commands.setContent(draft.content);
+    }
+    if (draft.tags && tagField.setManualTags) {
+      tagField.setManualTags(draft.tags);
+    }
+    setIsDraftModalOpen(false);
+  }
+
+  function handleDeleteDraft(draft) {
+    if (!draft?.id) return;
+    const nextDrafts = drafts.filter((d) => d.id !== draft.id);
+    setDrafts(nextDrafts);
+    saveStoredDrafts(nextDrafts);
+  }
+
   /**
    * 게시/수정 버튼 핸들러. 제목·본문을 검증한 뒤 작성 모드면 createPost, 수정 모드면 updatePost 를 호출하고
    * 성공 시 게시글 상세로 이동한다.
@@ -205,7 +286,6 @@ export default function PostEditorPage({ postId }) {
   }
 
   // 수정 모드에서 기존 글을 불러오는 중/실패했을 때는 폼 대신 상태 메시지를 보여준다.
-  // TODO: 프로젝트에 공용 로딩/에러 컴포넌트가 있다면 그걸로 교체할 것.
   if (isEditMode && isPostLoading) {
     return <div className="p-7 text-center text-muted-foreground">불러오는 중…</div>;
   }
@@ -220,6 +300,7 @@ export default function PostEditorPage({ postId }) {
         <PostEditorTopBar
           logoLabel={postEditorCopy.logoLabel}
           onOpenDraftModal={() => setIsDraftModalOpen(true)}
+          onSaveDraft={handleSaveDraft}
           onPublish={handlePublish}
           publishDisabled={activeMutation.isPending}
           publishButtonLabel={
@@ -308,9 +389,11 @@ export default function PostEditorPage({ postId }) {
       </PostEditorShell>
       {/* DraftModal은 Dialog portal로 body에 마운트되므로 Shell 바깥에 위치해야 한다 */}
       <PostEditorDraftModal
-        drafts={postEditorDrafts}
+        drafts={drafts}
         isOpen={isDraftModalOpen}
         onClose={() => setIsDraftModalOpen(false)}
+        onLoadDraft={handleLoadDraft}
+        onDeleteDraft={handleDeleteDraft}
       />
     </>
   );

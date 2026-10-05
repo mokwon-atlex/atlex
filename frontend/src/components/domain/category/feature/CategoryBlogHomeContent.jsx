@@ -243,7 +243,7 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
    */
   async function handleLikeToggle(post) {
     if (!isLoggedIn) {
-      router.push('/auth/login');
+      router.push('/account');
       return;
     }
     const requestUserId = currentUserIdRef.current;

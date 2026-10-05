@@ -26,7 +26,12 @@ export default function BlogMainSection({ filters, activeFilterId, initialPosts,
     <>
       <BlogMainToolbar activeFilterId={activeFilterId} filters={filters} onChangeFilter={handleChangeFilter} />
 
-      <BlogMainInfinitePostGrid key={activeFilterId} initialPosts={initialPosts} totalPages={totalPages} />
+      <BlogMainInfinitePostGrid
+        key={activeFilterId}
+        type={activeFilterId}
+        initialPosts={initialPosts}
+        totalPages={totalPages}
+      />
     </>
   );
 }

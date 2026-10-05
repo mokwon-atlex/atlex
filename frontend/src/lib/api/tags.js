@@ -19,3 +19,16 @@ export function getTags(limitOrUserId = 10, cursor = 0) {
   }
   return apiClient.get('/tags', { params: { limit: limitOrUserId, cursor } });
 }
+
+// GET /tags/all?sort={sort}&keyword={keyword}&page={page}&size={size}
+// 플랫폼 전체 공개 태그 목록 페이징 조회
+export function fetchAllTags({ sort = 'trending', keyword = '', page = 0, size = 12 } = {}) {
+  return apiClient.get('/tags/all', {
+    params: {
+      sort,
+      ...(keyword && { keyword }),
+      page,
+      size,
+    },
+  });
+}
