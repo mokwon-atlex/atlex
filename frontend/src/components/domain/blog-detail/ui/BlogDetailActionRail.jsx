@@ -35,8 +35,8 @@ export default function BlogDetailActionRail({
   onCommentClick,
   postId,
 }) {
-  const { comments = [] } = useComments(postId);
-  const commentCount = propComments ?? (postId ? comments.length : 0);
+  const { commentCount: fetchedCommentCount } = useComments(postId);
+  const commentCount = propComments ?? (postId ? fetchedCommentCount : 0);
   const [isDownloading, setIsDownloading] = useState(false);
   // 로그인이 필요한 동작 이름('좋아요' | '즐겨찾기'). null 이면 안내를 숨긴다.
   const [loginRequiredFor, setLoginRequiredFor] = useState(null);

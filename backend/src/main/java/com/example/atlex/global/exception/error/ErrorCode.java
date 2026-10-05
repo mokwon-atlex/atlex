@@ -58,6 +58,9 @@ public enum ErrorCode {
     // 404 Not Found - 댓글
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다."),
 
+    // 400 Bad Request - 댓글
+    COMMENT_REPLY_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "답글에는 답글을 작성할 수 없습니다."),
+
     // 403 Forbidden - 댓글
     COMMENT_UPDATE_FORBIDDEN(HttpStatus.FORBIDDEN, "본인이 작성한 댓글만 수정할 수 있습니다."),
     COMMENT_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "댓글을 삭제할 권한이 없습니다."),

@@ -48,7 +48,10 @@ let detailSpy;
  */
 function setupLikeRequests({ liked = false, likes = 18, failToggle = false } = {}) {
   return () => {
-    detailSpy = spyOn(apiClient, 'get').mockImplementation(async () => ({ id: 10, liked, likes }));
+    // 좋아요 처리 후 게시글 캐시 무효화로 댓글이 재조회될 수 있어 댓글 목록 요청은 빈 배열로 응답한다.
+    detailSpy = spyOn(apiClient, 'get').mockImplementation(async (url) =>
+      String(url).includes('/comments') ? [] : { id: 10, liked, likes },
+    );
 
     likeSpy = spyOn(apiClient, 'post').mockImplementation(async () => {
       if (failToggle) throw new Error('좋아요 처리에 실패했습니다.');
@@ -78,7 +81,8 @@ function setupLikeRequests({ liked = false, likes = 18, failToggle = false } = {
  */
 function setupSlowLikeStateRequest() {
   return () => {
-    detailSpy = spyOn(apiClient, 'get').mockImplementation(async () => {
+    detailSpy = spyOn(apiClient, 'get').mockImplementation(async (url) => {
+      if (String(url).includes('/comments')) return [];
       await new Promise((resolve) => setTimeout(resolve, 300));
       return { id: 10, liked: true, likes: 19 };
     });
