@@ -75,7 +75,7 @@ public class AiTokenLimiter {
         int maxTokens = (tier == MembershipTier.PREMIUM) ? PREMIUM_TIER_LIMIT : FREE_TIER_LIMIT;
 
         String redisKey = "ai_usage:" + userId;
-        
+
         try {
             String currentUsageStr = redisTemplate.opsForValue().get(redisKey);
             int currentUsage = currentUsageStr != null ? Integer.parseInt(currentUsageStr) : 0;
