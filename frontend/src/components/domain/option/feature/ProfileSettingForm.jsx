@@ -38,14 +38,14 @@ function ProfileSettingForm() {
     handleThemeChange,
   } = useProfileSettingForm();
 
-  const { user, setUser } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const [isUpgrading, setIsUpgrading] = useState(false);
 
   const handleUpgrade = async () => {
     try {
       setIsUpgrading(true);
       const res = await upgradeUserMembership(user.userId);
-      setUser(res.data);
+      updateUser(res); // apiClient already unwraps response, so res is the UserResponse
       alert('프리미엄 등급으로 업그레이드되었습니다!');
     } catch (err) {
       alert('업그레이드 중 오류가 발생했습니다.');

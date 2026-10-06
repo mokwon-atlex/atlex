@@ -57,12 +57,12 @@ public class AiSuggestionService {
      * 게시글 제목 자동완성 텍스트를 제안합니다.
      */
     public AiSuggestionResponse suggestTitle(TitleSuggestionRequest request) {
-        aiTokenLimiter.checkAndConsumeToken(resolveCurrentUserKey(), 50);
-
         String currentTitle = request.getCurrentTitle() != null ? request.getCurrentTitle().trim() : "";
         if (currentTitle.length() < 2) {
             return AiSuggestionResponse.builder().suggestion("").build();
         }
+        
+        aiTokenLimiter.checkAndConsumeToken(resolveCurrentUserKey(), 50);
 
         StringBuilder userPrompt = new StringBuilder();
         userPrompt.append("현재 입력된 제목: ").append(currentTitle).append("\n");

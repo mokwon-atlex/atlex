@@ -21,17 +21,25 @@ public class AdminAccountInitializer implements ApplicationRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @org.springframework.beans.factory.annotation.Value("${admin.password:}")
+    private String adminPassword;
+
     @Override
     public void run(ApplicationArguments args) {
         String adminId = "admin";
 
         if (!userRepository.existsByUserId(adminId)) {
+            if (adminPassword == null || adminPassword.isBlank()) {
+                log.warn("환경변수에 관리자 비밀번호(admin.password)가 설정되지 않아 관리자 계정을 생성하지 않습니다.");
+                return;
+            }
+
             log.info("기본 관리자 계정(admin)이 존재하지 않아 새로 생성합니다.");
 
             User adminUser = User.builder()
                 .userId(adminId)
                 .email("admin@atlexa.com")
-                .password(passwordEncoder.encode("admin1234!"))
+                .password(passwordEncoder.encode(adminPassword))
                 .name("관리자")
                 .role(UserRole.ADMIN)
                 .membershipTier(MembershipTier.PREMIUM)
@@ -43,7 +51,7 @@ public class AdminAccountInitializer implements ApplicationRunner {
                 .build();
 
             userRepository.save(adminUser);
-            log.info("관리자 계정 생성 완료: ID={}, Password={}", adminId, "admin1234!");
+            log.info("관리자 계정 생성 완료: ID={}", adminId);
         } else {
             log.info("기본 관리자 계정(admin)이 이미 존재합니다.");
         }

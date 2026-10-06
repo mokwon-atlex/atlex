@@ -105,7 +105,7 @@ export default function PostEditorPage({ postId }) {
   } = usePost(isEditMode ? postId : undefined);
 
   const { data: tokenStatusData } = useAiTokens();
-  const tokenStatus = tokenStatusData?.data;
+  const tokenStatus = tokenStatusData;
 
   useEffect(() => {
     let cancelled = false;

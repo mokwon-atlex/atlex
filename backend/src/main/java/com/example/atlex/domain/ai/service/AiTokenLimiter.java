@@ -36,20 +36,16 @@ public class AiTokenLimiter {
         int maxTokens = (tier == MembershipTier.PREMIUM) ? PREMIUM_TIER_LIMIT : FREE_TIER_LIMIT;
         Duration ttl = (tier == MembershipTier.PREMIUM) ? PREMIUM_TIER_TTL : FREE_TIER_TTL;
 
-        String redisKey = "ai_usage:" + userId;
+        String redisKey = "ai_usage:" + tier.name() + ":" + userId;
 
         try {
-            String currentUsageStr = redisTemplate.opsForValue().get(redisKey);
-            int currentUsage = currentUsageStr != null ? Integer.parseInt(currentUsageStr) : 0;
-
-            if (currentUsage + requiredTokens > maxTokens) {
+            Long newUsage = redisTemplate.opsForValue().increment(redisKey, requiredTokens);
+            
+            if (newUsage != null && newUsage > maxTokens) {
+                redisTemplate.opsForValue().decrement(redisKey, requiredTokens);
                 throw new TooManyAiRequestsException();
             }
 
-            // Increment usage
-            Long newUsage = redisTemplate.opsForValue().increment(redisKey, requiredTokens);
-
-            // Set TTL if it's the first usage in the window
             if (newUsage != null && newUsage == requiredTokens) {
                 redisTemplate.expire(redisKey, ttl);
             }
@@ -74,7 +70,7 @@ public class AiTokenLimiter {
         MembershipTier tier = user.getMembershipTier();
         int maxTokens = (tier == MembershipTier.PREMIUM) ? PREMIUM_TIER_LIMIT : FREE_TIER_LIMIT;
 
-        String redisKey = "ai_usage:" + userId;
+        String redisKey = "ai_usage:" + tier.name() + ":" + userId;
 
         try {
             String currentUsageStr = redisTemplate.opsForValue().get(redisKey);
