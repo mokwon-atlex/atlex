@@ -4,6 +4,7 @@ import com.example.atlex.domain.comment.dto.request.CommentCreateRequest;
 import com.example.atlex.domain.comment.dto.request.CommentUpdateRequest;
 import com.example.atlex.domain.comment.dto.response.CommentResponse;
 import com.example.atlex.domain.comment.entity.Comment;
+import com.example.atlex.domain.comment.event.CommentCreatedEvent;
 import com.example.atlex.domain.comment.exception.CommentDeleteForbiddenException;
 import com.example.atlex.domain.comment.exception.CommentNotFoundException;
 import com.example.atlex.domain.comment.exception.CommentReplyDepthExceededException;
@@ -15,6 +16,7 @@ import com.example.atlex.domain.user.entity.User;
 import com.example.atlex.domain.user.exception.UserNotFoundException;
 import com.example.atlex.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +32,16 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostAccessService postAccessService;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * 게시글에 댓글 또는 답글을 작성하고, 커밋 후 알림 생성을 위한 이벤트를 발행한다.
+     *
+     * @param postId  게시글 ID
+     * @param request 댓글 내용과 선택적 부모 댓글 ID
+     * @param userId  작성자 DB ID
+     * @return 작성된 댓글
+     */
     @Transactional
     public CommentResponse createComment(Long postId, CommentCreateRequest request, Long userId) {
         Post post = postAccessService.getAccessiblePost(postId, userId);
@@ -47,7 +58,9 @@ public class CommentService {
             .content(request.getContent())
             .build();
 
-        return CommentResponse.from(commentRepository.save(comment));
+        Comment savedComment = commentRepository.save(comment);
+        eventPublisher.publishEvent(CommentCreatedEvent.from(savedComment));
+        return CommentResponse.from(savedComment);
     }
 
     /**

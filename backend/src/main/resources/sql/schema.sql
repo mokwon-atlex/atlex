@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS reports;
 DROP TABLE IF EXISTS post_relations;
 DROP TABLE IF EXISTS post_keywords;
@@ -228,3 +229,27 @@ CREATE TABLE reports (
 
 CREATE INDEX idx_reports_status_created
     ON reports(status, created_at);
+
+CREATE TABLE notifications (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    recipient_id BIGINT NOT NULL,
+    actor_id BIGINT NOT NULL,
+    type VARCHAR(30) NOT NULL,
+    post_id BIGINT,
+    comment_id BIGINT,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME,
+    CONSTRAINT fk_notifications_recipient
+        FOREIGN KEY (recipient_id) REFERENCES users(id),
+    CONSTRAINT fk_notifications_actor
+        FOREIGN KEY (actor_id) REFERENCES users(id),
+    CONSTRAINT fk_notifications_post
+        FOREIGN KEY (post_id) REFERENCES posts(id),
+    CONSTRAINT fk_notifications_comment
+        FOREIGN KEY (comment_id) REFERENCES comments(id),
+    CONSTRAINT uk_notifications_recipient_type_comment
+        UNIQUE (recipient_id, type, comment_id)
+);
+
+CREATE INDEX idx_notifications_recipient_created
+    ON notifications(recipient_id, created_at);
