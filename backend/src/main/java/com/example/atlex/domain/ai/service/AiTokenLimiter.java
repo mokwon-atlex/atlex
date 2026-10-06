@@ -40,7 +40,7 @@ public class AiTokenLimiter {
 
         try {
             Long newUsage = redisTemplate.opsForValue().increment(redisKey, requiredTokens);
-            
+
             if (newUsage != null && newUsage > maxTokens) {
                 redisTemplate.opsForValue().decrement(redisKey, requiredTokens);
                 throw new TooManyAiRequestsException();

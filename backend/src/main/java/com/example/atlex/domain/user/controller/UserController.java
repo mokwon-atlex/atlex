@@ -139,11 +139,11 @@ public class UserController implements UserControllerDocs {
         if (!principalDetails.user().getUserId().equals(userId)) {
             throw new AccessDeniedException();
         }
-        
+
         if (java.util.Arrays.asList(env.getActiveProfiles()).contains("prod")) {
             throw new AccessDeniedException("운영 환경에서는 이 기능을 사용할 수 없습니다.");
         }
-        
+
         UserResponse response = userService.upgradeMembership(userId);
         return ResponseEntity.ok(ApiResponse.success(response, "프리미엄 멤버십으로 업그레이드되었습니다."));
     }

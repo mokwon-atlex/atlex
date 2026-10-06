@@ -61,7 +61,7 @@ public class AiSuggestionService {
         if (currentTitle.length() < 2) {
             return AiSuggestionResponse.builder().suggestion("").build();
         }
-        
+
         aiTokenLimiter.checkAndConsumeToken(resolveCurrentUserKey(), 50);
 
         StringBuilder userPrompt = new StringBuilder();
