@@ -24,10 +24,10 @@ public class AdminAccountInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         String adminId = "admin";
-        
+
         if (!userRepository.existsByUserId(adminId)) {
             log.info("기본 관리자 계정(admin)이 존재하지 않아 새로 생성합니다.");
-            
+
             User adminUser = User.builder()
                 .userId(adminId)
                 .email("admin@atlexa.com")
@@ -41,7 +41,7 @@ public class AdminAccountInitializer implements ApplicationRunner {
                 .agreedAt(LocalDateTime.now())
                 .active(true)
                 .build();
-                
+
             userRepository.save(adminUser);
             log.info("관리자 계정 생성 완료: ID={}, Password={}", adminId, "admin1234!");
         } else {
