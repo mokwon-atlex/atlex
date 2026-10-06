@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { Bookmark, Check, Download, Heart, LoaderCircle, MessageSquare, Share2 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/common/ui/button';
 import { useComments } from '@/hooks/queries/comments/useComments';
-import { usePostLike } from '@/hooks/queries/posts/usePostLike';
 import { usePostFavorite } from '@/hooks/queries/posts/usePostFavorite';
+import { usePostLike } from '@/hooks/queries/posts/usePostLike';
 import { downloadPostMarkdown } from '@/lib/api/posts';
 
 function ActionButton({ label, count, icon, onClick, disabled, pressed, 'aria-label': ariaLabel }) {
@@ -29,7 +29,6 @@ function ActionButton({ label, count, icon, onClick, disabled, pressed, 'aria-la
 }
 
 export default function BlogDetailActionRail({
-  bookmarks,
   comments: propComments,
   initialLiked = false,
   likes = 0,
@@ -39,7 +38,8 @@ export default function BlogDetailActionRail({
   const { commentCount: fetchedCommentCount } = useComments(postId);
   const commentCount = propComments ?? (postId ? fetchedCommentCount : 0);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [needsLogin, setNeedsLogin] = useState(false);
+  // 로그인이 필요한 동작 이름('좋아요' | '즐겨찾기'). null 이면 안내를 숨긴다.
+  const [loginRequiredFor, setLoginRequiredFor] = useState(null);
   const [likeError, setLikeError] = useState(null);
   const [favoriteError, setFavoriteError] = useState(null);
   const [isCopied, setIsCopied] = useState(false);
@@ -57,24 +57,12 @@ export default function BlogDetailActionRail({
 
   const {
     isFavorited,
+    isStateReady: isFavoriteStateReady,
+    stateError: favoriteStateError,
+    retryFavoriteState,
     isPending: isFavoritePending,
-    isLoading: isFavoritesLoading,
     toggleFavorite,
   } = usePostFavorite(postId);
-
-  const handleFavoriteClick = async () => {
-    setFavoriteError(null);
-    setNeedsLogin(false);
-    if (!isLoggedIn) {
-      setNeedsLogin(true);
-      return;
-    }
-    try {
-      await toggleFavorite();
-    } catch (err) {
-      setFavoriteError(err?.message ?? '즐겨찾기 처리에 실패했습니다.');
-    }
-  };
 
   const handleShareClick = async () => {
     if (typeof window === 'undefined') return;
@@ -89,9 +77,9 @@ export default function BlogDetailActionRail({
 
   const handleLikeClick = async () => {
     setLikeError(null);
-    setNeedsLogin(false);
+    setLoginRequiredFor(null);
     if (!isLoggedIn) {
-      setNeedsLogin(true);
+      setLoginRequiredFor('좋아요');
       return;
     }
 
@@ -99,6 +87,21 @@ export default function BlogDetailActionRail({
       await toggleLike();
     } catch (error) {
       setLikeError(error?.message ?? '좋아요 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    }
+  };
+
+  const handleFavoriteClick = async () => {
+    setFavoriteError(null);
+    setLoginRequiredFor(null);
+    if (!isLoggedIn) {
+      setLoginRequiredFor('즐겨찾기');
+      return;
+    }
+
+    try {
+      await toggleFavorite();
+    } catch (error) {
+      setFavoriteError(error?.message ?? '즐겨찾기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.');
     }
   };
 
@@ -138,14 +141,13 @@ export default function BlogDetailActionRail({
       />
       <ActionButton
         label="Save"
-        count={bookmarks}
         icon={
           <Bookmark className={`size-3.5 ${isFavorited ? 'fill-current text-foreground' : 'text-muted-foreground'}`} />
         }
         onClick={handleFavoriteClick}
-        disabled={isFavoritePending || isFavoritesLoading}
+        disabled={isFavoritePending || !isFavoriteStateReady}
         pressed={isFavorited}
-        aria-label={isFavorited ? '즐겨찾기 취소하기' : '즐겨찾기 추가하기'}
+        aria-label={isFavorited ? '즐겨찾기 해제하기' : '즐겨찾기에 저장하기'}
       />
       <ActionButton
         label="Comment"
@@ -180,18 +182,12 @@ export default function BlogDetailActionRail({
         aria-label="게시글 링크 복사"
       />
 
-      {needsLogin ? (
+      {loginRequiredFor ? (
         <p role="alert" className="text-xs text-muted-foreground xl:w-full">
-          좋아요 및 즐겨찾기는 로그인 후 사용할 수 있습니다.{' '}
+          {loginRequiredFor}는 로그인 후 사용할 수 있습니다.{' '}
           <Link href="/account" className={buttonVariants({ variant: 'link', size: 'sm' })}>
             로그인하기
           </Link>
-        </p>
-      ) : null}
-
-      {favoriteError ? (
-        <p role="alert" className="text-xs text-destructive xl:w-full">
-          {favoriteError}
         </p>
       ) : null}
 
@@ -204,9 +200,29 @@ export default function BlogDetailActionRail({
         </p>
       ) : null}
 
+      {favoriteStateError ? (
+        <p role="alert" className="text-xs text-destructive xl:w-full">
+          즐겨찾기 상태를 불러오지 못했습니다.{' '}
+          <button
+            type="button"
+            onClick={() => retryFavoriteState()}
+            aria-label="즐겨찾기 상태 다시 불러오기"
+            className="font-semibold underline"
+          >
+            다시 시도
+          </button>
+        </p>
+      ) : null}
+
       {likeError ? (
         <p role="alert" className="text-xs text-destructive xl:w-full">
           {likeError}
+        </p>
+      ) : null}
+
+      {favoriteError ? (
+        <p role="alert" className="text-xs text-destructive xl:w-full">
+          {favoriteError}
         </p>
       ) : null}
     </div>
