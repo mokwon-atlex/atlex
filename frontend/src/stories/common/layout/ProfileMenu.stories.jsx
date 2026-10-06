@@ -57,8 +57,10 @@ export const LoggedIn = {
 
     await waitFor(() => expect(screen.getByRole('link', { name: '내 블로그' })).toHaveAttribute('href', '/@atlex'));
     await expect(screen.getByRole('link', { name: '그래프 뷰' })).toHaveAttribute('href', '/graph');
+    await expect(screen.getByRole('link', { name: '즐겨찾기' })).toHaveAttribute('href', '/favorites');
     // 일반 사용자에게는 관리자 메뉴를 노출하지 않는다.
     await expect(screen.queryByRole('link', { name: '신고 관리' })).toBeNull();
+    await expect(screen.queryByRole('link', { name: '회원 관리' })).toBeNull();
   },
 };
 
@@ -70,6 +72,7 @@ export const LoggedInAdmin = {
     await waitFor(() =>
       expect(screen.getByRole('link', { name: '신고 관리' })).toHaveAttribute('href', '/admin/reports'),
     );
+    await expect(screen.getByRole('link', { name: '회원 관리' })).toHaveAttribute('href', '/admin/users');
   },
 };
 

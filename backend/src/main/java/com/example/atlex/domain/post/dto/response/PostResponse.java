@@ -41,6 +41,8 @@ public class PostResponse {
     private Integer likes;
     @Schema(description = "로그인 사용자의 좋아요 여부(비로그인은 false)", example = "true")
     private boolean liked;
+    @Schema(description = "로그인 사용자의 즐겨찾기 여부(비로그인은 false)", example = "false")
+    private boolean favorited;
     @Schema(description = "공개 여부 (false면 본인만 조회 가능)", example = "true")
     private Boolean isPublic;
     @Schema(description = "태그 목록", example = "[\"Java\", \"Spring Boot\"]")
@@ -55,10 +57,10 @@ public class PostResponse {
     }
 
     public static PostResponse from(Post post, List<String> tags) {
-        return from(post, tags, false);
+        return from(post, tags, false, false);
     }
 
-    public static PostResponse from(Post post, List<String> tags, boolean liked) {
+    public static PostResponse from(Post post, List<String> tags, boolean liked, boolean favorited) {
         return PostResponse.builder()
             .id(post.getId())
             .categoryId(post.getCategory() != null ? post.getCategory().getId() : null)
@@ -72,6 +74,7 @@ public class PostResponse {
             .hits(post.getHits())
             .likes(post.getLikes())
             .liked(liked)
+            .favorited(favorited)
             .isPublic(post.getIsPublic())
             .tags(tags != null ? tags : List.of())
             .createdAt(post.getCreatedAt())

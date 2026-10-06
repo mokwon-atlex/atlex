@@ -8,6 +8,7 @@ import com.example.atlex.domain.category.entity.Category;
 import com.example.atlex.domain.graph.service.GraphIndexService;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.category.repository.CategoryRepository;
+import com.example.atlex.domain.post.repository.PostFavoriteRepository;
 import com.example.atlex.domain.post.repository.PostLikeRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.tag.entity.PostTag;
@@ -51,6 +52,7 @@ public class PostService {
     private final CategoryRepository categoryRepository;
     private final GraphIndexService graphIndexService;
     private final PostLikeRepository postLikeRepository;
+    private final PostFavoriteRepository postFavoriteRepository;
     private final PostTagRepository postTagRepository;
     private final TagRepository tagRepository;
     private final TagService tagService;
@@ -157,7 +159,8 @@ public class PostService {
 
         List<String> tags = postTagRepository.findTagNamesByPostId(postId);
         boolean liked = id != null && postLikeRepository.existsByPost_IdAndUser_Id(postId, id);
-        return PostResponse.from(post, tags, liked);
+        boolean favorited = id != null && postFavoriteRepository.existsByPost_IdAndUser_Id(postId, id);
+        return PostResponse.from(post, tags, liked, favorited);
     }
 
     @Transactional
@@ -194,9 +197,10 @@ public class PostService {
         graphIndexService.refreshPostGraph(post.getId());
         eventPublisher.publishEvent(PostGitHubSyncEvent.update(post.getId(), id));
         List<String> tags = postTagRepository.findTagNamesByPostId(post.getId());
-        // 수정 응답으로 상세 화면을 갱신해도 좋아요 상태가 풀리지 않도록 함께 내려준다.
+        // 수정 응답으로 상세 화면을 갱신해도 좋아요·즐겨찾기 상태가 풀리지 않도록 함께 내려준다.
         boolean liked = postLikeRepository.existsByPost_IdAndUser_Id(post.getId(), id);
-        return PostResponse.from(post, tags, liked);
+        boolean favorited = postFavoriteRepository.existsByPost_IdAndUser_Id(post.getId(), id);
+        return PostResponse.from(post, tags, liked, favorited);
     }
 
     @Transactional
