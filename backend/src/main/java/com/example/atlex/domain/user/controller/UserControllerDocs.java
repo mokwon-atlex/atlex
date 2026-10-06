@@ -196,4 +196,16 @@ public interface UserControllerDocs {
         PrincipalDetails principalDetails,
         @Parameter(description = "탈퇴할 사용자 아이디", example = "john123") @PathVariable
         String userId);
+
+    @Operation(summary = "가짜 프리미엄 결제(업그레이드)", description = "테스트용 결제 우회 API. 즉시 PREMIUM 등급으로 승급합니다. Authorization 헤더 필수.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "업그레이드 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 토큰 없음")
+    })
+    ResponseEntity<ApiResponse<UserResponse>> upgradeMembership(
+        @Parameter(hidden = true) @AuthenticationPrincipal
+        PrincipalDetails principalDetails,
+        @Parameter(description = "업그레이드할 사용자 아이디", example = "john123") @PathVariable
+        String userId);
 }

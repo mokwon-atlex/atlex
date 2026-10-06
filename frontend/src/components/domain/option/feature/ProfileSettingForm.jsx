@@ -10,6 +10,9 @@ import {
   ProfileSettingThemeField,
 } from '@/components/domain/option/feature/ProfileSettingFields';
 import { useProfileSettingForm } from '@/hooks/option/useProfileSettingForm';
+import { useAuthStore } from '@/store/authStore';
+import { upgradeUserMembership } from '@/lib/api/users';
+import { useState } from 'react';
 
 function ProfileSettingForm() {
   const {
@@ -35,11 +38,34 @@ function ProfileSettingForm() {
     handleThemeChange,
   } = useProfileSettingForm();
 
+  const { user, setUser } = useAuthStore();
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
+  const handleUpgrade = async () => {
+    try {
+      setIsUpgrading(true);
+      const res = await upgradeUserMembership(user.userId);
+      setUser(res.data);
+      alert('프리미엄 등급으로 업그레이드되었습니다!');
+    } catch (err) {
+      alert('업그레이드 중 오류가 발생했습니다.');
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
+
   return (
     <Card className="rounded-3xl border-border/60 bg-card/80 shadow-sm backdrop-blur">
-      <CardHeader>
-        <CardTitle>프로필 설정</CardTitle>
-        <CardDescription>프로필 정보와 이메일을 관리할 수 있습니다.</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>프로필 설정</CardTitle>
+          <CardDescription>프로필 정보와 이메일을 관리할 수 있습니다.</CardDescription>
+        </div>
+        {user?.membershipTier === 'FREE' && (
+          <Button variant="outline" className="border-primary text-primary" disabled={isUpgrading} onClick={handleUpgrade}>
+            {isUpgrading ? '처리 중...' : '프리미엄 무료 체험(가짜 결제)'}
+          </Button>
+        )}
       </CardHeader>
 
       <form onSubmit={handleSubmit}>

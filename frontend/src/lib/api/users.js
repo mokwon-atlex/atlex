@@ -49,3 +49,8 @@ export function updateUserBlogCategory(userId, categoryId, name) {
 export function deleteUserBlogCategory(userId, categoryId) {
   return apiClient.delete(`/users/${userId}/categories/${categoryId}`);
 }
+
+// POST /users/{userId}/membership/upgrade
+export function upgradeUserMembership(userId) {
+  return apiClient.post(`/users/${userId}/membership/upgrade`);
+}
