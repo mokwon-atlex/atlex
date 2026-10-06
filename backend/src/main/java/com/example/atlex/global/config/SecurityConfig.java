@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/graph", "/api/v1/graph/posts/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/profiles/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/*/categories/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/tags").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/tags", "/api/v1/tags/**").permitAll()
                 .requestMatchers("/api/v1/github/**").authenticated()
                 .requestMatchers("/api/v1/ai/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/users/all").hasRole("ADMIN")

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Bookmark, Download, Heart, LoaderCircle, MessageSquare, Share2 } from 'lucide-react';
+import { Bookmark, Check, Download, Heart, LoaderCircle, MessageSquare, Share2 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/common/ui/button';
 import { useComments } from '@/hooks/queries/comments/useComments';
 import { usePostFavorite } from '@/hooks/queries/posts/usePostFavorite';
@@ -42,6 +42,8 @@ export default function BlogDetailActionRail({
   const [loginRequiredFor, setLoginRequiredFor] = useState(null);
   const [likeError, setLikeError] = useState(null);
   const [favoriteError, setFavoriteError] = useState(null);
+  const [isCopied, setIsCopied] = useState(false);
+
   const {
     isLoggedIn,
     isLiked,
@@ -61,6 +63,17 @@ export default function BlogDetailActionRail({
     isPending: isFavoritePending,
     toggleFavorite,
   } = usePostFavorite(postId);
+
+  const handleShareClick = async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      alert('링크 복사에 실패했습니다.');
+    }
+  };
 
   const handleLikeClick = async () => {
     setLikeError(null);
@@ -156,12 +169,23 @@ export default function BlogDetailActionRail({
         disabled={isDownloading}
         aria-label="마크다운(.md) 파일 다운로드"
       />
-      <ActionButton label="Share" icon={<Share2 className="size-3.5 text-muted-foreground" />} />
+      <ActionButton
+        label={isCopied ? 'Copied' : 'Share'}
+        icon={
+          isCopied ? (
+            <Check className="size-3.5 text-emerald-600" />
+          ) : (
+            <Share2 className="size-3.5 text-muted-foreground" />
+          )
+        }
+        onClick={handleShareClick}
+        aria-label="게시글 링크 복사"
+      />
 
       {loginRequiredFor ? (
         <p role="alert" className="text-xs text-muted-foreground xl:w-full">
           {loginRequiredFor}는 로그인 후 사용할 수 있습니다.{' '}
-          <Link href="/auth/login" className={buttonVariants({ variant: 'link', size: 'sm' })}>
+          <Link href="/account" className={buttonVariants({ variant: 'link', size: 'sm' })}>
             로그인하기
           </Link>
         </p>

@@ -320,12 +320,9 @@ let unfavoriteSpy;
  */
 function setupFavoriteRequests({ favorited = false, failToggle = false } = {}) {
   return () => {
-    detailSpy = spyOn(apiClient, 'get').mockImplementation(async () => ({
-      id: 10,
-      liked: false,
-      likes: 18,
-      favorited,
-    }));
+    detailSpy = spyOn(apiClient, 'get').mockImplementation(async (url) =>
+      String(url).includes('/comments') ? [] : { id: 10, liked: false, likes: 18, favorited },
+    );
 
     favoriteSpy = spyOn(apiClient, 'post').mockImplementation(async () => {
       if (failToggle) throw new Error('즐겨찾기 처리에 실패했습니다.');
