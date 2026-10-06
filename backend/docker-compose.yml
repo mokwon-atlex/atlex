@@ -18,8 +18,17 @@ services:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI:-http://localhost:3000/blog_option}
+      REDIS_HOST: redis
     expose:
       - "8080"                                # 내부 네트워크에만 노출 (외부 X)
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    expose:
+      - "6379"
 
   nginx:
     image: nginx:alpine

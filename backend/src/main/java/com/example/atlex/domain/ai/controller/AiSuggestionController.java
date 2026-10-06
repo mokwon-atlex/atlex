@@ -46,4 +46,10 @@ public class AiSuggestionController implements AiSuggestionControllerDocs {
         AiSuggestionResponse response = aiSuggestionService.suggestDescription(request);
         return ResponseEntity.ok(ApiResponse.success(response, "요약 추천이 생성되었습니다."));
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/tokens")
+    public ResponseEntity<ApiResponse<com.example.atlex.domain.ai.dto.response.AiTokenResponse>> getTokenStatus() {
+        com.example.atlex.domain.ai.dto.response.AiTokenResponse response = aiSuggestionService.getTokenStatus();
+        return ResponseEntity.ok(ApiResponse.success(response, "토큰 상태를 조회했습니다."));
+    }
 }
