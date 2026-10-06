@@ -62,7 +62,12 @@ function ProfileSettingForm() {
           <CardDescription>프로필 정보와 이메일을 관리할 수 있습니다.</CardDescription>
         </div>
         {user?.membershipTier === 'FREE' && (
-          <Button variant="outline" className="border-primary text-primary" disabled={isUpgrading} onClick={handleUpgrade}>
+          <Button
+            variant="outline"
+            className="border-primary text-primary"
+            disabled={isUpgrading}
+            onClick={handleUpgrade}
+          >
             {isUpgrading ? '처리 중...' : '프리미엄 무료 체험(가짜 결제)'}
           </Button>
         )}
