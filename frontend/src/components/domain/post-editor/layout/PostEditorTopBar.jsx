@@ -11,6 +11,8 @@ export default function PostEditorTopBar({
   onPublish, // 게시 버튼 핸들러
   publishButtonLabel = '게시 버튼',
   publishDisabled = false, // 게시 진행 중 등 버튼 비활성화 여부
+  remainingTokens = null,
+  maxTokens = null,
 }) {
   return (
     <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-7">
@@ -21,6 +23,17 @@ export default function PostEditorTopBar({
       </Link>
 
       <div className="flex flex-wrap items-center gap-3">
+        {remainingTokens !== null && maxTokens !== null && (
+          <div className="text-sm text-muted-foreground mr-2 font-medium">
+            남은 AI 토큰:{' '}
+            {remainingTokens === 0 ? (
+              <span className="text-destructive font-bold">0</span>
+            ) : (
+              remainingTokens.toLocaleString()
+            )}{' '}
+            / {maxTokens.toLocaleString()}
+          </div>
+        )}
         {onSaveDraft && (
           <Button variant="outline" size="default" onClick={onSaveDraft}>
             {saveDraftButtonLabel}

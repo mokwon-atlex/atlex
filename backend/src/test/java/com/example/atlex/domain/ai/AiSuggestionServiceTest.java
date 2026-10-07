@@ -17,7 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import com.example.atlex.domain.ai.service.AiRateLimiter;
+import com.example.atlex.domain.ai.service.AiTokenLimiter;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -30,13 +30,13 @@ class AiSuggestionServiceTest {
     private GeminiClient geminiClient;
 
     @Mock
-    private AiRateLimiter aiRateLimiter;
+    private AiTokenLimiter aiTokenLimiter;
 
     private AiSuggestionService aiSuggestionService;
 
     @BeforeEach
     void setUp() {
-        aiSuggestionService = new AiSuggestionService(geminiClient, aiRateLimiter);
+        aiSuggestionService = new AiSuggestionService(geminiClient, aiTokenLimiter);
     }
 
     @Nested

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 public class AiSuggestionService {
 
     private final GeminiClient geminiClient;
-    private final AiRateLimiter aiRateLimiter;
+    private final AiTokenLimiter aiTokenLimiter;
 
     private static final String TITLE_SYSTEM_PROMPT = """
         당신은 블로그 글 제목 자동완성 어시스턴트입니다.
@@ -57,12 +57,12 @@ public class AiSuggestionService {
      * 게시글 제목 자동완성 텍스트를 제안합니다.
      */
     public AiSuggestionResponse suggestTitle(TitleSuggestionRequest request) {
-        aiRateLimiter.checkRateLimit(resolveCurrentUserKey());
-
         String currentTitle = request.getCurrentTitle() != null ? request.getCurrentTitle().trim() : "";
         if (currentTitle.length() < 2) {
             return AiSuggestionResponse.builder().suggestion("").build();
         }
+
+        aiTokenLimiter.checkAndConsumeToken(resolveCurrentUserKey(), 50);
 
         StringBuilder userPrompt = new StringBuilder();
         userPrompt.append("현재 입력된 제목: ").append(currentTitle).append("\n");
@@ -85,7 +85,7 @@ public class AiSuggestionService {
      * 게시글 본문 다음 문장을 제안합니다.
      */
     public AiSuggestionResponse suggestParagraph(ParagraphSuggestionRequest request) {
-        aiRateLimiter.checkRateLimit(resolveCurrentUserKey());
+        aiTokenLimiter.checkAndConsumeToken(resolveCurrentUserKey(), 100);
 
         StringBuilder userPrompt = new StringBuilder();
         if (request.getTitle() != null && !request.getTitle().isBlank()) {
@@ -118,7 +118,7 @@ public class AiSuggestionService {
      * 게시글 본문 내용을 바탕으로 메타 요약(Description)을 제안합니다.
      */
     public AiSuggestionResponse suggestDescription(DescriptionSuggestionRequest request) {
-        aiRateLimiter.checkRateLimit(resolveCurrentUserKey());
+        aiTokenLimiter.checkAndConsumeToken(resolveCurrentUserKey(), 150);
 
         StringBuilder userPrompt = new StringBuilder();
         if (request.getTitle() != null && !request.getTitle().isBlank()) {
@@ -185,5 +185,13 @@ public class AiSuggestionService {
             }
         } catch (Exception ignored) {}
         return "anonymous";
+    }
+
+    public com.example.atlex.domain.ai.dto.response.AiTokenResponse getTokenStatus() {
+        String key = resolveCurrentUserKey();
+        return com.example.atlex.domain.ai.dto.response.AiTokenResponse.builder()
+            .remainingTokens(aiTokenLimiter.getRemainingTokens(key))
+            .maxTokens(aiTokenLimiter.getMaxTokens(key))
+            .build();
     }
 }

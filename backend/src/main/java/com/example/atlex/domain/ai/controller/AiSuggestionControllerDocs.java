@@ -20,4 +20,7 @@ public interface AiSuggestionControllerDocs {
     @Operation(summary = "게시글 요약(Description) AI 추천", description = "게시글 제목과 본문을 기반으로 1~2문장의 메타 요약문을 제안합니다.")
     ResponseEntity<ApiResponse<AiSuggestionResponse>> suggestDescription(
         com.example.atlex.domain.ai.dto.request.DescriptionSuggestionRequest request);
+
+    @Operation(summary = "남은 AI 글쓰기 토큰 조회", description = "현재 유저의 남은 일일 AI 글쓰기 토큰을 조회합니다.")
+    ResponseEntity<ApiResponse<com.example.atlex.domain.ai.dto.response.AiTokenResponse>> getTokenStatus();
 }

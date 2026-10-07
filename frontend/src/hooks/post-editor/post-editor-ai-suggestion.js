@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { fetchDescriptionAiSuggestion, fetchParagraphAiSuggestion, fetchTitleAiSuggestion } from '@/lib/api/ai';
 
 const DEBOUNCE_DELAY_MS = 600;
@@ -9,6 +10,7 @@ const DEBOUNCE_DELAY_MS = 600;
  * 게시글 에디터 내 AI 자동완성 및 단락 추천을 총괄하는 커스텀 훅입니다.
  */
 export default function usePostEditorAiSuggestion({ category, editor, tags = [], title = '' } = {}) {
+  const queryClient = useQueryClient();
   const [titleSuggestion, setTitleSuggestion] = useState('');
   const [isSuggestingTitle, setIsSuggestingTitle] = useState(false);
   const [isSuggestingParagraph, setIsSuggestingParagraph] = useState(false);
@@ -54,10 +56,15 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
             controller.signal,
           );
           setTitleSuggestion(res?.suggestion || '');
+          queryClient.invalidateQueries({ queryKey: ['aiTokens'] });
         } catch (error) {
           if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
             setTitleSuggestion('');
-            setAiError('AI 제목 추천을 가져오지 못했습니다.');
+            if (error.response?.status === 429) {
+              setAiError('일일 AI 사용 토큰이 모두 소진되었습니다.');
+            } else {
+              setAiError('AI 제목 추천을 가져오지 못했습니다.');
+            }
           }
         } finally {
           setIsSuggestingTitle(false);
@@ -148,13 +155,18 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
           } else {
             editor.commands.setAiSuggestion(suggestionText);
           }
+          queryClient.invalidateQueries({ queryKey: ['aiTokens'] });
         } else {
           editor.commands.clearAiSuggestion();
         }
       } catch (error) {
         if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
           editor.commands.clearAiSuggestion();
-          setAiError('AI 문장 제안을 불러오지 못했습니다.');
+          if (error.response?.status === 429) {
+            setAiError('일일 AI 사용 토큰이 모두 소진되었습니다.');
+          } else {
+            setAiError('AI 문장 제안을 불러오지 못했습니다.');
+          }
         }
       } finally {
         setIsSuggestingParagraph(false);
@@ -196,10 +208,15 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
           },
           controller.signal,
         );
+        queryClient.invalidateQueries({ queryKey: ['aiTokens'] });
         return res?.suggestion || '';
       } catch (error) {
         if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
-          setAiError('AI 요약 생성에 실패했습니다.');
+          if (error.response?.status === 429) {
+            setAiError('일일 AI 사용 토큰이 모두 소진되었습니다.');
+          } else {
+            setAiError('AI 요약 생성에 실패했습니다.');
+          }
         }
         return '';
       } finally {

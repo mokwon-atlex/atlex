@@ -48,6 +48,7 @@ import usePostEditorTags from '@/hooks/post-editor/post-editor-tags';
 import { useCreatePost } from '@/hooks/queries/posts/useCreatePost';
 import { useUpdatePost } from '@/hooks/queries/posts/useUpdatePost';
 import { usePost } from '@/hooks/queries/posts/usePost';
+import { useAiTokens } from '@/hooks/queries/ai/useAiTokens';
 import { loadUserBlogCategories } from '@/lib/category/blog-categories';
 import { useAuthStore } from '@/store/authStore';
 
@@ -102,6 +103,9 @@ export default function PostEditorPage({ postId }) {
     isLoading: isPostLoading,
     isError: isPostError,
   } = usePost(isEditMode ? postId : undefined);
+
+  const { data: tokenStatusData } = useAiTokens();
+  const tokenStatus = tokenStatusData;
 
   useEffect(() => {
     let cancelled = false;
@@ -306,6 +310,8 @@ export default function PostEditorPage({ postId }) {
           publishButtonLabel={
             activeMutation.isPending ? (isEditMode ? '수정 중…' : '게시 중…') : isEditMode ? '수정 완료' : '게시'
           }
+          remainingTokens={tokenStatus?.remainingTokens}
+          maxTokens={tokenStatus?.maxTokens}
         />
 
         <PostEditorTitleSection

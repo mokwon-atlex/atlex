@@ -44,6 +44,9 @@ class AiSuggestionControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    private com.example.atlex.domain.ai.service.AiSuggestionService aiSuggestionService;
+
     private MockMvc mockMvc;
     private String userToken;
 
@@ -105,6 +108,8 @@ class AiSuggestionControllerTest {
     @DisplayName("인증된 사용자가 유효한 제목으로 요청 시 200 OK와 추천 텍스트를 반환한다")
     void suggestTitle_success() throws Exception {
         TitleSuggestionRequest request = new TitleSuggestionRequest("스프링 부트로", "기술", List.of("AI"));
+        org.mockito.Mockito.when(aiSuggestionService.suggestTitle(org.mockito.ArgumentMatchers.any()))
+            .thenReturn(new com.example.atlex.domain.ai.dto.response.AiSuggestionResponse("추천 텍스트"));
 
         mockMvc.perform(post("/api/v1/ai/suggest/title")
             .header("Authorization", "Bearer " + userToken)
@@ -120,6 +125,8 @@ class AiSuggestionControllerTest {
     void suggestParagraph_success() throws Exception {
         ParagraphSuggestionRequest request = new ParagraphSuggestionRequest(
             "블로그 만들기", "기술", List.of("Spring"), "의존성 설정을 완료했습니다.");
+        org.mockito.Mockito.when(aiSuggestionService.suggestParagraph(org.mockito.ArgumentMatchers.any()))
+            .thenReturn(new com.example.atlex.domain.ai.dto.response.AiSuggestionResponse("추천 텍스트"));
 
         mockMvc.perform(post("/api/v1/ai/suggest/paragraph")
             .header("Authorization", "Bearer " + userToken)
@@ -135,6 +142,8 @@ class AiSuggestionControllerTest {
     void suggestDescription_success() throws Exception {
         DescriptionSuggestionRequest request = new DescriptionSuggestionRequest(
             "블로그 만들기", "스프링 부트 환경에서 블로그 AI 서비스를 구축하는 내용입니다.");
+        org.mockito.Mockito.when(aiSuggestionService.suggestDescription(org.mockito.ArgumentMatchers.any()))
+            .thenReturn(new com.example.atlex.domain.ai.dto.response.AiSuggestionResponse("추천 텍스트"));
 
         mockMvc.perform(post("/api/v1/ai/suggest/description")
             .header("Authorization", "Bearer " + userToken)

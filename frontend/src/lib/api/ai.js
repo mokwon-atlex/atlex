@@ -38,3 +38,11 @@ export async function fetchParagraphAiSuggestion({ title, category, tags, curren
 export async function fetchDescriptionAiSuggestion({ title, content }, signal) {
   return apiClient.post('/ai/suggest/description', { title, content }, { signal });
 }
+
+/**
+ * 남은 AI 글쓰기 토큰 조회 API를 호출합니다.
+ * @returns {Promise<number>}
+ */
+export async function fetchAiTokens() {
+  return apiClient.get('/ai/suggest/tokens');
+}
