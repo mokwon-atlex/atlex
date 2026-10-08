@@ -2,7 +2,7 @@
 # 실행: docker compose up -d   (같은 디렉터리의 .env 자동 로드)
 services:
   app:
-    image: ghcr.io/mokwon-atlex/atlex:latest   # GitHub Actions가 push, EC2는 pull
+    image: ghcr.io/mokwon-atlex/atlex:${IMAGE_TAG:-latest}   # GitHub Actions가 SHA 태그 push, EC2는 IMAGE_TAG 지정 pull (기본값 latest)
     restart: unless-stopped
     mem_limit: 600m          # JVM의 MaxRAMPercentage(60%) 기준 → 힙 최대 ~360MB
     memswap_limit: 1600m     # mem_limit(600m) + swap 1G 까지 허용 (피크 흡수)
