@@ -6,9 +6,17 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
     boolean existsByPost_IdAndUser_Id(Long postId, Long userId);
+
+    // 목록 응답의 좋아요 여부를 게시글마다 조회하지 않도록 한 번에 가져온다.
+    @Query("SELECT pl.post.id FROM PostLike pl WHERE pl.user.id = :userId AND pl.post.id IN :postIds")
+    List<Long> findLikedPostIds(@Param("userId")
+    Long userId, @Param("postIds")
+    List<Long> postIds);
 
     // 실제 삭제된 행 수를 반환해 좋아요 취소가 카운트에 반영돼야 하는지 판단한다(멱등 처리).
     @Modifying(clearAutomatically = true, flushAutomatically = true)

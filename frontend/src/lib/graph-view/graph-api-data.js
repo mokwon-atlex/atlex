@@ -1,4 +1,4 @@
-import { SVG_H, SVG_W } from '@/lib/graph-view/graph-view-utils';
+import { SVG_H, SVG_W, graphNodeRadius } from '@/lib/graph-view/graph-view-utils';
 
 const AVATAR_COLORS = ['#6252D9', '#159D91', '#2F7ED8', '#E25555', '#7B5CE1', '#D97706'];
 
@@ -35,9 +35,8 @@ export function toGraphViewData(graph) {
   const edges = Array.isArray(graph?.edges) ? graph.edges : [];
   const authorsById = new Map();
   const tagCounts = new Map();
-  const positions = createNodePositions(nodes.length);
 
-  const posts = nodes.map((node, index) => {
+  const postDrafts = nodes.map((node) => {
     const author = getOrCreateAuthor(node, authorsById);
     const tags = normalizeTags(node.tags);
 
@@ -51,14 +50,10 @@ export function toGraphViewData(graph) {
       categoryName: node.categoryName ?? null,
       tags,
       isPrivate: node.isPublic === false,
-      color: createNodeColor(index),
-      x: positions[index].x,
-      y: positions[index].y,
-      radius: 24,
     };
   });
 
-  const postIds = new Set(posts.map((post) => post.id));
+  const postIds = new Set(postDrafts.map((post) => post.id));
   const mappedEdges = edges.flatMap((edge, index) => {
     const from = String(edge.sourcePostId);
     const to = String(edge.targetPostId);
@@ -82,6 +77,13 @@ export function toGraphViewData(graph) {
       },
     ];
   });
+  const positions = createForceDirectedPositions(postDrafts, mappedEdges);
+  const posts = postDrafts.map((post, index) => ({
+    ...post,
+    radius: 24,
+    x: positions[index].x,
+    y: positions[index].y,
+  }));
 
   return {
     authors: [...authorsById.values()].sort((left, right) => left.name.localeCompare(right.name, 'ko')),
@@ -96,6 +98,154 @@ export function toGraphViewData(graph) {
 /** 노드 ID를 자연수 순서로 정렬해 좌표 배치 결과를 안정화한다. */
 function compareNodes(left, right) {
   return String(left.id).localeCompare(String(right.id), 'en', { numeric: true });
+}
+
+/** 관계 간선의 인력과 노드 간 반발력을 계산해 고정된 그래프 배치를 만든다. */
+function createForceDirectedPositions(posts, edges) {
+  const seedPositions = createNodePositions(posts.length);
+
+  if (posts.length <= 1) {
+    return seedPositions;
+  }
+
+  const indexById = new Map(posts.map((post, index) => [post.id, index]));
+  const layoutNodes = posts.map((post, index) => ({
+    id: post.id,
+    velocityX: 0,
+    velocityY: 0,
+    x: seedPositions[index].x,
+    y: seedPositions[index].y,
+  }));
+  const degrees = Array.from({ length: posts.length }, () => 0);
+  const linkedPairs = new Set();
+  const links = edges.flatMap((edge) => {
+    const sourceIndex = indexById.get(edge.from);
+    const targetIndex = indexById.get(edge.to);
+
+    if (sourceIndex == null || targetIndex == null || sourceIndex === targetIndex) {
+      return [];
+    }
+
+    const pairKey = [sourceIndex, targetIndex].sort((left, right) => left - right).join(':');
+
+    if (linkedPairs.has(pairKey)) {
+      return [];
+    }
+
+    linkedPairs.add(pairKey);
+    degrees[sourceIndex] += 1;
+    degrees[targetIndex] += 1;
+    return [{ sourceIndex, targetIndex }];
+  });
+  const minX = 54;
+  const maxX = SVG_W - minX;
+  const minY = 54;
+  const maxY = SVG_H - minY;
+  const nodeRadii = degrees.map((degree) => graphNodeRadius(degree));
+  const nodeGap = Math.max(32, 64 - Math.sqrt(posts.length) * 2);
+  const linkDistance = Math.max(130, Math.min(210, 270 - Math.sqrt(posts.length) * 17));
+  const simulationSteps = Math.max(90, Math.min(220, 250 - posts.length));
+  const repulsionStrength = 25000 / Math.sqrt(posts.length);
+
+  for (let step = 0; step < simulationSteps; step += 1) {
+    const forceX = Array.from({ length: posts.length }, () => 0);
+    const forceY = Array.from({ length: posts.length }, () => 0);
+
+    for (let sourceIndex = 0; sourceIndex < layoutNodes.length; sourceIndex += 1) {
+      for (let targetIndex = sourceIndex + 1; targetIndex < layoutNodes.length; targetIndex += 1) {
+        const source = layoutNodes[sourceIndex];
+        const target = layoutNodes[targetIndex];
+        let dx = source.x - target.x;
+        let dy = source.y - target.y;
+        let distanceSquared = dx * dx + dy * dy;
+
+        if (distanceSquared < 1) {
+          const angle = (sourceIndex + 1) * (targetIndex + 1);
+
+          dx = Math.cos(angle);
+          dy = Math.sin(angle);
+          distanceSquared = 1;
+        }
+
+        const distance = Math.sqrt(distanceSquared);
+        const repulsion = repulsionStrength / distanceSquared;
+        const unitX = dx / distance;
+        const unitY = dy / distance;
+        const minimumDistance = nodeRadii[sourceIndex] + nodeRadii[targetIndex] + nodeGap;
+        const collision = Math.max(0, minimumDistance - distance);
+        const collisionForce = (collision / minimumDistance) * 7;
+
+        forceX[sourceIndex] += unitX * (repulsion + collisionForce);
+        forceY[sourceIndex] += unitY * (repulsion + collisionForce);
+        forceX[targetIndex] -= unitX * (repulsion + collisionForce);
+        forceY[targetIndex] -= unitY * (repulsion + collisionForce);
+      }
+    }
+
+    links.forEach(({ sourceIndex, targetIndex }) => {
+      const source = layoutNodes[sourceIndex];
+      const target = layoutNodes[targetIndex];
+      const dx = target.x - source.x;
+      const dy = target.y - source.y;
+      const distance = Math.max(Math.hypot(dx, dy), 1);
+      const linkStrength = 0.04 / Math.max(1, Math.sqrt(degrees[sourceIndex] * degrees[targetIndex]));
+      const attraction = (distance - linkDistance) * linkStrength;
+      const unitX = dx / distance;
+      const unitY = dy / distance;
+
+      forceX[sourceIndex] += unitX * attraction;
+      forceY[sourceIndex] += unitY * attraction;
+      forceX[targetIndex] -= unitX * attraction;
+      forceY[targetIndex] -= unitY * attraction;
+    });
+
+    layoutNodes.forEach((node, index) => {
+      forceX[index] += (SVG_W / 2 - node.x) * 0.002;
+      forceY[index] += (SVG_H / 2 - node.y) * 0.002;
+      node.velocityX = Math.max(-14, Math.min(14, (node.velocityX + forceX[index]) * 0.78));
+      node.velocityY = Math.max(-14, Math.min(14, (node.velocityY + forceY[index]) * 0.78));
+      node.x = Math.max(minX, Math.min(maxX, node.x + node.velocityX));
+      node.y = Math.max(minY, Math.min(maxY, node.y + node.velocityY));
+    });
+    resolveNodeCollisions(layoutNodes, nodeRadii, nodeGap, minX, maxX, minY, maxY);
+  }
+
+  return layoutNodes.map((node) => ({ x: Math.round(node.x), y: Math.round(node.y) }));
+}
+
+/** 노드 크기와 여백을 기준으로 겹친 노드를 다시 밀어내 제목과 클릭 영역의 간섭을 줄인다. */
+function resolveNodeCollisions(nodes, radii, gap, minX, maxX, minY, maxY) {
+  for (let sourceIndex = 0; sourceIndex < nodes.length; sourceIndex += 1) {
+    for (let targetIndex = sourceIndex + 1; targetIndex < nodes.length; targetIndex += 1) {
+      const source = nodes[sourceIndex];
+      const target = nodes[targetIndex];
+      let dx = source.x - target.x;
+      let dy = source.y - target.y;
+      let distance = Math.hypot(dx, dy);
+      const minimumDistance = radii[sourceIndex] + radii[targetIndex] + gap;
+
+      if (distance >= minimumDistance) {
+        continue;
+      }
+
+      if (distance < 1) {
+        const angle = (sourceIndex + 1) * (targetIndex + 1);
+
+        dx = Math.cos(angle);
+        dy = Math.sin(angle);
+        distance = 1;
+      }
+
+      const shift = (minimumDistance - distance) / 2;
+      const unitX = dx / distance;
+      const unitY = dy / distance;
+
+      source.x = Math.max(minX, Math.min(maxX, source.x + unitX * shift));
+      source.y = Math.max(minY, Math.min(maxY, source.y + unitY * shift));
+      target.x = Math.max(minX, Math.min(maxX, target.x - unitX * shift));
+      target.y = Math.max(minY, Math.min(maxY, target.y - unitY * shift));
+    }
+  }
 }
 
 /** 제목 영역까지 고려해 노드 간 간격을 확보하는 동심원 좌표를 만든다. */
@@ -155,13 +305,6 @@ function createRingRadii(ringCount) {
   }
 
   return [95, 160, 225];
-}
-
-/** 인접한 노드도 구분되는 색을 갖도록 황금각 기반의 색상을 만든다. */
-function createNodeColor(index) {
-  const hue = (210 + index * 137.508) % 360;
-
-  return `hsl(${hue.toFixed(3)} 62% 46%)`;
 }
 
 /** 같은 작성자는 하나의 필터 항목을 공유하도록 작성자 정보를 재사용한다. */

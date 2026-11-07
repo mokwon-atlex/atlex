@@ -42,6 +42,9 @@ export function toBlogMainPost(apiPost) {
     author: apiPost.authorName,
     authorUserId: apiPost.authorUserId,
     likes: apiPost.likes ?? 0,
+    // 조회한 사용자 기준 값. SSR 응답에는 인증 헤더가 없어 false 로 내려오고,
+    // 마운트 후 클라이언트 재요청에서 실제 값으로 바뀜다.
+    liked: Boolean(apiPost.liked),
     comments: 0,
     publishedAt: formatKoreanDate(apiPost.createdAt),
     eyebrow: apiPost.categoryName ?? 'post',
@@ -49,14 +52,22 @@ export function toBlogMainPost(apiPost) {
   };
 }
 
-// input: fetchPostById 응답 (ApiPost)
-// output: 상세 페이지 shape (BlogDetailContent 에서 소비)
+/**
+ * 게시글 단건 응답을 상세 페이지 shape 로 변환한다(BlogDetailContent 에서 소비).
+ * `postId` 는 작성자 전용 수정 링크(`/write/{postId}`) 생성에 사용된다.
+ *
+ * @param {object} apiPost - fetchPostById 응답(ApiPost).
+ * @returns {object} 상세 페이지 표시용 데이터.
+ */
 export function toBlogDetail(apiPost) {
   const content = apiPost.content ?? '';
   const sanitizedContent = sanitizeRichTextHtml(content);
   const plainTextContent = getRichTextPlainText(sanitizedContent);
 
   return {
+    id: apiPost.id,
+    // 수정 화면(/write/{postId}) 링크를 만드는 데 필요해 추가함.
+    postId: apiPost.id,
     blogTitle: apiPost.authorUserId ? `${apiPost.authorUserId}.log` : 'blog',
     category: apiPost.categoryName ?? '미분류',
     title: apiPost.title,
@@ -65,6 +76,9 @@ export function toBlogDetail(apiPost) {
     updatedAt: formatKoreanDate(apiPost.updatedAt),
     readTime: `${Math.max(1, Math.ceil(plainTextContent.length / 300))} min read`,
     visibilityLabel: apiPost.isPublic ? '공개' : '비공개',
+    likes: apiPost.likes ?? 0,
+    // SSR 응답에는 인증 헤더가 없어 항상 false 다. 화면에서 usePostLike 가 보정한다.
+    liked: Boolean(apiPost.liked),
     authorUserId: apiPost.authorUserId ?? null,
     adminActions: ['통계', '수정', '삭제'],
     contentBlocks: [
@@ -85,12 +99,12 @@ export function toBlogHomeFeedPost(apiPost) {
     excerpt: truncate(apiPost.content ?? apiPost.description, 120),
     // 카테고리명이 있을 때만 채운다(없으면 null → 카드에서 숨김).
     category: apiPost.categoryName ?? null,
-    tags: [],
+    tags: apiPost.tags ?? [],
     date: formatDotDate(apiPost.createdAt),
     likes: apiPost.likes ?? 0,
     comments: 0,
     bookmarks: 0,
-    isLiked: false,
+    isLiked: Boolean(apiPost.liked),
     thumbnailUrl: apiPost.thumbnailUrl ?? undefined,
     // 목록 응답엔 isPublic 이 없다(상세에만 있음). 값이 없으면 공개로 본다 — 명시적 false 일 때만 비공개.
     isPrivate: apiPost.isPublic === false,

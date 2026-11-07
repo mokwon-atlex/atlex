@@ -57,4 +57,15 @@ public interface TagControllerDocs {
         Long cursor,
         @Parameter(hidden = true) @AuthenticationPrincipal
         PrincipalDetails principalDetails);
+
+    @Operation(summary = "플랫폼 전체 태그 목록 조회", description = "전체 공개 게시글의 태그 목록을 정렬 및 검색하여 페이징 조회합니다.")
+    ResponseEntity<ApiResponse<org.springframework.data.domain.Page<com.example.atlex.domain.tag.dto.response.PlatformTagItemResponse>>> getAllPlatformTags(
+        @Parameter(description = "정렬 기준 (trending, popular, alphabet)", example = "trending") @RequestParam(required = false, defaultValue = "trending")
+        String sort,
+        @Parameter(description = "검색 키워드", example = "Spring") @RequestParam(required = false)
+        String keyword,
+        @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(required = false, defaultValue = "0")
+        int page,
+        @Parameter(description = "페이지 크기", example = "12") @RequestParam(required = false, defaultValue = "12")
+        int size);
 }

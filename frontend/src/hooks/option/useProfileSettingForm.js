@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { checkUserEmail, getUser, updateUser } from '@/lib/api/users';
+import { updateProfile } from '@/lib/api/profiles';
 import { useAuthStore } from '@/store/authStore';
 
 const THEME_OPTIONS = [
@@ -118,20 +119,34 @@ export function useProfileSettingForm() {
 
       const trimmedNickname = form.nickname.trim();
       const trimmedEmail = form.email.trim();
-      const payload = {
-        name: trimmedNickname,
-        profileImage: form.profileImage || null,
-        email: trimmedEmail,
-      };
+      let currentUserData = settingsQuery.data;
 
-      const userResponse = await updateUser(userId, payload);
+      // 사용자 기본 정보(닉네임, 이메일) 변경 확인
+      const hasUserChanges =
+        trimmedNickname !== initialValues.nickname.trim() || trimmedEmail !== initialValues.email.trim();
 
-      return (
-        userResponse ?? {
-          ...settingsQuery.data,
-          ...payload,
+      if (hasUserChanges) {
+        const userPayload = {};
+        if (trimmedNickname !== initialValues.nickname.trim()) {
+          userPayload.name = trimmedNickname;
         }
-      );
+        if (trimmedEmail !== initialValues.email.trim()) {
+          userPayload.email = trimmedEmail;
+        }
+        const updatedUser = await updateUser(userId, userPayload);
+        currentUserData = updatedUser;
+        // 부분 성공을 반영하기 위해 캐시 즉시 업데이트
+        queryClient.setQueryData(['user-settings', userId], currentUserData);
+      }
+
+      // 프로필 이미지 변경 확인 (별도 Profile API 호출)
+      const hasImageChanges = form.profileImage !== initialValues.profileImage;
+      if (hasImageChanges) {
+        await updateProfile(userId, { profileImage: form.profileImage || null });
+        currentUserData = { ...currentUserData, profileImage: form.profileImage || null };
+      }
+
+      return currentUserData;
     },
     onSuccess: (nextUser) => {
       queryClient.setQueryData(['user-settings', userId], nextUser);

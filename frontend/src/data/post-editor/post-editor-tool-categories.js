@@ -65,7 +65,7 @@ export const postEditorToolCategories = [
         id: 'insert-basic',
         title: '삽입',
         description: '외부 리소스와 미디어를 추가합니다.',
-        items: ['링크', '이미지', '파일', '표'],
+        items: ['링크', '내 글 링크', '이미지', '파일', '표'],
       },
       {
         id: 'insert-advanced',

@@ -130,4 +130,13 @@ public class UserService {
 
         user.changePassword(passwordEncoder.encode(request.getNewPassword()));
     }
+
+    @Transactional
+    public UserResponse upgradeMembership(String userId) {
+        User user = userRepository.findByUserIdAndActiveTrue(userId)
+            .orElseThrow(UserNotFoundException::new);
+
+        user.setMembershipTier(com.example.atlex.domain.user.entity.MembershipTier.PREMIUM);
+        return UserResponse.from(user);
+    }
 }

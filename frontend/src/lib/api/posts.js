@@ -5,23 +5,26 @@
 import { apiClient } from '@/lib/api/client';
 
 // 게시글 목록 조회.
-// page, size 로 페이지네이션하고 authorUserId, type 이 있으면 해당 조건으로 필터링한다.
+// page, size 로 페이지네이션하고 userId(또는 authorUserId), type 이 있으면 해당 조건으로 필터링한다.
 // 응답 예시: { content: ApiPost[], totalElements, totalPages, ... }
-export function fetchPosts({ authorUserId, page = 0, size = 10, type } = {}) {
+export function fetchPosts({ authorUserId, userId, page = 0, size = 10, type, tag } = {}) {
+  const targetUserId = userId ?? authorUserId;
   return apiClient.get('/posts', {
     params: {
       page,
       size,
-      ...(authorUserId && { authorUserId }),
+      ...(targetUserId && { userId: targetUserId }),
       ...(type && { type }),
+      ...(tag && { tag }),
     },
   });
 }
 
-// GET /posts?userId={userId}&categoryId={categoryId}&tags={tags}&page={page}&size={size} — 특정 유저 게시글 목록 조회.
+// GET /posts?userId={userId}&categoryId={categoryId}&tag={tag}&page={page}&size={size} — 특정 유저 게시글 목록 조회.
 // Authorization 헤더는 필요 시 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
-// payload: { userId?, categoryId?, type?, tags?, page?, size? }
-export function fetchUserBlogPosts({ userId, categoryId, type, tags, page = 0, size = 10 } = {}) {
+// payload: { userId?, categoryId?, type?, tag?, page?, size? }
+// tag 는 단일 태그 이름이며, 전체 태그 조회는 값을 넘기지 않는다.
+export function fetchUserBlogPosts({ userId, categoryId, type, tag, page = 0, size = 10 } = {}) {
   return apiClient.get('/posts', {
     params: {
       page,
@@ -29,7 +32,7 @@ export function fetchUserBlogPosts({ userId, categoryId, type, tags, page = 0, s
       ...(userId && { userId }),
       ...(categoryId !== undefined && { categoryId }),
       ...(type && { type }),
-      ...(tags !== undefined && { tags }),
+      ...(tag !== undefined && { tag }),
     },
   });
 }
@@ -56,6 +59,7 @@ export function createPost({ categoryId, title, description, content, tags, isPu
 // PATCH /posts/{postId} — 게시글 수정.
 // Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
 // payload: { categoryId?, title?, description?, content?, tags?, isPublic? }
+// categoryId: undefined 면 기존 카테고리 유지, null 이면 카테고리 해제.
 export function updatePost(postId, { categoryId, title, description, content, tags, isPublic } = {}) {
   return apiClient.patch(`/posts/${postId}`, {
     ...(categoryId !== undefined && { categoryId }),
@@ -65,4 +69,66 @@ export function updatePost(postId, { categoryId, title, description, content, ta
     ...(tags !== undefined && { tags }),
     ...(isPublic !== undefined && { isPublic }),
   });
+}
+
+// GET /posts/favorites — 로그인한 사용자의 즐겨찾기 목록 조회.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function fetchFavoritePosts({ page = 0, size = 10 } = {}) {
+  return apiClient.get('/posts/favorites', {
+    params: {
+      page,
+      size,
+    },
+  });
+}
+
+// POST /posts/{postId}/favorites — 게시글 즐겨찾기 등록.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function addPostFavorite(postId) {
+  return apiClient.post(`/posts/${postId}/favorites`);
+}
+
+// DELETE /posts/{postId}/favorites — 게시글 즐겨찾기 해제.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function removePostFavorite(postId) {
+  return apiClient.delete(`/posts/${postId}/favorites`);
+}
+
+// POST /posts/{postId}/likes — 게시글 좋아요 등록.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function addPostLike(postId) {
+  return apiClient.post(`/posts/${postId}/likes`);
+}
+
+// DELETE /posts/{postId}/likes — 게시글 좋아요 해제.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function removePostLike(postId) {
+  return apiClient.delete(`/posts/${postId}/likes`);
+}
+
+// DELETE /posts/{postId} — 게시글 삭제.
+// Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
+export function deletePost(postId) {
+  return apiClient.delete(`/posts/${postId}`);
+}
+
+// GET /posts/{postId}/export/markdown — 게시글 YAML Frontmatter 포함 마크다운 데이터 조회
+export function fetchPostMarkdown(postId) {
+  return apiClient.get(`/posts/${postId}/export/markdown`);
+}
+
+// 브라우저에서 게시글을 .md 파일로 즉시 다운로드 실행
+export async function downloadPostMarkdown(postId, fallbackFilename = 'post.md') {
+  const data = await fetchPostMarkdown(postId);
+  if (typeof window === 'undefined') return data;
+  const blob = new Blob([data.content], { type: 'text/markdown;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = data.filename || fallbackFilename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  return data;
 }

@@ -10,8 +10,8 @@
 // 이렇게 하면 TanStack Query 가 재시도·캐시 등을 예측 가능하게 제어할 수 있다.
 //
 // ── /users 프로필을 따로 조회하지 않는 이유 ──
-// 현재 앱이 store 의 user 에서 사용하는 값은 userId 하나뿐(ProfileMenu, AdminActions).
-// 로그인 응답에 이미 포함되어 있어 별도 조회가 불필요하고,
+// 현재 앱이 store 의 user 에서 사용하는 값은 userId(ProfileMenu, AdminActions)와
+// 관리자 메뉴 노출용 role 뿐이다. 둘 다 로그인 응답에 이미 포함되어 있어 별도 조회가 불필요하고,
 // 백엔드 GET /users/{id} 는 숫자 id 만 받아 문자열 userId 로는 400 이 난다.
 // 추후 name/email 등이 필요해지면 토큰 저장 완료 후 별도 시점에 조회한다.
 //
@@ -36,12 +36,14 @@ export function useLogin(options) {
         accessToken,
         refreshToken,
         userId: loggedInUserId,
+        role,
       } = await loginApi({
         userId,
         password,
       });
       // loggedInUserId: 백엔드가 내려준 값. 없을 경우 입력한 userId 를 폴백으로 사용한다.
-      const user = { userId: loggedInUserId ?? userId };
+      // role: 관리자 메뉴 노출 판단용. 실제 권한 검사는 서버가 수행한다.
+      const user = { userId: loggedInUserId ?? userId, role: role ?? 'USER' };
       return { user, accessToken, refreshToken };
     },
 

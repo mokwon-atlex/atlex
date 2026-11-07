@@ -3,6 +3,7 @@ package com.example.atlex.domain.graph;
 import com.example.atlex.domain.graph.dto.response.PostGraphResponse;
 import com.example.atlex.domain.graph.entity.PostRelation;
 import com.example.atlex.domain.graph.repository.PostRelationRepository;
+import com.example.atlex.domain.graph.config.GraphProperties;
 import com.example.atlex.domain.graph.service.GraphService;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.post.repository.PostRepository;
@@ -85,7 +86,11 @@ class GraphServiceTest {
     }
 
     private GraphService newService() {
-        return new GraphService(postRepository, postTagRepository, postRelationRepository);
+        return new GraphService(
+            postRepository,
+            postTagRepository,
+            postRelationRepository,
+            new GraphProperties(1.5, 1.0, 2.0, 8, 50, 5, 0.15));
     }
 
     private record TestPostTagName(

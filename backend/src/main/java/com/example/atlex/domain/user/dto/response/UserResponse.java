@@ -33,6 +33,11 @@ public class UserResponse {
     @Schema(description = "수정일시", example = "2024-01-16T09:00:00")
     private LocalDateTime updatedAt;
 
+    @Schema(description = "사용자 권한", example = "USER")
+    private String role;
+    @Schema(description = "멤버십 등급", example = "FREE")
+    private String membershipTier;
+
     //Entity를 Response DTO로 변환하는 정적 팩토리 메서드
     public static UserResponse from(User user) {
         return UserResponse.builder()
@@ -41,6 +46,8 @@ public class UserResponse {
             .email(user.getEmail())
             .name(user.getName())
             .active(user.getActive())
+            .role(user.getRole() != null ? user.getRole().name() : null)
+            .membershipTier(user.getMembershipTier() != null ? user.getMembershipTier().name() : null)
             .marketingAgreed(user.getMarketingAgreed())
             .createdAt(user.getCreatedAt())
             .updatedAt(user.getUpdatedAt()) // 수정 전엔 null 또는 생성시간과 동일

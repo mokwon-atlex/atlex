@@ -1,5 +1,6 @@
 package com.example.atlex.domain.graph.service;
 
+import com.example.atlex.domain.graph.config.GraphProperties;
 import com.example.atlex.domain.graph.entity.Keyword;
 import com.example.atlex.domain.graph.entity.PostKeyword;
 import com.example.atlex.domain.graph.entity.PostRelation;
@@ -30,11 +31,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class GraphIndexService {
 
-    private static final int MAX_SOURCE_KEYWORDS = 8;
-    private static final int MAX_CANDIDATES = 50;
-    private static final int TOP_K = 5;
-    private static final double MIN_SCORE = 0.15;
-
     private final PostRepository postRepository;
     private final PostTagRepository postTagRepository;
     private final KeywordRepository keywordRepository;
@@ -43,6 +39,7 @@ public class GraphIndexService {
     private final KeywordExtractor keywordExtractor;
     private final KeywordWeightCalculator keywordWeightCalculator;
     private final TransactionOperations transactionOperations;
+    private final GraphProperties graphProperties;
 
     @Transactional
     public void refreshPostGraph(Long postId) {
@@ -124,7 +121,7 @@ public class GraphIndexService {
 
         List<PostKeyword> sourceKeywords = postKeywordRepository.findByPostIdOrderByWeightDesc(postId)
             .stream()
-            .limit(MAX_SOURCE_KEYWORDS)
+            .limit(graphProperties.getMaxSourceKeywords())
             .toList();
         if (sourceKeywords.isEmpty()) {
             return;
@@ -141,7 +138,7 @@ public class GraphIndexService {
         List<PostKeyword> candidateKeywords = postKeywordRepository.findPublicCandidatesByKeywordNames(
             postId,
             sourceKeywordNames,
-            PageRequest.of(0, MAX_CANDIDATES));
+            PageRequest.of(0, graphProperties.getMaxCandidates()));
 
         double sourceTotalWeight = sourceKeywords.stream()
             .mapToDouble(PostKeyword::getWeight)
@@ -163,9 +160,9 @@ public class GraphIndexService {
 
         List<PostRelation> relations = scores.values().stream()
             .map(candidateScore -> candidateScore.toRelation(sourcePost))
-            .filter(relation -> relation.getScore() >= MIN_SCORE)
+            .filter(relation -> relation.getScore() >= graphProperties.getMinScore())
             .sorted(Comparator.comparing(PostRelation::getScore).reversed())
-            .limit(TOP_K)
+            .limit(graphProperties.getMaxRelationsPerPost())
             .toList();
 
         postRelationRepository.saveAll(relations);

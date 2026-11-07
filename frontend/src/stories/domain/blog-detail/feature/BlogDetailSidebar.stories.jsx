@@ -8,7 +8,6 @@ const meta = {
   parameters: { layout: 'centered' },
   argTypes: {
     likes: { control: 'number' },
-    bookmarks: { control: 'number' },
   },
 };
 
@@ -35,7 +34,6 @@ export const Default = {
     <div className="w-[280px]">
       <BlogDetailSidebar
         likes={18}
-        bookmarks={7}
         sections={mockSections}
         pageSignals={mockPageSignals}
         publishedAt="2025년 5월 12일"
@@ -51,7 +49,6 @@ export const Default = {
 export const ActionRailOnly = {
   args: {
     likes: 42,
-    bookmarks: 13,
   },
 };
 
@@ -60,7 +57,6 @@ export const WithReadingMapAndInfo = {
     <div className="w-[280px]">
       <BlogDetailSidebar
         likes={25}
-        bookmarks={9}
         sections={mockSections}
         pageSignals={[]}
         publishedAt="2025년 4월 3일"
@@ -78,7 +74,6 @@ export const WithSignalsOnly = {
     <div className="w-[280px]">
       <BlogDetailSidebar
         likes={8}
-        bookmarks={3}
         sections={[]}
         pageSignals={mockPageSignals}
         publishedAt=""

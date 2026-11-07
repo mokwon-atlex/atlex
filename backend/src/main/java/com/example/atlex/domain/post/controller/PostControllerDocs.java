@@ -38,7 +38,8 @@ public interface PostControllerDocs {
                 "description": "Spring Boot를 처음 시작하는 분들을 위한 가이드입니다.",
                 "content": "## 시작하기\\nSpring Boot는...",
                 "thumbnailUrl": null, "authorId": 1, "authorUserId": "john123",
-                "authorName": "홍길동", "hits": 0, "likes": 0, "isPublic": true,
+                "authorName": "홍길동", "hits": 0, "likes": 0, "liked": false, "favorited": false, "isPublic": true,
+                "tags": ["Java", "Spring Boot"],
                 "createdAt": "2024-01-15T10:30:00", "updatedAt": null
               },
               "errors": null
@@ -83,7 +84,8 @@ public interface PostControllerDocs {
                     "title": "Spring Boot 입문 가이드",
                     "description": "Spring Boot를 처음 시작하는 분들을 위한 가이드입니다.",
                     "thumbnailUrl": null, "authorId": 1, "authorUserId": "john123",
-                    "authorName": "홍길동", "hits": 42, "likes": 7,
+                    "authorName": "홍길동", "hits": 42, "likes": 7, "liked": false,
+                    "tags": ["Java", "Spring Boot"],
                     "createdAt": "2024-01-15T10:30:00"
                   }
                 ],
@@ -106,6 +108,8 @@ public interface PostControllerDocs {
         String userId,
         @Parameter(description = "카테고리 ID로 필터링 (선택)", example = "2") @RequestParam(required = false)
         Long categoryId,
+        @Parameter(description = "태그 이름으로 필터링 (선택)", example = "Java") @RequestParam(required = false)
+        String tag,
         @ParameterObject
         Pageable pageable);
 
@@ -120,7 +124,8 @@ public interface PostControllerDocs {
                 "description": "Spring Boot를 처음 시작하는 분들을 위한 가이드입니다.",
                 "content": "## 시작하기\\nSpring Boot는...",
                 "thumbnailUrl": null, "authorId": 1, "authorUserId": "john123",
-                "authorName": "홍길동", "hits": 42, "likes": 7, "isPublic": true,
+                "authorName": "홍길동", "hits": 42, "likes": 7, "liked": false, "favorited": false, "isPublic": true,
+                "tags": ["Java", "Spring Boot"],
                 "createdAt": "2024-01-15T10:30:00", "updatedAt": null
               },
               "errors": null
@@ -151,7 +156,8 @@ public interface PostControllerDocs {
                 "description": "수정된 설명입니다.",
                 "content": "## 수정된 내용\\nSpring Boot는...",
                 "thumbnailUrl": null, "authorId": 1, "authorUserId": "john123",
-                "authorName": "홍길동", "hits": 42, "likes": 7, "isPublic": true,
+                "authorName": "홍길동", "hits": 42, "likes": 7, "liked": false, "favorited": false, "isPublic": true,
+                "tags": ["Java", "Spring Boot"],
                 "createdAt": "2024-01-15T10:30:00", "updatedAt": "2024-01-16T09:00:00"
               },
               "errors": null

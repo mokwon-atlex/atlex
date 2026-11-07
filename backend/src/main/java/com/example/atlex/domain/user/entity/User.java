@@ -35,6 +35,11 @@ public class User {
     @Column(length = 20)
     private UserRole role = UserRole.USER;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private MembershipTier membershipTier = MembershipTier.FREE;
+
     @CreatedDate
     private LocalDateTime createdAt;
 
@@ -56,6 +61,9 @@ public class User {
     void prePersist() {
         if (role == null) {
             role = UserRole.USER;
+        }
+        if (membershipTier == null) {
+            membershipTier = MembershipTier.FREE;
         }
     }
 

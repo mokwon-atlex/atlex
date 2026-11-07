@@ -135,6 +135,24 @@ class TagControllerTest {
             .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
     }
 
+    @Test
+    @DisplayName("플랫폼 전체 태그 목록을 페이징 조회할 수 있다")
+    void getAllPlatformTags() throws Exception {
+        Post post = savePost(owner, null);
+        savePostTag(owner, post, tag1);
+        savePostTag(owner, post, tag2);
+
+        mockMvc.perform(get("/api/v1/tags/all")
+            .param("sort", "popular")
+            .param("page", "0")
+            .param("size", "10"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("SUCCESS"))
+            .andExpect(jsonPath("$.data.content").isArray())
+            .andExpect(jsonPath("$.data.content", hasSize(2)));
+    }
+
     private User saveUser(String userId, String email) {
         return userRepository.saveAndFlush(User.builder()
             .userId(userId)

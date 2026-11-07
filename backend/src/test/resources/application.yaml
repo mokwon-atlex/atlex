@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+jwt:
+  secret: djksdjl23423213njn23jdsadnakjfnej_atlex_2026
+
+gemini:
+  api-key: ""
+  model: gemini-3.5-flash-lite
+
+graph:
+  weight:
+    title: 1.5
+    content: 1.0
+    tag: 2.0
+  relation:
+    max-source-keywords: 8
+    max-candidates: 50
+    max-per-post: 5
+    min-score: 0.15
+
+github:
+  client-id: test-client-id
+  client-secret: test-client-secret
+  redirect-uri: http://localhost:3000/blog_option
+  encryption-key: test-encryption-key-for-unit-test!

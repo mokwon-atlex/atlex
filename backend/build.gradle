@@ -58,12 +58,19 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
+    //HTML 본문에서 평문 추출 (그래프 키워드 계산용)
+    implementation 'org.jsoup:jsoup:1.18.3'
+
     //Swagger (OpenAPI 3)
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
+
+    //Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    environment 'GITHUB_TOKEN_ENCRYPTION_KEY', 'test-encryption-key-for-unit-test!'
 }
 
 spotless {

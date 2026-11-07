@@ -82,6 +82,11 @@ class CommentControllerTest {
             .post(post).user(user).content(content).build());
     }
 
+    private Comment saveReply(Comment parent, User user, String content) {
+        return commentRepository.saveAndFlush(Comment.builder()
+            .post(parent.getPost()).user(user).parent(parent).content(content).build());
+    }
+
     // ────────────────────────── 작성 ──────────────────────────
 
     @Test
@@ -163,6 +168,49 @@ class CommentControllerTest {
             .andExpect(status().isCreated());
     }
 
+    @Test
+    @DisplayName("최상위 댓글에 답글 작성 → 201, parentId 포함")
+    void createReply_success() throws Exception {
+        Comment parent = saveComment(publicPost, author, "부모");
+
+        mockMvc.perform(post("/api/v1/posts/{postId}/comments", publicPost.getId())
+            .header("Authorization", "Bearer " + otherToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"content\":\"답글\",\"parentId\":" + parent.getId() + "}"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.parentId").value(parent.getId()))
+            .andExpect(jsonPath("$.data.deleted").value(false));
+    }
+
+    @Test
+    @DisplayName("답글에 답글 작성 → 400 COMMENT_REPLY_DEPTH_EXCEEDED")
+    void createReply_toReply() throws Exception {
+        Comment parent = saveComment(publicPost, author, "부모");
+        Comment childReply = saveReply(parent, other, "답글");
+
+        mockMvc.perform(post("/api/v1/posts/{postId}/comments", publicPost.getId())
+            .header("Authorization", "Bearer " + otherToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"content\":\"답글의 답글\",\"parentId\":" + childReply.getId() + "}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("COMMENT_REPLY_DEPTH_EXCEEDED"));
+    }
+
+    @Test
+    @DisplayName("삭제된 댓글에 답글 작성 → 404 COMMENT_NOT_FOUND")
+    void createReply_deletedParent() throws Exception {
+        Comment parent = saveComment(publicPost, author, "부모");
+        parent.softDelete();
+        commentRepository.saveAndFlush(parent);
+
+        mockMvc.perform(post("/api/v1/posts/{postId}/comments", publicPost.getId())
+            .header("Authorization", "Bearer " + otherToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"content\":\"답글\",\"parentId\":" + parent.getId() + "}"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("COMMENT_NOT_FOUND"));
+    }
+
     // ────────────────────────── 목록 조회 ──────────────────────────
 
     @Test
@@ -197,6 +245,24 @@ class CommentControllerTest {
             .andExpect(jsonPath("$.data[0].id").value(c1.getId()))
             .andExpect(jsonPath("$.data[1].id").value(c2.getId()))
             .andExpect(jsonPath("$.data[2].id").value(c3.getId()));
+    }
+
+    @Test
+    @DisplayName("답글은 최상위 댓글의 replies에 오래된 순으로 포함된다")
+    void getList_nestsRepliesUnderRoot() throws Exception {
+        Comment root = saveComment(publicPost, author, "부모");
+        Comment reply1 = saveReply(root, other, "답글1");
+        Comment reply2 = saveReply(root, author, "답글2");
+
+        mockMvc.perform(get("/api/v1/posts/{postId}/comments", publicPost.getId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].id").value(root.getId()))
+            .andExpect(jsonPath("$.data[0].replies.length()").value(2))
+            .andExpect(jsonPath("$.data[0].replies[0].id").value(reply1.getId()))
+            .andExpect(jsonPath("$.data[0].replies[0].parentId").value(root.getId()))
+            .andExpect(jsonPath("$.data[0].replies[1].id").value(reply2.getId()))
+            .andExpect(jsonPath("$.data[0].replies[0].replies").doesNotExist());
     }
 
     // ────────────────────────── 수정 ──────────────────────────
@@ -347,6 +413,61 @@ class CommentControllerTest {
 
         mockMvc.perform(delete("/api/v1/comments/{commentId}", comment.getId())
             .header("Authorization", "Bearer " + otherToken))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("COMMENT_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("답글이 있는 댓글 삭제 → 삭제 상태로 자리를 유지하고 답글을 보존한다")
+    void delete_rootWithReplies_keepsPlaceholder() throws Exception {
+        Comment root = saveComment(publicPost, other, "부모");
+        Comment childReply = saveReply(root, author, "답글");
+
+        mockMvc.perform(delete("/api/v1/comments/{commentId}", root.getId())
+            .header("Authorization", "Bearer " + otherToken))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/v1/posts/{postId}/comments", publicPost.getId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].id").value(root.getId()))
+            .andExpect(jsonPath("$.data[0].deleted").value(true))
+            .andExpect(jsonPath("$.data[0].content").doesNotExist())
+            .andExpect(jsonPath("$.data[0].authorUserId").doesNotExist())
+            .andExpect(jsonPath("$.data[0].replies[0].id").value(childReply.getId()))
+            .andExpect(jsonPath("$.data[0].replies[0].content").value("답글"));
+    }
+
+    @Test
+    @DisplayName("삭제 상태 댓글의 마지막 답글 삭제 → 부모 댓글도 목록에서 제외된다")
+    void delete_lastReplyOfDeletedRoot_removesRoot() throws Exception {
+        Comment root = saveComment(publicPost, other, "부모");
+        Comment childReply = saveReply(root, other, "답글");
+
+        mockMvc.perform(delete("/api/v1/comments/{commentId}", root.getId())
+            .header("Authorization", "Bearer " + otherToken))
+            .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/v1/comments/{commentId}", childReply.getId())
+            .header("Authorization", "Bearer " + otherToken))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/v1/posts/{postId}/comments", publicPost.getId()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("삭제 상태 댓글 수정 → 404")
+    void update_deletedRoot_notFound() throws Exception {
+        Comment root = saveComment(publicPost, other, "부모");
+        saveReply(root, author, "답글");
+        root.softDelete();
+        commentRepository.saveAndFlush(root);
+
+        mockMvc.perform(patch("/api/v1/comments/{commentId}", root.getId())
+            .header("Authorization", "Bearer " + otherToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"content\":\"수정 시도\"}"))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("COMMENT_NOT_FOUND"));
     }

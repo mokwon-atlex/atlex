@@ -1,3 +1,5 @@
+import { expect, within } from 'storybook/test';
+
 import BlogMainPostCard from '@/components/domain/blog-main/ui/BlogMainPostCard';
 
 /** @type { import('@storybook/nextjs-vite').Meta<typeof BlogMainPostCard> } */
@@ -115,5 +117,28 @@ export const NoEyebrow = {
       ...mockPost,
       eyebrow: null,
     },
+  },
+};
+
+/** 조회한 사용자가 좋아요한 글은 목록 카드의 하트도 채워진다. */
+export const LikedByViewer = {
+  args: { post: { ...mockPost, liked: true } },
+  play: async ({ canvasElement }) => {
+    const heart = canvasElement.querySelector('svg.lucide-heart');
+
+    expect(heart).not.toBeNull();
+    expect(heart.getAttribute('class')).toContain('fill-current');
+    expect(within(canvasElement).getByText('42')).toBeInTheDocument();
+  },
+};
+
+/** 좋아요하지 않은 글은 하트를 채우지 않는다. */
+export const NotLikedByViewer = {
+  args: { post: { ...mockPost, liked: false } },
+  play: async ({ canvasElement }) => {
+    const heart = canvasElement.querySelector('svg.lucide-heart');
+
+    expect(heart).not.toBeNull();
+    expect(heart.getAttribute('class')).not.toContain('fill-current');
   },
 };

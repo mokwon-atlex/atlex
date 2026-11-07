@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/common/ui/button';
@@ -11,19 +11,126 @@ import { PasswordField } from '@/components/common/layout/PasswordField';
 
 import { useLogin } from '@/hooks/queries/auth/useLogin';
 
+/** 아이디 저장을 위한 로컬 스토리지 키 */
+const SAVED_USER_ID_KEY = 'atlex_saved_user_id';
+
+/**
+ * 저장된 아이디를 로컬 스토리지에서 안전하게 조회합니다.
+ *
+ * @returns {string} 저장된 아이디 또는 빈 문자열
+ */
+function getSavedUserId() {
+  try {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(SAVED_USER_ID_KEY) ?? '';
+  } catch (error) {
+    console.warn('[LoginForm] 저장된 아이디 조회 중 로컬 스토리지 예외 발생:', error);
+    return '';
+  }
+}
+
+/**
+ * 아이디를 로컬 스토리지에 안전하게 저장합니다.
+ *
+ * @param {string} id - 저장할 사용자 아이디
+ * @returns {boolean} 저장 성공 여부
+ */
+function saveUserId(id) {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SAVED_USER_ID_KEY, id);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.warn('[LoginForm] 아이디 저장 중 로컬 스토리지 예외 발생:', error);
+    return false;
+  }
+}
+
+/**
+ * 저장된 아이디를 로컬 스토리지에서 안전하게 제거합니다.
+ *
+ * @returns {boolean} 삭제 성공 여부
+ */
+function removeSavedUserId() {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(SAVED_USER_ID_KEY);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.warn('[LoginForm] 저장된 아이디 삭제 중 로컬 스토리지 예외 발생:', error);
+    return false;
+  }
+}
+
+/**
+ * 로그인 화면의 폼 컴포넌트입니다.
+ * 아이디와 비밀번호를 입력받아 로그인을 수행하며, 아이디 저장 선택 시 로컬 스토리지에 아이디를 보관합니다.
+ *
+ * @param {Object} props
+ * @param {() => void} [props.onSwitchMode] - 회원가입 모드로 전환하는 콜백
+ */
 function LoginForm({ onSwitchMode }) {
   const router = useRouter();
   const { mutateAsync: login, isPending } = useLogin();
 
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberId, setRememberId] = useState(false);
   const [error, setError] = useState('');
 
+  // 화면 마운트 시 로컬 스토리지에 저장된 아이디가 있으면 복원
+  useEffect(() => {
+    const savedId = getSavedUserId();
+    if (savedId) {
+      setUserId(savedId);
+      setRememberId(true);
+    }
+  }, []);
+
+  /**
+   * 아이디 저장 체크박스 변경 시 호출되는 핸들러입니다.
+   * 체크 해제 시 저장되어 있던 아이디를 로컬 스토리지에서 즉시 제거합니다.
+   *
+   * @param {boolean} checked - 체크 여부
+   */
+  function handleRememberIdChange(checked) {
+    const nextChecked = checked === true;
+    setRememberId(nextChecked);
+    if (!nextChecked) {
+      const removed = removeSavedUserId();
+      if (!removed && typeof window !== 'undefined') {
+        console.warn('[LoginForm] 아이디 저장 해제 후 로컬 스토리지 삭제 실패');
+      }
+    }
+  }
+
+  /**
+   * 로그인 폼 제출 이벤트 핸들러입니다.
+   * 로그인 성공 시 아이디 저장 선택 여부에 따라 스토리지에 아이디만 보관하거나 제거합니다.
+   *
+   * @param {React.FormEvent<HTMLFormElement>} e - 폼 제출 이벤트
+   */
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     try {
       await login({ userId, password });
+      // 아이디 저장이 선택된 경우 아이디만 저장하고, 미선택 시 저장값 제거
+      if (rememberId) {
+        const saved = saveUserId(userId.trim());
+        if (!saved && typeof window !== 'undefined') {
+          console.warn('[LoginForm] 로그인 성공 후 아이디 저장 실패');
+        }
+      } else {
+        const removed = removeSavedUserId();
+        if (!removed && typeof window !== 'undefined') {
+          console.warn('[LoginForm] 로그인 성공 후 기존 저장 아이디 삭제 실패');
+        }
+      }
       router.push('/');
     } catch (err) {
       setError(err.message ?? '로그인에 실패했습니다.');
@@ -45,8 +152,8 @@ function LoginForm({ onSwitchMode }) {
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <Checkbox />
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+            <Checkbox checked={rememberId} onCheckedChange={handleRememberIdChange} />
             아이디 저장
           </label>
 
@@ -78,4 +185,4 @@ function LoginForm({ onSwitchMode }) {
   );
 }
 
-export { LoginForm };
+export { LoginForm, SAVED_USER_ID_KEY };

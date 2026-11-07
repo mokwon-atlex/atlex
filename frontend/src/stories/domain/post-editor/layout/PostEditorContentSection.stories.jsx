@@ -4,7 +4,7 @@ import PostEditorContentSection from '@/components/domain/post-editor/layout/Pos
 import { postEditorCopy } from '@/data/post-editor/post-editor-copy';
 import usePostEditorRichText from '@/hooks/post-editor/post-editor-rich-text';
 
-function ContentSectionDemo({ initialContent = '' }) {
+function ContentSectionDemo({ initialContent = '', isSuggestingParagraph = false, onRequestParagraphAi = undefined }) {
   const richText = usePostEditorRichText({ initialContent });
 
   return (
@@ -15,6 +15,8 @@ function ContentSectionDemo({ initialContent = '' }) {
           bodyText={richText.bodyText}
           editor={richText.editor}
           isEditorEmpty={richText.isEditorEmpty}
+          isSuggestingParagraph={isSuggestingParagraph}
+          onRequestParagraphAi={onRequestParagraphAi}
         />
       </div>
     </div>
@@ -40,5 +42,15 @@ export const Empty = {
 export const WithContent = {
   render: () => (
     <ContentSectionDemo initialContent="행사 운영 일정과 부스 배치 변경 사항을 먼저 안내하는 예시 본문입니다. 현장 동선과 참여 시간, 주의 사항을 확인해 주세요. #일정 #안내" />
+  ),
+};
+
+// AI 이어쓰기 버튼이 노출되는 상태
+export const WithAiAction = {
+  render: () => (
+    <ContentSectionDemo
+      initialContent="다음 단락을 AI로 이어 쓸 수 있는 예시 본문입니다."
+      onRequestParagraphAi={() => {}}
+    />
   ),
 };

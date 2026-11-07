@@ -7,4 +7,8 @@ public class AccessDeniedException extends CustomException {
     public AccessDeniedException() {
         super(ErrorCode.ACCESS_DENIED);
     }
+
+    public AccessDeniedException(String message) {
+        super(ErrorCode.ACCESS_DENIED, message);
+    }
 }

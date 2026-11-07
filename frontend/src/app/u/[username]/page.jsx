@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import CategoryBlogHomeContent from '@/components/domain/category/feature/CategoryBlogHomeContent';
 import Header from '@/components/common/layout/Header';
-import { blogHomeTags } from '@/data/blog-home/blog-home-mock-data';
 import { loadBlogHomeData } from '@/lib/queries/blog-home';
 import { stripHandle } from '@/lib/url/handle';
 
@@ -29,7 +28,7 @@ export default async function BlogHomePage({ params }) {
           categories={data.categories}
           feed={data.feed}
           profile={data.profile}
-          tags={blogHomeTags}
+          tags={data.tags}
         />
       </div>
     </div>

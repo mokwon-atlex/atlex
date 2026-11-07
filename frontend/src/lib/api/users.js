@@ -7,9 +7,14 @@ export function getUser(userId) {
   return apiClient.get(`/users/${userId}`);
 }
 
-// PUT /users/{userId}
+// PATCH /users/{userId}
 export function updateUser(userId, body) {
-  return apiClient.put(`/users/${userId}`, body);
+  return apiClient.patch(`/users/${userId}`, body);
+}
+
+// GET /admin/users — 관리자 전체 회원 목록(페이지 없이 전체 배열).
+export function fetchAdminUsers() {
+  return apiClient.get('/admin/users');
 }
 
 // DELETE /users/{userId}
@@ -48,4 +53,9 @@ export function updateUserBlogCategory(userId, categoryId, name) {
 // DELETE /users/{userId}/categories/{categoryId}
 export function deleteUserBlogCategory(userId, categoryId) {
   return apiClient.delete(`/users/${userId}/categories/${categoryId}`);
+}
+
+// POST /users/{userId}/membership/upgrade
+export function upgradeUserMembership(userId) {
+  return apiClient.post(`/users/${userId}/membership/upgrade`);
 }

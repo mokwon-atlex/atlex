@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider, isServer } from '@tanstack/react-quer
 // (이게 없으면 authStore 를 import 하지 않는 페이지 — 예: /write — 직접 로드 시 토큰 getter 가
 //  주입되지 않아, 요청에 Authorization 헤더가 안 붙어 401 이 난다.)
 import '@/store/authStore';
+import { resetQueriesOnUserChange } from '@/lib/queries/user-query-cache';
 
 function makeQueryClient() {
   return new QueryClient({
@@ -30,6 +31,8 @@ function getQueryClient() {
   }
   if (!browserQueryClient) {
     browserQueryClient = makeQueryClient();
+    // 로그아웃·계정 전환 시 이전 사용자 데이터가 화면에 남지 않도록 캐시를 초기화한다. (#97)
+    resetQueriesOnUserChange(browserQueryClient);
   }
   return browserQueryClient;
 }

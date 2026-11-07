@@ -45,6 +45,17 @@
   text-decoration: underline;
   text-decoration-thickness: 1.5px;
   text-underline-offset: 0.18em;
+  transition: opacity 0.15s ease;
+}
+
+.richText a:hover {
+  text-decoration-thickness: 2px;
+  opacity: 0.85;
+}
+
+.richText a[href^='/@'],
+.richText a[href^='/u/'] {
+  font-weight: 500;
 }
 
 .richText blockquote {

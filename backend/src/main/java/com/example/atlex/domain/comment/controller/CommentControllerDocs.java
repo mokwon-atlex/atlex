@@ -23,7 +23,12 @@ import java.util.List;
 @Tag(name = "Comment", description = "댓글 관련 API")
 public interface CommentControllerDocs {
 
-    @Operation(summary = "댓글 작성", description = "게시글에 댓글을 작성합니다. Authorization 헤더 필수. 비공개 게시글은 작성자 본인만 작성할 수 있습니다.")
+    @Operation(summary = "댓글 작성", description = """
+        게시글에 댓글 또는 답글을 작성합니다. Authorization 헤더 필수. 비공개 게시글은 작성자 본인만 작성할 수 있습니다.
+        - parentId를 지정하면 해당 최상위 댓글의 답글로 작성합니다.
+        - 답글은 1단계까지만 허용하며, 답글에 답글을 작성하면 400을 반환합니다.
+        - 삭제됐거나 다른 게시글에 속한 부모 댓글을 지정하면 404를 반환합니다.
+        """)
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "작성 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
@@ -31,27 +36,45 @@ public interface CommentControllerDocs {
               "code": "SUCCESS",
               "message": "댓글이 작성되었습니다",
               "data": {
-                "id": 1, "postId": 10, "content": "좋은 글 감사합니다!",
+                "id": 1, "postId": 10, "parentId": null, "deleted": false, "content": "좋은 글 감사합니다!",
                 "authorId": 1, "authorUserId": "john123", "authorName": "홍길동",
                 "createdAt": "2024-01-15T10:30:00", "updatedAt": null
               },
               "errors": null
             }"""))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 오류 (내용 누락 또는 1000자 초과)", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
-            {
-              "code": "VALIDATION_ERROR",
-              "message": "입력값이 올바르지 않습니다.",
-              "data": null,
-              "errors": [{"message": "댓글을 입력해주세요.", "data": {"key": "content", "value": ""}}]
-            }"""))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 오류 (내용 누락 또는 1000자 초과) 또는 답글에 답글 작성 시도", content = @Content(mediaType = "application/json", examples = {
+            @ExampleObject(name = "VALIDATION_ERROR", value = """
+                {
+                  "code": "VALIDATION_ERROR",
+                  "message": "입력값이 올바르지 않습니다.",
+                  "data": null,
+                  "errors": [{"message": "댓글을 입력해주세요.", "data": {"key": "content", "value": ""}}]
+                }"""),
+            @ExampleObject(name = "COMMENT_REPLY_DEPTH_EXCEEDED", value = """
+                {
+                  "code": "COMMENT_REPLY_DEPTH_EXCEEDED",
+                  "message": "답글에는 답글을 작성할 수 없습니다.",
+                  "data": null,
+                  "errors": null
+                }""")
+        })),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 토큰 없음"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시글 없음 (또는 비공개 게시글에 비작성자가 접근)", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
-            {
-              "code": "POST_NOT_FOUND",
-              "message": "해당 게시글을 찾을 수 없습니다.",
-              "data": null,
-              "errors": null
-            }""")))
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시글 없음 (또는 비공개 게시글에 비작성자가 접근) 또는 부모 댓글 없음 (삭제됐거나 다른 게시글의 댓글)", content = @Content(mediaType = "application/json", examples = {
+            @ExampleObject(name = "POST_NOT_FOUND", value = """
+                {
+                  "code": "POST_NOT_FOUND",
+                  "message": "해당 게시글을 찾을 수 없습니다.",
+                  "data": null,
+                  "errors": null
+                }"""),
+            @ExampleObject(name = "COMMENT_NOT_FOUND", value = """
+                {
+                  "code": "COMMENT_NOT_FOUND",
+                  "message": "해당 댓글을 찾을 수 없습니다.",
+                  "data": null,
+                  "errors": null
+                }""")
+        }))
     })
     ResponseEntity<ApiResponse<CommentResponse>> createComment(
         @Parameter(hidden = true) @AuthenticationPrincipal
@@ -64,7 +87,9 @@ public interface CommentControllerDocs {
     @Operation(summary = "댓글 목록 조회", description = """
         특정 게시글의 댓글 목록을 조회합니다.
         - 현재 댓글 목록 조회는 페이지네이션을 지원하지 않습니다.
-        - 전체 댓글 목록을 createdAt ASC, id ASC 순으로 반환합니다.
+        - 최상위 댓글을 createdAt ASC, id ASC 순으로 반환하고, 각 댓글의 replies에 답글을 같은 순서로 포함합니다.
+        - 삭제된 답글과 답글이 없는 삭제 댓글은 목록에서 제외됩니다.
+        - 답글이 남은 삭제 댓글은 deleted=true로 자리를 유지하며 content와 작성자 정보는 null입니다.
         - 비공개 게시글의 댓글은 게시글 작성자 본인에게만 노출됩니다.
         """)
     @ApiResponses({
@@ -74,9 +99,28 @@ public interface CommentControllerDocs {
               "message": null,
               "data": [
                 {
-                  "id": 1, "postId": 10, "content": "첫 번째 댓글",
+                  "id": 1, "postId": 10, "parentId": null, "deleted": false, "content": "첫 번째 댓글",
                   "authorId": 1, "authorUserId": "john123", "authorName": "홍길동",
-                  "createdAt": "2024-01-15T10:30:00", "updatedAt": null
+                  "createdAt": "2024-01-15T10:30:00", "updatedAt": null,
+                  "replies": [
+                    {
+                      "id": 3, "postId": 10, "parentId": 1, "deleted": false, "content": "첫 번째 답글",
+                      "authorId": 2, "authorUserId": "jane456", "authorName": "김영희",
+                      "createdAt": "2024-01-15T11:00:00", "updatedAt": null
+                    }
+                  ]
+                },
+                {
+                  "id": 2, "postId": 10, "parentId": null, "deleted": true, "content": null,
+                  "authorId": null, "authorUserId": null, "authorName": null,
+                  "createdAt": "2024-01-15T10:40:00", "updatedAt": null,
+                  "replies": [
+                    {
+                      "id": 4, "postId": 10, "parentId": 2, "deleted": false, "content": "삭제된 댓글에 남은 답글",
+                      "authorId": 1, "authorUserId": "john123", "authorName": "홍길동",
+                      "createdAt": "2024-01-15T11:10:00", "updatedAt": null
+                    }
+                  ]
                 }
               ],
               "errors": null
@@ -103,7 +147,7 @@ public interface CommentControllerDocs {
               "code": "SUCCESS",
               "message": "댓글이 수정되었습니다",
               "data": {
-                "id": 1, "postId": 10, "content": "수정된 댓글 내용",
+                "id": 1, "postId": 10, "parentId": null, "deleted": false, "content": "수정된 댓글 내용",
                 "authorId": 1, "authorUserId": "john123", "authorName": "홍길동",
                 "createdAt": "2024-01-15T10:30:00", "updatedAt": "2024-01-16T09:00:00"
               },
@@ -134,7 +178,11 @@ public interface CommentControllerDocs {
         @Valid @RequestBody
         CommentUpdateRequest request);
 
-    @Operation(summary = "댓글 삭제", description = "댓글을 삭제합니다. 댓글 작성자 또는 게시글 작성자만 삭제할 수 있습니다. Authorization 헤더 필수. 삭제된 게시글의 댓글은 삭제할 수 없습니다.")
+    @Operation(summary = "댓글 삭제", description = """
+        댓글 또는 답글을 삭제합니다. 댓글 작성자 또는 게시글 작성자만 삭제할 수 있습니다. Authorization 헤더 필수. 삭제된 게시글의 댓글은 삭제할 수 없습니다.
+        - 답글이 남은 댓글은 목록에서 삭제 상태(deleted=true)로 자리를 유지하고 기존 답글을 보존합니다.
+        - 답글이 없는 댓글과 답글은 목록에서 완전히 제외됩니다.
+        """)
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "삭제 성공 (응답 바디 없음)"),

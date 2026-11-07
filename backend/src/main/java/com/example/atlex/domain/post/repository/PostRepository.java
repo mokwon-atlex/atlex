@@ -23,18 +23,28 @@ public interface PostRepository extends JpaRepository<Post, Long> {
           AND p.isPublic = true
           AND (:userId IS NULL OR p.user.userId = :userId)
           AND (:categoryId IS NULL OR p.category.id = :categoryId)
+          AND (:tag IS NULL OR EXISTS (
+              SELECT pt FROM PostTag pt
+              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
+          ))
         """, countQuery = """
         SELECT COUNT(p) FROM Post p
         WHERE p.isDeleted = false
           AND p.isPublic = true
           AND (:userId IS NULL OR p.user.userId = :userId)
           AND (:categoryId IS NULL OR p.category.id = :categoryId)
+          AND (:tag IS NULL OR EXISTS (
+              SELECT pt FROM PostTag pt
+              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
+          ))
         """)
     Page<Post> findAllPublic(
         @Param("userId")
         String userId,
         @Param("categoryId")
         Long categoryId,
+        @Param("tag")
+        String tag,
         Pageable pageable);
 
     // 현재 정책: 로그인 사용자는 공개 글 + 본인 비공개 글을 목록에서 조회할 수 있음.
@@ -45,12 +55,20 @@ public interface PostRepository extends JpaRepository<Post, Long> {
           AND (p.isPublic = true OR p.user.id = :id)
           AND (:userId IS NULL OR p.user.userId = :userId)
           AND (:categoryId IS NULL OR p.category.id = :categoryId)
+          AND (:tag IS NULL OR EXISTS (
+              SELECT pt FROM PostTag pt
+              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
+          ))
         """, countQuery = """
         SELECT COUNT(p) FROM Post p
         WHERE p.isDeleted = false
           AND (p.isPublic = true OR p.user.id = :id)
           AND (:userId IS NULL OR p.user.userId = :userId)
           AND (:categoryId IS NULL OR p.category.id = :categoryId)
+          AND (:tag IS NULL OR EXISTS (
+              SELECT pt FROM PostTag pt
+              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
+          ))
         """)
     Page<Post> findAllVisibleTo(
         @Param("id")
@@ -59,6 +77,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         String userId,
         @Param("categoryId")
         Long categoryId,
+        @Param("tag")
+        String tag,
         Pageable pageable);
 
     @Query("SELECT p FROM Post p JOIN FETCH p.user LEFT JOIN FETCH p.category WHERE p.id = :id AND p.isDeleted = false")

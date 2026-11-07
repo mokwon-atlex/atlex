@@ -34,4 +34,19 @@ public class TagController implements TagControllerDocs {
             loginUserId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<com.example.atlex.domain.tag.dto.response.PlatformTagItemResponse>>> getAllPlatformTags(
+        @RequestParam(required = false, defaultValue = "trending")
+        String sort,
+        @RequestParam(required = false)
+        String keyword,
+        @RequestParam(required = false, defaultValue = "0")
+        int page,
+        @RequestParam(required = false, defaultValue = "12")
+        int size) {
+        org.springframework.data.domain.Page<com.example.atlex.domain.tag.dto.response.PlatformTagItemResponse> response = tagService
+            .getAllTags(sort, keyword, page, size);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }

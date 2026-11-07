@@ -21,6 +21,7 @@ const useAuthStore = create(
       login: ({ user, accessToken, refreshToken }) =>
         set({ isLoggedIn: true, user, accessToken, refreshToken: refreshToken ?? null }),
       logout: () => set({ isLoggedIn: false, user: null, accessToken: null, refreshToken: null }),
+      updateUser: (user) => set({ user }),
       // 토큰 재발급 시 accessToken(+회전된 refreshToken) 만 갱신. 값이 없으면 기존값 유지.
       setTokens: ({ accessToken, refreshToken } = {}) =>
         set((s) => ({

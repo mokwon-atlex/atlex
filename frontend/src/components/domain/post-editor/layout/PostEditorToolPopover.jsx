@@ -6,6 +6,7 @@ import {
   AlignRight,
   AlertCircle,
   Bold,
+  BookOpen,
   Captions,
   CheckSquare,
   ChevronRight,
@@ -72,6 +73,7 @@ const ITEM_ICON_MAP = {
   '토글 섹션': ChevronRight,
   체크리스트: CheckSquare,
   링크: Link,
+  '내 글 링크': BookOpen,
   이미지: Image,
   파일: Paperclip,
   표: Table,
@@ -82,6 +84,17 @@ const ITEM_ICON_MAP = {
   '실행 취소': Undo2,
   '다시 실행': Redo2,
   '서식 제거': RemoveFormatting,
+};
+
+const ITEM_SHORTCUT_MAP = {
+  볼드: 'Ctrl+B',
+  이탤릭: 'Ctrl+I',
+  밑줄: 'Ctrl+U',
+  링크: 'Ctrl+K',
+  '내 글 링크': '[[',
+  '코드 블록': '```',
+  '실행 취소': 'Ctrl+Z',
+  '다시 실행': 'Ctrl+Y',
 };
 
 export default function PostEditorToolPopover({ getItemState, onExecuteItem, tool }) {
@@ -106,6 +119,7 @@ export default function PostEditorToolPopover({ getItemState, onExecuteItem, too
               {group.items.map((item) => {
                 const Icon = ITEM_ICON_MAP[item] ?? Type;
                 const { isActive, isDisabled } = getItemState(group.id, item);
+                const shortcut = ITEM_SHORTCUT_MAP[item];
 
                 return (
                   <Tooltip key={item}>
@@ -123,7 +137,17 @@ export default function PostEditorToolPopover({ getItemState, onExecuteItem, too
                     >
                       <Icon className="h-4 w-4" />
                     </TooltipTrigger>
-                    <TooltipContent side="top">{item}</TooltipContent>
+                    <TooltipContent side="top" className="flex items-center gap-1.5">
+                      <span>{item}</span>
+                      {shortcut ? (
+                        <kbd
+                          data-slot="kbd"
+                          className="rounded bg-background/20 px-1 py-0.5 font-mono text-[10px] font-medium text-background/90"
+                        >
+                          {shortcut}
+                        </kbd>
+                      ) : null}
+                    </TooltipContent>
                   </Tooltip>
                 );
               })}

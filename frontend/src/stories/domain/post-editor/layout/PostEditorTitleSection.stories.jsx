@@ -6,7 +6,12 @@ import PostEditorTitleSection from '@/components/domain/post-editor/layout/PostE
 import { postEditorCopy } from '@/data/post-editor/post-editor-copy';
 import usePostEditorTags from '@/hooks/post-editor/post-editor-tags';
 
-function TitleSectionDemo({ initialTitle = '', initialManualTags = [] }) {
+function TitleSectionDemo({
+  initialTitle = '',
+  initialManualTags = [],
+  titleSuggestion = '',
+  isSuggestingTitle = false,
+}) {
   const [title, setTitle] = useState(initialTitle);
   const tagField = usePostEditorTags('', { initialManualTags });
 
@@ -18,6 +23,8 @@ function TitleSectionDemo({ initialTitle = '', initialManualTags = [] }) {
         tagField={tagField}
         tagPlaceholder={postEditorCopy.tagPlaceholder}
         onTitleChange={setTitle}
+        titleSuggestion={titleSuggestion}
+        isSuggestingTitle={isSuggestingTitle}
       />
     </div>
   );
@@ -39,4 +46,14 @@ export const Default = {
 
 export const WithContent = {
   render: () => <TitleSectionDemo initialTitle="벚꽃 축제 운영 일정 안내" initialManualTags={['공지', '운영']} />,
+};
+
+export const WithAiSuggestion = {
+  render: () => (
+    <TitleSectionDemo
+      initialTitle="스프링 부트와 "
+      initialManualTags={['스프링', 'AI']}
+      titleSuggestion="Gemini AI로 블로그 자동완성 만들기"
+    />
+  ),
 };

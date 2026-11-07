@@ -37,6 +37,7 @@ public enum ErrorCode {
 
     // 429 Too Many Requests
     TOO_MANY_LOGIN_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "로그인 시도가 너무 많습니다. 30분 후 다시 시도해주세요."),
+    TOO_MANY_AI_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "AI 요청이 너무 빈번합니다. 잠시 후 다시 시도해주세요."),
 
     // JWT 토큰
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않거나 만료된 토큰입니다."),
@@ -57,9 +58,25 @@ public enum ErrorCode {
     // 404 Not Found - 댓글
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다."),
 
+    // 400 Bad Request - 댓글
+    COMMENT_REPLY_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "답글에는 답글을 작성할 수 없습니다."),
+
     // 403 Forbidden - 댓글
     COMMENT_UPDATE_FORBIDDEN(HttpStatus.FORBIDDEN, "본인이 작성한 댓글만 수정할 수 있습니다."),
     COMMENT_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "댓글을 삭제할 권한이 없습니다."),
+
+    // GitHub 연동
+    GITHUB_OAUTH_FAILED(HttpStatus.BAD_GATEWAY, "GitHub 인증에 실패했습니다."),
+    GITHUB_SYNC_NOT_CONFIGURED(HttpStatus.NOT_FOUND, "GitHub 연동 설정이 되어있지 않습니다."),
+    GITHUB_API_ERROR(HttpStatus.BAD_GATEWAY, "GitHub API 호출 중 오류가 발생했습니다."),
+
+    // 신고
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 신고를 찾을 수 없습니다."),
+    DUPLICATE_REPORT(HttpStatus.CONFLICT, "이미 신고한 대상입니다."),
+    SELF_REPORT_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "본인이 작성한 콘텐츠는 신고할 수 없습니다."),
+    REPORT_DESCRIPTION_REQUIRED(HttpStatus.BAD_REQUEST, "기타 사유를 선택한 경우 추가 설명을 입력해주세요."),
+    INVALID_REPORT_STATUS(HttpStatus.BAD_REQUEST, "처리 결과는 조치 완료 또는 기각만 선택할 수 있습니다."),
+    REPORT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "이미 처리된 신고입니다."),
 
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생하였습니다.");

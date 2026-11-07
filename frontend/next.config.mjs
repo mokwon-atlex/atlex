@@ -29,6 +29,16 @@ const nextConfig = {
       ],
     };
   },
+
+  async redirects() {
+    return [
+      {
+        source: '/auth/login',
+        destination: '/account',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

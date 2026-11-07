@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import BlogOptionBioForm from '@/components/domain/blog-option/feature/BlogOptionBioForm';
 import BlogOptionCategoryManager from '@/components/domain/blog-option/feature/BlogOptionCategoryManager';
+import BlogOptionGitHubSync from '@/components/domain/blog-option/feature/BlogOptionGitHubSync';
 import BlogOptionPageLayout from '@/components/domain/blog-option/layout/BlogOptionPageLayout';
 import { createUserBlogCategory, deleteUserBlogCategory, updateUserBlogCategory } from '@/lib/api/users';
 import { loadUserBlogCategories } from '@/lib/category/blog-categories';
@@ -278,6 +279,7 @@ export default function BlogOptionPage() {
           onDeleteCategory={handleDeleteCategory}
         />
       }
+      githubSection={<BlogOptionGitHubSync />}
     />
   );
 }

@@ -31,6 +31,13 @@ public class Comment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    /**
+     * 답글이 속한 최상위 댓글. 최상위 댓글이면 null이며, 답글은 1단계까지만 허용한다.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Comment parent;
+
     @Column(nullable = false, length = 1000)
     private String content;
 
@@ -48,6 +55,15 @@ public class Comment {
     public void update(String content) {
         if (content != null)
             this.content = content;
+    }
+
+    /**
+     * 다른 댓글에 달린 답글인지 확인한다.
+     *
+     * @return 부모 댓글이 있으면 true
+     */
+    public boolean isReply() {
+        return parent != null;
     }
 
     public void softDelete() {
