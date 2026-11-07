@@ -57,7 +57,7 @@ github:
 
 
 ---
-# 운영(EC2 + RDS MySQL) 프로파일: SPRING_PROFILES_ACTIVE=prod
+# 운영 프로파일: SPRING_PROFILES_ACTIVE=prod
 spring:
   config:
     activate:
