@@ -1,16 +1,32 @@
-# EC2 배포용 구성. mysql + app + nginx 세 컨테이너.
+# OCI(Oracle Cloud) Always Free 배포용 구성. mysql + redis + app + nginx
 # 실행: docker compose up -d   (같은 디렉터리의 .env 자동 로드)
 services:
-  app:
-    image: ghcr.io/mokwon-atlex/atlex:latest   # GitHub Actions가 push, EC2는 pull
+  mysql:
+    image: mysql:8.0
     restart: unless-stopped
-    mem_limit: 600m          # JVM의 MaxRAMPercentage(60%) 기준 → 힙 최대 ~360MB
-    memswap_limit: 1600m     # mem_limit(600m) + swap 1G 까지 허용 (피크 흡수)
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-atlex}
+      MYSQL_USER: ${DB_USERNAME:-atlex}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-${DB_PASSWORD}}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    expose:
+      - "3306"
+
+  app:
+    image: ghcr.io/mokwon-atlex/atlex:latest   # GitHub Actions가 push, 서버는 pull
+    restart: unless-stopped
+    mem_limit: 2g          # Ampere A1(최대 24GB RAM) 기준 여유 있는 메모리 할당
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      DB_HOST: ${DB_HOST}                     # RDS 엔드포인트
-      DB_NAME: ${DB_NAME}
-      DB_USERNAME: ${DB_USERNAME}
+      DB_HOST: ${DB_HOST:-mysql}              # 기본값으로 내부 mysql 컨테이너 사용 (외부 DB 필요 시 .env로 재정의 가능)
+      DB_NAME: ${DB_NAME:-atlex}
+      DB_USERNAME: ${DB_USERNAME:-atlex}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       GITHUB_TOKEN_ENCRYPTION_KEY: ${GITHUB_TOKEN_ENCRYPTION_KEY}
@@ -22,6 +38,7 @@ services:
     expose:
       - "8080"                                # 내부 네트워크에만 노출 (외부 X)
     depends_on:
+      - mysql
       - redis
 
   redis:
@@ -42,4 +59,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/certbot/conf:/etc/letsencrypt:ro
       - ./nginx/certbot/www:/var/www/certbot:ro
+
+volumes:
+  mysql_data:
 
