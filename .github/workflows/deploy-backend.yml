@@ -65,9 +65,9 @@ jobs:
           script: |
             set -e
             cd ~/atlex
+            # 설정 파일과 이미지를 같은 배포 대상 커밋으로 고정
             git fetch origin main
-            git checkout main
-            git pull --ff-only origin main
+            git checkout --detach "$TARGET_SHA"
 
             # 비공개 GHCR 패키지 pull 대비 로그인
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
@@ -78,15 +78,19 @@ jobs:
             docker compose -f backend/docker-compose.yml up -d
 
             # 헬스 체크 (최대 5분, 저사양 서버의 느린 기동 고려)
+            # 요청별 5초 제한 + 시작 시점 기준 전체 5분 마감
             HEALTHY=0
-            for i in $(seq 1 60); do
-              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/api/v1/health || true)
+            DEADLINE=$(( $(date +%s) + 300 ))
+            i=0
+            while [ "$(date +%s)" -lt "$DEADLINE" ]; do
+              i=$((i + 1))
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost/api/v1/health || true)
               if [ "$HTTP_CODE" = "200" ]; then
                 echo "헬스 체크 성공 (시도 $i)"
                 HEALTHY=1
                 break
               fi
-              echo "헬스 체크 대기 $i/60 (HTTP $HTTP_CODE)"
+              echo "헬스 체크 대기 $i (HTTP $HTTP_CODE)"
               sleep 5
             done
 
