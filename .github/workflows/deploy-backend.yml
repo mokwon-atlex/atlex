@@ -94,7 +94,8 @@ jobs:
               sleep 5
             done
 
-            docker logout ghcr.io
+            # 로그아웃 실패로 아래 실패 로그 출력이 생략되지 않도록 무시
+            docker logout ghcr.io || true
 
             if [ "$HEALTHY" -ne 1 ]; then
               echo "헬스 체크 실패: 최근 app 로그"
