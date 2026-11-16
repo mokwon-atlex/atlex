@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,8 @@ public class TagService {
     private final PostTagRepository postTagRepository;
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
+    /** 트렌딩 집계 기준 시각을 계산하는 시계 */
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public TagListResponse getTags(
@@ -130,7 +133,7 @@ public class TagService {
         if ("alphabet".equalsIgnoreCase(sort)) {
             result = postTagRepository.findPlatformTagsAlphabet(normalizedKeyword, pageRequest);
         } else if ("trending".equalsIgnoreCase(sort)) {
-            LocalDateTime since = LocalDateTime.now().minusDays(TRENDING_PERIOD_DAYS);
+            LocalDateTime since = LocalDateTime.now(clock).minusDays(TRENDING_PERIOD_DAYS);
             result = postTagRepository.findPlatformTagsTrending(normalizedKeyword, since, pageRequest);
         } else {
             result = postTagRepository.findPlatformTagsPopular(normalizedKeyword, pageRequest);
