@@ -15,13 +15,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
@@ -37,6 +42,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @Transactional
 class TagControllerTest {
+
+    /** 트렌딩 집계 기준 시각을 고정하기 위한 테스트 시각 */
+    private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 1, 31, 12, 0);
+
+    /**
+     * 서비스가 고정 시각을 기준으로 트렌딩을 집계하도록 시계를 교체합니다.
+     */
+    @TestConfiguration
+    static class FixedClockConfig {
+
+        @Bean
+        @Primary
+        Clock fixedClock() {
+            ZoneId zone = ZoneId.systemDefault();
+            return Clock.fixed(FIXED_NOW.atZone(zone).toInstant(), zone);
+        }
+    }
 
     @Autowired
     WebApplicationContext context;
@@ -165,7 +187,7 @@ class TagControllerTest {
         for (int i = 0; i < 3; i++) {
             savePostTag(owner, saveOldPost(owner, 60), oldTag);
         }
-        savePostTag(owner, savePost(owner, null), recentTag);
+        savePostTag(owner, saveOldPost(owner, 1), recentTag);
 
         // when & then: 최근 글 수 기준으로 recent가 먼저, 응답 글 수는 전체 기간 기준
         mockMvc.perform(get("/api/v1/tags/all").param("sort", "trending").param("keyword", "zzsort"))
@@ -193,20 +215,37 @@ class TagControllerTest {
     }
 
     @Test
+    @DisplayName("트렌딩 정렬은 정확히 30일 전 글을 포함하고 그보다 이전 글은 제외한다")
+    void getAllPlatformTags_trendingBoundary() throws Exception {
+        // given: in은 경계 시각 글 1개, out은 경계 1초 전 글 2개
+        Tag inTag = saveTag("zzsort-in");
+        Tag outTag = saveTag("zzsort-out");
+        LocalDateTime boundary = FIXED_NOW.minusDays(30);
+        savePostTag(owner, savePostCreatedAt(owner, boundary), inTag);
+        savePostTag(owner, savePostCreatedAt(owner, boundary.minusSeconds(1)), outTag);
+        savePostTag(owner, savePostCreatedAt(owner, boundary.minusSeconds(1)), outTag);
+
+        // when & then: in만 최근 글로 집계되어 전체 글 수가 많은 out보다 먼저
+        mockMvc.perform(get("/api/v1/tags/all").param("sort", "trending").param("keyword", "zzsort"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.content[*].name").value(contains("zzsort-in", "zzsort-out")));
+    }
+
+    @Test
     @DisplayName("인기순 정렬은 기간과 관계없이 전체 글 수가 많은 태그를 먼저 반환한다")
     void getAllPlatformTags_popular() throws Exception {
-        // given: old는 60일 전 글 3개, recent는 최근 글 1개
-        Tag oldTag = saveTag("zzsort-old");
-        Tag recentTag = saveTag("zzsort-recent");
+        // given: 글이 많은 태그가 이름순으로는 뒤에 위치 (z-old 3개, a-recent 1개)
+        Tag oldTag = saveTag("zzsort-z-old");
+        Tag recentTag = saveTag("zzsort-a-recent");
         for (int i = 0; i < 3; i++) {
             savePostTag(owner, saveOldPost(owner, 60), oldTag);
         }
-        savePostTag(owner, savePost(owner, null), recentTag);
+        savePostTag(owner, saveOldPost(owner, 1), recentTag);
 
         // when & then
         mockMvc.perform(get("/api/v1/tags/all").param("sort", "popular").param("keyword", "zzsort"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.content[*].name").value(contains("zzsort-old", "zzsort-recent")));
+            .andExpect(jsonPath("$.data.content[*].name").value(contains("zzsort-z-old", "zzsort-a-recent")));
     }
 
     @Test
@@ -226,13 +265,20 @@ class TagControllerTest {
     }
 
     /**
-     * 작성일을 지정한 일수만큼 과거로 변경한 게시글을 저장합니다.
-     * createdAt은 엔티티에서 수정할 수 없어 JPQL 일괄 수정으로 변경합니다.
+     * 고정 시각 기준으로 지정한 일수만큼 과거에 작성된 게시글을 저장합니다.
      */
     private Post saveOldPost(User user, int daysAgo) {
+        return savePostCreatedAt(user, FIXED_NOW.minusDays(daysAgo));
+    }
+
+    /**
+     * 작성일을 지정한 시각으로 변경한 게시글을 저장합니다.
+     * createdAt은 엔티티에서 수정할 수 없어 JPQL 일괄 수정으로 변경합니다.
+     */
+    private Post savePostCreatedAt(User user, LocalDateTime createdAt) {
         Post post = savePost(user, null);
         entityManager.createQuery("UPDATE Post p SET p.createdAt = :createdAt WHERE p.id = :id")
-            .setParameter("createdAt", LocalDateTime.now().minusDays(daysAgo))
+            .setParameter("createdAt", createdAt)
             .setParameter("id", post.getId())
             .executeUpdate();
         return post;
