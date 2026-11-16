@@ -52,6 +52,11 @@ class TagControllerTest {
     @TestConfiguration
     static class FixedClockConfig {
 
+        /**
+         * 운영용 시스템 시계 대신 {@link #FIXED_NOW}에 고정된 시계를 우선 주입합니다.
+         *
+         * @return 테스트 시각에 고정된 시계
+         */
         @Bean
         @Primary
         Clock fixedClock() {
