@@ -1,0 +1,3 @@
+# 텍스트 파일 줄바꿈을 운영체제와 관계없이 LF로 통일 (CONTRIBUTING.md 11장)
+# Spotless도 이 설정을 기준으로 줄바꿈을 검사하며, Windows 전용 스크립트 규칙은 backend/.gitattributes에 둡니다.
+* text=auto eol=lf
