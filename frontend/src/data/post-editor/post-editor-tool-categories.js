@@ -71,7 +71,7 @@ export const postEditorToolCategories = [
         id: 'insert-advanced',
         title: '고급 블록',
         description: '개발과 수식 관련 블록을 넣습니다.',
-        items: ['코드 블록', '수식(LaTeX)', '구분 영역'],
+        items: ['코드 블록', '수식(LaTeX)'],
       },
       {
         id: 'edit-actions',

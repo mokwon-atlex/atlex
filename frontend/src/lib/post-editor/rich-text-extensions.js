@@ -97,50 +97,6 @@ const DetailsBlock = Node.create({
   },
 });
 
-const SectionBlock = Node.create({
-  name: 'sectionBlock',
-  group: 'block',
-  content: 'block+',
-  defining: true,
-  isolating: true,
-  addAttributes() {
-    return {
-      title: {
-        default: '구분 영역',
-      },
-    };
-  },
-  parseHTML() {
-    return [{ tag: 'section[data-type="section-block"]' }];
-  },
-  renderHTML({ HTMLAttributes }) {
-    const { title, ...restAttributes } = HTMLAttributes;
-
-    return [
-      'section',
-      mergeAttributes(restAttributes, {
-        'data-type': 'section-block',
-      }),
-      ['div', { class: 'post-editor-block__label' }, title],
-      ['div', { class: 'post-editor-block__body' }, 0],
-    ];
-  },
-  addCommands() {
-    return {
-      insertSectionBlock:
-        (attributes = {}) =>
-        ({ commands }) =>
-          commands.insertContent({
-            type: this.name,
-            attrs: {
-              title: attributes.title?.trim() || '구분 영역',
-            },
-            content: createBlockContent(attributes.content?.trim() || '영역 내용을 입력하세요.'),
-          }),
-    };
-  },
-});
-
 const MathBlock = Node.create({
   name: 'mathBlock',
   group: 'block',
@@ -239,7 +195,7 @@ export const editorExtensions = [
     allowBase64: true,
   }),
   TextAlign.configure({
-    types: ['blockquote', 'captionParagraph', 'detailsBlock', 'heading', 'leadParagraph', 'paragraph', 'sectionBlock'],
+    types: ['blockquote', 'captionParagraph', 'detailsBlock', 'heading', 'leadParagraph', 'paragraph'],
   }),
   TaskList,
   TaskItem.configure({
@@ -254,7 +210,6 @@ export const editorExtensions = [
   LeadParagraph,
   CaptionParagraph,
   DetailsBlock,
-  SectionBlock,
   MathBlock,
   AiSuggestionExtension,
   PostLinkExtension,

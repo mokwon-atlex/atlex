@@ -152,17 +152,12 @@
 }
 
 .post-editor-prose .tiptap [data-type='details-block'],
-.post-editor-prose .tiptap [data-type='math-block'],
-.post-editor-prose .tiptap [data-type='section-block'] {
+.post-editor-prose .tiptap [data-type='math-block'] {
   background: #fff;
   border: 1px solid #cbd5e1;
   border-radius: 1rem;
   margin: 1.25rem 0;
   padding: 1rem 1rem 1.1rem;
-}
-
-.post-editor-prose .tiptap [data-type='section-block'] {
-  background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
 }
 
 .post-editor-block__label,
