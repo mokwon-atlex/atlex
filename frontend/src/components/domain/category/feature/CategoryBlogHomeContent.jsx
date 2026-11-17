@@ -4,13 +4,17 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { buttonVariants } from '@/components/common/ui/button';
+import { UserCheck, UserPlus } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/common/ui/button';
 import CategoryBlogHomeSidebarCategoryDialog from '@/components/domain/category/layout/CategoryBlogHomeSidebarCategoryDialog';
 import BlogHomeFeed from '@/components/domain/blog-home/feature/BlogHomeFeed';
 import BlogHomeSidebar from '@/components/domain/blog-home/feature/BlogHomeSidebar';
 import BlogHomeBodyLayout from '@/components/domain/blog-home/layout/BlogHomeBodyLayout';
+import BlogHomeFollowListModal from '@/components/domain/blog-home/layout/BlogHomeFollowListModal';
 import { ALL_CATEGORY_ID, findCategoryById } from '@/lib/category/category-picker';
+import { followUser, unfollowUser } from '@/lib/api/follows';
 import { addPostLike, fetchUserBlogPosts, removePostLike } from '@/lib/api/posts';
+import { fetchProfileByUserId } from '@/lib/api/profiles';
 import { toBlogHomeFeedPost } from '@/lib/mappers/post';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
@@ -83,7 +87,79 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   const [selectedTagId, setSelectedTagId] = useState(() => getInitialSelectedTagId(tags));
   const [selectedCategoryId, setSelectedCategoryId] = useState(ALL_CATEGORY_ID);
   const isOwnerBlog = mounted && currentUserId === profile.userId;
-  const resolvedQuickActions = isOwnerBlog ? quickActions : quickActions.filter(({ id }) => id !== 'option');
+  const [isFollowing, setIsFollowing] = useState(Boolean(profile.following));
+  const [followerCount, setFollowerCount] = useState(Number(profile.followerCount ?? 0));
+  const [followingCount, setFollowingCount] = useState(Number(profile.followingCount ?? 0));
+  const [isFollowPending, setIsFollowPending] = useState(false);
+  const [followModalTab, setFollowModalTab] = useState(null);
+
+  useEffect(() => {
+    setIsFollowing(Boolean(profile.following));
+    setFollowerCount(Number(profile.followerCount ?? 0));
+    setFollowingCount(Number(profile.followingCount ?? 0));
+  }, [profile.userId, profile.following, profile.followerCount, profile.followingCount]);
+
+  useEffect(() => {
+    if (!mounted || !currentUserId || !profile.userId || isOwnerBlog) {
+      return;
+    }
+
+    let cancelled = false;
+    fetchProfileByUserId(profile.userId)
+      .then((apiProfile) => {
+        if (cancelled) return;
+        setIsFollowing(Boolean(apiProfile?.following));
+        setFollowerCount(Number(apiProfile?.followerCount ?? 0));
+        setFollowingCount(Number(apiProfile?.followingCount ?? 0));
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mounted, currentUserId, profile.userId, isOwnerBlog]);
+
+  const resolvedQuickActions = quickActions.filter(({ id }) => {
+    if (id === 'option') return isOwnerBlog;
+    if (id === 'follow') return !isOwnerBlog;
+    return true;
+  });
+
+  const resolvedStats = (profile.stats ?? []).map((stat) => {
+    if (stat.id === 'followers') {
+      return { ...stat, value: followerCount.toLocaleString() };
+    }
+    if (stat.id === 'following') {
+      return { ...stat, value: followingCount.toLocaleString() };
+    }
+    return stat;
+  });
+
+  async function handleFollowToggle() {
+    if (isFollowPending || !profile.userId) {
+      return;
+    }
+    if (!currentUserId) {
+      router.push('/account');
+      return;
+    }
+
+    setIsFollowPending(true);
+    try {
+      const result = isFollowing ? await unfollowUser(profile.userId) : await followUser(profile.userId);
+      setIsFollowing(Boolean(result?.following));
+      if (typeof result?.followerCount === 'number') {
+        setFollowerCount(result.followerCount);
+      }
+      if (typeof result?.followingCount === 'number') {
+        setFollowingCount(result.followingCount);
+      }
+    } catch {
+      // 에러 시 기존 상태를 유지한다.
+    } finally {
+      setIsFollowPending(false);
+    }
+  }
   const graphParams = new URLSearchParams();
 
   if (profile?.userId) {
@@ -305,6 +381,22 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   }
 
   const quickActionOverrides = {
+    follow: ({ id }) => (
+      <Button
+        key={id}
+        type="button"
+        variant={isFollowing ? 'default' : 'outline'}
+        size="icon-lg"
+        disabled={isFollowPending}
+        aria-pressed={isFollowing}
+        aria-label={isFollowing ? '팔로잉 취소' : '팔로우'}
+        title={isFollowing ? '팔로잉' : '팔로우'}
+        onClick={handleFollowToggle}
+        className="size-11 rounded-full"
+      >
+        {isFollowing ? <UserCheck className="size-4" /> : <UserPlus className="size-4" />}
+      </Button>
+    ),
     category: ({ id, label }) => (
       <CategoryBlogHomeSidebarCategoryDialog
         key={id}
@@ -330,20 +422,31 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   };
 
   return (
-    <BlogHomeBodyLayout
-      sidebar={
-        <BlogHomeSidebar
-          onTagSelect={setSelectedTagId}
-          profile={{
-            ...profile,
-            quickActions: resolvedQuickActions,
-          }}
-          quickActionOverrides={quickActionOverrides}
-          tags={resolvedTags}
-        />
-      }
-    >
-      <BlogHomeFeed feed={resolvedFeed} />
-    </BlogHomeBodyLayout>
+    <>
+      <BlogHomeBodyLayout
+        sidebar={
+          <BlogHomeSidebar
+            onStatClick={(statId) => setFollowModalTab(statId)}
+            onTagSelect={setSelectedTagId}
+            profile={{
+              ...profile,
+              stats: resolvedStats,
+              quickActions: resolvedQuickActions,
+            }}
+            quickActionOverrides={quickActionOverrides}
+            tags={resolvedTags}
+          />
+        }
+      >
+        <BlogHomeFeed feed={resolvedFeed} />
+      </BlogHomeBodyLayout>
+
+      <BlogHomeFollowListModal
+        activeTab={followModalTab}
+        userId={profile.userId}
+        onClose={() => setFollowModalTab(null)}
+        onTabChange={setFollowModalTab}
+      />
+    </>
   );
 }

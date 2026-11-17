@@ -8,7 +8,12 @@ import BlogHomeSidebarStatsLayout from '@/components/domain/blog-home/layout/Blo
 import BlogHomeProfileAvatar from '@/components/domain/blog-home/ui/BlogHomeProfileAvatar';
 import { cn } from '@/lib/utils';
 
-export default function BlogHomeSidebarProfileLayout({ profile, quickActionOverrides, summaryStats = [] }) {
+export default function BlogHomeSidebarProfileLayout({
+  onStatClick,
+  profile,
+  quickActionOverrides,
+  summaryStats = [],
+}) {
   return (
     <BlogHomeSidebarCard>
       <div className="flex flex-col gap-4">
@@ -44,7 +49,7 @@ export default function BlogHomeSidebarProfileLayout({ profile, quickActionOverr
         </div>
       </div>
 
-      <BlogHomeSidebarStatsLayout stats={summaryStats} />
+      <BlogHomeSidebarStatsLayout onStatClick={onStatClick} stats={summaryStats} />
       <BlogHomeSidebarQuickActionsLayout actionOverrides={quickActionOverrides} actions={profile.quickActions} />
     </BlogHomeSidebarCard>
   );

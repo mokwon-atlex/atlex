@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS follows;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS reports;
 DROP TABLE IF EXISTS post_relations;
@@ -32,6 +33,25 @@ CREATE TABLE users (
     marketing_agreed BOOLEAN DEFAULT FALSE,
     agreed_at DATETIME
 );
+
+CREATE TABLE follows (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    follower_id BIGINT NOT NULL,
+    following_id BIGINT NOT NULL,
+    created_at DATETIME NOT NULL,
+    CONSTRAINT fk_follows_follower
+        FOREIGN KEY (follower_id) REFERENCES users(id),
+    CONSTRAINT fk_follows_following
+        FOREIGN KEY (following_id) REFERENCES users(id),
+    CONSTRAINT uk_follows_pair
+        UNIQUE (follower_id, following_id)
+);
+
+CREATE INDEX idx_follows_follower_id
+    ON follows(follower_id);
+
+CREATE INDEX idx_follows_following_id
+    ON follows(following_id);
 
 CREATE TABLE refresh_token (
     id BIGINT PRIMARY KEY,
