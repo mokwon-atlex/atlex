@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -187,5 +188,30 @@ class NotificationControllerTest {
             .andExpect(jsonPath("$.data.likeEnabled").value(true))
             .andExpect(jsonPath("$.data.followEnabled").value(false))
             .andExpect(jsonPath("$.data.noticeEnabled").value(true));
+    }
+
+    @Test
+    @DisplayName("타인의 알림을 삭제하려고 하면 403 예외가 발생한다")
+    void forbidDeletingOthersNotification() throws Exception {
+        mockMvc.perform(delete("/api/v1/notifications/" + notificationId)
+            .header("Authorization", "Bearer " + otherToken))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("NOTIFICATION_ACCESS_DENIED"));
+    }
+
+    @Test
+    @DisplayName("본인의 알림을 단건 삭제하고 전체 삭제할 수 있다")
+    void deleteNotificationAndDeleteAll() throws Exception {
+        mockMvc.perform(delete("/api/v1/notifications/" + notificationId)
+            .header("Authorization", "Bearer " + recipientToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("SUCCESS"));
+
+        assertEquals(0L, notificationRepository.count());
+
+        mockMvc.perform(delete("/api/v1/notifications")
+            .header("Authorization", "Bearer " + recipientToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value("SUCCESS"));
     }
 }

@@ -1,7 +1,10 @@
 // [Section] 게시 메타 입력 — 설명(description) · 카테고리 · 공개 여부(isPublic).
 // 모든 값/핸들러를 props 로 받는 controlled 컴포넌트. 상태는 상위(page.jsx)에서 관리한다.
-import { Loader2, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { Loader2, Plus, Sparkles, X } from 'lucide-react';
+import { Button } from '@/components/common/ui/button';
 import { Field, FieldLabel } from '@/components/common/ui/field';
+import { Input } from '@/components/common/ui/input';
 import { Textarea } from '@/components/common/ui/textarea';
 import { Switch } from '@/components/common/ui/switch';
 import { postEditorCategories } from '@/data/post-editor/post-editor-categories';
@@ -14,12 +17,37 @@ export default function PostEditorMetaSection({
   categoryId, // null | number
   categories = [],
   onCategoryChange,
+  onCreateCategory, // (name: string) => Promise<void>
   isPublic,
   onIsPublicChange,
   isGeneratingDescription = false,
   onRequestGenerateDescription,
 }) {
   const categoryOptions = [postEditorCategories[0], ...categories];
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [categoryError, setCategoryError] = useState('');
+
+  async function handleSubmitNewCategory() {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) {
+      setCategoryError('카테고리 이름을 입력해 주세요.');
+      return;
+    }
+
+    setIsCreatingCategory(true);
+    setCategoryError('');
+    try {
+      await onCreateCategory?.(trimmed);
+      setNewCategoryName('');
+      setIsAddingCategory(false);
+    } catch (error) {
+      setCategoryError(error?.message ?? '카테고리 추가에 실패했습니다.');
+    } finally {
+      setIsCreatingCategory(false);
+    }
+  }
 
   return (
     <section className="border-b border-border">
@@ -57,27 +85,97 @@ export default function PostEditorMetaSection({
         </Field>
 
         <div className="flex flex-wrap items-end justify-between gap-6">
-          {/* 카테고리 (현재 정적 목록 — 백엔드 오픈 전까지 UI 용) */}
-          <Field className="max-w-xs">
+          {/* 카테고리 */}
+          <Field className="max-w-md flex-1">
             <FieldLabel htmlFor="post-editor-category" className={LABEL_CLASS}>
               카테고리
             </FieldLabel>
-            <select
-              id="post-editor-category"
-              value={categoryId ?? ''}
-              onChange={(event) => {
-                const { value } = event.target;
-                const nextCategoryId = Number(value);
-                onCategoryChange(value === '' || !Number.isFinite(nextCategoryId) ? null : nextCategoryId);
-              }}
-              className="h-10 w-full rounded-lg border border-border bg-muted px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              {categoryOptions.map((category) => (
-                <option key={category.id ?? 'none'} value={category.id ?? ''}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                id="post-editor-category"
+                value={categoryId ?? ''}
+                onChange={(event) => {
+                  const { value } = event.target;
+                  const nextCategoryId = Number(value);
+                  onCategoryChange(value === '' || !Number.isFinite(nextCategoryId) ? null : nextCategoryId);
+                }}
+                className="h-10 min-w-44 flex-1 rounded-lg border border-border bg-muted px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                {categoryOptions.map((category) => (
+                  <option key={category.id ?? 'none'} value={category.id ?? ''}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+
+              {onCreateCategory && !isAddingCategory ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  onClick={() => {
+                    setCategoryError('');
+                    setIsAddingCategory(true);
+                  }}
+                  className="h-10 shrink-0 gap-1"
+                >
+                  <Plus className="size-4" />
+                  추가
+                </Button>
+              ) : null}
+            </div>
+
+            {onCreateCategory && isAddingCategory ? (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSubmitNewCategory();
+                    } else if (e.key === 'Escape') {
+                      setIsAddingCategory(false);
+                      setCategoryError('');
+                    }
+                  }}
+                  placeholder="새 카테고리 이름"
+                  disabled={isCreatingCategory}
+                  aria-label="새 카테고리 이름"
+                  className="h-9 min-w-40 flex-1"
+                  autoFocus
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={isCreatingCategory || !newCategoryName.trim()}
+                  onClick={handleSubmitNewCategory}
+                >
+                  {isCreatingCategory ? <Loader2 className="size-3.5 animate-spin" /> : '저장'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled={isCreatingCategory}
+                  onClick={() => {
+                    setIsAddingCategory(false);
+                    setNewCategoryName('');
+                    setCategoryError('');
+                  }}
+                  aria-label="카테고리 추가 취소"
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+            ) : null}
+
+            {categoryError ? (
+              <p role="alert" className="mt-1.5 text-xs text-destructive">
+                {categoryError}
+              </p>
+            ) : null}
           </Field>
 
           {/* 공개 여부 */}
