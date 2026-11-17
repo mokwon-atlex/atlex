@@ -40,7 +40,7 @@ export default function PostEditorContentSection({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 p-5 sm:p-7">
-        <Card variant="dashed" size="sm" className="flex h-full min-h-0 flex-col gap-4 p-5 sm:p-6">
+        <Card size="sm" className="flex h-full min-h-0 flex-col gap-4 bg-background p-5 sm:p-6">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">본문</CardTitle>
             {onRequestParagraphAi ? (

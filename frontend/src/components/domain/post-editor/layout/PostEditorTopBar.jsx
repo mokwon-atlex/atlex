@@ -1,6 +1,6 @@
 // [Section] 에디터 상단 바 — 로고, 임시 저장 목록 열기, 게시 버튼
 import Link from 'next/link';
-import { Button, buttonVariants } from '@/components/common/ui/button';
+import { Button } from '@/components/common/ui/button';
 
 export default function PostEditorTopBar({
   draftButtonLabel = '임시 저장 목록',
@@ -16,10 +16,13 @@ export default function PostEditorTopBar({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-7">
-      <Link href="/">
-        <Button variant="outline" size="lg">
-          {logoLabel}
-        </Button>
+      <Link href="/" aria-label={logoLabel} className="inline-flex h-10 w-20 items-center">
+        <img src="/logo/atlex-light.svg" alt={logoLabel} className="max-h-full max-w-full object-contain dark:hidden" />
+        <img
+          src="/logo/atlex-dark.svg"
+          alt={logoLabel}
+          className="hidden max-h-full max-w-full object-contain dark:block"
+        />
       </Link>
 
       <div className="flex flex-wrap items-center gap-3">
