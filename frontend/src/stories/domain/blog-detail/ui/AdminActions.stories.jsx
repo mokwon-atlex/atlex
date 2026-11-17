@@ -22,7 +22,7 @@ function AdminActionsWrapper({
   currentUserId = 'author1',
   authorUserId = 'author1',
   postId = '123',
-  actions = ['통계', '수정', '삭제'],
+  actions = ['수정', '삭제'],
   onDelete,
   onDeleteSuccess,
   onDeleteError,
@@ -82,11 +82,9 @@ export const AuthorView = {
       const editLink = await canvas.findByRole('link', { name: '수정' });
       await expect(editLink).toHaveAttribute('href', '/write/123');
 
-      // 목적지가 없는 액션(통계)과 삭제는 링크가 아닌 일반 버튼으로 남아 있어야 한다.
+      // 삭제는 링크가 아닌 일반 버튼으로 남아 있어야 한다.
       await expect(canvas.getByRole('button', { name: '삭제' })).toBeVisible();
       await expect(canvas.queryByRole('link', { name: '삭제' })).not.toBeInTheDocument();
-      await expect(canvas.getByRole('button', { name: '통계' })).toBeVisible();
-      await expect(canvas.queryByRole('link', { name: '통계' })).not.toBeInTheDocument();
     } finally {
       resetAuthStore();
     }

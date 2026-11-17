@@ -21,6 +21,8 @@ public class PostResponse {
     private Long id;
     @Schema(description = "카테고리 ID (없으면 null)", example = "2")
     private Long categoryId;
+    @Schema(description = "카테고리 이름 (없으면 null)", example = "개발 노트")
+    private String categoryName;
     @Schema(description = "게시글 제목", example = "Spring Boot 입문 가이드")
     private String title;
     @Schema(description = "요약 설명 (목록 표시용)", example = "Spring Boot를 처음 시작하는 분들을 위한 가이드입니다.")
@@ -64,6 +66,7 @@ public class PostResponse {
         return PostResponse.builder()
             .id(post.getId())
             .categoryId(post.getCategory() != null ? post.getCategory().getId() : null)
+            .categoryName(post.getCategory() != null ? post.getCategory().getName() : null)
             .title(post.getTitle())
             .description(post.getDescription())
             .content(post.getContent())
