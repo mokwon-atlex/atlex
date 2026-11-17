@@ -50,7 +50,7 @@ export const postEditorToolCategories = [
         id: 'structure-block',
         title: '구조 요소',
         description: '문단 사이에 들어가는 구조 블록입니다.',
-        items: ['구분선', '토글 섹션', '체크리스트'],
+        items: ['구분선', '토글 섹션'],
       },
     ],
   },

@@ -3,8 +3,6 @@ import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
-import TaskItem from '@tiptap/extension-task-item';
-import TaskList from '@tiptap/extension-task-list';
 import TextAlign from '@tiptap/extension-text-align';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -186,7 +184,11 @@ export const editorExtensions = [
     autolink: true,
     defaultProtocol: 'https',
     linkOnPaste: true,
-    openOnClick: false,
+    openOnClick: true,
+    HTMLAttributes: {
+      target: '_blank',
+      rel: 'noopener noreferrer',
+    },
   }),
   CodeBlockLowlight.configure({
     lowlight: editorLowlight,
@@ -196,10 +198,6 @@ export const editorExtensions = [
   }),
   TextAlign.configure({
     types: ['blockquote', 'captionParagraph', 'detailsBlock', 'heading', 'leadParagraph', 'paragraph'],
-  }),
-  TaskList,
-  TaskItem.configure({
-    nested: true,
   }),
   Table.configure({
     resizable: true,
