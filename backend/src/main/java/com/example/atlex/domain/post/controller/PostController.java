@@ -49,10 +49,19 @@ public class PostController implements PostControllerDocs {
         Long categoryId,
         @RequestParam(required = false)
         String tag,
+        @RequestParam(required = false)
+        String keyword,
         @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
         Pageable pageable) {
         Long id = principalDetails != null ? principalDetails.user().getId() : null;
-        Page<PostSummaryResponse> response = postService.getPostList(type, userId, categoryId, tag, pageable, id);
+        Page<PostSummaryResponse> response = postService.getPostList(
+            type,
+            userId,
+            categoryId,
+            tag,
+            keyword,
+            pageable,
+            id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

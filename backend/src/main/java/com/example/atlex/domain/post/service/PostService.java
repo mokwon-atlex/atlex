@@ -105,9 +105,22 @@ public class PostService {
         String tag,
         Pageable pageable,
         Long id) {
+        return getPostList(type, userId, categoryId, tag, null, pageable, id);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PostSummaryResponse> getPostList(
+        String type,
+        String userId,
+        Long categoryId,
+        String tag,
+        String keyword,
+        Pageable pageable,
+        Long id) {
         String normalizedType = normalizeType(type);
         String normalizedUserId = normalizeUserId(userId);
         String normalizedTag = normalizeTag(tag);
+        String normalizedKeyword = normalizeKeyword(keyword);
         Sort sort = "trending".equals(normalizedType)
             ? Sort.by(
                 Sort.Order.desc("likes"),
@@ -116,9 +129,27 @@ public class PostService {
             : Sort.by(Sort.Order.desc("createdAt"));
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        Page<Post> posts = (id != null)
-            ? postRepository.findAllVisibleTo(id, normalizedUserId, categoryId, normalizedTag, sortedPageable)
-            : postRepository.findAllPublic(normalizedUserId, categoryId, normalizedTag, sortedPageable);
+        Page<Post> posts;
+        if (normalizedKeyword == null) {
+            posts = (id != null)
+                ? postRepository.findAllVisibleTo(id, normalizedUserId, categoryId, normalizedTag, sortedPageable)
+                : postRepository.findAllPublic(normalizedUserId, categoryId, normalizedTag, sortedPageable);
+        } else {
+            posts = (id != null)
+                ? postRepository.findAllVisibleTo(
+                    id,
+                    normalizedUserId,
+                    categoryId,
+                    normalizedTag,
+                    normalizedKeyword,
+                    sortedPageable)
+                : postRepository.findAllPublic(
+                    normalizedUserId,
+                    categoryId,
+                    normalizedTag,
+                    normalizedKeyword,
+                    sortedPageable);
+        }
 
         List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
         Map<Long, List<String>> tagMap = findTagNamesByPostIds(postIds);
@@ -144,6 +175,10 @@ public class PostService {
 
     private String normalizeTag(String tag) {
         return tag == null || tag.isBlank() ? null : tag.trim();
+    }
+
+    private String normalizeKeyword(String keyword) {
+        return keyword == null || keyword.isBlank() ? null : keyword.trim();
     }
 
     @Transactional(readOnly = true)
