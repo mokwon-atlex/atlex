@@ -39,3 +39,41 @@ export function markNotificationAsRead(notificationId) {
 export function markAllNotificationsAsRead() {
   return apiClient.patch('/notifications/read-all');
 }
+
+/**
+ * 로그인한 사용자의 알림 수신 설정을 조회한다.
+ *
+ * @returns {Promise<{ commentEnabled: boolean, likeEnabled: boolean, followEnabled: boolean, noticeEnabled: boolean }>}
+ */
+export function fetchNotificationSettings() {
+  return apiClient.get('/notifications/settings');
+}
+
+/**
+ * 로그인한 사용자의 알림 수신 설정을 저장한다.
+ *
+ * @param {{ commentEnabled: boolean, likeEnabled: boolean, followEnabled: boolean, noticeEnabled: boolean }} body
+ * @returns {Promise<{ commentEnabled: boolean, likeEnabled: boolean, followEnabled: boolean, noticeEnabled: boolean }>}
+ */
+export function updateNotificationSettings(body) {
+  return apiClient.patch('/notifications/settings', body);
+}
+
+/**
+ * 특정 알림을 삭제한다.
+ *
+ * @param {number|string} notificationId 알림 ID
+ * @returns {Promise<null>}
+ */
+export function deleteNotification(notificationId) {
+  return apiClient.delete(`/notifications/${notificationId}`);
+}
+
+/**
+ * 로그인한 사용자의 모든 알림을 삭제한다.
+ *
+ * @returns {Promise<null>}
+ */
+export function deleteAllNotifications() {
+  return apiClient.delete('/notifications');
+}

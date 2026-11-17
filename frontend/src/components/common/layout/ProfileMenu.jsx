@@ -99,12 +99,6 @@ export default function ProfileMenu() {
         >
           태그 목록
         </Link>
-        <Link
-          href="/policy"
-          className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
-        >
-          약관 보기
-        </Link>
         {mounted && isLoggedIn && (
           <>
             <hr className="my-1 border-border" />
