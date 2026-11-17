@@ -52,6 +52,7 @@ import { useCreatePost } from '@/hooks/queries/posts/useCreatePost';
 import { useUpdatePost } from '@/hooks/queries/posts/useUpdatePost';
 import { usePost } from '@/hooks/queries/posts/usePost';
 import { useAiTokens } from '@/hooks/queries/ai/useAiTokens';
+import { createUserBlogCategory } from '@/lib/api/users';
 import { loadUserBlogCategories } from '@/lib/category/blog-categories';
 import { useAuthStore } from '@/store/authStore';
 
@@ -339,6 +340,21 @@ export default function PostEditorPage({ postId }) {
           categoryId={categoryId}
           categories={categories}
           onCategoryChange={setCategoryId}
+          onCreateCategory={
+            userId
+              ? async (name) => {
+                  const created = await createUserBlogCategory(userId, name);
+                  const nextCategories = await loadUserBlogCategories(userId);
+                  setCategories(nextCategories);
+                  const matched =
+                    nextCategories.find((item) => item.id === created?.id) ??
+                    nextCategories.find((item) => item.name === name);
+                  if (matched?.id != null) {
+                    setCategoryId(matched.id);
+                  }
+                }
+              : undefined
+          }
           isPublic={isPublic}
           onIsPublicChange={setIsPublic}
           isGeneratingDescription={aiSuggestion.isSuggestingDescription}
