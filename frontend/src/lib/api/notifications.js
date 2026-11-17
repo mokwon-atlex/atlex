@@ -39,3 +39,22 @@ export function markNotificationAsRead(notificationId) {
 export function markAllNotificationsAsRead() {
   return apiClient.patch('/notifications/read-all');
 }
+
+/**
+ * 특정 알림을 삭제한다.
+ *
+ * @param {number|string} notificationId 알림 ID
+ * @returns {Promise<null>}
+ */
+export function deleteNotification(notificationId) {
+  return apiClient.delete(`/notifications/${notificationId}`);
+}
+
+/**
+ * 로그인한 사용자의 모든 알림을 삭제한다.
+ *
+ * @returns {Promise<null>}
+ */
+export function deleteAllNotifications() {
+  return apiClient.delete('/notifications');
+}
