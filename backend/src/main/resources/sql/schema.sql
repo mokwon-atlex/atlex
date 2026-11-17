@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS notification_settings;
 DROP TABLE IF EXISTS follows;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS reports;
@@ -52,6 +53,20 @@ CREATE INDEX idx_follows_follower_id
 
 CREATE INDEX idx_follows_following_id
     ON follows(following_id);
+
+CREATE TABLE notification_settings (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    comment_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    like_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    follow_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    notice_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_at DATETIME,
+    CONSTRAINT fk_notification_settings_user
+        FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT uk_notification_settings_user
+        UNIQUE (user_id)
+);
 
 CREATE TABLE refresh_token (
     id BIGINT PRIMARY KEY,

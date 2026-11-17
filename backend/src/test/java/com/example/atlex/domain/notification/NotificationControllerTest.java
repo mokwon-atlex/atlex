@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -152,6 +153,41 @@ class NotificationControllerTest {
             .header("Authorization", "Bearer " + otherToken))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value("NOTIFICATION_ACCESS_DENIED"));
+    }
+
+    @Test
+    @DisplayName("알림 설정을 조회하고 수정한 값이 유지된다")
+    void getAndUpdateNotificationSettings() throws Exception {
+        mockMvc.perform(get("/api/v1/notifications/settings")
+            .header("Authorization", "Bearer " + recipientToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.commentEnabled").value(true))
+            .andExpect(jsonPath("$.data.likeEnabled").value(true))
+            .andExpect(jsonPath("$.data.followEnabled").value(true))
+            .andExpect(jsonPath("$.data.noticeEnabled").value(true));
+
+        mockMvc.perform(patch("/api/v1/notifications/settings")
+            .header("Authorization", "Bearer " + recipientToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "commentEnabled": false,
+                  "likeEnabled": true,
+                  "followEnabled": false,
+                  "noticeEnabled": true
+                }
+                """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.commentEnabled").value(false))
+            .andExpect(jsonPath("$.data.followEnabled").value(false));
+
+        mockMvc.perform(get("/api/v1/notifications/settings")
+            .header("Authorization", "Bearer " + recipientToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.commentEnabled").value(false))
+            .andExpect(jsonPath("$.data.likeEnabled").value(true))
+            .andExpect(jsonPath("$.data.followEnabled").value(false))
+            .andExpect(jsonPath("$.data.noticeEnabled").value(true));
     }
 
     @Test

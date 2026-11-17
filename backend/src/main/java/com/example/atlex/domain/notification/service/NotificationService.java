@@ -2,12 +2,16 @@ package com.example.atlex.domain.notification.service;
 
 import com.example.atlex.domain.comment.event.CommentCreatedEvent;
 import com.example.atlex.domain.comment.repository.CommentRepository;
+import com.example.atlex.domain.notification.dto.request.NotificationSettingUpdateRequest;
 import com.example.atlex.domain.notification.dto.response.NotificationResponse;
+import com.example.atlex.domain.notification.dto.response.NotificationSettingResponse;
 import com.example.atlex.domain.notification.entity.Notification;
+import com.example.atlex.domain.notification.entity.NotificationSetting;
 import com.example.atlex.domain.notification.entity.NotificationType;
 import com.example.atlex.domain.notification.exception.NotificationAccessDeniedException;
 import com.example.atlex.domain.notification.exception.NotificationNotFoundException;
 import com.example.atlex.domain.notification.repository.NotificationRepository;
+import com.example.atlex.domain.notification.repository.NotificationSettingRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +31,7 @@ import java.util.Objects;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final NotificationSettingRepository notificationSettingRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
@@ -46,6 +51,13 @@ public class NotificationService {
         if (recipientId.equals(event.actorId())
             || notificationRepository.existsByRecipient_IdAndTypeAndComment_Id(recipientId, type,
                 event.commentId())) {
+            return;
+        }
+
+        boolean commentEnabled = notificationSettingRepository.findByUser_Id(recipientId)
+            .map(NotificationSetting::isCommentEnabled)
+            .orElse(true);
+        if (!commentEnabled) {
             return;
         }
 
@@ -84,6 +96,30 @@ public class NotificationService {
     @Transactional
     public void markAllAsRead(Long recipientId) {
         notificationRepository.markAllAsReadByRecipientId(recipientId);
+    }
+
+    @Transactional(readOnly = true)
+    public NotificationSettingResponse getNotificationSettings(Long userId) {
+        return notificationSettingRepository.findByUser_Id(userId)
+            .map(NotificationSettingResponse::from)
+            .orElseGet(NotificationSettingResponse::defaults);
+    }
+
+    @Transactional
+    public NotificationSettingResponse updateNotificationSettings(
+        Long userId,
+        NotificationSettingUpdateRequest request) {
+        NotificationSetting setting = notificationSettingRepository.findByUser_Id(userId)
+            .orElseGet(() -> notificationSettingRepository.save(
+                NotificationSetting.defaultFor(userRepository.getReferenceById(userId))));
+
+        setting.update(
+            request.getCommentEnabled(),
+            request.getLikeEnabled(),
+            request.getFollowEnabled(),
+            request.getNoticeEnabled());
+
+        return NotificationSettingResponse.from(setting);
     }
 
     @Transactional
