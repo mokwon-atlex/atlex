@@ -110,6 +110,8 @@ public interface PostControllerDocs {
         Long categoryId,
         @Parameter(description = "태그 이름으로 필터링 (선택)", example = "Java") @RequestParam(required = false)
         String tag,
+        @Parameter(description = "검색 키워드 (제목, 요약, 본문, 작성자, 태그)", example = "Spring") @RequestParam(required = false)
+        String keyword,
         @ParameterObject
         Pageable pageable);
 

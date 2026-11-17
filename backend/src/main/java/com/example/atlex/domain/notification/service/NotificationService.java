@@ -2,15 +2,22 @@ package com.example.atlex.domain.notification.service;
 
 import com.example.atlex.domain.comment.event.CommentCreatedEvent;
 import com.example.atlex.domain.comment.repository.CommentRepository;
+import com.example.atlex.domain.notification.dto.response.NotificationResponse;
 import com.example.atlex.domain.notification.entity.Notification;
 import com.example.atlex.domain.notification.entity.NotificationType;
+import com.example.atlex.domain.notification.exception.NotificationAccessDeniedException;
+import com.example.atlex.domain.notification.exception.NotificationNotFoundException;
 import com.example.atlex.domain.notification.repository.NotificationRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 /**
  * 사용자 활동에 대한 서비스 내부 알림 생성 규칙을 담당한다.
@@ -49,5 +56,33 @@ public class NotificationService {
             .post(postRepository.getReferenceById(event.postId()))
             .comment(commentRepository.getReferenceById(event.commentId()))
             .build());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<NotificationResponse> getNotifications(Long recipientId, Pageable pageable) {
+        return notificationRepository.findByRecipient_IdOrderByCreatedAtDesc(recipientId, pageable)
+            .map(NotificationResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public long getUnreadCount(Long recipientId) {
+        return notificationRepository.countByRecipient_IdAndIsReadFalse(recipientId);
+    }
+
+    @Transactional
+    public void markAsRead(Long notificationId, Long recipientId) {
+        Notification notification = notificationRepository.findById(notificationId)
+            .orElseThrow(NotificationNotFoundException::new);
+
+        if (!Objects.equals(notification.getRecipient().getId(), recipientId)) {
+            throw new NotificationAccessDeniedException();
+        }
+
+        notification.markAsRead();
+    }
+
+    @Transactional
+    public void markAllAsRead(Long recipientId) {
+        notificationRepository.markAllAsReadByRecipientId(recipientId);
     }
 }

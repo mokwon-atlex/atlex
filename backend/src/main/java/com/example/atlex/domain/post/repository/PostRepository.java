@@ -16,6 +16,14 @@ import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
 
+    default Page<Post> findAllPublic(
+        String userId,
+        Long categoryId,
+        String tag,
+        Pageable pageable) {
+        return findAllPublic(userId, categoryId, tag, null, pageable);
+    }
+
     @EntityGraph(attributePaths = {"user", "category"})
     @Query(value = """
         SELECT p FROM Post p
@@ -27,6 +35,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
               SELECT pt FROM PostTag pt
               WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
           ))
+          AND (:keyword IS NULL
+              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR EXISTS (
+                  SELECT pt FROM PostTag pt
+                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              ))
         """, countQuery = """
         SELECT COUNT(p) FROM Post p
         WHERE p.isDeleted = false
@@ -37,6 +55,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
               SELECT pt FROM PostTag pt
               WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
           ))
+          AND (:keyword IS NULL
+              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR EXISTS (
+                  SELECT pt FROM PostTag pt
+                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              ))
         """)
     Page<Post> findAllPublic(
         @Param("userId")
@@ -45,9 +73,20 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         Long categoryId,
         @Param("tag")
         String tag,
+        @Param("keyword")
+        String keyword,
         Pageable pageable);
 
     // 현재 정책: 로그인 사용자는 공개 글 + 본인 비공개 글을 목록에서 조회할 수 있음.
+    default Page<Post> findAllVisibleTo(
+        Long id,
+        String userId,
+        Long categoryId,
+        String tag,
+        Pageable pageable) {
+        return findAllVisibleTo(id, userId, categoryId, tag, null, pageable);
+    }
+
     @EntityGraph(attributePaths = {"user", "category"})
     @Query(value = """
         SELECT p FROM Post p
@@ -59,6 +98,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
               SELECT pt FROM PostTag pt
               WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
           ))
+          AND (:keyword IS NULL
+              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR EXISTS (
+                  SELECT pt FROM PostTag pt
+                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              ))
         """, countQuery = """
         SELECT COUNT(p) FROM Post p
         WHERE p.isDeleted = false
@@ -69,6 +118,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
               SELECT pt FROM PostTag pt
               WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
           ))
+          AND (:keyword IS NULL
+              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR EXISTS (
+                  SELECT pt FROM PostTag pt
+                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              ))
         """)
     Page<Post> findAllVisibleTo(
         @Param("id")
@@ -79,6 +138,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         Long categoryId,
         @Param("tag")
         String tag,
+        @Param("keyword")
+        String keyword,
         Pageable pageable);
 
     @Query("SELECT p FROM Post p JOIN FETCH p.user LEFT JOIN FETCH p.category WHERE p.id = :id AND p.isDeleted = false")
