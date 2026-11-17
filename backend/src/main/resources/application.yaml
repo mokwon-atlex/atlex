@@ -23,6 +23,14 @@ spring:
       enabled: true
       path: /h2-console
 
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:./uploads}
+
 # JWT 서명 키. 운영에서는 JWT_SECRET 환경변수로 주입 (아래 임시값은 로컬 개발용)
 jwt:
   secret: ${JWT_SECRET:djksdjl23423213njn23jdsadnakjfnej_atlex_2026}
@@ -86,3 +94,7 @@ spring:
   h2:
     console:
       enabled: false
+
+# 운영에서는 기본값 없이 JWT_SECRET 환경변수를 필수로 요구한다.
+jwt:
+  secret: ${JWT_SECRET}

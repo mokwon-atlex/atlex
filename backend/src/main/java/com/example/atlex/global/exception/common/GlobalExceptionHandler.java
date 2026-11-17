@@ -9,6 +9,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,6 +55,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
             .status(ErrorCode.VALIDATION_ERROR.getStatus())
             .body(ApiResponse.fail(ErrorCode.VALIDATION_ERROR, errors));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException e) {
+        ErrorCode errorCode = ErrorCode.FILE_SIZE_EXCEEDED;
+        return ResponseEntity
+            .status(errorCode.getStatus())
+            .body(ApiResponse.fail(errorCode));
     }
 
     @ExceptionHandler(CustomException.class)

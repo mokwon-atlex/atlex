@@ -21,6 +21,11 @@ const { retryWithRefreshedToken } = createTokenRefresher(apiClient);
 apiClient.interceptors.request.use((config) => {
   config.baseURL = getApiBaseUrl();
 
+  // FormData 전송 시 브라우저가 boundary를 포함한 multipart/form-data 헤더를 자동 생성하도록 기본 JSON 헤더를 제거한다.
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData && config.headers) {
+    delete config.headers['Content-Type'];
+  }
+
   // 인증 토큰 자동 첨부 (브라우저 환경만). 호출부가 명시한 Authorization 은 덮지 않는다.
   // SKIP_AUTH_REFRESH 플래그가 있으면 기존 토큰을 붙이지 않는다.
   // 이 플래그는 두 가지를 동시에 끈다: (1) 여기서 토큰 자동 첨부, (2) 응답 401 시 재발급 재시도.
