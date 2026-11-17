@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Bookmark, Check, Download, Heart, LoaderCircle, MessageSquare, Share2 } from 'lucide-react';
+import { Bookmark, Check, Copy, Download, Heart, LoaderCircle, MessageSquare, Share2 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/common/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/common/ui/dialog';
+import { Input } from '@/components/common/ui/input';
 import { useComments } from '@/hooks/queries/comments/useComments';
 import { usePostFavorite } from '@/hooks/queries/posts/usePostFavorite';
 import { usePostLike } from '@/hooks/queries/posts/usePostLike';
@@ -42,7 +44,19 @@ export default function BlogDetailActionRail({
   const [loginRequiredFor, setLoginRequiredFor] = useState(null);
   const [likeError, setLikeError] = useState(null);
   const [favoriteError, setFavoriteError] = useState(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
   const [isCopied, setIsCopied] = useState(false);
+  const [copyError, setCopyError] = useState('');
+  const copyTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current);
+      }
+    };
+  }, []);
 
   const {
     isLoggedIn,
@@ -64,14 +78,26 @@ export default function BlogDetailActionRail({
     toggleFavorite,
   } = usePostFavorite(postId);
 
-  const handleShareClick = async () => {
+  const handleShareClick = () => {
     if (typeof window === 'undefined') return;
+    setShareUrl(window.location.href);
+    setIsCopied(false);
+    setCopyError('');
+    setIsShareModalOpen(true);
+  };
+
+  const handleCopyShareUrl = async () => {
+    if (!shareUrl) return;
+    setCopyError('');
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(shareUrl);
       setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch (error) {
-      alert('링크 복사에 실패했습니다.');
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current);
+      }
+      copyTimerRef.current = setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      setCopyError('클립보드 복사에 실패했습니다. 주소를 직접 복사해 주세요.');
     }
   };
 
@@ -170,17 +196,41 @@ export default function BlogDetailActionRail({
         aria-label="마크다운(.md) 파일 다운로드"
       />
       <ActionButton
-        label={isCopied ? 'Copied' : 'Share'}
-        icon={
-          isCopied ? (
-            <Check className="size-3.5 text-emerald-600" />
-          ) : (
-            <Share2 className="size-3.5 text-muted-foreground" />
-          )
-        }
+        label="Share"
+        icon={<Share2 className="size-3.5 text-muted-foreground" />}
         onClick={handleShareClick}
-        aria-label="게시글 링크 복사"
+        aria-label="게시글 공유 링크 열기"
       />
+
+      <Dialog open={isShareModalOpen} onOpenChange={setIsShareModalOpen}>
+        <DialogContent size="md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">게시글 공유</DialogTitle>
+            <DialogDescription>아래 주소를 복사하여 게시글을 공유할 수 있습니다.</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex items-center gap-2">
+            <Input
+              type="text"
+              readOnly
+              value={shareUrl}
+              onClick={(e) => e.currentTarget.select()}
+              aria-label="공유할 게시글 URL"
+              className="flex-1 font-mono text-xs"
+            />
+            <Button type="button" onClick={handleCopyShareUrl} className="shrink-0 gap-1.5">
+              {isCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
+              {isCopied ? '복사됨' : 'URL 복사'}
+            </Button>
+          </div>
+
+          {copyError ? (
+            <p role="alert" className="text-xs text-destructive">
+              {copyError}
+            </p>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       {loginRequiredFor ? (
         <p role="alert" className="text-xs text-muted-foreground xl:w-full">

@@ -22,7 +22,7 @@ import { fetchPosts } from '@/lib/api/posts';
 import { toBlogMainPost } from '@/lib/mappers/post';
 import { useAuthStore } from '@/store/authStore';
 
-export function useInfinitePosts({ pageSize = 10, authorUserId, userId, type, initialPosts, totalPages } = {}) {
+export function useInfinitePosts({ pageSize = 10, authorUserId, userId, type, tag, initialPosts, totalPages } = {}) {
   const targetUserId = userId ?? authorUserId;
   // 목록 응답의 liked 는 조회한 사용자 기준 값이다.
   // authorUserId 는 글을 쓴 사람이라 이것만으로는 계정을 바꿔도 같은 캐시를 본다.
@@ -30,14 +30,15 @@ export function useInfinitePosts({ pageSize = 10, authorUserId, userId, type, in
   const viewerId = useAuthStore((s) => s.user?.userId ?? null);
 
   const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    // queryKey: 이 배열이 같으면 같은 캐시를 바라본다. pageSize/userId/type/viewerId 가 바뀌면 새 요청을 보낸다.
-    queryKey: ['posts', { userId: targetUserId, type, pageSize, viewerId: viewerId ?? 'anonymous' }],
+    // queryKey: 이 배열이 같으면 같은 캐시를 바라본다. pageSize/userId/type/tag/viewerId 가 바뀌면 새 요청을 보낸다.
+    queryKey: ['posts', { userId: targetUserId, type, tag, pageSize, viewerId: viewerId ?? 'anonymous' }],
 
     // queryFn: 다음 페이지를 실제로 가져오는 함수. pageParam 은 TanStack 이 주입해주는 페이지 번호.
     queryFn: async ({ pageParam }) => {
       const res = await fetchPosts({
         userId: targetUserId,
         type,
+        tag,
         page: pageParam,
         size: pageSize,
       });

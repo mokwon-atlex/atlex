@@ -71,7 +71,6 @@ export const SIMPLE_TOOLBAR_ACTIONS = {
   인용문: (editor) => editor.chain().focus().toggleBlockquote().run(),
   캡션: (editor) => editor.chain().focus().toggleCaptionParagraph().run(),
   구분선: (editor) => editor.chain().focus().setHorizontalRule().run(),
-  체크리스트: (editor) => editor.chain().focus().toggleTaskList().run(),
   '코드 블록': insertCodeBlockBelow,
   '실행 취소': (editor) => editor.chain().focus().undo().run(),
   '다시 실행': (editor) => editor.chain().focus().redo().run(),
@@ -105,7 +104,6 @@ const TOOLBAR_ACTIVE_CHECKERS = {
   '코드 블록': (editor) => editor.isActive('codeBlock'),
   '수식(LaTeX)': (editor) => editor.isActive('mathBlock'),
   '토글 섹션': (editor) => editor.isActive('detailsBlock'),
-  체크리스트: (editor) => editor.isActive('taskList'),
 };
 
 export function getItemActiveState(editor, itemLabel) {

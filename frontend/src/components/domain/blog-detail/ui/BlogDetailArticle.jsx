@@ -115,6 +115,13 @@ export default function BlogDetailArticle({ contentBlocks }) {
       if (router?.push) {
         router.push(href);
       }
+      return;
+    }
+
+    // 외부 링크는 target="_blank" 속성이 누락된 기존 글에서도 새 탭으로 열리도록 처리
+    if (/^https?:\/\//i.test(href)) {
+      e.preventDefault();
+      window.open(href, '_blank', 'noopener,noreferrer');
     }
   };
 
