@@ -12,6 +12,48 @@ import {
 //
 // 이 객체는 prompt 없이 바로 실행할 수 있는 명령 모음이다.
 // 예를 들어 볼드, 정렬, 제목 전환처럼 추가 입력이 필요 없는 버튼이 여기에 들어간다.
+/**
+ * 현재 커서 위치의 글이 코드 블록으로 빨려 들어가지 않도록,
+ * 빈 문단이면 현재 위치에 전환하고, 내용이나 표가 있으면 그 아래에 새 코드 블록을 삽입한다.
+ */
+function insertCodeBlockBelow(editor) {
+  const { $from } = editor.state.selection;
+
+  if ($from.parent.type.name === 'codeBlock') {
+    editor.chain().focus().toggleCodeBlock().run();
+    return;
+  }
+
+  // 표 안에 커서가 있으면 표 바깥(표 바로 아래)에 코드 블록을 삽입한다.
+  for (let depth = $from.depth; depth > 0; depth -= 1) {
+    if ($from.node(depth).type.name === 'table') {
+      const insertPos = $from.after(depth);
+      editor
+        .chain()
+        .focus()
+        .insertContentAt(insertPos, { type: 'codeBlock' })
+        .setTextSelection(insertPos + 1)
+        .run();
+      return;
+    }
+  }
+
+  // 비어 있는 최상위 기본 문단이면 현재 줄을 코드 블록으로 전환한다.
+  if ($from.depth === 1 && $from.parent.type.name === 'paragraph' && $from.parent.content.size === 0) {
+    editor.chain().focus().setCodeBlock().run();
+    return;
+  }
+
+  // 작성 중인 문단이나 다른 블록이 있으면 그 블록 아래에 새 코드 블록을 추가한다.
+  const insertPos = $from.after(1);
+  editor
+    .chain()
+    .focus()
+    .insertContentAt(insertPos, { type: 'codeBlock' })
+    .setTextSelection(insertPos + 1)
+    .run();
+}
+
 export const SIMPLE_TOOLBAR_ACTIONS = {
   볼드: (editor) => editor.chain().focus().toggleBold().run(),
   이탤릭: (editor) => editor.chain().focus().toggleItalic().run(),
@@ -30,7 +72,7 @@ export const SIMPLE_TOOLBAR_ACTIONS = {
   캡션: (editor) => editor.chain().focus().toggleCaptionParagraph().run(),
   구분선: (editor) => editor.chain().focus().setHorizontalRule().run(),
   체크리스트: (editor) => editor.chain().focus().toggleTaskList().run(),
-  '코드 블록': (editor) => editor.chain().focus().toggleCodeBlock().run(),
+  '코드 블록': insertCodeBlockBelow,
   '실행 취소': (editor) => editor.chain().focus().undo().run(),
   '다시 실행': (editor) => editor.chain().focus().redo().run(),
   '서식 제거': (editor) => editor.chain().focus().unsetAllMarks().clearNodes().run(),
@@ -62,7 +104,6 @@ const TOOLBAR_ACTIVE_CHECKERS = {
   표: (editor) => editor.isActive('table'),
   '코드 블록': (editor) => editor.isActive('codeBlock'),
   '수식(LaTeX)': (editor) => editor.isActive('mathBlock'),
-  '알림 박스': (editor) => editor.isActive('calloutBox'),
   '구분 영역': (editor) => editor.isActive('sectionBlock'),
   '토글 섹션': (editor) => editor.isActive('detailsBlock'),
   체크리스트: (editor) => editor.isActive('taskList'),
@@ -281,8 +322,13 @@ function promptTable(editor, selection) {
     .run();
 }
 
-// 수식 블록은 한 번에 하나의 LaTeX 문자열을 받아 블록 노드로 넣는다.
-function promptMathBlock(editor, selection) {
+// 수식 버튼은 등록된 수식 작성 모달을 우선 열고, 모달이 없으면 기본 입력창으로 대체한다.
+function openMathBlockModal(editor, selection) {
+  if (typeof editor.storage?.mathBlock?.openModal === 'function') {
+    editor.storage.mathBlock.openModal({ selection, initialLatex: '' });
+    return;
+  }
+
   const latex = window.prompt('LaTeX 수식을 입력하세요.', '\\frac{a}{b} = c');
 
   if (latex === null || !latex.trim()) {
@@ -290,28 +336,6 @@ function promptMathBlock(editor, selection) {
   }
 
   restoreSelection(editor, selection).insertMathBlock(latex.trim()).run();
-}
-
-// 알림 박스는 제목과 본문을 함께 받아 calloutBox 노드로 삽입한다.
-function promptCalloutBox(editor, selection) {
-  const boxTitle = window.prompt('알림 박스 제목을 입력하세요.', '알림');
-
-  if (boxTitle === null) {
-    return;
-  }
-
-  const boxBody = window.prompt('알림 박스 내용을 입력하세요.', '알림 내용을 입력하세요.');
-
-  if (boxBody === null) {
-    return;
-  }
-
-  restoreSelection(editor, selection)
-    .insertCalloutBox({
-      content: boxBody,
-      title: boxTitle,
-    })
-    .run();
 }
 
 // 구분 영역은 큰 덩어리 콘텐츠를 눈에 띄게 묶고 싶을 때 쓰는 블록이다.
@@ -345,8 +369,7 @@ const PROMPT_TOOLBAR_ACTIONS = {
   이미지: promptImage,
   파일: promptFileLink,
   표: promptTable,
-  '수식(LaTeX)': promptMathBlock,
-  '알림 박스': promptCalloutBox,
+  '수식(LaTeX)': openMathBlockModal,
   '구분 영역': promptSectionBlock,
 };
 
