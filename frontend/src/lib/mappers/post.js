@@ -80,7 +80,7 @@ export function toBlogDetail(apiPost) {
     // SSR 응답에는 인증 헤더가 없어 항상 false 다. 화면에서 usePostLike 가 보정한다.
     liked: Boolean(apiPost.liked),
     authorUserId: apiPost.authorUserId ?? null,
-    adminActions: ['통계', '수정', '삭제'],
+    adminActions: ['수정', '삭제'],
     contentBlocks: [
       ...(apiPost.thumbnailUrl ? [{ id: 'cover', type: 'image', src: apiPost.thumbnailUrl, caption: '' }] : []),
       hasRichTextHtml(content)

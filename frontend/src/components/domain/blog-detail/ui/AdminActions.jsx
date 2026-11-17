@@ -99,16 +99,16 @@ export function AdminActions({ authorUserId, postId, actions = [], onDelete, onD
 
   return (
     <>
-      <div className="inline-flex flex-nowrap items-center gap-1 rounded-full border border-border bg-card p-1">
+      <div className="inline-flex flex-nowrap items-center gap-2">
         {actions.map((action) => {
           if (action === '삭제') {
             return (
               <Button
                 key={action}
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="rounded-full px-4 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
                 onClick={handleOpenConfirm}
               >
                 {action}
@@ -122,18 +122,14 @@ export function AdminActions({ authorUserId, postId, actions = [], onDelete, onD
           if (href) {
             return (
               // 페이지 이동이므로 버튼이 아닌 링크 시맨틱을 유지하고 스타일만 버튼과 맞춘다.
-              <Link
-                key={action}
-                href={href}
-                className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'rounded-full px-4')}
-              >
+              <Link key={action} href={href} className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
                 {action}
               </Link>
             );
           }
 
           return (
-            <Button key={action} type="button" variant="ghost" size="sm" className="rounded-full px-4">
+            <Button key={action} type="button" variant="outline" size="sm">
               {action}
             </Button>
           );
