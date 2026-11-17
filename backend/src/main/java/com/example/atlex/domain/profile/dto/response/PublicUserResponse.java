@@ -23,14 +23,27 @@ public class PublicUserResponse {
     private String profileImage;
     @Schema(description = "자기소개", example = "안녕하세요, 백엔드 개발자입니다.")
     private String info;
+    @Schema(description = "팔로워 수", example = "12")
+    private long followerCount;
+    @Schema(description = "팔로잉 수", example = "5")
+    private long followingCount;
+    @Schema(description = "현재 로그인 사용자의 팔로우 여부", example = "false")
+    private boolean following;
 
     public static PublicUserResponse from(User user) {
+        return from(user, 0L, 0L, false);
+    }
+
+    public static PublicUserResponse from(User user, long followerCount, long followingCount, boolean following) {
         return PublicUserResponse.builder()
             .id(user.getId())
             .userId(user.getUserId())
             .name(user.getName())
             .profileImage(user.getProfileImage())
             .info(user.getInfo())
+            .followerCount(followerCount)
+            .followingCount(followingCount)
+            .following(following)
             .build();
     }
 }

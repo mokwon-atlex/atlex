@@ -27,8 +27,12 @@ public class ProfileController implements ProfileControllerDocs {
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<PublicUserResponse>> getPublicProfileByUserId(
         @PathVariable
-        String userId) {
-        PublicUserResponse response = profileService.getPublicProfile(userId);
+        String userId,
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails) {
+        PublicUserResponse response = profileService.getPublicProfile(
+            userId,
+            principalDetails != null ? principalDetails.user() : null);
         return ResponseEntity.ok(ApiResponse.success(response, null));
     }
 
