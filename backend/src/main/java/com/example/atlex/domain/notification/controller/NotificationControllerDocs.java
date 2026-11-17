@@ -1,6 +1,8 @@
 package com.example.atlex.domain.notification.controller;
 
+import com.example.atlex.domain.notification.dto.request.NotificationSettingUpdateRequest;
 import com.example.atlex.domain.notification.dto.response.NotificationResponse;
+import com.example.atlex.domain.notification.dto.response.NotificationSettingResponse;
 import com.example.atlex.domain.notification.dto.response.UnreadNotificationCountResponse;
 import com.example.atlex.global.response.ApiResponse;
 import com.example.atlex.global.security.principal.PrincipalDetails;
@@ -56,4 +58,22 @@ public interface NotificationControllerDocs {
     ResponseEntity<ApiResponse<Void>> markAllAsRead(
         @Parameter(hidden = true) @AuthenticationPrincipal
         PrincipalDetails principalDetails);
+
+    @Operation(summary = "알림 설정 조회", description = "로그인한 사용자의 알림 수신 설정을 조회합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    ResponseEntity<ApiResponse<NotificationSettingResponse>> getNotificationSettings(
+        @Parameter(hidden = true) @AuthenticationPrincipal
+        PrincipalDetails principalDetails);
+
+    @Operation(summary = "알림 설정 저장", description = "로그인한 사용자의 알림 수신 설정을 저장합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "저장 성공")
+    })
+    ResponseEntity<ApiResponse<NotificationSettingResponse>> updateNotificationSettings(
+        @Parameter(hidden = true) @AuthenticationPrincipal
+        PrincipalDetails principalDetails,
+        @org.springframework.web.bind.annotation.RequestBody
+        NotificationSettingUpdateRequest request);
 }

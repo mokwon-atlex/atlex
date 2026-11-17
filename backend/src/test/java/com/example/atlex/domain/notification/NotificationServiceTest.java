@@ -6,6 +6,7 @@ import com.example.atlex.domain.comment.repository.CommentRepository;
 import com.example.atlex.domain.notification.entity.Notification;
 import com.example.atlex.domain.notification.entity.NotificationType;
 import com.example.atlex.domain.notification.repository.NotificationRepository;
+import com.example.atlex.domain.notification.repository.NotificationSettingRepository;
 import com.example.atlex.domain.notification.service.NotificationService;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.post.repository.PostRepository;
@@ -32,6 +33,8 @@ class NotificationServiceTest {
 
     @Mock
     NotificationRepository notificationRepository;
+    @Mock
+    NotificationSettingRepository notificationSettingRepository;
     @Mock
     UserRepository userRepository;
     @Mock
