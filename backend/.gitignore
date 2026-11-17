@@ -46,3 +46,9 @@ out/
 .bkit/
 .claude/
 CLAUDE.md
+
+# DB 백업 덤프
+backups/
+
+# 로컬 업로드 파일
+uploads/

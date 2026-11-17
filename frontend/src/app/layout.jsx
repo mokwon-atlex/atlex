@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono, Nanum_Gothic_Coding } from 'next/font/google';
 import { TooltipProvider } from '@/components/common/ui/tooltip';
 import { Providers } from './providers';
+import 'katex/dist/katex.min.css';
 import './globals.css';
 
 const nanumGothicCoding = Nanum_Gothic_Coding({
