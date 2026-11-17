@@ -3,12 +3,13 @@
 import { useInfinitePosts } from '@/hooks/queries/posts/useInfinitePosts';
 import BlogMainPostGrid from './BlogMainPostGrid';
 
-export default function BlogMainInfinitePostGrid({ initialPosts, totalPages, type }) {
+export default function BlogMainInfinitePostGrid({ initialPosts, totalPages, type, tag }) {
   const { posts, isLoading, sentinelRef } = useInfinitePosts({
     pageSize: 10,
     initialPosts,
     totalPages,
     type,
+    tag,
   });
 
   return (
