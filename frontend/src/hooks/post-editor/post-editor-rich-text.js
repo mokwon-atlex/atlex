@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEditor } from '@tiptap/react';
 import { editorExtensions } from '@/lib/post-editor/rich-text-extensions';
 import {
   executePromptToolbarAction,
   getItemActiveState,
   SIMPLE_TOOLBAR_ACTIONS,
+  uploadAndInsertAttachment,
+  uploadAndInsertImage,
 } from '@/lib/post-editor/rich-text-toolbar';
 import { createInitialContent, getSelectionSnapshot, restoreSelection } from '@/lib/post-editor/rich-text-utils';
 
@@ -29,6 +31,7 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
     selection: null,
     editPos: null,
   });
+  const editorRef = useRef(null);
 
   // 태그 추출과 글자 수 표시는 HTML이 아니라 사용자가 보는 순수 텍스트 기준으로 맞춘다.
   function syncEditorState(nextEditor) {
@@ -45,9 +48,40 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
       attributes: {
         class: 'post-editor-prose__surface',
       },
+      handleDrop(_view, event, _slice, moved) {
+        if (moved || !event.dataTransfer?.files?.length) {
+          return false;
+        }
+        const files = Array.from(event.dataTransfer.files);
+        if (files.length === 0) {
+          return false;
+        }
+        event.preventDefault();
+        files.forEach((file) => {
+          if (file.type.startsWith('image/')) {
+            uploadAndInsertImage(editorRef.current, file);
+          } else {
+            uploadAndInsertAttachment(editorRef.current, file);
+          }
+        });
+        return true;
+      },
+      handlePaste(_view, event) {
+        const files = Array.from(event.clipboardData?.files ?? []);
+        const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+        if (imageFiles.length === 0) {
+          return false;
+        }
+        event.preventDefault();
+        imageFiles.forEach((file) => {
+          uploadAndInsertImage(editorRef.current, file);
+        });
+        return true;
+      },
     },
     extensions: editorExtensions,
     onCreate({ editor: nextEditor }) {
+      editorRef.current = nextEditor;
       // 첫 렌더 직후에도 본문 텍스트와 empty 상태를 맞춰 둔다.
       syncEditorState(nextEditor);
       setToolbarStateTick((currentValue) => currentValue + 1);

@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,10 +33,14 @@ public class TagService {
 
     private static final int DEFAULT_LIMIT = 10;
     private static final int MAX_LIMIT = 50;
+    /** 트렌딩 정렬에서 최근 글 수를 집계하는 기간(일) */
+    private static final int TRENDING_PERIOD_DAYS = 30;
 
     private final PostTagRepository postTagRepository;
     private final TagRepository tagRepository;
     private final UserRepository userRepository;
+    /** 트렌딩 집계 기준 시각을 계산하는 시계 */
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public TagListResponse getTags(
@@ -104,6 +110,7 @@ public class TagService {
 
     /**
      * 플랫폼 전체 공개 태그 목록을 정렬 및 검색 조건에 따라 페이징 조회합니다.
+     * trending은 최근 30일 글 수, popular는 전체 글 수, alphabet은 태그명 기준이며 알 수 없는 값은 popular로 처리합니다.
      *
      * @param sort 정렬 기준 (popular, alphabet, trending)
      * @param keyword 태그 검색 키워드
@@ -122,9 +129,15 @@ public class TagService {
         int safeSize = (size <= 0 || size > 100) ? 12 : size;
         PageRequest pageRequest = PageRequest.of(safePage, safeSize);
 
-        Page<PlatformTagProjection> result = "alphabet".equalsIgnoreCase(sort)
-            ? postTagRepository.findPlatformTagsAlphabet(normalizedKeyword, pageRequest)
-            : postTagRepository.findPlatformTagsPopular(normalizedKeyword, pageRequest);
+        Page<PlatformTagProjection> result;
+        if ("alphabet".equalsIgnoreCase(sort)) {
+            result = postTagRepository.findPlatformTagsAlphabet(normalizedKeyword, pageRequest);
+        } else if ("trending".equalsIgnoreCase(sort)) {
+            LocalDateTime since = LocalDateTime.now(clock).minusDays(TRENDING_PERIOD_DAYS);
+            result = postTagRepository.findPlatformTagsTrending(normalizedKeyword, since, pageRequest);
+        } else {
+            result = postTagRepository.findPlatformTagsPopular(normalizedKeyword, pageRequest);
+        }
 
         return result.map(p -> PlatformTagItemResponse.builder()
             .name(p.getName())
