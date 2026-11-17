@@ -82,4 +82,9 @@ public class Notification {
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    /** 알림을 읽음 상태로 전환한다. */
+    public void markAsRead() {
+        this.isRead = true;
+    }
 }

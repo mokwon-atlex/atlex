@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bell, Search, ImageIcon, PenLine } from 'lucide-react';
-import { Capsule } from '@/components/common/ui/capsule';
+import { ImageIcon, PenLine } from 'lucide-react';
+import NotificationPopover from '@/components/common/layout/NotificationPopover';
 import ProfileMenu from '@/components/common/layout/ProfileMenu';
+import SearchDialog from '@/components/common/layout/SearchDialog';
 import { useAuthStore } from '@/store/authStore';
 
 export default function Header({
@@ -77,25 +78,9 @@ export default function Header({
 
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-1.5 sm:gap-3">
-            <Capsule
-              variant="outline"
-              size="lg"
-              className="h-10 cursor-pointer gap-2 px-3 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground sm:px-4"
-              onClick={onSearch}
-            >
-              <Search className="size-4" strokeWidth={2.5} />
-              <span className="hidden text-sm font-bold sm:inline">검색</span>
-            </Capsule>
+            <SearchDialog onSearch={onSearch} />
 
-            <Capsule
-              variant="outline"
-              size="lg"
-              className="h-10 cursor-pointer gap-2 px-3 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground sm:px-4"
-              onClick={onNotification}
-            >
-              <Bell className="size-4" strokeWidth={2.5} />
-              <span className="hidden text-sm font-bold sm:inline">알림</span>
-            </Capsule>
+            <NotificationPopover mounted={mounted} onNotification={onNotification} />
 
             {mounted && isLoggedIn && (
               <Link

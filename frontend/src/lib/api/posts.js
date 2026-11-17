@@ -7,8 +7,9 @@ import { apiClient } from '@/lib/api/client';
 // 게시글 목록 조회.
 // page, size 로 페이지네이션하고 userId(또는 authorUserId), type 이 있으면 해당 조건으로 필터링한다.
 // 응답 예시: { content: ApiPost[], totalElements, totalPages, ... }
-export function fetchPosts({ authorUserId, userId, page = 0, size = 10, type, tag } = {}) {
+export function fetchPosts({ authorUserId, userId, page = 0, size = 10, type, tag, keyword } = {}) {
   const targetUserId = userId ?? authorUserId;
+  const trimmedKeyword = typeof keyword === 'string' ? keyword.trim() : '';
   return apiClient.get('/posts', {
     params: {
       page,
@@ -16,6 +17,7 @@ export function fetchPosts({ authorUserId, userId, page = 0, size = 10, type, ta
       ...(targetUserId && { userId: targetUserId }),
       ...(type && { type }),
       ...(tag && { tag }),
+      ...(trimmedKeyword && { keyword: trimmedKeyword }),
     },
   });
 }

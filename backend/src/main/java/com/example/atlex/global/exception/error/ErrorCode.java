@@ -78,6 +78,10 @@ public enum ErrorCode {
     INVALID_REPORT_STATUS(HttpStatus.BAD_REQUEST, "처리 결과는 조치 완료 또는 기각만 선택할 수 있습니다."),
     REPORT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "이미 처리된 신고입니다."),
 
+    // 알림
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 알림을 찾을 수 없습니다."),
+    NOTIFICATION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "본인의 알림만 처리할 수 있습니다."),
+
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생하였습니다.");
 
