@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { textfieldVariants } from '@/components/common/ui/textfield';
+import { renderLatexToHtml } from '@/lib/post-editor/math-render';
 import styles from './BlogDetailArticle.module.css';
 
 /**
@@ -28,7 +30,39 @@ function ArticleImage({ src, caption }) {
  * @returns {React.ReactElement} 리치 텍스트 본문
  */
 function RichTextArticle({ html, onLinkClick }) {
-  return <div className={styles.richText} onClick={onLinkClick} dangerouslySetInnerHTML={{ __html: html }} />;
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const mathBlocks = container.querySelectorAll('[data-type="math-block"]');
+    mathBlocks.forEach((block) => {
+      const codeEl = block.querySelector('pre code, code');
+      const latex = codeEl?.textContent?.trim();
+      if (!latex) return;
+
+      const renderedHtml = renderLatexToHtml(latex);
+      if (!renderedHtml) return;
+
+      const preEl = block.querySelector('pre');
+      if (preEl) {
+        const renderedWrapper = document.createElement('div');
+        renderedWrapper.className = 'overflow-x-auto py-2 text-center';
+        renderedWrapper.innerHTML = renderedHtml;
+        preEl.replaceWith(renderedWrapper);
+      }
+    });
+  }, [html]);
+
+  return (
+    <div
+      ref={containerRef}
+      className={styles.richText}
+      onClick={onLinkClick}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
 }
 
 /**

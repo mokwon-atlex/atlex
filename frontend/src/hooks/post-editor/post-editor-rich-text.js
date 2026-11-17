@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useEditor } from '@tiptap/react';
 import { editorExtensions } from '@/lib/post-editor/rich-text-extensions';
 import {
@@ -8,7 +8,7 @@ import {
   getItemActiveState,
   SIMPLE_TOOLBAR_ACTIONS,
 } from '@/lib/post-editor/rich-text-toolbar';
-import { createInitialContent, getSelectionSnapshot } from '@/lib/post-editor/rich-text-utils';
+import { createInitialContent, getSelectionSnapshot, restoreSelection } from '@/lib/post-editor/rich-text-utils';
 
 // 이 훅은 "에디터 생성", "본문 상태 동기화", "툴바 버튼 연결" 세 가지를 한곳에 모은다.
 // 화면 컴포넌트는 복잡한 TipTap API 대신 이 훅이 돌려주는 값과 함수만 사용하면 된다.
@@ -23,6 +23,12 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
   // 본문 글자 수가 그대로여도 서식/undo 가능 여부는 바뀔 수 있어서
   // 에디터 트랜잭션마다 한 번 더 렌더링해 패널 버튼 상태를 최신으로 맞춘다.
   const [, setToolbarStateTick] = useState(0);
+  const [mathModalState, setMathModalState] = useState({
+    isOpen: false,
+    initialLatex: '',
+    selection: null,
+    editPos: null,
+  });
 
   // 태그 추출과 글자 수 표시는 HTML이 아니라 사용자가 보는 순수 텍스트 기준으로 맞춘다.
   function syncEditorState(nextEditor) {
@@ -56,6 +62,49 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
       setToolbarStateTick((currentValue) => currentValue + 1);
     },
   });
+
+  useEffect(() => {
+    if (!editor?.storage?.mathBlock) {
+      return;
+    }
+
+    editor.storage.mathBlock.openModal = ({ selection = null, initialLatex = '', editPos = null } = {}) => {
+      setMathModalState({
+        isOpen: true,
+        initialLatex,
+        selection: selection ?? getSelectionSnapshot(editor),
+        editPos,
+      });
+    };
+
+    return () => {
+      if (editor?.storage?.mathBlock) {
+        editor.storage.mathBlock.openModal = null;
+      }
+    };
+  }, [editor]);
+
+  function closeMathModal() {
+    setMathModalState((prev) => ({ ...prev, isOpen: false }));
+  }
+
+  function submitMathModal(latex) {
+    if (!editor || !latex?.trim()) {
+      return;
+    }
+
+    const trimmed = latex.trim();
+
+    if (typeof mathModalState.editPos === 'number') {
+      editor.chain().focus().updateMathBlockAt(mathModalState.editPos, trimmed).run();
+    } else if (mathModalState.selection) {
+      restoreSelection(editor, mathModalState.selection).insertMathBlock(trimmed).run();
+    } else {
+      editor.chain().focus().insertMathBlock(trimmed).run();
+    }
+
+    closeMathModal();
+  }
 
   function executeToolbarItem(groupId, itemLabel) {
     if (!editor || groupId === 'font-color') {
@@ -122,10 +171,13 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
 
   return {
     bodyText,
+    closeMathModal,
     editor,
     executeToolbarItem,
     getHTML,
     getToolbarItemState,
     isEditorEmpty,
+    mathModalState,
+    submitMathModal,
   };
 }

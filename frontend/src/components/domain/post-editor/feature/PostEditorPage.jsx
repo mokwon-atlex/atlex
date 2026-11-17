@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/common/ui/alert';
 import PostEditorContentSection from '@/components/domain/post-editor/layout/PostEditorContentSection';
 import PostEditorDraftModal from '@/components/domain/post-editor/layout/PostEditorDraftModal';
+import PostEditorMathModal from '@/components/domain/post-editor/layout/PostEditorMathModal';
 import PostEditorMetaSection from '@/components/domain/post-editor/layout/PostEditorMetaSection';
 import PostEditorTitleSection from '@/components/domain/post-editor/layout/PostEditorTitleSection';
 import PostEditorToolRail from '@/components/domain/post-editor/layout/PostEditorToolRail';
@@ -400,6 +401,12 @@ export default function PostEditorPage({ postId }) {
         onClose={() => setIsDraftModalOpen(false)}
         onLoadDraft={handleLoadDraft}
         onDeleteDraft={handleDeleteDraft}
+      />
+      <PostEditorMathModal
+        isOpen={richText.mathModalState.isOpen}
+        initialLatex={richText.mathModalState.initialLatex}
+        onClose={richText.closeMathModal}
+        onSubmit={richText.submitMathModal}
       />
     </>
   );

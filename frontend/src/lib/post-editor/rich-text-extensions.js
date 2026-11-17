@@ -1,4 +1,5 @@
 import { mergeAttributes, Node } from '@tiptap/core';
+import { ReactNodeViewRenderer } from '@tiptap/react';
 import Image from '@tiptap/extension-image';
 import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table';
 import TaskItem from '@tiptap/extension-task-item';
@@ -8,6 +9,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { AiSuggestionExtension } from '@/lib/post-editor/rich-text-ai-extension';
 import { PostLinkExtension } from '@/lib/post-editor/rich-text-post-link-extension';
 import { createBlockContent } from '@/lib/post-editor/rich-text-utils';
+import MathBlockNodeView from '@/components/domain/post-editor/ui/MathBlockNodeView';
 
 function createParagraphVariant(name, dataType) {
   return Node.create({
@@ -92,50 +94,6 @@ const DetailsBlock = Node.create({
   },
 });
 
-const CalloutBox = Node.create({
-  name: 'calloutBox',
-  group: 'block',
-  content: 'block+',
-  defining: true,
-  isolating: true,
-  addAttributes() {
-    return {
-      title: {
-        default: '알림',
-      },
-    };
-  },
-  parseHTML() {
-    return [{ tag: 'section[data-type="callout-box"]' }];
-  },
-  renderHTML({ HTMLAttributes }) {
-    const { title, ...restAttributes } = HTMLAttributes;
-
-    return [
-      'section',
-      mergeAttributes(restAttributes, {
-        'data-type': 'callout-box',
-      }),
-      ['div', { class: 'post-editor-block__label' }, title],
-      ['div', { class: 'post-editor-block__body' }, 0],
-    ];
-  },
-  addCommands() {
-    return {
-      insertCalloutBox:
-        (attributes = {}) =>
-        ({ commands }) =>
-          commands.insertContent({
-            type: this.name,
-            attrs: {
-              title: attributes.title?.trim() || '알림',
-            },
-            content: createBlockContent(attributes.content?.trim() || '알림 내용을 입력하세요.'),
-          }),
-    };
-  },
-});
-
 const SectionBlock = Node.create({
   name: 'sectionBlock',
   group: 'block',
@@ -187,6 +145,11 @@ const MathBlock = Node.create({
   marks: '',
   code: true,
   defining: true,
+  addStorage() {
+    return {
+      openModal: null,
+    };
+  },
   parseHTML() {
     return [{ tag: 'div[data-type="math-block"]' }];
   },
@@ -200,6 +163,9 @@ const MathBlock = Node.create({
       ['pre', { class: 'post-editor-block__body' }, ['code', 0]],
     ];
   },
+  addNodeView() {
+    return ReactNodeViewRenderer(MathBlockNodeView);
+  },
   addCommands() {
     return {
       insertMathBlock:
@@ -209,6 +175,22 @@ const MathBlock = Node.create({
             type: this.name,
             content: [{ type: 'text', text: latex }],
           }),
+      updateMathBlockAt:
+        (pos, latex) =>
+        ({ tr, state, dispatch }) => {
+          if (typeof pos !== 'number' || !latex?.trim()) {
+            return false;
+          }
+          const node = state.doc.nodeAt(pos);
+          if (!node || node.type.name !== this.name) {
+            return false;
+          }
+          if (dispatch) {
+            const nextNode = this.type.create(node.attrs, state.schema.text(latex.trim()));
+            tr.replaceWith(pos, pos + node.nodeSize, nextNode);
+          }
+          return true;
+        },
     };
   },
 });
@@ -230,16 +212,7 @@ export const editorExtensions = [
     allowBase64: true,
   }),
   TextAlign.configure({
-    types: [
-      'blockquote',
-      'captionParagraph',
-      'calloutBox',
-      'detailsBlock',
-      'heading',
-      'leadParagraph',
-      'paragraph',
-      'sectionBlock',
-    ],
+    types: ['blockquote', 'captionParagraph', 'detailsBlock', 'heading', 'leadParagraph', 'paragraph', 'sectionBlock'],
   }),
   TaskList,
   TaskItem.configure({
@@ -254,7 +227,6 @@ export const editorExtensions = [
   LeadParagraph,
   CaptionParagraph,
   DetailsBlock,
-  CalloutBox,
   SectionBlock,
   MathBlock,
   AiSuggestionExtension,
