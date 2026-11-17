@@ -87,6 +87,9 @@ public enum ErrorCode {
     FILE_SIZE_EXCEEDED(HttpStatus.CONTENT_TOO_LARGE, "업로드 가능한 최대 파일 크기를 초과했습니다."),
     FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 파일을 찾을 수 없습니다."),
 
+    // 팔로우
+    SELF_FOLLOW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "본인은 팔로우할 수 없습니다."),
+
     // 500
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생하였습니다.");
 

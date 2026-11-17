@@ -1,5 +1,6 @@
 package com.example.atlex.domain.profile.service;
 
+import com.example.atlex.domain.follow.repository.FollowRepository;
 import com.example.atlex.domain.profile.dto.request.ProfileUpdateRequest;
 import com.example.atlex.domain.profile.dto.response.PublicUserResponse;
 import com.example.atlex.domain.user.entity.User;
@@ -14,16 +15,27 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProfileService {
 
+    private final FollowRepository followRepository;
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public PublicUserResponse getPublicProfile(String userId) {
+        return getPublicProfile(userId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public PublicUserResponse getPublicProfile(String userId, User loginUser) {
         if (userId == null || userId.isBlank()) {
             throw new UserNotFoundException();
         }
         User user = userRepository.findByUserIdAndActiveTrue(userId)
             .orElseThrow(UserNotFoundException::new);
-        return PublicUserResponse.from(user);
+        long followerCount = followRepository.countByFollowingId(user.getId());
+        long followingCount = followRepository.countByFollowerId(user.getId());
+        boolean following = loginUser != null
+            && !loginUser.getId().equals(user.getId())
+            && followRepository.existsByFollowerAndFollowing(loginUser, user);
+        return PublicUserResponse.from(user, followerCount, followingCount, following);
     }
 
     @Transactional
@@ -44,6 +56,8 @@ public class ProfileService {
             request.getProfileImage(),
             request.getInfo());
 
-        return PublicUserResponse.from(user);
+        long followerCount = followRepository.countByFollowingId(user.getId());
+        long followingCount = followRepository.countByFollowerId(user.getId());
+        return PublicUserResponse.from(user, followerCount, followingCount, false);
     }
 }

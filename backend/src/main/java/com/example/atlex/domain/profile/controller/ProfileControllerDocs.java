@@ -45,7 +45,8 @@ public interface ProfileControllerDocs {
     })
     ResponseEntity<ApiResponse<PublicUserResponse>> getPublicProfileByUserId(
         @Parameter(description = "조회할 사용자 아이디", example = "john123") @PathVariable
-        String userId);
+        String userId,
+        @AuthenticationPrincipal PrincipalDetails principalDetails);
 
     @Operation(summary = "공개 프로필 수정", description = "본인의 공개 프로필(닉네임, 프로필 이미지, 자기소개)을 수정합니다. Authorization 헤더 필수.")
     @SecurityRequirement(name = "bearerAuth")
