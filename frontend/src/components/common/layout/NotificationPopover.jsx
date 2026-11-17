@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, CheckCheck, Loader2, MessageSquare } from 'lucide-react';
+import { Bell, CheckCheck, Loader2, MessageSquare, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -9,6 +9,8 @@ import { Button } from '@/components/common/ui/button';
 import { Capsule } from '@/components/common/ui/capsule';
 import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from '@/components/common/ui/popover';
 import {
+  useDeleteAllNotifications,
+  useDeleteNotification,
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
   useNotificationList,
@@ -43,6 +45,8 @@ export default function NotificationPopover({ mounted, onNotification }) {
   const { data: notificationPage, isLoading } = useNotificationList({ enabled: open });
   const markReadMutation = useMarkNotificationRead();
   const markAllReadMutation = useMarkAllNotificationsRead();
+  const deleteMutation = useDeleteNotification();
+  const deleteAllMutation = useDeleteAllNotifications();
 
   const notifications = notificationPage?.content ?? [];
   const showUnreadBadge = mounted && isLoggedIn && unreadCount > 0;
@@ -98,18 +102,35 @@ export default function NotificationPopover({ mounted, onNotification }) {
       <PopoverContent align="end" sideOffset={8} className="w-80 p-0 sm:w-96">
         <PopoverHeader className="flex-row items-center justify-between border-b border-border px-4 py-3">
           <PopoverTitle className="text-sm font-bold">알림</PopoverTitle>
-          {mounted && isLoggedIn && unreadCount > 0 ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
-              disabled={markAllReadMutation.isPending}
-              onClick={() => markAllReadMutation.mutate()}
-            >
-              <CheckCheck className="size-3.5" />
-              모두 읽음
-            </Button>
+          {mounted && isLoggedIn ? (
+            <div className="flex items-center gap-1">
+              {unreadCount > 0 ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  disabled={markAllReadMutation.isPending}
+                  onClick={() => markAllReadMutation.mutate()}
+                >
+                  <CheckCheck className="size-3.5" />
+                  모두 읽음
+                </Button>
+              ) : null}
+              {notifications.length > 0 ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  className="h-7 gap-1 text-xs text-muted-foreground hover:text-destructive"
+                  disabled={deleteAllMutation.isPending}
+                  onClick={() => deleteAllMutation.mutate()}
+                >
+                  <Trash2 className="size-3.5" />
+                  전체 삭제
+                </Button>
+              ) : null}
+            </div>
           ) : null}
         </PopoverHeader>
 
@@ -137,33 +158,53 @@ export default function NotificationPopover({ mounted, onNotification }) {
                 item.type === 'REPLY' ? '님이 회원님의 댓글에 답글을 남겼습니다.' : '님이 게시글에 댓글을 남겼습니다.';
 
               return (
-                <button
+                <div
                   key={item.id}
-                  type="button"
-                  onClick={() => handleItemClick(item)}
                   className={cn(
-                    'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50',
+                    'group relative flex w-full items-start gap-2 px-4 py-3 transition-colors hover:bg-muted/50',
                     !item.isRead ? 'bg-primary/5' : '',
                   )}
                 >
-                  <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                    <MessageSquare className="size-4" />
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <p className="text-xs leading-relaxed text-foreground">
-                      <span className="font-semibold">{item.actorName || item.actorUserId}</span>
-                      {actionText}
-                    </p>
-                    <p className="truncate text-xs font-medium text-muted-foreground">{item.postTitle}</p>
-                    {item.commentContent ? (
-                      <p className="line-clamp-2 rounded bg-muted/60 px-2 py-1 text-xs text-muted-foreground">
-                        {item.commentContent}
+                  <button
+                    type="button"
+                    onClick={() => handleItemClick(item)}
+                    className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                  >
+                    <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                      <MessageSquare className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <p className="text-xs leading-relaxed text-foreground">
+                        <span className="font-semibold">{item.actorName || item.actorUserId}</span>
+                        {actionText}
                       </p>
-                    ) : null}
-                    <p className="text-[11px] text-muted-foreground/80">{formatRelativeTime(item.createdAt)}</p>
+                      <p className="truncate text-xs font-medium text-muted-foreground">{item.postTitle}</p>
+                      {item.commentContent ? (
+                        <p className="line-clamp-2 rounded bg-muted/60 px-2 py-1 text-xs text-muted-foreground">
+                          {item.commentContent}
+                        </p>
+                      ) : null}
+                      <p className="text-[11px] text-muted-foreground/80">{formatRelativeTime(item.createdAt)}</p>
+                    </div>
+                  </button>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {!item.isRead ? <span className="size-2 rounded-full bg-primary" /> : null}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label="알림 삭제"
+                      disabled={deleteMutation.isPending}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteMutation.mutate(item.id);
+                      }}
+                      className="size-6 text-muted-foreground opacity-60 hover:text-destructive group-hover:opacity-100"
+                    >
+                      <X className="size-3.5" />
+                    </Button>
                   </div>
-                  {!item.isRead ? <span className="mt-2 size-2 shrink-0 rounded-full bg-primary" /> : null}
-                </button>
+                </div>
               );
             })}
           </div>

@@ -85,4 +85,21 @@ public class NotificationService {
     public void markAllAsRead(Long recipientId) {
         notificationRepository.markAllAsReadByRecipientId(recipientId);
     }
+
+    @Transactional
+    public void deleteNotification(Long notificationId, Long recipientId) {
+        Notification notification = notificationRepository.findById(notificationId)
+            .orElseThrow(NotificationNotFoundException::new);
+
+        if (!Objects.equals(notification.getRecipient().getId(), recipientId)) {
+            throw new NotificationAccessDeniedException();
+        }
+
+        notificationRepository.delete(notification);
+    }
+
+    @Transactional
+    public void deleteAllNotifications(Long recipientId) {
+        notificationRepository.deleteAllByRecipientId(recipientId);
+    }
 }
