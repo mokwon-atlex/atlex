@@ -217,6 +217,25 @@ const CustomLink = Link.extend({
   },
 });
 
+const CustomLink = Link.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      download: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('download'),
+        renderHTML: (attributes) => (attributes.download ? { download: attributes.download } : {}),
+      },
+      'data-file-attachment': {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-file-attachment'),
+        renderHTML: (attributes) =>
+          attributes['data-file-attachment'] ? { 'data-file-attachment': attributes['data-file-attachment'] } : {},
+      },
+    };
+  },
+});
+
 // 실제로 사용할 확장 목록을 한 곳에 모아 두면, 어떤 서식이 가능한지 빠르게 파악할 수 있다.
 export const editorExtensions = [
   StarterKit.configure({
