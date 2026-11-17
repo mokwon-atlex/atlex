@@ -10,7 +10,12 @@ import {
   uploadAndInsertAttachment,
   uploadAndInsertImage,
 } from '@/lib/post-editor/rich-text-toolbar';
-import { createInitialContent, getSelectionSnapshot, restoreSelection } from '@/lib/post-editor/rich-text-utils';
+import {
+  createInitialContent,
+  getSelectionSnapshot,
+  normalizeUrl,
+  restoreSelection,
+} from '@/lib/post-editor/rich-text-utils';
 
 // 이 훅은 "에디터 생성", "본문 상태 동기화", "툴바 버튼 연결" 세 가지를 한곳에 모은다.
 // 화면 컴포넌트는 복잡한 TipTap API 대신 이 훅이 돌려주는 값과 함수만 사용하면 된다.
@@ -30,6 +35,19 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
     initialLatex: '',
     selection: null,
     editPos: null,
+  });
+  const [linkModalState, setLinkModalState] = useState({
+    isOpen: false,
+    initialUrl: '',
+    initialText: '',
+    hasSelection: false,
+    isActiveLink: false,
+    selection: null,
+  });
+  const [tableModalState, setTableModalState] = useState({
+    isOpen: false,
+    isTableActive: false,
+    selection: null,
   });
   const editorRef = useRef(null);
 
@@ -98,22 +116,57 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
   });
 
   useEffect(() => {
-    if (!editor?.storage?.mathBlock) {
+    if (!editor?.storage) {
       return;
     }
 
-    editor.storage.mathBlock.openModal = ({ selection = null, initialLatex = '', editPos = null } = {}) => {
-      setMathModalState({
-        isOpen: true,
-        initialLatex,
-        selection: selection ?? getSelectionSnapshot(editor),
-        editPos,
-      });
+    if (editor.storage.mathBlock) {
+      editor.storage.mathBlock.openModal = ({ selection = null, initialLatex = '', editPos = null } = {}) => {
+        setMathModalState({
+          isOpen: true,
+          initialLatex,
+          selection: selection ?? getSelectionSnapshot(editor),
+          editPos,
+        });
+      };
+    }
+
+    editor.storage.linkModal = {
+      openModal: ({
+        selection = null,
+        initialUrl = '',
+        initialText = '',
+        hasSelection = false,
+        isActiveLink = false,
+      } = {}) => {
+        setLinkModalState({
+          isOpen: true,
+          initialUrl,
+          initialText,
+          hasSelection,
+          isActiveLink,
+          selection: selection ?? getSelectionSnapshot(editor),
+        });
+      },
+    };
+
+    editor.storage.tableModal = {
+      openModal: ({ selection = null, isTableActive = false } = {}) => {
+        setTableModalState({
+          isOpen: true,
+          isTableActive,
+          selection: selection ?? getSelectionSnapshot(editor),
+        });
+      },
     };
 
     return () => {
       if (editor?.storage?.mathBlock) {
         editor.storage.mathBlock.openModal = null;
+      }
+      if (editor?.storage) {
+        editor.storage.linkModal = null;
+        editor.storage.tableModal = null;
       }
     };
   }, [editor]);
@@ -138,6 +191,84 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
     }
 
     closeMathModal();
+  }
+
+  function closeLinkModal() {
+    setLinkModalState((prev) => ({ ...prev, isOpen: false }));
+  }
+
+  function submitLinkModal({ url, text }) {
+    if (!editor) {
+      return;
+    }
+
+    const nextHref = normalizeUrl(url ?? '');
+    const chain = linkModalState.selection
+      ? restoreSelection(editor, linkModalState.selection)
+      : editor.chain().focus();
+
+    if (!nextHref) {
+      chain.extendMarkRange('link').unsetLink().run();
+      closeLinkModal();
+      return;
+    }
+
+    if (linkModalState.hasSelection || linkModalState.isActiveLink) {
+      chain.extendMarkRange('link').setLink({ href: nextHref }).run();
+      closeLinkModal();
+      return;
+    }
+
+    chain
+      .insertContent({
+        type: 'text',
+        text: text?.trim() || nextHref,
+        marks: [{ type: 'link', attrs: { href: nextHref } }],
+      })
+      .run();
+    closeLinkModal();
+  }
+
+  function removeLinkModal() {
+    if (!editor) {
+      return;
+    }
+
+    const chain = linkModalState.selection
+      ? restoreSelection(editor, linkModalState.selection)
+      : editor.chain().focus();
+    chain.extendMarkRange('link').unsetLink().run();
+    closeLinkModal();
+  }
+
+  function closeTableModal() {
+    setTableModalState((prev) => ({ ...prev, isOpen: false }));
+  }
+
+  function submitTableModal({ rows, cols }) {
+    if (!editor) {
+      return;
+    }
+
+    const chain = tableModalState.selection
+      ? restoreSelection(editor, tableModalState.selection)
+      : editor.chain().focus();
+
+    chain
+      .insertTable({
+        cols,
+        rows,
+        withHeaderRow: true,
+      })
+      .run();
+    closeTableModal();
+  }
+
+  function deleteCurrentTable() {
+    if (!editor) {
+      return;
+    }
+    editor.chain().focus().deleteTable().run();
   }
 
   function executeToolbarItem(groupId, itemLabel) {
@@ -205,13 +336,21 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
 
   return {
     bodyText,
+    closeLinkModal,
     closeMathModal,
+    closeTableModal,
+    deleteCurrentTable,
     editor,
     executeToolbarItem,
     getHTML,
     getToolbarItemState,
     isEditorEmpty,
+    linkModalState,
     mathModalState,
+    removeLinkModal,
+    submitLinkModal,
     submitMathModal,
+    submitTableModal,
+    tableModalState,
   };
 }

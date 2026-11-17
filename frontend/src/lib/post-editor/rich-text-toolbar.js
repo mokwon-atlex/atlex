@@ -104,7 +104,6 @@ const TOOLBAR_ACTIVE_CHECKERS = {
   표: (editor) => editor.isActive('table'),
   '코드 블록': (editor) => editor.isActive('codeBlock'),
   '수식(LaTeX)': (editor) => editor.isActive('mathBlock'),
-  '구분 영역': (editor) => editor.isActive('sectionBlock'),
   '토글 섹션': (editor) => editor.isActive('detailsBlock'),
   체크리스트: (editor) => editor.isActive('taskList'),
 };
@@ -140,37 +139,35 @@ function promptDetailsBlock(editor, selection) {
 // 1. 주소를 비우면 기존 링크 제거
 // 2. 선택한 텍스트나 기존 링크가 있으면 그 범위의 링크만 수정
 // 3. 아무것도 선택하지 않았으면 표시할 텍스트를 새로 받아 링크 삽입
-function promptLink(editor, selection) {
+function openLinkModal(editor, selection) {
   const currentHref = editor.getAttributes('link').href ?? '';
-  const nextHrefInput = window.prompt('링크 주소를 입력하세요. 비워두면 링크를 제거합니다.', currentHref);
+  const selectedText = getSelectedText(editor, selection);
+  const isActiveLink = editor.isActive('link');
 
-  if (nextHrefInput === null) {
+  if (typeof editor.storage?.linkModal?.openModal === 'function') {
+    editor.storage.linkModal.openModal({
+      selection,
+      initialUrl: currentHref,
+      initialText: selectedText,
+      hasSelection: Boolean(selectedText),
+      isActiveLink,
+    });
     return;
   }
 
+  const nextHrefInput = window.prompt('링크 주소를 입력하세요. 비워두면 링크를 제거합니다.', currentHref);
+  if (nextHrefInput === null) return;
   const nextHref = normalizeUrl(nextHrefInput);
-
   if (!nextHref) {
-    // 링크 주소가 비어 있으면 "링크 제거" 요청으로 본다.
     restoreSelection(editor, selection).extendMarkRange('link').unsetLink().run();
     return;
   }
-
-  const selectedText = getSelectedText(editor, selection);
-
-  if (selectedText || editor.isActive('link')) {
-    // 선택 범위가 있거나 커서가 기존 링크 안에 있으면 새 링크를 만드는 대신 주소만 교체한다.
+  if (selectedText || isActiveLink) {
     restoreSelection(editor, selection).extendMarkRange('link').setLink({ href: nextHref }).run();
     return;
   }
-
-  // 선택한 텍스트가 없으면 사용자가 바로 읽을 수 있는 링크 문구도 함께 만든다.
   const linkLabel = window.prompt('링크에 표시할 텍스트를 입력하세요.', nextHref);
-
-  if (linkLabel === null) {
-    return;
-  }
-
+  if (linkLabel === null) return;
   restoreSelection(editor, selection)
     .insertContent({
       type: 'text',
@@ -309,7 +306,15 @@ async function promptFileLink(editor, selection) {
 
 // 표는 행/열 수만 입력받고, 나머지 구조는 에디터 기본 표 노드 규칙을 따른다.
 // 비어 있거나 잘못된 입력이 와도 기본값 3x3 으로 안전하게 맞춘다.
-function promptTable(editor, selection) {
+function openTableModal(editor, selection) {
+  if (typeof editor.storage?.tableModal?.openModal === 'function') {
+    editor.storage.tableModal.openModal({
+      selection,
+      isTableActive: editor.isActive('table'),
+    });
+    return;
+  }
+
   const rows = parsePositiveInteger(window.prompt('표 행 수를 입력하세요.', '3'), 3);
   const columns = parsePositiveInteger(window.prompt('표 열 수를 입력하세요.', '3'), 3);
 
@@ -338,39 +343,13 @@ function openMathBlockModal(editor, selection) {
   restoreSelection(editor, selection).insertMathBlock(latex.trim()).run();
 }
 
-// 구분 영역은 큰 덩어리 콘텐츠를 눈에 띄게 묶고 싶을 때 쓰는 블록이다.
-function promptSectionBlock(editor, selection) {
-  const sectionTitle = window.prompt('구분 영역 제목을 입력하세요.', '구분 영역');
-
-  if (sectionTitle === null) {
-    return;
-  }
-
-  const sectionBody = window.prompt('구분 영역 내용을 입력하세요.', '영역 내용을 입력하세요.');
-
-  if (sectionBody === null) {
-    return;
-  }
-
-  restoreSelection(editor, selection)
-    .insertSectionBlock({
-      content: sectionBody,
-      title: sectionTitle,
-    })
-    .run();
-}
-
-// prompt 가 필요한 버튼은 여기서 따로 관리한다.
-// executeToolbarItem 쪽에서는 "추가 입력이 필요한가?"만 구분하고,
-// 실제 어떤 prompt 함수를 부를지는 이 매핑으로 결정한다.
 const PROMPT_TOOLBAR_ACTIONS = {
   '토글 섹션': promptDetailsBlock,
-  링크: promptLink,
+  링크: openLinkModal,
   이미지: promptImage,
   파일: promptFileLink,
-  표: promptTable,
+  표: openTableModal,
   '수식(LaTeX)': openMathBlockModal,
-  '구분 영역': promptSectionBlock,
 };
 
 export function executePromptToolbarAction(editor, itemLabel, selection) {

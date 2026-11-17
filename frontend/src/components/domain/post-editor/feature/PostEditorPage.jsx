@@ -10,8 +10,10 @@ import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/common/ui/alert';
 import PostEditorContentSection from '@/components/domain/post-editor/layout/PostEditorContentSection';
 import PostEditorDraftModal from '@/components/domain/post-editor/layout/PostEditorDraftModal';
+import PostEditorLinkModal from '@/components/domain/post-editor/layout/PostEditorLinkModal';
 import PostEditorMathModal from '@/components/domain/post-editor/layout/PostEditorMathModal';
 import PostEditorMetaSection from '@/components/domain/post-editor/layout/PostEditorMetaSection';
+import PostEditorTableModal from '@/components/domain/post-editor/layout/PostEditorTableModal';
 import PostEditorTitleSection from '@/components/domain/post-editor/layout/PostEditorTitleSection';
 import PostEditorToolRail from '@/components/domain/post-editor/layout/PostEditorToolRail';
 import PostEditorTopBar from '@/components/domain/post-editor/layout/PostEditorTopBar';
@@ -407,6 +409,23 @@ export default function PostEditorPage({ postId }) {
         initialLatex={richText.mathModalState.initialLatex}
         onClose={richText.closeMathModal}
         onSubmit={richText.submitMathModal}
+      />
+      <PostEditorLinkModal
+        isOpen={richText.linkModalState.isOpen}
+        initialUrl={richText.linkModalState.initialUrl}
+        initialText={richText.linkModalState.initialText}
+        hasSelection={richText.linkModalState.hasSelection}
+        isActiveLink={richText.linkModalState.isActiveLink}
+        onClose={richText.closeLinkModal}
+        onSubmit={richText.submitLinkModal}
+        onRemove={richText.removeLinkModal}
+      />
+      <PostEditorTableModal
+        isOpen={richText.tableModalState.isOpen}
+        isTableActive={richText.tableModalState.isTableActive}
+        onClose={richText.closeTableModal}
+        onInsert={richText.submitTableModal}
+        onDeleteTable={richText.deleteCurrentTable}
       />
     </>
   );

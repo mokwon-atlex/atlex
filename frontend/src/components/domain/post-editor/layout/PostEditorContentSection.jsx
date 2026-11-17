@@ -68,8 +68,8 @@ export default function PostEditorContentSection({
           </div>
 
           {isTableActive ? (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs">
-              <span className="font-medium text-muted-foreground">표 편집</span>
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs">
+              <span className="font-semibold text-foreground">표 편집</span>
               <div className="flex flex-wrap items-center gap-1">
                 <Button
                   type="button"
