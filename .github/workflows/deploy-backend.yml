@@ -8,6 +8,11 @@ on:
       - ".github/workflows/deploy-backend.yml"
   workflow_dispatch:
 
+# 배포 작업 직렬화 (진행 중인 배포는 취소하지 않음)
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
 env:
   IMAGE: ghcr.io/${{ github.repository_owner }}/atlex
 
@@ -30,6 +35,8 @@ jobs:
         with:
           context: ./backend
           file: ./backend/Dockerfile
+          # OCI Always Free VM.Standard.E2.1.Micro(x86_64) 기준
+          platforms: linux/amd64
           push: true
           tags: |
             ${{ env.IMAGE }}:latest
@@ -41,20 +48,58 @@ jobs:
     needs: build-and-push
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions:
+      packages: read
     steps:
       - uses: appleboy/ssh-action@v1
+        env:
+          TARGET_SHA: ${{ github.sha }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.OCI_HOST || secrets.EC2_HOST }}
+          username: ${{ secrets.OCI_USER || secrets.EC2_USER || 'ubuntu' }}
+          key: ${{ secrets.OCI_SSH_KEY || secrets.EC2_SSH_KEY }}
+          envs: TARGET_SHA,GHCR_USER,GHCR_TOKEN
           command_timeout: 30m
           script: |
             set -e
             cd ~/atlex
+            # 설정 파일과 이미지를 같은 배포 대상 커밋으로 고정
             git fetch origin main
-            git checkout main
-            git pull --ff-only origin main
+            git checkout --detach "$TARGET_SHA"
+
+            # 비공개 GHCR 패키지 pull 대비 로그인
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            # 배포 대상 커밋 SHA 태그 이미지로 실행
+            export IMAGE_TAG="$TARGET_SHA"
             docker compose -f backend/docker-compose.yml pull
             docker compose -f backend/docker-compose.yml up -d
+
+            # 헬스 체크 (최대 5분, 저사양 서버의 느린 기동 고려)
+            # 요청별 5초 제한 + 시작 시점 기준 전체 5분 마감
+            HEALTHY=0
+            DEADLINE=$(( $(date +%s) + 300 ))
+            i=0
+            while [ "$(date +%s)" -lt "$DEADLINE" ]; do
+              i=$((i + 1))
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost/api/v1/health || true)
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "헬스 체크 성공 (시도 $i)"
+                HEALTHY=1
+                break
+              fi
+              echo "헬스 체크 대기 $i (HTTP $HTTP_CODE)"
+              sleep 5
+            done
+
+            docker logout ghcr.io
+
+            if [ "$HEALTHY" -ne 1 ]; then
+              echo "헬스 체크 실패: 최근 app 로그"
+              docker compose -f backend/docker-compose.yml logs --tail=100 app
+              exit 1
+            fi
+
             docker image prune -f

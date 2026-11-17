@@ -103,9 +103,9 @@
 }
 
 .richText pre {
-  background: var(--foreground);
+  background: #0f172a;
   border-radius: 1rem;
-  color: var(--background);
+  color: #e2e8f0;
   overflow-x: auto;
   padding: 1rem 1.125rem;
 }
@@ -119,7 +119,65 @@
 
 .richText pre code {
   background: transparent;
+  color: inherit;
   padding: 0;
+}
+
+.richText pre :global(.hljs-comment),
+.richText pre :global(.hljs-quote) {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.richText pre :global(.hljs-keyword),
+.richText pre :global(.hljs-selector-tag),
+.richText pre :global(.hljs-subst) {
+  color: #c084fc;
+}
+
+.richText pre :global(.hljs-string),
+.richText pre :global(.hljs-doctag),
+.richText pre :global(.hljs-regexp) {
+  color: #86efac;
+}
+
+.richText pre :global(.hljs-number),
+.richText pre :global(.hljs-literal),
+.richText pre :global(.hljs-variable),
+.richText pre :global(.hljs-template-variable) {
+  color: #fdba74;
+}
+
+.richText pre :global(.hljs-title),
+.richText pre :global(.hljs-section),
+.richText pre :global(.hljs-selector-id) {
+  color: #7dd3fc;
+}
+
+.richText pre :global(.hljs-type),
+.richText pre :global(.hljs-built_in),
+.richText pre :global(.hljs-attr) {
+  color: #fde047;
+}
+
+.richText a[data-file-attachment='true'] {
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.65rem;
+  color: #0f172a;
+  display: inline-flex;
+  font-size: 0.875rem;
+  font-weight: 600;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  text-decoration: none;
+}
+
+.richText a[data-file-attachment='true']:hover {
+  background: #e2e8f0;
+  opacity: 1;
+  text-decoration: none;
 }
 
 .richText hr {
@@ -145,6 +203,56 @@
 .richText th {
   background: var(--muted);
   font-weight: 700;
+}
+
+.richText [data-type='callout-box'],
+.richText [data-type='details-block'],
+.richText [data-type='math-block'],
+.richText [data-type='section-block'] {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 1rem;
+  margin: 1.25rem 0;
+  padding: 1rem 1rem 1.1rem;
+}
+
+.richText [data-type='callout-box'] {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.richText [data-type='section-block'] {
+  background: linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+}
+
+.richText :global(.post-editor-block__label),
+.richText :global(.post-editor-block__summary) {
+  color: #0f172a;
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.8rem;
+  text-transform: uppercase;
+}
+
+.richText :global(.post-editor-block__summary) {
+  cursor: pointer;
+}
+
+.richText :global(.post-editor-block__body) > *:first-child {
+  margin-top: 0;
+}
+
+.richText [data-type='math-block'] :global(.post-editor-block__body) {
+  margin: 0;
+}
+
+.richText [data-type='math-block'] :global(.katex-display) {
+  margin: 0.25rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
 }
 
 @media (min-width: 640px) {

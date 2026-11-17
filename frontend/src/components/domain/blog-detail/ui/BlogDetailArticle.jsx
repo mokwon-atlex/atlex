@@ -1,7 +1,10 @@
 'use client';
 
+import katex from 'katex';
 import { useRouter } from 'next/navigation';
+import { useEffect, useRef } from 'react';
 import { textfieldVariants } from '@/components/common/ui/textfield';
+import { highlightCodeToHtml } from '@/lib/post-editor/rich-text-code';
 import styles from './BlogDetailArticle.module.css';
 
 /**
@@ -28,7 +31,55 @@ function ArticleImage({ src, caption }) {
  * @returns {React.ReactElement} 리치 텍스트 본문
  */
 function RichTextArticle({ html, onLinkClick }) {
-  return <div className={styles.richText} onClick={onLinkClick} dangerouslySetInnerHTML={{ __html: html }} />;
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    container.querySelectorAll('[data-type="math-block"]').forEach((block) => {
+      const codeEl = block.querySelector('code');
+      const latexSource = (codeEl?.textContent ?? block.textContent ?? '').trim();
+      if (!latexSource) {
+        return;
+      }
+
+      const bodyEl = block.querySelector('pre');
+      if (bodyEl) {
+        const rendered = document.createElement('div');
+        rendered.className = 'post-editor-block__body';
+        rendered.innerHTML = katex.renderToString(latexSource, {
+          displayMode: true,
+          throwOnError: false,
+        });
+        bodyEl.replaceWith(rendered);
+      }
+    });
+
+    container.querySelectorAll('pre code').forEach((codeEl) => {
+      if (codeEl.closest('[data-type="math-block"]')) {
+        return;
+      }
+      const rawCode = codeEl.textContent ?? '';
+      if (!rawCode) {
+        return;
+      }
+      const languageClass = Array.from(codeEl.classList).find((name) => name.startsWith('language-'));
+      const language = languageClass ? languageClass.replace('language-', '') : '';
+      codeEl.innerHTML = highlightCodeToHtml(rawCode, language);
+    });
+  }, [html]);
+
+  return (
+    <div
+      ref={containerRef}
+      className={styles.richText}
+      onClick={onLinkClick}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
 }
 
 /**

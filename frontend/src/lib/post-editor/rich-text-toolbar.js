@@ -1,3 +1,5 @@
+import toast from 'react-hot-toast';
+import { formatFileSize, uploadAttachmentFile, uploadImageFile } from '@/lib/api/files';
 import {
   getSelectedText,
   normalizeUrl,
@@ -137,59 +139,131 @@ function promptLink(editor, selection) {
     .run();
 }
 
-// 이미지는 URL 과 alt 텍스트를 받아 현재 선택 위치에 삽입한다.
-function promptImage(editor, selection) {
-  const imageSource = window.prompt('이미지 주소를 입력하세요.', 'https://');
-
-  if (imageSource === null) {
-    return;
+/**
+ * 브라우저 파일 선택 대화상자를 열어 사용자가 선택한 파일을 반환한다.
+ *
+ * @param {string} accept 허용할 파일 MIME/확장자 필터
+ * @returns {Promise<File | null>} 선택된 파일 (취소 시 null)
+ */
+function pickLocalFile(accept) {
+  if (typeof document === 'undefined') {
+    return Promise.resolve(null);
   }
 
-  const src = normalizeUrl(imageSource);
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    if (accept) {
+      input.accept = accept;
+    }
 
-  if (!src) {
-    return;
-  }
+    let settled = false;
+    const finish = (file) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      input.remove();
+      resolve(file ?? null);
+    };
 
-  const altText = window.prompt('대체 텍스트를 입력하세요.', '이미지 설명') ?? '';
+    input.addEventListener('change', () => finish(input.files?.[0] ?? null), { once: true });
+    input.addEventListener('cancel', () => finish(null), { once: true });
 
-  restoreSelection(editor, selection).setImage({ alt: altText.trim(), src }).run();
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.click();
+  });
 }
 
-// 파일 첨부는 별도 업로드가 아니라 링크 텍스트를 만들어 주는 방식이다.
-// 그래서 사용자가 보는 문구와 실제 이동할 URL 을 같이 만든다.
-function promptFileLink(editor, selection) {
-  const fileUrlInput = window.prompt('파일 주소를 입력하세요.', 'https://');
-
-  if (fileUrlInput === null) {
+/**
+ * 이미지 파일을 백엔드에 업로드한 뒤 에디터의 지정 위치(또는 현재 커서)에 삽입한다.
+ *
+ * @param {import('@tiptap/react').Editor} editor TipTap 에디터 인스턴스
+ * @param {File} file 업로드할 이미지 파일
+ * @param {{ from: number, to: number } | null} [selection] 복원할 선택 범위
+ */
+export async function uploadAndInsertImage(editor, file, selection = null) {
+  if (!editor || !file) {
     return;
   }
 
-  const fileUrl = normalizeUrl(fileUrlInput);
+  const toastId = toast.loading('이미지를 업로드하는 중입니다...');
+  try {
+    const uploaded = await uploadImageFile(file);
+    const chain = selection ? restoreSelection(editor, selection) : editor.chain().focus();
+    chain.setImage({ alt: uploaded.originalName || file.name, src: uploaded.url }).run();
+    toast.success('이미지가 삽입되었습니다.', { id: toastId });
+  } catch (error) {
+    toast.error(error?.message || '이미지 업로드에 실패했습니다.', { id: toastId });
+  }
+}
 
-  if (!fileUrl) {
+/**
+ * 일반 첨부파일을 백엔드에 업로드한 뒤 다운로드 링크를 에디터에 삽입한다.
+ *
+ * @param {import('@tiptap/react').Editor} editor TipTap 에디터 인스턴스
+ * @param {File} file 업로드할 첨부파일
+ * @param {{ from: number, to: number } | null} [selection] 복원할 선택 범위
+ */
+export async function uploadAndInsertAttachment(editor, file, selection = null) {
+  if (!editor || !file) {
     return;
   }
 
-  const fileLabel = window.prompt('파일 이름을 입력하세요.', '다운로드 파일');
+  const toastId = toast.loading('파일을 업로드하는 중입니다...');
+  try {
+    const uploaded = await uploadAttachmentFile(file);
+    const displayName = uploaded.originalName || file.name;
+    const sizeText = formatFileSize(uploaded.size ?? file.size);
+    const chain = selection ? restoreSelection(editor, selection) : editor.chain().focus();
 
-  if (fileLabel === null) {
+    chain
+      .insertContent([
+        {
+          type: 'text',
+          text: `📎 ${displayName} (${sizeText})`,
+          marks: [
+            {
+              type: 'link',
+              attrs: {
+                href: uploaded.url,
+                download: displayName,
+                'data-file-attachment': 'true',
+              },
+            },
+          ],
+        },
+        {
+          type: 'text',
+          text: ' ',
+        },
+      ])
+      .run();
+    toast.success('파일이 첨부되었습니다.', { id: toastId });
+  } catch (error) {
+    toast.error(error?.message || '파일 업로드에 실패했습니다.', { id: toastId });
+  }
+}
+
+// 이미지 버튼은 로컬 이미지 파일을 선택받아 서버에 업로드한 뒤 본문에 삽입한다.
+async function promptImage(editor, selection) {
+  const file = await pickLocalFile('image/jpeg,image/png,image/gif,image/webp');
+  if (!file) {
     return;
   }
 
-  restoreSelection(editor, selection)
-    .insertContent([
-      {
-        type: 'text',
-        text: `파일: ${fileLabel.trim() || '다운로드 파일'}`,
-        marks: [{ type: 'link', attrs: { href: fileUrl } }],
-      },
-      {
-        type: 'text',
-        text: ' ',
-      },
-    ])
-    .run();
+  await uploadAndInsertImage(editor, file, selection);
+}
+
+// 파일 버튼은 로컬 파일을 선택받아 서버에 업로드한 뒤 다운로드 링크를 본문에 삽입한다.
+async function promptFileLink(editor, selection) {
+  const file = await pickLocalFile();
+  if (!file) {
+    return;
+  }
+
+  await uploadAndInsertAttachment(editor, file, selection);
 }
 
 // 표는 행/열 수만 입력받고, 나머지 구조는 에디터 기본 표 노드 규칙을 따른다.

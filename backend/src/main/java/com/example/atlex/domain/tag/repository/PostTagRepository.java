@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PostTagRepository extends JpaRepository<PostTag, Long> {
@@ -121,5 +122,35 @@ public interface PostTagRepository extends JpaRepository<PostTag, Long> {
     Page<PlatformTagProjection> findPlatformTagsAlphabet(
         @Param("keyword")
         String keyword,
+        Pageable pageable);
+
+    /**
+     * 플랫폼 공개 태그를 트렌딩 순으로 페이징 조회합니다.
+     * 기준 시각 이후 작성된 글 수, 전체 글 수, 태그명 순으로 정렬하며 응답의 글 수는 전체 기간 기준입니다.
+     *
+     * @param keyword 태그명 검색 키워드 (없으면 null)
+     * @param since 트렌딩 집계 시작 시각
+     * @param pageable 페이지 정보
+     * @return 태그명과 전체 글 수 페이지
+     */
+    @Query(value = """
+        SELECT pt.tag.name AS name, COUNT(DISTINCT pt.post.id) AS postCount
+        FROM PostTag pt
+        WHERE pt.post.isDeleted = false AND pt.post.isPublic = true
+          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(REPLACE(:keyword, '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
+        GROUP BY pt.tag.name
+        ORDER BY COUNT(DISTINCT CASE WHEN pt.post.createdAt >= :since THEN pt.post.id END) DESC,
+          COUNT(DISTINCT pt.post.id) DESC, pt.tag.name ASC
+        """, countQuery = """
+        SELECT COUNT(DISTINCT pt.tag.name)
+        FROM PostTag pt
+        WHERE pt.post.isDeleted = false AND pt.post.isPublic = true
+          AND (:keyword IS NULL OR LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', REPLACE(REPLACE(REPLACE(:keyword, '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '%')) ESCAPE '\\')
+        """)
+    Page<PlatformTagProjection> findPlatformTagsTrending(
+        @Param("keyword")
+        String keyword,
+        @Param("since")
+        LocalDateTime since,
         Pageable pageable);
 }
