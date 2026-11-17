@@ -30,8 +30,10 @@ public class FollowController implements FollowControllerDocs {
     @Override
     @PostMapping("/follow")
     public ResponseEntity<ApiResponse<FollowStatusResponse>> follow(
-        @PathVariable String userId,
-        @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        @PathVariable
+        String userId,
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails) {
         if (principalDetails == null) {
             throw new AuthenticationException();
         }
@@ -42,8 +44,10 @@ public class FollowController implements FollowControllerDocs {
     @Override
     @DeleteMapping("/follow")
     public ResponseEntity<ApiResponse<FollowStatusResponse>> unfollow(
-        @PathVariable String userId,
-        @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        @PathVariable
+        String userId,
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails) {
         if (principalDetails == null) {
             throw new AuthenticationException();
         }
@@ -53,13 +57,15 @@ public class FollowController implements FollowControllerDocs {
 
     @Override
     @GetMapping("/followers")
-    public ResponseEntity<ApiResponse<List<FollowUserResponse>>> getFollowers(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<List<FollowUserResponse>>> getFollowers(@PathVariable
+    String userId) {
         return ResponseEntity.ok(ApiResponse.success(followService.getFollowers(userId), null));
     }
 
     @Override
     @GetMapping("/following")
-    public ResponseEntity<ApiResponse<List<FollowUserResponse>>> getFollowing(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<List<FollowUserResponse>>> getFollowing(@PathVariable
+    String userId) {
         return ResponseEntity.ok(ApiResponse.success(followService.getFollowing(userId), null));
     }
 }

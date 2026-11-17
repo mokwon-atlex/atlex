@@ -19,20 +19,26 @@ public interface FollowControllerDocs {
     @Operation(summary = "사용자 팔로우", description = "대상 사용자를 팔로우합니다. Authorization 헤더 필수.")
     @SecurityRequirement(name = "bearerAuth")
     ResponseEntity<ApiResponse<FollowStatusResponse>> follow(
-        @Parameter(description = "대상 사용자 아이디", example = "john123") @PathVariable String userId,
-        @AuthenticationPrincipal PrincipalDetails principalDetails);
+        @Parameter(description = "대상 사용자 아이디", example = "john123") @PathVariable
+        String userId,
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails);
 
     @Operation(summary = "사용자 언팔로우", description = "대상 사용자 팔로우를 해제합니다. Authorization 헤더 필수.")
     @SecurityRequirement(name = "bearerAuth")
     ResponseEntity<ApiResponse<FollowStatusResponse>> unfollow(
-        @Parameter(description = "대상 사용자 아이디", example = "john123") @PathVariable String userId,
-        @AuthenticationPrincipal PrincipalDetails principalDetails);
+        @Parameter(description = "대상 사용자 아이디", example = "john123") @PathVariable
+        String userId,
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails);
 
     @Operation(summary = "팔로워 목록 조회", description = "대상 사용자를 팔로우하는 사용자 목록을 조회합니다.")
     ResponseEntity<ApiResponse<List<FollowUserResponse>>> getFollowers(
-        @Parameter(description = "대상 사용자 아이디", example = "john123") @PathVariable String userId);
+        @Parameter(description = "대상 사용자 아이디", example = "john123") @PathVariable
+        String userId);
 
     @Operation(summary = "팔로잉 목록 조회", description = "대상 사용자가 팔로우하는 사용자 목록을 조회합니다.")
     ResponseEntity<ApiResponse<List<FollowUserResponse>>> getFollowing(
-        @Parameter(description = "대상 사용자 아이디", example = "john123") @PathVariable String userId);
+        @Parameter(description = "대상 사용자 아이디", example = "john123") @PathVariable
+        String userId);
 }

@@ -20,13 +20,10 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-    properties = {
-        "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-    }
-)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = {
+    "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+})
 @Transactional
 class FollowControllerTest {
 
@@ -55,8 +52,7 @@ class FollowControllerTest {
                 .password("pw")
                 .name("팔로워유저")
                 .active(true)
-                .build()
-        );
+                .build());
         userRepository.saveAndFlush(
             User.builder()
                 .userId("target1")
@@ -64,8 +60,7 @@ class FollowControllerTest {
                 .password("pw")
                 .name("대상유저")
                 .active(true)
-                .build()
-        );
+                .build());
         followerToken = jwtProvider.createAccessToken(follower.getId());
     }
 
@@ -73,7 +68,8 @@ class FollowControllerTest {
     @DisplayName("팔로우 등록·조회·언팔로우 흐름 검증")
     void followAndUnfollow_success() throws Exception {
         mockMvc
-            .perform(post("/api/v1/profiles/{userId}/follow", "target1").header("Authorization", "Bearer " + followerToken))
+            .perform(
+                post("/api/v1/profiles/{userId}/follow", "target1").header("Authorization", "Bearer " + followerToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("SUCCESS"))
             .andExpect(jsonPath("$.data.userId").value("target1"))
@@ -105,7 +101,8 @@ class FollowControllerTest {
 
         // 언팔로우
         mockMvc
-            .perform(delete("/api/v1/profiles/{userId}/follow", "target1").header("Authorization", "Bearer " + followerToken))
+            .perform(delete("/api/v1/profiles/{userId}/follow", "target1").header("Authorization",
+                "Bearer " + followerToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.following").value(false))
             .andExpect(jsonPath("$.data.followerCount").value(0));
@@ -116,8 +113,8 @@ class FollowControllerTest {
     void follow_self_badRequest() throws Exception {
         mockMvc
             .perform(
-                post("/api/v1/profiles/{userId}/follow", "follower1").header("Authorization", "Bearer " + followerToken)
-            )
+                post("/api/v1/profiles/{userId}/follow", "follower1").header("Authorization",
+                    "Bearer " + followerToken))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("SELF_FOLLOW_NOT_ALLOWED"));
     }

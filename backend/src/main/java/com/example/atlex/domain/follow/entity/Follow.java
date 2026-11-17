@@ -23,16 +23,12 @@ import lombok.NoArgsConstructor;
  * 사용자 간 팔로우 관계를 저장하는 엔티티.
  */
 @Entity
-@Table(
-    name = "follows",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_follows_pair", columnNames = {"follower_id", "following_id"})
-    },
-    indexes = {
-        @Index(name = "idx_follows_follower_id", columnList = "follower_id"),
-        @Index(name = "idx_follows_following_id", columnList = "following_id")
-    }
-)
+@Table(name = "follows", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_follows_pair", columnNames = {"follower_id", "following_id"})
+}, indexes = {
+    @Index(name = "idx_follows_follower_id", columnList = "follower_id"),
+    @Index(name = "idx_follows_following_id", columnList = "following_id")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Follow {
