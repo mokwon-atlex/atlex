@@ -11,8 +11,7 @@ export default function BlogDetailAuthorCard({ authorCard }) {
           </div>
 
           <div>
-            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-muted-foreground">writer</p>
-            <h2 className="mt-3 text-[1.9rem] font-bold tracking-[-0.08em] text-foreground">{authorCard.name}</h2>
+            <h2 className="text-[1.9rem] font-bold tracking-[-0.04em] text-foreground">{authorCard.name}</h2>
             <Capsule variant="outline" className="mt-3 text-[0.72rem]">
               {authorCard.role}
             </Capsule>

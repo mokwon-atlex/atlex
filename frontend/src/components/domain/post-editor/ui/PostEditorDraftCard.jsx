@@ -16,7 +16,7 @@ export default function PostEditorDraftCard({
   return (
     <Card size="sm" className="bg-muted/40">
       <CardHeader>
-        <Textfield variant="muted" size="xs" weight="semibold" className="uppercase tracking-[0.18em]">
+        <Textfield variant="muted" size="xs" weight="medium">
           {draft.updatedAt}
         </Textfield>
         <CardTitle className="text-lg">{draft.title}</CardTitle>

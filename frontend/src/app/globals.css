@@ -29,11 +29,11 @@ input[type='password']::-webkit-textfield-decoration-container {
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-nanum-gothic-coding), 'Apple SD Gothic Neo', 'Malgun Gothic', monospace;
+    font-family: var(--font-geist-sans), 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   }
 
   html {
-    font-family: var(--font-nanum-gothic-coding), 'Apple SD Gothic Neo', 'Malgun Gothic', monospace;
+    font-family: var(--font-geist-sans), 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   }
 }
 

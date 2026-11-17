@@ -64,11 +64,8 @@ export default function Header({
           {blogUserId && (
             <>
               <span className="hidden h-6 w-px bg-border/60 md:block" />
-              <Link href={`/@${blogUserId}`} className="flex flex-col">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/80">
-                  USER BLOG
-                </span>
-                <h1 className="text-lg font-black tracking-tight text-foreground sm:text-xl">
+              <Link href={`/@${blogUserId}`} className="flex items-center">
+                <h1 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">
                   {blogUserId}&apos;s blog
                 </h1>
               </Link>
