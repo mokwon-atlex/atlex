@@ -22,7 +22,7 @@ async function verifySingleExtensionRegistration() {
     autolink: true,
     defaultProtocol: 'https',
     linkOnPaste: true,
-    openOnClick: false,
+    openOnClick: true,
   });
 }
 
