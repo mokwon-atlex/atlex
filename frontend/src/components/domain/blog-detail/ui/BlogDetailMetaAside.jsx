@@ -41,8 +41,8 @@ export default function BlogDetailMetaAside({
     <div className="space-y-4">
       {/* 데이터가 일부만 있어도 자연스럽게 줄어들도록 카드별로 조건부 렌더링합니다. */}
       {hasReadingMap ? (
-        <div className="rounded-[1.8rem] border border-border bg-card px-6 py-6">
-          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-muted-foreground">reading map</p>
+        <div className="rounded-xl border border-border bg-card px-5 py-5">
+          <p className="text-xs font-semibold text-muted-foreground">목차</p>
           <div className="mt-4 space-y-3">
             {sections.map((section) => (
               <a
@@ -60,8 +60,8 @@ export default function BlogDetailMetaAside({
 
       {/* 본문 흐름을 방해하지 않으면서 상태 정보를 빠르게 훑어볼 수 있게 합니다. */}
       {hasPageSignals ? (
-        <div className="rounded-[1.8rem] border border-border bg-background px-6 py-6">
-          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-muted-foreground">page signals</p>
+        <div className="rounded-xl border border-border bg-background px-5 py-5">
+          <p className="text-xs font-semibold text-muted-foreground">문서 지표</p>
           <div className="mt-4 space-y-4">
             {pageSignals.map((signal) => (
               <SignalMeter key={signal.label} label={signal.label} meter={signal.meter} value={signal.value} />
@@ -71,8 +71,8 @@ export default function BlogDetailMetaAside({
       ) : null}
 
       {hasPostInfo ? (
-        <div className="rounded-[1.8rem] border border-border bg-card px-6 py-6">
-          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-muted-foreground">post info</p>
+        <div className="rounded-xl border border-border bg-card px-5 py-5">
+          <p className="text-xs font-semibold text-muted-foreground">게시글 정보</p>
           <div className="mt-4 space-y-3">
             {publishedAt ? <InfoRow label="Published" value={publishedAt} /> : null}
             {updatedAt ? <InfoRow label="Updated" value={updatedAt} /> : null}
@@ -83,10 +83,8 @@ export default function BlogDetailMetaAside({
 
       {/* 마지막 카드는 글의 맥락 설명과 키워드를 함께 보여주는 용도입니다. */}
       {hasStance ? (
-        <div className="rounded-[1.8rem] border border-border bg-card px-6 py-6">
-          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-            detail stance
-          </p>
+        <div className="rounded-xl border border-border bg-card px-5 py-5">
+          <p className="text-xs font-semibold text-muted-foreground">핵심 요약</p>
           {asideNote ? <p className="mt-4 text-[0.9rem] leading-7 text-foreground/80">{asideNote}</p> : null}
           {keywords.length > 0 ? (
             <div className="mt-5 flex flex-wrap gap-2">

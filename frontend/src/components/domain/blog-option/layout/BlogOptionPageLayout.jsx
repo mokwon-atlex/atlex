@@ -13,9 +13,8 @@ export default function BlogOptionPageLayout({ blogUserId, bioSection, categoryS
       <Header blogUserId={blogUserId} />
 
       <div className="mx-auto flex w-full max-w-content-narrow flex-col gap-6 px-5 pb-12 pt-7 sm:px-8 lg:px-10">
-        <div className="flex flex-col gap-4 rounded-[2rem] border border-border/60 bg-card/70 p-6 backdrop-blur sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/70 p-6 backdrop-blur sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-muted-foreground">Blog Option</p>
             <h1 className="text-2xl font-black tracking-tight sm:text-3xl">블로그 옵션</h1>
             <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
               유저 소개글, 카테고리 및 GitHub 자동 백업을 관리하는 전용 페이지입니다.

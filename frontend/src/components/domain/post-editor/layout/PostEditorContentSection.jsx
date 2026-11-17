@@ -3,7 +3,7 @@
 // [Section] tiptap 리치 텍스트 에디터를 Card(dashed) 안에 렌더하는 본문 섹션.
 // 에디터가 비어 있을 때만 placeholder를 absolute로 겹쳐서 표시한다.
 import { EditorContent } from '@tiptap/react';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/common/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/common/ui/card';
@@ -20,6 +20,8 @@ export default function PostEditorContentSection({
   onCancelParagraphAi,
   userId,
 }) {
+  const isTableActive = Boolean(editor?.isActive('table'));
+
   const handleKeyDown = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
       e.preventDefault();
@@ -38,7 +40,7 @@ export default function PostEditorContentSection({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 p-5 sm:p-7">
-        <Card variant="dashed" size="sm" className="flex h-full min-h-0 flex-col gap-4 p-5 sm:p-6">
+        <Card size="sm" className="flex h-full min-h-0 flex-col gap-4 bg-background p-5 sm:p-6">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">본문</CardTitle>
             {onRequestParagraphAi ? (
@@ -65,8 +67,62 @@ export default function PostEditorContentSection({
             ) : null}
           </div>
 
+          {isTableActive ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs">
+              <span className="font-medium text-muted-foreground">표 편집</span>
+              <div className="flex flex-wrap items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().addRowAfter().run()}
+                >
+                  행 추가
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().deleteRow().run()}
+                >
+                  행 삭제
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().addColumnAfter().run()}
+                >
+                  열 추가
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().deleteColumn().run()}
+                >
+                  열 삭제
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="xs"
+                  className="gap-1"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().deleteTable().run()}
+                >
+                  <Trash2 className="size-3" />표 삭제
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
           <CardContent className="relative min-h-0 flex-1 px-0">
-            {isEditorEmpty ? (
+            {isEditorEmpty && bodyPlaceholder ? (
               <Textfield
                 variant="muted"
                 size="default"

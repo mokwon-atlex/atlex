@@ -30,14 +30,9 @@ export default function PostEditorSidebar({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
-        <div>
-          <Textfield variant="muted" size="xs" weight="semibold" className="uppercase tracking-[0.18em]">
-            도구 패널
-          </Textfield>
-          <Textfield size="lg" weight="semibold" className="mt-1">
-            {activeTool.title}
-          </Textfield>
-        </div>
+        <Textfield size="lg" weight="semibold">
+          {activeTool.title}
+        </Textfield>
         <Button type="button" variant="outline" size="icon-sm" onClick={onClose} aria-label="도구 패널 닫기">
           <X className="h-4 w-4" />
         </Button>
