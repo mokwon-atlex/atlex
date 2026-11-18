@@ -181,7 +181,11 @@ function MinimalCover({ cover, toneClass }) {
 function ImageCover({ cover }) {
   return (
     <CoverFrame toneClass="bg-muted">
-      <img src={cover.url} alt="" className="h-full w-full object-cover" />
+      <img
+        src={cover.url}
+        alt=""
+        className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover/card:scale-105"
+      />
     </CoverFrame>
   );
 }
