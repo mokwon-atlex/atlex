@@ -1,7 +1,7 @@
 // [Section] 게시 메타 입력 — 설명(description) · 카테고리 · 공개 여부(isPublic).
 // 모든 값/핸들러를 props 로 받는 controlled 컴포넌트. 상태는 상위(page.jsx)에서 관리한다.
 import { useState } from 'react';
-import { Loader2, Plus, Sparkles, X } from 'lucide-react';
+import { Check, ImageOff, Loader2, Plus, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/common/ui/button';
 import { Field, FieldLabel } from '@/components/common/ui/field';
 import { Input } from '@/components/common/ui/input';
@@ -22,6 +22,9 @@ export default function PostEditorMetaSection({
   onIsPublicChange,
   isGeneratingDescription = false,
   onRequestGenerateDescription,
+  images = [],
+  selectedThumbnailUrl = null,
+  onSelectThumbnail,
 }) {
   const categoryOptions = [postEditorCategories[0], ...categories];
   const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -186,6 +189,61 @@ export default function PostEditorMetaSection({
             <Switch id="post-editor-public" checked={isPublic} onCheckedChange={onIsPublicChange} />
           </Field>
         </div>
+
+        {/* 본문에 이미지가 1개 이상 있으면 대표 이미지 선택 UI를 노출한다. */}
+        {images.length > 0 && onSelectThumbnail ? (
+          <Field>
+            <div className="flex items-center justify-between gap-2">
+              <FieldLabel className={LABEL_CLASS}>대표 이미지</FieldLabel>
+              <span className="text-xs text-muted-foreground">
+                {images.length > 1
+                  ? '목록 카드에 표시할 기본 이미지를 선택하세요.'
+                  : '목록 카드에 표시되는 기본 이미지입니다.'}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {images.map((src, index) => {
+                const isSelected = selectedThumbnailUrl === src;
+                return (
+                  <button
+                    key={src}
+                    type="button"
+                    onClick={() => onSelectThumbnail(src)}
+                    aria-label={`대표 이미지 ${index + 1} 선택`}
+                    aria-pressed={isSelected}
+                    className={`relative h-16 w-24 overflow-hidden rounded-lg border transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-primary ring-2 ring-primary/40'
+                        : 'border-border opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`대표 이미지 후보 ${index + 1}`} className="h-full w-full object-cover" />
+                    {isSelected ? (
+                      <span className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+                        <Check className="size-3" />
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={() => onSelectThumbnail(null)}
+                aria-pressed={selectedThumbnailUrl === null}
+                className={`inline-flex h-16 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-all cursor-pointer ${
+                  selectedThumbnailUrl === null
+                    ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/30'
+                    : 'border-border bg-muted/50 text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                <ImageOff className="size-3.5" />
+                <span>선택 안 함</span>
+              </button>
+            </div>
+          </Field>
+        ) : null}
       </div>
     </section>
   );

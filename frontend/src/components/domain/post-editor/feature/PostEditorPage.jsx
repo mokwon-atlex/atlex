@@ -74,6 +74,8 @@ export default function PostEditorPage({ postId }) {
   const [categoryId, setCategoryId] = useState(null);
   const [categories, setCategories] = useState([]);
   const [isPublic, setIsPublic] = useState(true);
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
+  const [isThumbnailDisabled, setIsThumbnailDisabled] = useState(false);
   // 게시/수정 직전 클라이언트 검증 메시지(빈 제목/본문 등). API 에러와 구분해 둔다.
   const [validationError, setValidationError] = useState('');
   // 수정 모드에서 기존 데이터를 폼에 이미 반영했는지 여부(중복 반영 방지용)
@@ -159,6 +161,8 @@ export default function PostEditorPage({ postId }) {
     setDescription(existingPost.description ?? '');
     setCategoryId(existingPost.categoryId ?? null);
     setIsPublic(existingPost.isPublic ?? true);
+    setThumbnailUrl(existingPost.thumbnailUrl ?? null);
+    setIsThumbnailDisabled(!existingPost.thumbnailUrl && /<img\b/i.test(existingPost.content ?? ''));
 
     // tiptap 에디터에 기존 본문 HTML을 채워 넣는다(본문이 비어 있어도 명시적으로 적용).
     richText.editor.commands.setContent(existingPost.content ?? '');
@@ -182,6 +186,22 @@ export default function PostEditorPage({ postId }) {
   }, [title, description, richText.bodyText, categoryId, isPublic, clearAiError]);
 
   const activeMutation = isEditMode ? updatePost : createPost;
+  const selectedThumbnailUrl =
+    richText.bodyImages.length === 0 || isThumbnailDisabled
+      ? null
+      : thumbnailUrl && richText.bodyImages.includes(thumbnailUrl)
+        ? thumbnailUrl
+        : richText.bodyImages[0];
+
+  function handleSelectThumbnail(nextUrl) {
+    if (nextUrl === null) {
+      setIsThumbnailDisabled(true);
+      setThumbnailUrl(null);
+      return;
+    }
+    setIsThumbnailDisabled(false);
+    setThumbnailUrl(nextUrl);
+  }
 
   function handleSaveDraft() {
     if (!title.trim() && richText.isEditorEmpty) {
@@ -261,6 +281,7 @@ export default function PostEditorPage({ postId }) {
       content: richText.getHTML(), // 서식 보존을 위해 HTML 로 저장
       // 수정 모드에서는 빈 문자열도 보내야 기존 설명을 비울 수 있다(undefined 면 PATCH 에서 제외되어 기존 값 유지).
       description: isEditMode ? description.trim() : description.trim() || undefined,
+      thumbnailUrl: selectedThumbnailUrl,
       categoryId, // 작성: null 이면 요청에서 제외 / 수정: null 이면 카테고리 해제(미분류)
       isPublic,
       tags: tagField.combinedTags, // 백엔드 미구현이라 현재는 무시될 수 있음
@@ -358,6 +379,9 @@ export default function PostEditorPage({ postId }) {
           isPublic={isPublic}
           onIsPublicChange={setIsPublic}
           isGeneratingDescription={aiSuggestion.isSuggestingDescription}
+          images={richText.bodyImages}
+          selectedThumbnailUrl={selectedThumbnailUrl}
+          onSelectThumbnail={handleSelectThumbnail}
           onRequestGenerateDescription={async () => {
             const descriptionBeforeRequest = description;
             const summary = await aiSuggestion.requestDescriptionSuggestion({

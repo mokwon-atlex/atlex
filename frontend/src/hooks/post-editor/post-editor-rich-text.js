@@ -26,6 +26,7 @@ import {
 
 export default function usePostEditorRichText({ initialContent = '' } = {}) {
   const [bodyText, setBodyText] = useState(initialContent);
+  const [bodyImages, setBodyImages] = useState([]);
   const [isEditorEmpty, setIsEditorEmpty] = useState(!initialContent.trim());
   // 본문 글자 수가 그대로여도 서식/undo 가능 여부는 바뀔 수 있어서
   // 에디터 트랜잭션마다 한 번 더 렌더링해 패널 버튼 상태를 최신으로 맞춘다.
@@ -55,6 +56,21 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
   function syncEditorState(nextEditor) {
     setBodyText(nextEditor.getText());
     setIsEditorEmpty(nextEditor.isEmpty);
+
+    const nextImages = [];
+    const seen = new Set();
+    nextEditor.state.doc.descendants((node) => {
+      if (node.type.name === 'image') {
+        const src = typeof node.attrs?.src === 'string' ? node.attrs.src.trim() : '';
+        if (src && !seen.has(src)) {
+          seen.add(src);
+          nextImages.push(src);
+        }
+      }
+    });
+    setBodyImages((prev) =>
+      prev.length === nextImages.length && prev.every((item, idx) => item === nextImages[idx]) ? prev : nextImages,
+    );
   }
 
   const editor = useEditor({
@@ -336,6 +352,7 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
   }
 
   return {
+    bodyImages,
     bodyText,
     closeLinkModal,
     closeMathModal,
