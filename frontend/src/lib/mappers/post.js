@@ -49,7 +49,7 @@ export function toBlogMainPost(apiPost) {
     // 조회한 사용자 기준 값. SSR 응답에는 인증 헤더가 없어 false 로 내려오고,
     // 마운트 후 클라이언트 재요청에서 실제 값으로 바뀜다.
     liked: Boolean(apiPost.liked),
-    comments: 0,
+    comments: Number(apiPost.commentCount ?? 0),
     publishedAt: formatKoreanDate(apiPost.createdAt),
     eyebrow: apiPost.categoryName ?? 'post',
     cover: apiPost.thumbnailUrl ? { variant: 'image', url: apiPost.thumbnailUrl } : { variant: 'none' },
@@ -107,7 +107,7 @@ export function toBlogHomeFeedPost(apiPost) {
     tags: apiPost.tags ?? [],
     date: formatDotDate(apiPost.createdAt),
     likes: apiPost.likes ?? 0,
-    comments: 0,
+    comments: Number(apiPost.commentCount ?? 0),
     bookmarks: 0,
     isLiked: Boolean(apiPost.liked),
     thumbnailUrl: apiPost.thumbnailUrl ?? undefined,

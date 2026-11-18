@@ -6,6 +6,7 @@
 export function toBlogHomeProfile(apiProfile) {
   const followerCount = Number(apiProfile.followerCount ?? 0);
   const followingCount = Number(apiProfile.followingCount ?? 0);
+  const postCount = Number(apiProfile.postCount ?? 0);
 
   return {
     userId: apiProfile.userId,
@@ -19,7 +20,7 @@ export function toBlogHomeProfile(apiProfile) {
     stats: [
       { id: 'followers', label: '팔로워', value: followerCount.toLocaleString() },
       { id: 'following', label: '팔로잉', value: followingCount.toLocaleString() },
-      { id: 'posts', label: '게시글', value: '0' },
+      { id: 'posts', label: '게시글', value: postCount.toLocaleString() },
     ],
     quickActions: [
       { id: 'follow', label: '팔로우', tone: 'accent' },

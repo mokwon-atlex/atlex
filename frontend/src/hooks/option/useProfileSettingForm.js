@@ -221,6 +221,12 @@ export function useProfileSettingForm() {
       return;
     }
 
+    if (selectedFile.size > 20 * 1024 * 1024) {
+      setStatus(createStatus('error', '이미지 크기는 최대 20MB까지 업로드할 수 있습니다.'));
+      input.value = '';
+      return;
+    }
+
     setIsUploadingImage(true);
     setStatus(null);
     try {
