@@ -54,37 +54,44 @@ export default function PostEditorTableModal({ isOpen, isTableActive = false, on
       <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-            <Table2 className="size-4" />표 삽입
+            <Table2 className="size-4" />
+            {isTableActive ? '표 관리' : '표 삽입'}
           </DialogTitle>
-          <DialogDescription>삽입할 표의 행과 열 개수를 입력하세요.</DialogDescription>
+          <DialogDescription>
+            {isTableActive
+              ? '표 안에는 새 표를 삽입할 수 없습니다. 현재 표를 삭제할 수 있습니다.'
+              : '삽입할 표의 행과 열 개수를 입력하세요.'}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <Field>
-              <FieldLabel htmlFor="post-editor-table-rows">행 (Rows)</FieldLabel>
-              <Input
-                ref={rowsInputRef}
-                id="post-editor-table-rows"
-                type="number"
-                min={1}
-                max={20}
-                value={rows}
-                onChange={(e) => setRows(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="post-editor-table-cols">열 (Columns)</FieldLabel>
-              <Input
-                id="post-editor-table-cols"
-                type="number"
-                min={1}
-                max={12}
-                value={cols}
-                onChange={(e) => setCols(e.target.value)}
-              />
-            </Field>
-          </div>
+          {!isTableActive ? (
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <FieldLabel htmlFor="post-editor-table-rows">행 (Rows)</FieldLabel>
+                <Input
+                  ref={rowsInputRef}
+                  id="post-editor-table-rows"
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={rows}
+                  onChange={(e) => setRows(e.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="post-editor-table-cols">열 (Columns)</FieldLabel>
+                <Input
+                  id="post-editor-table-cols"
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={cols}
+                  onChange={(e) => setCols(e.target.value)}
+                />
+              </Field>
+            </div>
+          ) : null}
 
           <DialogFooter className="flex-wrap justify-between gap-2 pt-1">
             {isTableActive ? (
@@ -107,9 +114,9 @@ export default function PostEditorTableModal({ isOpen, isTableActive = false, on
 
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" onClick={onClose}>
-                취소
+                {isTableActive ? '닫기' : '취소'}
               </Button>
-              <Button type="submit">삽입</Button>
+              {!isTableActive ? <Button type="submit">삽입</Button> : null}
             </div>
           </DialogFooter>
         </form>

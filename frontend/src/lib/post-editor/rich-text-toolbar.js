@@ -71,6 +71,7 @@ export const SIMPLE_TOOLBAR_ACTIONS = {
   인용문: (editor) => editor.chain().focus().toggleBlockquote().run(),
   캡션: (editor) => editor.chain().focus().toggleCaptionParagraph().run(),
   구분선: (editor) => editor.chain().focus().setHorizontalRule().run(),
+  '토글 섹션': (editor) => editor.chain().focus().insertDetailsBlock({ title: '토글 제목', content: '' }).run(),
   '코드 블록': insertCodeBlockBelow,
   '실행 취소': (editor) => editor.chain().focus().undo().run(),
   '다시 실행': (editor) => editor.chain().focus().redo().run(),
@@ -109,28 +110,6 @@ const TOOLBAR_ACTIVE_CHECKERS = {
 export function getItemActiveState(editor, itemLabel) {
   // 아직 체크 규칙이 없는 버튼은 false 로 처리해서 UI가 안전하게 동작하게 둔다.
   return TOOLBAR_ACTIVE_CHECKERS[itemLabel]?.(editor) ?? false;
-}
-
-// 토글 섹션은 제목과 본문을 함께 받아 detailsBlock 노드로 넣는다.
-function promptDetailsBlock(editor, selection) {
-  const sectionTitle = window.prompt('토글 섹션 제목을 입력하세요.', '토글 제목');
-
-  if (sectionTitle === null) {
-    return;
-  }
-
-  const sectionBody = window.prompt('토글 섹션 기본 내용을 입력하세요.', '토글 내용을 입력하세요.');
-
-  if (sectionBody === null) {
-    return;
-  }
-
-  restoreSelection(editor, selection)
-    .insertDetailsBlock({
-      content: sectionBody,
-      title: sectionTitle,
-    })
-    .run();
 }
 
 // 링크 버튼은 세 가지 상황을 처리한다.
@@ -342,7 +321,6 @@ function openMathBlockModal(editor, selection) {
 }
 
 const PROMPT_TOOLBAR_ACTIONS = {
-  '토글 섹션': promptDetailsBlock,
   링크: openLinkModal,
   이미지: promptImage,
   파일: promptFileLink,

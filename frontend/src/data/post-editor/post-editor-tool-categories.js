@@ -14,12 +14,6 @@ export const postEditorToolCategories = [
         items: ['볼드', '이탤릭', '밑줄', '취소선'],
       },
       {
-        id: 'font-color',
-        title: '색상',
-        description: '텍스트와 배경색을 지정하는 영역입니다.',
-        items: ['글자색', '배경색', '강조 배경', '투명 배경'],
-      },
-      {
         id: 'font-align',
         title: '정렬',
         description: '문장과 문단 정렬을 바꾸는 영역입니다.',

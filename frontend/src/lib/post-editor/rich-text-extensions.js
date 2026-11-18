@@ -6,6 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table
 import TextAlign from '@tiptap/extension-text-align';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import DetailsBlockNodeView from '@/components/domain/post-editor/ui/DetailsBlockNodeView';
 import MathBlockNodeView from '@/components/domain/post-editor/ui/MathBlockNodeView';
 import { AiSuggestionExtension } from '@/lib/post-editor/rich-text-ai-extension';
 import { editorLowlight } from '@/lib/post-editor/rich-text-code';
@@ -79,18 +80,23 @@ const DetailsBlock = Node.create({
       ['div', { class: 'post-editor-block__body' }, 0],
     ];
   },
+  addNodeView() {
+    return ReactNodeViewRenderer(DetailsBlockNodeView);
+  },
   addCommands() {
     return {
       insertDetailsBlock:
         (attributes = {}) =>
-        ({ commands }) =>
-          commands.insertContent({
+        ({ commands }) => {
+          const bodyText = attributes.content?.trim();
+          return commands.insertContent({
             type: this.name,
             attrs: {
               title: attributes.title?.trim() || '토글 제목',
             },
-            content: createBlockContent(attributes.content?.trim() || '토글 내용을 입력하세요.'),
-          }),
+            content: bodyText ? createBlockContent(bodyText) : [{ type: 'paragraph' }],
+          });
+        },
     };
   },
 });
