@@ -12,8 +12,8 @@ export const blogMainFilters = [
   },
   {
     id: 'feed',
-    label: '피드',
-    description: '전체 글을 한 화면에서 훑어볼 수 있는 보기입니다.',
+    label: '팔로우 피드',
+    description: '팔로우한 사용자의 글을 모아보는 보기입니다.',
   },
 ];
 

@@ -19,6 +19,7 @@ export function FilterSidebar({
   setMinSharedTags,
   setShowExplicitEdges,
   setShowTagEdges,
+  showAuthorFilter = true,
   showExplicitEdges,
   showTagEdges,
   stats,
@@ -63,29 +64,31 @@ export function FilterSidebar({
         </div>
       </SidebarSection>
 
-      <SidebarSection isOpen={openAuthors} onToggle={() => setOpenAuthors((value) => !value)} title="작성자">
-        {authors.map((author) => {
-          const active = activeAuthors.has(author.id);
+      {showAuthorFilter ? (
+        <SidebarSection isOpen={openAuthors} onToggle={() => setOpenAuthors((value) => !value)} title="작성자">
+          {authors.map((author) => {
+            const active = activeAuthors.has(author.id);
 
-          return (
-            <label key={author.id} className="flex cursor-pointer items-center justify-between gap-3">
-              <span className="flex items-center gap-2">
-                <Avatar author={author} size="md" />
-                <span className="font-bold text-foreground">{author.name}</span>
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="text-xs font-bold text-muted-foreground">{author.count}</span>
-                <input
-                  checked={active}
-                  className="h-4 w-4 rounded accent-primary"
-                  onChange={() => toggleAuthor(author.id)}
-                  type="checkbox"
-                />
-              </span>
-            </label>
-          );
-        })}
-      </SidebarSection>
+            return (
+              <label key={author.id} className="flex cursor-pointer items-center justify-between gap-3">
+                <span className="flex items-center gap-2">
+                  <Avatar author={author} size="md" />
+                  <span className="font-bold text-foreground">{author.name}</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-muted-foreground">{author.count}</span>
+                  <input
+                    checked={active}
+                    className="h-4 w-4 rounded accent-primary"
+                    onChange={() => toggleAuthor(author.id)}
+                    type="checkbox"
+                  />
+                </span>
+              </label>
+            );
+          })}
+        </SidebarSection>
+      ) : null}
 
       <SidebarSection isOpen={openTags} onToggle={() => setOpenTags((value) => !value)} title="태그">
         {tagCounts.map(([tag, count]) => {
