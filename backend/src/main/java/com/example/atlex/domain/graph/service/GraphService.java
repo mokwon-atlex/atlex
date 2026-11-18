@@ -1,5 +1,6 @@
 package com.example.atlex.domain.graph.service;
 
+import com.example.atlex.domain.follow.repository.FollowRepository;
 import com.example.atlex.domain.graph.config.GraphProperties;
 import com.example.atlex.domain.graph.dto.response.GraphEdgeResponse;
 import com.example.atlex.domain.graph.dto.response.GraphNodeResponse;
@@ -17,10 +18,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,15 +33,20 @@ public class GraphService {
 
     private static final int DEFAULT_CENTER_LIMIT = 10;
     private static final int MAX_CENTER_LIMIT = 50;
+    public static final int MAX_GRAPH_NODES = 100;
 
     private final PostRepository postRepository;
     private final PostTagRepository postTagRepository;
     private final PostRelationRepository postRelationRepository;
+    private final FollowRepository followRepository;
     private final GraphProperties graphProperties;
 
     @Transactional(readOnly = true)
     public PostGraphResponse getGraph(String userId, Long categoryId, Double minScore, Long viewerId) {
-        List<Post> posts = postRepository.findGraphVisiblePosts(viewerId, normalizeUserId(userId), categoryId);
+        String normalizedUserId = normalizeUserId(userId);
+        double effectiveMinScore = minScore == null ? graphProperties.getMinScore() : minScore;
+        List<Post> visiblePosts = postRepository.findGraphVisiblePosts(viewerId, normalizedUserId, categoryId);
+        List<Post> posts = selectPrioritizedPosts(visiblePosts, viewerId, normalizedUserId, effectiveMinScore);
         List<Long> visiblePostIds = posts.stream().map(Post::getId).toList();
         Map<Long, List<String>> tagNamesByPostId = findTagNamesByPostId(visiblePostIds);
 
@@ -45,15 +55,100 @@ public class GraphService {
             .toList();
         List<GraphEdgeResponse> edges = visiblePostIds.isEmpty()
             ? List.of()
-            : postRelationRepository.findVisibleEdges(
-                visiblePostIds,
-                minScore == null ? graphProperties.getMinScore() : minScore).stream().map(GraphEdgeResponse::from)
+            : postRelationRepository.findVisibleEdges(visiblePostIds, effectiveMinScore).stream()
+                .map(GraphEdgeResponse::from)
                 .toList();
 
         return PostGraphResponse.builder()
             .nodes(nodes)
             .edges(edges)
             .build();
+    }
+
+    private List<Post> selectPrioritizedPosts(
+        List<Post> posts,
+        Long viewerId,
+        String normalizedUserId,
+        double effectiveMinScore) {
+        if (posts.size() <= MAX_GRAPH_NODES) {
+            return posts;
+        }
+        if (normalizedUserId != null) {
+            return posts.subList(0, MAX_GRAPH_NODES);
+        }
+
+        Comparator<Post> popularityOrder = Comparator
+            .comparingInt((Post post) -> (post.getLikes() != null ? post.getLikes() : 0) * 2
+                + (post.getHits() != null ? post.getHits() : 0))
+            .reversed()
+            .thenComparing(Post::getId, Comparator.reverseOrder());
+
+        if (viewerId == null) {
+            return posts.stream().sorted(popularityOrder).limit(MAX_GRAPH_NODES).toList();
+        }
+
+        Set<Long> ownPostIds = posts.stream()
+            .filter(post -> Objects.equals(post.getUser().getId(), viewerId))
+            .map(Post::getId)
+            .collect(Collectors.toSet());
+
+        Map<Long, Double> relatedScoreByPostId = new LinkedHashMap<>();
+        if (!ownPostIds.isEmpty()) {
+            List<Long> allPostIds = posts.stream().map(Post::getId).toList();
+            for (PostRelation relation : postRelationRepository.findVisibleEdges(allPostIds, effectiveMinScore)) {
+                Long sourceId = relation.getSourcePost().getId();
+                Long targetId = relation.getTargetPost().getId();
+                if (ownPostIds.contains(sourceId) && !ownPostIds.contains(targetId)) {
+                    relatedScoreByPostId.merge(targetId, relation.getScore(), Math::max);
+                } else if (ownPostIds.contains(targetId) && !ownPostIds.contains(sourceId)) {
+                    relatedScoreByPostId.merge(sourceId, relation.getScore(), Math::max);
+                }
+            }
+        }
+
+        Set<Long> followingUserIds = followRepository.findAllByFollowerIdOrderByCreatedAtDesc(viewerId).stream()
+            .map(follow -> follow.getFollowing().getId())
+            .collect(Collectors.toSet());
+
+        Map<Long, Post> selected = new LinkedHashMap<>();
+        // 1순위: 내 글
+        posts.stream()
+            .filter(post -> ownPostIds.contains(post.getId()))
+            .limit(MAX_GRAPH_NODES)
+            .forEach(post -> selected.put(post.getId(), post));
+
+        // 2순위: 내 글과 제목·내용·태그로 연관성이 높은 글
+        if (selected.size() < MAX_GRAPH_NODES && !relatedScoreByPostId.isEmpty()) {
+            posts.stream()
+                .filter(post -> !selected.containsKey(post.getId()) && relatedScoreByPostId.containsKey(post.getId()))
+                .sorted(Comparator
+                    .comparingDouble((Post post) -> relatedScoreByPostId.getOrDefault(post.getId(), 0.0))
+                    .reversed()
+                    .thenComparing(popularityOrder))
+                .limit(MAX_GRAPH_NODES - selected.size())
+                .forEach(post -> selected.put(post.getId(), post));
+        }
+
+        // 3순위: 팔로우한 작성자의 인기·최신 글
+        if (selected.size() < MAX_GRAPH_NODES && !followingUserIds.isEmpty()) {
+            posts.stream()
+                .filter(post -> !selected.containsKey(post.getId())
+                    && followingUserIds.contains(post.getUser().getId()))
+                .sorted(popularityOrder)
+                .limit(MAX_GRAPH_NODES - selected.size())
+                .forEach(post -> selected.put(post.getId(), post));
+        }
+
+        // 4순위: 나머지 공개 글(인기·최신순)
+        if (selected.size() < MAX_GRAPH_NODES) {
+            posts.stream()
+                .filter(post -> !selected.containsKey(post.getId()))
+                .sorted(popularityOrder)
+                .limit(MAX_GRAPH_NODES - selected.size())
+                .forEach(post -> selected.put(post.getId(), post));
+        }
+
+        return new ArrayList<>(selected.values());
     }
 
     @Transactional(readOnly = true)

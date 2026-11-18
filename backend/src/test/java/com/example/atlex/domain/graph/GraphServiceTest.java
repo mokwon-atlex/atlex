@@ -1,5 +1,6 @@
 package com.example.atlex.domain.graph;
 
+import com.example.atlex.domain.follow.repository.FollowRepository;
 import com.example.atlex.domain.graph.dto.response.PostGraphResponse;
 import com.example.atlex.domain.graph.entity.PostRelation;
 import com.example.atlex.domain.graph.repository.PostRelationRepository;
@@ -37,6 +38,8 @@ class GraphServiceTest {
     PostTagRepository postTagRepository;
     @Mock
     PostRelationRepository postRelationRepository;
+    @Mock
+    FollowRepository followRepository;
 
     @Test
     @DisplayName("전체 그래프 조회 시 태그를 게시글 ID 목록으로 한 번에 조회한다")
@@ -85,11 +88,42 @@ class GraphServiceTest {
         verify(postTagRepository, never()).findTagNamesByPostId(anyLong());
     }
 
+    @Test
+    @DisplayName("탐색 그래프 노드가 상한을 초과하면 내 글과 연관 글을 우선 선별해 100개로 제한한다")
+    void getGraphCapsNodesAndPrioritizesOwnAndRelatedPosts() {
+        GraphService service = newService();
+        User viewer = User.builder().id(1L).userId("viewer").name("나").build();
+        User other = User.builder().id(2L).userId("other").name("타인").build();
+
+        Post ownPost = Post.builder().id(1L).user(viewer).title("own").content("own").isPublic(true).build();
+        Post relatedPost = Post.builder().id(2L).user(other).title("related").content("related").isPublic(true).build();
+
+        List<Post> allPosts = new java.util.ArrayList<>();
+        allPosts.add(ownPost);
+        allPosts.add(relatedPost);
+        for (long i = 3; i <= 120; i++) {
+            allPosts.add(Post.builder().id(i).user(other).title("post" + i).content("c" + i).isPublic(true).build());
+        }
+
+        PostRelation relation = PostRelation.of(ownPost, relatedPost, 0.8, "spring");
+        when(postRepository.findGraphVisiblePosts(1L, null, null)).thenReturn(allPosts);
+        when(postRelationRepository.findVisibleEdges(any(), eq(0.15))).thenReturn(List.of(relation));
+        when(followRepository.findAllByFollowerIdOrderByCreatedAtDesc(1L)).thenReturn(List.of());
+        when(postTagRepository.findTagNamesByPostIds(any())).thenReturn(List.of());
+
+        PostGraphResponse response = service.getGraph(null, null, null, 1L);
+
+        assertEquals(GraphService.MAX_GRAPH_NODES, response.getNodes().size());
+        assertEquals(1L, response.getNodes().get(0).getId());
+        assertEquals(2L, response.getNodes().get(1).getId());
+    }
+
     private GraphService newService() {
         return new GraphService(
             postRepository,
             postTagRepository,
             postRelationRepository,
+            followRepository,
             new GraphProperties(1.5, 1.0, 2.0, 8, 50, 5, 0.15));
     }
 
