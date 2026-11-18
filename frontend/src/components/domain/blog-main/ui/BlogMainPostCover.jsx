@@ -7,7 +7,7 @@ const toneStyles = {
 };
 
 // 커버 영역의 고정 높이. 썸네일 유무와 무관하게 모든 카드가 같은 커버 높이를 갖도록 공용 상수로 둔다.
-const COVER_HEIGHT = 'h-36';
+const COVER_HEIGHT = 'h-44';
 
 function CoverFrame({ children, toneClass }) {
   return <div className={`relative h-full overflow-hidden ${toneClass}`}>{children}</div>;
