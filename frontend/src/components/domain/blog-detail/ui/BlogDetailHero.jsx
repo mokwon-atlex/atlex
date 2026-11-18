@@ -17,6 +17,7 @@ function MetaItem({ children }) {
  * @param {string|number|null} [props.authorUserId] - 게시글 작성자 ID(작성자 여부 판단에 사용).
  * @param {string} [props.category] - 카테고리명.
  * @param {string} [props.excerpt] - 게시글 요약.
+ * @param {number} [props.hits] - 게시글 조회수.
  * @param {string|number} [props.postId] - 게시글 ID. AdminActions의 수정 링크 생성에 사용된다.
  * @param {string} [props.publishedAt] - 게시일.
  * @param {string} [props.readTime] - 예상 읽기 시간.
@@ -30,6 +31,7 @@ export default function BlogDetailHero({
   authorUserId,
   category,
   excerpt,
+  hits,
   postId,
   publishedAt,
   readTime,
@@ -66,7 +68,7 @@ export default function BlogDetailHero({
           <div className="flex flex-wrap items-center gap-2.5">
             <MetaItem>{publishedAt}</MetaItem>
             <span className="text-muted-foreground">/</span>
-            <MetaItem>{readTime}</MetaItem>
+            <MetaItem>{hits != null ? `조회수 ${Number(hits).toLocaleString()}` : readTime}</MetaItem>
             <Capsule variant="outline" size="sm" className="rounded-md">
               {visibilityLabel}
             </Capsule>

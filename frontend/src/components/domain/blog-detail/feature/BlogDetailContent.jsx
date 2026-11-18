@@ -14,6 +14,7 @@ import BlogDetailHero from '@/components/domain/blog-detail/ui/BlogDetailHero';
  * @param {string} [props.category] - 카테고리명.
  * @param {Array} [props.contentBlocks] - 본문을 구성하는 블록 목록.
  * @param {string} [props.excerpt] - 게시글 요약.
+ * @param {number} [props.hits] - 게시글 조회수.
  * @param {string|number} [props.postId] - 게시글 ID. 수정 링크 생성에 사용된다.
  * @param {string} [props.publishedAt] - 게시일.
  * @param {string} [props.readTime] - 예상 읽기 시간.
@@ -29,6 +30,7 @@ export default function BlogDetailContent({
   category,
   contentBlocks,
   excerpt,
+  hits,
   id,
   postId,
   publishedAt,
@@ -45,6 +47,7 @@ export default function BlogDetailContent({
         authorUserId={authorUserId}
         category={category}
         excerpt={excerpt}
+        hits={hits}
         postId={currentPostId}
         publishedAt={publishedAt}
         readTime={readTime}
