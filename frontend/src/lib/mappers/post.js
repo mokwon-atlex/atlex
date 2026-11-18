@@ -78,6 +78,7 @@ export function toBlogDetail(apiPost) {
     excerpt: truncate(plainTextContent, 120),
     publishedAt: formatKoreanDate(apiPost.createdAt),
     updatedAt: formatKoreanDate(apiPost.updatedAt),
+    hits: Number(apiPost.hits ?? 0),
     readTime: `${Math.max(1, Math.ceil(plainTextContent.length / 300))} min read`,
     visibilityLabel: apiPost.isPublic ? '공개' : '비공개',
     likes: apiPost.likes ?? 0,
