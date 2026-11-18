@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { BookOpen, LayoutGrid, PanelLeft } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -6,6 +7,8 @@ import { cn } from '@/lib/utils';
 export function GraphToolbar({
   activeTab,
   isLoggedIn,
+  isOwnerScope = false,
+  scopedUserId = null,
   setActiveTab,
   setShowPanel,
   setShowSidebar,
@@ -38,28 +41,42 @@ export function GraphToolbar({
         <PanelLeft className="size-5" />
       </button>
 
-      <div className="ml-1 flex gap-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            aria-disabled={tab.id === 'mine' && !isLoggedIn}
-            className={cn(
-              'h-9 rounded-full px-4 text-base font-bold transition-colors',
-              activeTab === tab.id
-                ? 'bg-primary/12 text-primary'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-              tab.id === 'mine' && !isLoggedIn ? 'cursor-not-allowed opacity-50' : '',
-            )}
-            onClick={() => {
-              if (tab.id !== 'mine' || isLoggedIn) {
-                setActiveTab(tab.id);
-              }
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="ml-1 flex items-center gap-2">
+        {scopedUserId ? (
+          <>
+            <span className="inline-flex h-9 items-center rounded-full bg-primary/12 px-4 text-sm font-bold text-primary">
+              {isOwnerScope ? '내 포스트' : `@${scopedUserId} 포스트`}
+            </span>
+            <Link
+              href="/graph"
+              className="inline-flex h-9 items-center rounded-full px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              전체 그래프
+            </Link>
+          </>
+        ) : (
+          tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              aria-disabled={tab.id === 'mine' && !isLoggedIn}
+              className={cn(
+                'h-9 rounded-full px-4 text-base font-bold transition-colors',
+                activeTab === tab.id
+                  ? 'bg-primary/12 text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                tab.id === 'mine' && !isLoggedIn ? 'cursor-not-allowed opacity-50' : '',
+              )}
+              onClick={() => {
+                if (tab.id !== 'mine' || isLoggedIn) {
+                  setActiveTab(tab.id);
+                }
+              }}
+            >
+              {tab.label}
+            </button>
+          ))
+        )}
       </div>
 
       <div className="flex-1" />
