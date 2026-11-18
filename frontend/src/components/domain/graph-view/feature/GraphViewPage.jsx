@@ -201,6 +201,8 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
       <GraphToolbar
         activeTab={activeTab}
         isLoggedIn={isLoggedIn}
+        isOwnerScope={Boolean(userId && resolvedCurrentUserId && userId === resolvedCurrentUserId)}
+        scopedUserId={userId ?? null}
         setActiveTab={setActiveTab}
         setShowPanel={setShowPanel}
         setShowSidebar={setShowSidebar}
@@ -223,6 +225,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
               setMinSharedTags={setMinSharedTags}
               setShowExplicitEdges={setShowExplicitEdges}
               setShowTagEdges={setShowTagEdges}
+              showAuthorFilter={!userId && activeTab !== 'mine'}
               showExplicitEdges={showExplicitEdges}
               showTagEdges={showTagEdges}
               stats={{
