@@ -42,6 +42,8 @@ public class PostSummaryResponse {
     private Integer likes;
     @Schema(description = "로그인 사용자의 좋아요 여부(비로그인은 false)", example = "true")
     private boolean liked;
+    @Schema(description = "댓글 수", example = "3")
+    private long commentCount;
     @Schema(description = "태그 목록", example = "[\"Java\", \"Spring Boot\"]")
     private List<String> tags;
     @Schema(description = "작성일시", example = "2024-01-15T10:30:00")
@@ -56,6 +58,10 @@ public class PostSummaryResponse {
     }
 
     public static PostSummaryResponse from(Post post, List<String> tags, boolean liked) {
+        return from(post, tags, liked, 0L);
+    }
+
+    public static PostSummaryResponse from(Post post, List<String> tags, boolean liked, long commentCount) {
         return PostSummaryResponse.builder()
             .id(post.getId())
             .categoryId(post.getCategory() != null ? post.getCategory().getId() : null)
@@ -69,6 +75,7 @@ public class PostSummaryResponse {
             .hits(post.getHits())
             .likes(post.getLikes())
             .liked(liked)
+            .commentCount(commentCount)
             .tags(tags != null ? tags : List.of())
             .createdAt(post.getCreatedAt())
             .build();

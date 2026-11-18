@@ -65,6 +65,8 @@ class PostServiceTest {
     @Mock
     PostFavoriteRepository postFavoriteRepository;
     @Mock
+    com.example.atlex.domain.comment.repository.CommentRepository commentRepository;
+    @Mock
     PostTagRepository postTagRepository;
     @Mock
     TagRepository tagRepository;
@@ -84,6 +86,7 @@ class PostServiceTest {
             graphIndexService,
             postLikeRepository,
             postFavoriteRepository,
+            commentRepository,
             postTagRepository,
             tagRepository,
             tagService,
