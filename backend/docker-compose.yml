@@ -39,6 +39,8 @@ services:
       REDIS_HOST: redis
     expose:
       - "8080"                                # 내부 네트워크에만 노출 (외부 X)
+    volumes:
+      - uploads_data:/app/uploads             # 컨테이너 재배포 시 업로드 파일 유지
     depends_on:
       - mysql
       - redis
@@ -64,4 +66,5 @@ services:
 
 volumes:
   mysql_data:
+  uploads_data:
 
