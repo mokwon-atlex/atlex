@@ -17,7 +17,11 @@ export default function BlogHomeSidebarProfileLayout({
   return (
     <BlogHomeSidebarCard>
       <div className="flex flex-col gap-4">
-        <BlogHomeProfileAvatar className="h-24 w-24 self-center text-xs leading-4 xl:self-start" size="lg" />
+        <BlogHomeProfileAvatar
+          className="h-24 w-24 self-center text-xs leading-4 xl:self-start"
+          size="lg"
+          src={profile.profileImage}
+        />
 
         <div className="space-y-3">
           <Capsule

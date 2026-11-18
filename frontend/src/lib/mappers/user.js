@@ -10,6 +10,7 @@ export function toBlogHomeProfile(apiProfile) {
   return {
     userId: apiProfile.userId,
     nickname: apiProfile.name,
+    profileImage: apiProfile.profileImage ?? null,
     // 소개글(info)이 있으면 쓰고, 없으면 안내 문구.
     bio: apiProfile.info || '아직 소개글이 없습니다.',
     followerCount,

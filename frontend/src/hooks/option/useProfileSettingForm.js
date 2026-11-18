@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { checkUserEmail, getUser, updateUser } from '@/lib/api/users';
 import { uploadImageFile } from '@/lib/api/files';
@@ -52,9 +53,11 @@ function createFormValues(user) {
 }
 
 export function useProfileSettingForm() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const imageInputRef = useRef(null);
   const userId = useAuthStore((state) => state.user?.userId);
+  const updateAuthUser = useAuthStore((state) => state.updateUser);
 
   const [theme, setTheme] = useState('system');
   const [savedTheme, setSavedTheme] = useState('system');
@@ -142,12 +145,26 @@ export function useProfileSettingForm() {
     },
     onSuccess: (nextUser) => {
       queryClient.setQueryData(['user-settings', userId], nextUser);
+      queryClient.setQueryData(['profile', userId], (prev) =>
+        prev ? { ...prev, name: nextUser?.name ?? prev.name, profileImage: nextUser?.profileImage ?? null } : prev,
+      );
+      queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+
+      const currentAuthUser = useAuthStore.getState().user;
+      if (currentAuthUser) {
+        updateAuthUser({
+          ...currentAuthUser,
+          name: nextUser?.name ?? currentAuthUser.name,
+          profileImage: nextUser?.profileImage ?? null,
+        });
+      }
 
       const nextValues = createFormValues(nextUser);
       setForm(nextValues);
       setInitialValues(nextValues);
       setSavedTheme(theme);
       setStatus(createStatus('success', '프로필 설정을 저장했습니다.'));
+      router.refresh();
     },
   });
 

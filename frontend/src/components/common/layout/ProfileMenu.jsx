@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/common/ui/popover';
+import { fetchProfileByUserId } from '@/lib/api/profiles';
 import { useAuthStore } from '@/store/authStore';
 import { useLogout } from '@/hooks/queries/auth/useLogout';
 
@@ -13,6 +15,17 @@ export default function ProfileMenu() {
   const { mutateAsync: logout } = useLogout();
   const [mounted, setMounted] = useState(false);
   const [logoutError, setLogoutError] = useState('');
+
+  const profileQuery = useQuery({
+    queryKey: ['profile', user?.userId],
+    queryFn: () => fetchProfileByUserId(user.userId),
+    enabled: mounted && isLoggedIn && Boolean(user?.userId),
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  const profileImageSrc =
+    mounted && isLoggedIn ? (profileQuery.data?.profileImage ?? user?.profileImage ?? null) : null;
 
   useEffect(() => {
     setMounted(true);
@@ -32,11 +45,18 @@ export default function ProfileMenu() {
     <Popover>
       <PopoverTrigger
         aria-label="프로필"
-        className="inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-[3px] border-primary/40 bg-card text-center text-[0.62rem] font-semibold leading-4 text-muted-foreground transition-colors hover:border-primary/70"
+        className="inline-flex h-14 w-14 cursor-pointer items-center justify-center overflow-hidden rounded-full border-[3px] border-primary/40 bg-card text-center text-[0.62rem] font-semibold leading-4 text-muted-foreground transition-colors hover:border-primary/70"
       >
-        프로필
-        <br />
-        사진
+        {profileImageSrc ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={profileImageSrc} alt="프로필 사진" className="h-full w-full object-cover" />
+        ) : (
+          <>
+            프로필
+            <br />
+            사진
+          </>
+        )}
       </PopoverTrigger>
 
       <PopoverContent side="bottom" align="end" sideOffset={8} className="w-44 p-1">
