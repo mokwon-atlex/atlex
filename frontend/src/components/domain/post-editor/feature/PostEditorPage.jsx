@@ -54,6 +54,7 @@ import { usePost } from '@/hooks/queries/posts/usePost';
 import { useAiTokens } from '@/hooks/queries/ai/useAiTokens';
 import { createUserBlogCategory } from '@/lib/api/users';
 import { loadUserBlogCategories } from '@/lib/category/blog-categories';
+import { getRichTextPreviewText } from '@/lib/post-editor/rich-text-html';
 import { useAuthStore } from '@/store/authStore';
 
 /**
@@ -212,7 +213,7 @@ export default function PostEditorPage({ postId }) {
     const newDraft = {
       id: `draft-${Date.now()}`,
       title: title.trim() || '제목 없는 초안',
-      body: (richText.bodyText || '').slice(0, 100),
+      body: (getRichTextPreviewText(richText.getHTML()) || richText.bodyText || '').slice(0, 100),
       content: richText.getHTML(),
       description,
       categoryId,
@@ -386,7 +387,7 @@ export default function PostEditorPage({ postId }) {
             const descriptionBeforeRequest = description;
             const summary = await aiSuggestion.requestDescriptionSuggestion({
               title,
-              content: richText.bodyText,
+              content: getRichTextPreviewText(richText.getHTML()) || richText.bodyText,
             });
             if (summary) {
               setDescription((current) => (current === descriptionBeforeRequest ? summary : current));

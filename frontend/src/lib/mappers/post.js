@@ -3,7 +3,12 @@
 // 백엔드 응답 필드명이 바뀌면 input 부분만 수정하면 된다 (호출부 무영향).
 // API 스펙에 없는 필드는 기본값/유도값으로 채운다.
 
-import { getRichTextPlainText, hasRichTextHtml, sanitizeRichTextHtml } from '@/lib/post-editor/rich-text-html';
+import {
+  getRichTextPlainText,
+  getRichTextPreviewText,
+  hasRichTextHtml,
+  sanitizeRichTextHtml,
+} from '@/lib/post-editor/rich-text-html';
 
 function truncate(text, max) {
   if (!text) return '';
@@ -36,8 +41,8 @@ export function toBlogMainPost(apiPost) {
     id: String(apiPost.id),
     title: apiPost.title,
     // description 을 우선 보여주고, 없으면 본문(content)에서 끌어온다.
-    // HTML 태그가 카드 미리보기에 노출되지 않도록 순수 텍스트만 추출해 50자로 자른다.
-    excerpt: truncate(getRichTextPlainText(apiPost.description || apiPost.content), 50),
+    // HTML 태그 및 수식·표·코드·토글 블록을 제외하고 순수 텍스트만 추출해 50자로 자른다.
+    excerpt: truncate(getRichTextPreviewText(apiPost.description || apiPost.content), 50),
     author: apiPost.authorName,
     authorUserId: apiPost.authorUserId,
     likes: apiPost.likes ?? 0,
@@ -95,7 +100,7 @@ export function toBlogHomeFeedPost(apiPost) {
   return {
     id: apiPost.id,
     title: apiPost.title,
-    excerpt: truncate(getRichTextPlainText(apiPost.content ?? apiPost.description), 120),
+    excerpt: truncate(getRichTextPreviewText(apiPost.content ?? apiPost.description), 120),
     // 카테고리명이 있을 때만 채운다(없으면 null → 카드에서 숨김).
     category: apiPost.categoryName ?? null,
     tags: apiPost.tags ?? [],

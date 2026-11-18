@@ -86,7 +86,7 @@ public class PostSummaryResponse {
             return null;
         }
 
-        String plainContent = HtmlSanitizer.extractPlainText(content);
+        String plainContent = HtmlSanitizer.extractPreviewText(content);
         if (plainContent.isBlank()) {
             return null;
         }

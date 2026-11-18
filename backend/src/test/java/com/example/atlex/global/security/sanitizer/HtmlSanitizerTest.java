@@ -63,4 +63,19 @@ class HtmlSanitizerTest {
         assertThat(HtmlSanitizer.extractPlainText(html))
             .isEqualTo("#을 누르면 헤더1로 생성됩니다. 본문 강조");
     }
+
+    @Test
+    void extractPreviewText_excludesMathCodeTableAndToggleBlocks() {
+        String html = """
+            <h1>제목 텍스트</h1>
+            <details data-type="details-block" open="open"><summary>토글 제목</summary><div><p>토글 내용</p></div></details>
+            <table><tbody><tr><td>표 셀</td></tr></tbody></table>
+            <pre><code>int a = 10;</code></pre>
+            <div data-type="math-block"><div class="post-editor-block__label">수식 (LaTeX)</div><pre><code>E=mc^2</code></pre></div>
+            <p>본문 요약 텍스트</p>
+            """;
+
+        assertThat(HtmlSanitizer.extractPreviewText(html))
+            .isEqualTo("제목 텍스트 본문 요약 텍스트");
+    }
 }

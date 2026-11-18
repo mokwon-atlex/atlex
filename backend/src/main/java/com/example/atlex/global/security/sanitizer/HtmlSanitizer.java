@@ -136,4 +136,19 @@ public final class HtmlSanitizer {
         }
         return Jsoup.parse(html).text().trim();
     }
+
+    /**
+     * 카드 미리보기 등에 사용할 수 있도록 수식·표·코드 블록·토글을 제외한 본문 텍스트만 추출한다.
+     *
+     * @param html 원본 본문 HTML
+     * @return 비텍스트 블록이 제거된 순수 텍스트
+     */
+    public static String extractPreviewText(String html) {
+        if (html == null || html.isBlank()) {
+            return "";
+        }
+        Document document = Jsoup.parseBodyFragment(html);
+        document.select("div[data-type=math-block], pre, table, details").remove();
+        return document.body().text().trim();
+    }
 }

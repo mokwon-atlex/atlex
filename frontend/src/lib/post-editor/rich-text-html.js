@@ -146,3 +146,26 @@ export function getRichTextPlainText(html) {
 
   return text.replace(/\s+/g, ' ').trim();
 }
+
+const PREVIEW_EXCLUDED_TAGS = new Set(['pre', 'table', 'details']);
+
+const PREVIEW_SANITIZE_OPTIONS = {
+  ...RICH_TEXT_SANITIZE_OPTIONS,
+  exclusiveFilter: (frame) =>
+    PREVIEW_EXCLUDED_TAGS.has(frame.tag) || (frame.tag === 'div' && frame.attribs?.['data-type'] === 'math-block'),
+};
+
+/**
+ * 카드 미리보기와 설명 생성에 사용할 수 있도록 수식·표·코드 블록·토글을 제외한 본문 텍스트만 추출한다.
+ * @param {string | null | undefined} html 저장된 게시글 본문
+ * @returns {string} 비텍스트 블록이 제거된 일반 텍스트
+ */
+export function getRichTextPreviewText(html) {
+  const withoutBlocks = sanitizeHtml(html ?? '', PREVIEW_SANITIZE_OPTIONS);
+  const text = withoutBlocks
+    .replace(BLOCK_TAG_PATTERN, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&(amp|gt|lt|nbsp|quot|#39);/g, (entity) => HTML_ENTITIES[entity]);
+
+  return text.replace(/\s+/g, ' ').trim();
+}
