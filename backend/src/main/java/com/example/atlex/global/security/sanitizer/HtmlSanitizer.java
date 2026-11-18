@@ -17,8 +17,7 @@ public final class HtmlSanitizer {
     private static final Document.OutputSettings PRESERVE_WHITESPACE_OUTPUT = new Document.OutputSettings()
         .prettyPrint(false);
 
-    private HtmlSanitizer() {
-    }
+    private HtmlSanitizer() {}
 
     private static Safelist createRichTextSafelist() {
         return new Safelist()
@@ -109,7 +108,8 @@ public final class HtmlSanitizer {
             return null;
         }
         String trimmed = url.trim();
-        if (trimmed.startsWith("/api/v1/files/") && !trimmed.contains("..") && !trimmed.chars().anyMatch(Character::isWhitespace)) {
+        if (trimmed.startsWith("/api/v1/files/") && !trimmed.contains("..")
+            && !trimmed.chars().anyMatch(Character::isWhitespace)) {
             return trimmed;
         }
         try {
