@@ -1,6 +1,7 @@
 package com.example.atlex.domain.post.dto.response;
 
 import com.example.atlex.domain.post.entity.Post;
+import com.example.atlex.global.security.sanitizer.HtmlSanitizer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -75,13 +76,21 @@ public class PostSummaryResponse {
 
     private static String resolveListDescription(String description, String content) {
         if (description != null && !description.isBlank()) {
-            return description;
+            String plainDescription = HtmlSanitizer.extractPlainText(description);
+            if (!plainDescription.isBlank()) {
+                return plainDescription;
+            }
         }
 
         if (content == null || content.isBlank()) {
             return null;
         }
 
-        return content.length() <= 50 ? content : content.substring(0, 50);
+        String plainContent = HtmlSanitizer.extractPlainText(content);
+        if (plainContent.isBlank()) {
+            return null;
+        }
+
+        return plainContent.length() <= 50 ? plainContent : plainContent.substring(0, 50);
     }
 }
