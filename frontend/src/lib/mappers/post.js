@@ -87,7 +87,6 @@ export function toBlogDetail(apiPost) {
     authorUserId: apiPost.authorUserId ?? null,
     adminActions: ['수정', '삭제'],
     contentBlocks: [
-      ...(apiPost.thumbnailUrl ? [{ id: 'cover', type: 'image', src: apiPost.thumbnailUrl, caption: '' }] : []),
       hasRichTextHtml(content)
         ? { id: 'body', type: 'rich-text', html: sanitizedContent }
         : { id: 'body', type: 'paragraph', text: content },
