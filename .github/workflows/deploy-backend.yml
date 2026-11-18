@@ -77,10 +77,10 @@ jobs:
             docker compose -f backend/docker-compose.yml pull
             docker compose -f backend/docker-compose.yml up -d
 
-            # 헬스 체크 (최대 5분, 저사양 서버의 느린 기동 고려)
-            # 요청별 5초 제한 + 시작 시점 기준 전체 5분 마감
+            # 헬스 체크 (최대 10분, 저사양 서버의 느린 기동 고려)
+            # 요청별 5초 제한 + 시작 시점 기준 전체 10분 마감
             HEALTHY=0
-            DEADLINE=$(( $(date +%s) + 300 ))
+            DEADLINE=$(( $(date +%s) + 600 ))
             i=0
             while [ "$(date +%s)" -lt "$DEADLINE" ]; do
               i=$((i + 1))
