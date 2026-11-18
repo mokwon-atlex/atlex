@@ -25,6 +25,7 @@ import com.example.atlex.domain.post.exception.PostNotFoundException;
 import com.example.atlex.domain.post.exception.PostUpdateForbiddenException;
 import com.example.atlex.domain.user.exception.UserNotFoundException;
 import com.example.atlex.global.exception.ValidationException;
+import com.example.atlex.global.security.sanitizer.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import com.example.atlex.domain.github.event.PostGitHubSyncEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -69,18 +70,24 @@ public class PostService {
                 .orElseThrow(CategoryNotFoundException::new);
         }
 
+        String sanitizedTitle = HtmlSanitizer.sanitizePlainText(request.getTitle());
+        String sanitizedDescription = HtmlSanitizer.sanitizePlainText(request.getDescription());
+        String sanitizedContent = HtmlSanitizer.sanitizeRichText(request.getContent());
+        String sanitizedThumbnailUrl = HtmlSanitizer.sanitizeImageUrl(request.getThumbnailUrl());
+        List<String> sanitizedTags = HtmlSanitizer.sanitizeTags(request.getTags());
+
         Post post = Post.builder()
             .user(user)
             .category(category)
-            .title(request.getTitle())
-            .description(request.getDescription())
-            .content(request.getContent())
-            .thumbnailUrl(request.getThumbnailUrl())
+            .title(sanitizedTitle)
+            .description(sanitizedDescription)
+            .content(sanitizedContent)
+            .thumbnailUrl(sanitizedThumbnailUrl)
             .isPublic(request.getIsPublic() != null ? request.getIsPublic() : true)
             .build();
 
         Post savedPost = postRepository.save(post);
-        List<String> tags = syncPostTags(user, savedPost, request.getTags());
+        List<String> tags = syncPostTags(user, savedPost, sanitizedTags);
         graphIndexService.refreshPostGraph(savedPost.getId());
         eventPublisher.publishEvent(PostGitHubSyncEvent.create(savedPost.getId(), user.getId()));
 
@@ -217,16 +224,26 @@ public class PostService {
             post.updateCategory(null);
         }
 
+        String sanitizedTitle = HtmlSanitizer.sanitizePlainText(request.getTitle());
+        String sanitizedDescription = HtmlSanitizer.sanitizePlainText(request.getDescription());
+        String sanitizedContent = HtmlSanitizer.sanitizeRichText(request.getContent());
+        String sanitizedThumbnailUrl = HtmlSanitizer.sanitizeImageUrl(request.getThumbnailUrl());
+        List<String> sanitizedTags = HtmlSanitizer.sanitizeTags(request.getTags());
+
         post.update(
-            request.getTitle(),
-            request.getDescription(),
-            request.getContent(),
-            request.getThumbnailUrl(),
+            sanitizedTitle,
+            sanitizedDescription,
+            sanitizedContent,
+            sanitizedThumbnailUrl,
             request.getIsPublic());
 
-        if (request.getTags() != null) {
+        if (request.isThumbnailCleared()) {
+            post.clearThumbnail();
+        }
+
+        if (sanitizedTags != null) {
             postTagRepository.deleteByPostId(post.getId());
-            syncPostTags(post.getUser(), post, request.getTags());
+            syncPostTags(post.getUser(), post, sanitizedTags);
         }
 
         graphIndexService.refreshPostGraph(post.getId());
