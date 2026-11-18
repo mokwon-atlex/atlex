@@ -28,16 +28,11 @@ export default function BlogHomeFeed({ feed }) {
       </div>
 
       {hasPosts ? (
-        <Card
-          className={cn(
-            'overflow-hidden rounded-3xl gap-0 border-border bg-card/40 py-0 shadow-none',
-            isLoading && 'opacity-60',
-          )}
-        >
-          {posts.map((post, index) => (
-            <BlogHomeFeedItemLayout key={post.id} {...post} isLast={index === posts.length - 1} />
+        <div className={cn('space-y-4', isLoading && 'opacity-60')}>
+          {posts.map((post) => (
+            <BlogHomeFeedItemLayout key={post.id} {...post} />
           ))}
-        </Card>
+        </div>
       ) : (
         <Card className="overflow-hidden rounded-3xl gap-0 border-border bg-card/40 py-0 shadow-none">
           <div className="flex min-h-64 flex-col items-center justify-center gap-2 px-6 py-16 text-center">

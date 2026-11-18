@@ -16,10 +16,10 @@ export default function BlogMainPostCard({ post }) {
 
       {/* 본문 영역: flex column + min-height 로 카드 높이 베이스라인을 유지하고,
           날짜/댓글 푸터는 mt-auto 로 항상 하단에 고정한다. */}
-      <CardContent className={`flex min-h-[7.5rem] flex-1 flex-col px-3.5 pb-3 ${hasCover ? 'pt-3' : 'pt-4'}`}>
+      <CardContent className={`flex min-h-[8.5rem] flex-1 flex-col px-4 pb-3.5 ${hasCover ? 'pt-3.5' : 'pt-4'}`}>
         {/* 썸네일 없는 카드는 카테고리 배지와 넉넉한 본문 미리보기로 시각적 밀도를 채운다. */}
         {!hasCover && post.eyebrow ? (
-          <span className="mb-2.5 inline-flex w-fit items-center rounded-full border border-border/80 bg-background/80 px-2.5 py-0.5 text-[0.65rem] font-semibold tracking-[-0.01em] text-muted-foreground">
+          <span className="mb-3 inline-flex w-fit items-center rounded-full border border-border/80 bg-background/80 px-2.5 py-0.5 text-xs font-semibold tracking-[-0.01em] text-muted-foreground">
             {post.eyebrow}
           </span>
         ) : null}
@@ -27,7 +27,7 @@ export default function BlogMainPostCard({ post }) {
         {/* 제목: 2줄로 클램프(길어도 카드가 안 늘어남). 1줄이면 자연 높이라 본문과 붙음. */}
         <h3
           className={`line-clamp-2 font-bold tracking-[-0.03em] text-foreground transition-colors group-hover:text-primary ${
-            hasCover ? 'text-[0.88rem] leading-5.5' : 'text-[1.02rem] leading-6'
+            hasCover ? 'text-[1rem] leading-6' : 'text-[1.125rem] leading-7'
           }`}
         >
           {post.title}
@@ -39,7 +39,9 @@ export default function BlogMainPostCard({ post }) {
           <Textfield
             whitespace="keep"
             className={`text-muted-foreground ${
-              hasCover ? 'mt-1.5 line-clamp-2 text-[0.74rem] leading-5' : 'mt-2.5 line-clamp-5 text-[0.8rem] leading-6'
+              hasCover
+                ? 'mt-1.5 line-clamp-2 text-[0.85rem] leading-5.5'
+                : 'mt-2.5 line-clamp-5 text-[0.875rem] leading-6'
             }`}
           >
             {post.excerpt}
@@ -47,7 +49,7 @@ export default function BlogMainPostCard({ post }) {
         ) : null}
 
         {/* 날짜/댓글: mt-auto 로 카드 하단에 고정 */}
-        <div className="mt-auto flex items-center justify-between pt-3.5 text-[0.62rem] text-muted-foreground">
+        <div className="mt-auto flex items-center justify-between pt-4 text-xs text-muted-foreground">
           <span>{post.publishedAt}</span>
           <span>{post.comments}개의 댓글</span>
         </div>
@@ -57,7 +59,7 @@ export default function BlogMainPostCard({ post }) {
 
   return (
     <Card
-      className={`min-h-[20rem] gap-0 rounded-xl py-0 shadow-xs transition-all duration-200 ease-out hover:-translate-y-1 hover:border-foreground/15 hover:shadow-lg ${
+      className={`min-h-[22.5rem] gap-0 rounded-xl py-0 shadow-xs transition-all duration-200 ease-out hover:-translate-y-1 hover:border-foreground/15 hover:shadow-lg ${
         hasCover ? '' : 'bg-gradient-to-b from-muted/50 via-card to-card'
       }`}
     >
@@ -69,7 +71,7 @@ export default function BlogMainPostCard({ post }) {
         <div className="flex flex-1 flex-col">{detailBody}</div>
       )}
 
-      <CardFooter className="justify-between rounded-b-xl border-t border-border/50 bg-transparent px-3.5 py-2.5 text-[0.68rem] text-muted-foreground">
+      <CardFooter className="justify-between rounded-b-xl border-t border-border/50 bg-transparent px-4 py-3 text-xs text-muted-foreground">
         <p>
           by{' '}
           {userHref ? (
@@ -82,7 +84,7 @@ export default function BlogMainPostCard({ post }) {
         </p>
 
         <p className="inline-flex items-center gap-1 font-semibold text-foreground">
-          <Heart className={`h-3 w-3 ${post.liked ? 'fill-current' : ''}`} />
+          <Heart className={`h-3.5 w-3.5 ${post.liked ? 'fill-current' : ''}`} />
           <span>{post.likes}</span>
         </p>
       </CardFooter>
