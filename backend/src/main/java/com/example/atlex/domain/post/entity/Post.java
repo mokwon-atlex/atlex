@@ -86,6 +86,10 @@ public class Post {
         this.category = category;
     }
 
+    public void clearThumbnail() {
+        this.thumbnailUrl = null;
+    }
+
     public void softDelete() {
         this.isDeleted = true;
     }

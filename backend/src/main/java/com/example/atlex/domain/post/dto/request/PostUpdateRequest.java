@@ -30,9 +30,12 @@ public class PostUpdateRequest {
     @Size(max = 5000, message = "내용은 5000자 이하로 입력해주세요.")
     private String content;
 
-    @Schema(description = "변경할 썸네일 URL (최대 255자, 선택)", example = "https://example.com/images/new_thumbnail.jpg")
+    @Schema(description = "변경할 썸네일 URL (최대 255자, 선택, null 또는 빈 문자열이면 해제)", example = "https://example.com/images/new_thumbnail.jpg", nullable = true)
     @Size(max = 255, message = "썸네일 URL은 255자 이하로 입력해주세요.")
     private String thumbnailUrl;
+
+    @JsonIgnore
+    private boolean thumbnailUrlPresent;
 
     @Schema(description = "변경할 카테고리 ID (선택, 생략하면 유지, null이면 카테고리 해제)", example = "3", nullable = true)
     private Long categoryId;
@@ -68,6 +71,17 @@ public class PostUpdateRequest {
         this.categoryIdPresent = categoryId != null;
         this.tags = tags;
         this.isPublic = isPublic;
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+        this.thumbnailUrlPresent = true;
+    }
+
+    /** 요청 본문에 thumbnailUrl 이 null 또는 빈 문자열로 전송되어 썸네일을 해제해야 하는지 여부. */
+    @JsonIgnore
+    public boolean isThumbnailCleared() {
+        return thumbnailUrlPresent && (thumbnailUrl == null || thumbnailUrl.isBlank());
     }
 
     public void setCategoryId(Long categoryId) {

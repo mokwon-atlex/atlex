@@ -36,9 +36,8 @@ export function toBlogMainPost(apiPost) {
     id: String(apiPost.id),
     title: apiPost.title,
     // description 을 우선 보여주고, 없으면 본문(content)에서 끌어온다.
-    // ?? 대신 || 를 써서 description 이 빈 문자열("")일 때도 content 로 폴백한다.
-    // truncate 가 50자를 넘으면 말줄임표(…)를 붙인다(둘 다 없으면 빈 문자열).
-    excerpt: truncate(apiPost.description || apiPost.content, 50),
+    // HTML 태그가 카드 미리보기에 노출되지 않도록 순수 텍스트만 추출해 50자로 자른다.
+    excerpt: truncate(getRichTextPlainText(apiPost.description || apiPost.content), 50),
     author: apiPost.authorName,
     authorUserId: apiPost.authorUserId,
     likes: apiPost.likes ?? 0,
@@ -96,7 +95,7 @@ export function toBlogHomeFeedPost(apiPost) {
   return {
     id: apiPost.id,
     title: apiPost.title,
-    excerpt: truncate(apiPost.content ?? apiPost.description, 120),
+    excerpt: truncate(getRichTextPlainText(apiPost.content ?? apiPost.description), 120),
     // 카테고리명이 있을 때만 채운다(없으면 null → 카드에서 숨김).
     category: apiPost.categoryName ?? null,
     tags: apiPost.tags ?? [],
