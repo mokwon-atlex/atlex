@@ -110,6 +110,7 @@ export const RichText = {
       authorUserId: 'writer',
       content: '<p>Safe <strong>format</strong></p>',
       isPublic: true,
+      thumbnailUrl: 'https://placehold.co/800x400',
       title: 'Rich text post',
     });
     const unsafeHtmlDetail = toBlogDetail({
@@ -129,7 +130,8 @@ export const RichText = {
     const literalTagTextBlock = literalTagTextDetail.contentBlocks.at(-1);
     const canvas = within(canvasElement);
 
-    await expect(richTextBlock).toMatchObject({ type: 'rich-text' });
+    await expect(richTextDetail.contentBlocks).toHaveLength(1);
+    await expect(richTextBlock).toMatchObject({ id: 'body', type: 'rich-text' });
     await expect(richTextBlock.html).toContain('<strong>format</strong>');
     await expect(unsafeHtmlBlock.html).not.toContain('<script');
     await expect(unsafeHtmlBlock.html).not.toContain('onclick');
