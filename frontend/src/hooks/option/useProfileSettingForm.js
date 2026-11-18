@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { checkUserEmail, getUser, updateUser } from '@/lib/api/users';
+import { uploadImageFile } from '@/lib/api/files';
 import { updateProfile } from '@/lib/api/profiles';
 import { useAuthStore } from '@/store/authStore';
 
@@ -50,16 +51,6 @@ function createFormValues(user) {
   };
 }
 
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('이미지 파일을 읽지 못했습니다.'));
-    reader.readAsDataURL(file);
-  });
-}
-
 export function useProfileSettingForm() {
   const queryClient = useQueryClient();
   const imageInputRef = useRef(null);
@@ -70,6 +61,7 @@ export function useProfileSettingForm() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [initialValues, setInitialValues] = useState(null);
   const [status, setStatus] = useState(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const settingsQuery = useQuery({
     queryKey: ['user-settings', userId],
@@ -212,15 +204,18 @@ export function useProfileSettingForm() {
       return;
     }
 
+    setIsUploadingImage(true);
+    setStatus(null);
     try {
-      const nextImage = await readFileAsDataUrl(selectedFile);
+      const uploaded = await uploadImageFile(selectedFile);
 
-      if (typeof nextImage === 'string') {
-        updateField('profileImage', nextImage);
+      if (typeof uploaded?.url === 'string' && uploaded.url) {
+        updateField('profileImage', uploaded.url);
       }
     } catch (error) {
-      setStatus(createStatus('error', error.message ?? '이미지 파일을 읽지 못했습니다.'));
+      setStatus(createStatus('error', error.message ?? '이미지 업로드에 실패했습니다.'));
     } finally {
+      setIsUploadingImage(false);
       input.value = '';
     }
   }
@@ -282,7 +277,7 @@ export function useProfileSettingForm() {
   return {
     form,
     imageInputRef,
-    isBusy: settingsQuery.isPending || saveSettings.isPending,
+    isBusy: settingsQuery.isPending || saveSettings.isPending || isUploadingImage,
     isCheckingEmail: checkEmail.isPending,
     isReady,
     isSaving: saveSettings.isPending,
