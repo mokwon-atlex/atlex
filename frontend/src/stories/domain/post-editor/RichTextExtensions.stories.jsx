@@ -1,4 +1,4 @@
-import { resolveExtensions } from '@tiptap/core';
+import { generateJSON, resolveExtensions } from '@tiptap/core';
 import { expect } from 'storybook/test';
 
 import { editorExtensions } from '@/lib/post-editor/rich-text-extensions';
@@ -37,4 +37,17 @@ export default meta;
 // 링크와 밑줄 확장을 단일 구성으로 제공하는 상태
 export const Default = {
   play: verifySingleExtensionRegistration,
+};
+
+// 수식 블록 HTML을 다시 파싱할 때 라벨 텍스트가 수식에 섞이지 않는 상태
+export const MathBlockParseHtml = {
+  play: async () => {
+    const html =
+      '<div data-type="math-block"><div class="post-editor-block__label">수식 (LaTeX)</div><pre class="post-editor-block__body"><code>\\sum_{i=1}^{n} x_i</code></pre></div>';
+    const doc = generateJSON(html, editorExtensions);
+    const mathNode = doc.content?.find((node) => node.type === 'mathBlock');
+
+    await expect(mathNode).toBeDefined();
+    await expect(mathNode.content?.[0]?.text).toBe('\\sum_{i=1}^{n} x_i');
+  },
 };

@@ -114,7 +114,13 @@ const MathBlock = Node.create({
     };
   },
   parseHTML() {
-    return [{ tag: 'div[data-type="math-block"]' }];
+    return [
+      {
+        tag: 'div[data-type="math-block"]',
+        // 라벨(.post-editor-block__label) 텍스트가 수식 본문에 섞이지 않도록 code 영역만 파싱한다.
+        contentElement: 'pre code',
+      },
+    ];
   },
   renderHTML({ HTMLAttributes }) {
     return [
