@@ -5,6 +5,7 @@ import com.example.atlex.domain.post.dto.request.PostUpdateRequest;
 import com.example.atlex.domain.post.dto.response.PostResponse;
 import com.example.atlex.domain.post.dto.response.PostSummaryResponse;
 import com.example.atlex.domain.category.entity.Category;
+import com.example.atlex.domain.comment.repository.CommentRepository;
 import com.example.atlex.domain.graph.service.GraphIndexService;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.category.repository.CategoryRepository;
@@ -54,6 +55,7 @@ public class PostService {
     private final GraphIndexService graphIndexService;
     private final PostLikeRepository postLikeRepository;
     private final PostFavoriteRepository postFavoriteRepository;
+    private final CommentRepository commentRepository;
     private final PostTagRepository postTagRepository;
     private final TagRepository tagRepository;
     private final TagService tagService;
@@ -137,7 +139,11 @@ public class PostService {
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
         Page<Post> posts;
-        if (normalizedKeyword == null) {
+        if ("feed".equals(normalizedType)) {
+            posts = id == null
+                ? Page.empty(sortedPageable)
+                : postRepository.findFollowingFeed(id, normalizedTag, normalizedKeyword, sortedPageable);
+        } else if (normalizedKeyword == null) {
             posts = (id != null)
                 ? postRepository.findAllVisibleTo(id, normalizedUserId, categoryId, normalizedTag, sortedPageable)
                 : postRepository.findAllPublic(normalizedUserId, categoryId, normalizedTag, sortedPageable);
@@ -161,11 +167,24 @@ public class PostService {
         List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
         Map<Long, List<String>> tagMap = findTagNamesByPostIds(postIds);
         Set<Long> likedPostIds = findLikedPostIds(id, postIds);
+        Map<Long, Long> commentCountMap = findCommentCountsByPostIds(postIds);
 
         return posts.map(post -> PostSummaryResponse.from(
             post,
             tagMap.getOrDefault(post.getId(), List.of()),
-            likedPostIds.contains(post.getId())));
+            likedPostIds.contains(post.getId()),
+            commentCountMap.getOrDefault(post.getId(), 0L)));
+    }
+
+    private Map<Long, Long> findCommentCountsByPostIds(List<Long> postIds) {
+        if (postIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Long> counts = new java.util.HashMap<>();
+        for (Object[] row : commentRepository.countActiveByPostIds(postIds)) {
+            counts.put((Long)row[0], ((Number)row[1]).longValue());
+        }
+        return counts;
     }
 
     private String normalizeType(String type) {
@@ -173,7 +192,10 @@ public class PostService {
             return "latest";
         }
         String normalizedType = type.trim().toLowerCase(Locale.ROOT);
-        return "trending".equals(normalizedType) ? "trending" : "latest";
+        if ("trending".equals(normalizedType) || "feed".equals(normalizedType)) {
+            return normalizedType;
+        }
+        return "latest";
     }
 
     private String normalizeUserId(String userId) {

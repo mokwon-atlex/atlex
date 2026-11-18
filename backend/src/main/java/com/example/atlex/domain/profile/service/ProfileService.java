@@ -1,6 +1,7 @@
 package com.example.atlex.domain.profile.service;
 
 import com.example.atlex.domain.follow.repository.FollowRepository;
+import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.profile.dto.request.ProfileUpdateRequest;
 import com.example.atlex.domain.profile.dto.response.PublicUserResponse;
 import com.example.atlex.domain.user.entity.User;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProfileService {
 
     private final FollowRepository followRepository;
+    private final PostRepository postRepository;
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
@@ -32,10 +34,14 @@ public class ProfileService {
             .orElseThrow(UserNotFoundException::new);
         long followerCount = followRepository.countByFollowingId(user.getId());
         long followingCount = followRepository.countByFollowerId(user.getId());
+        boolean isOwner = loginUser != null && user.getId().equals(loginUser.getId());
+        long postCount = isOwner
+            ? postRepository.countByUser_IdAndIsDeletedFalse(user.getId())
+            : postRepository.countByUser_IdAndIsDeletedFalseAndIsPublicTrue(user.getId());
         boolean following = loginUser != null
             && !loginUser.getId().equals(user.getId())
             && followRepository.existsByFollowerAndFollowing(loginUser, user);
-        return PublicUserResponse.from(user, followerCount, followingCount, following);
+        return PublicUserResponse.from(user, followerCount, followingCount, following, postCount);
     }
 
     @Transactional
@@ -58,6 +64,7 @@ public class ProfileService {
 
         long followerCount = followRepository.countByFollowingId(user.getId());
         long followingCount = followRepository.countByFollowerId(user.getId());
-        return PublicUserResponse.from(user, followerCount, followingCount, false);
+        long postCount = postRepository.countByUser_IdAndIsDeletedFalse(user.getId());
+        return PublicUserResponse.from(user, followerCount, followingCount, false, postCount);
     }
 }

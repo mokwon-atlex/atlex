@@ -29,4 +29,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
         "ORDER BY c.createdAt ASC, c.id ASC")
     List<Comment> findAllWithAuthorByPostId(@Param("postId")
     Long postId);
+
+    @Query("SELECT c.post.id, COUNT(c) FROM Comment c " +
+        "WHERE c.isDeleted = false AND c.post.id IN :postIds " +
+        "GROUP BY c.post.id")
+    List<Object[]> countActiveByPostIds(@Param("postIds")
+    List<Long> postIds);
 }

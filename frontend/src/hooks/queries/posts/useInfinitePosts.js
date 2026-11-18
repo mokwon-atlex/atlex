@@ -59,7 +59,7 @@ export function useInfinitePosts({ pageSize = 10, authorUserId, userId, type, ta
     // SSR 에서 받은 첫 페이지를 캐시에 바로 주입한다.
     // initialPosts 가 없으면 undefined 로 두어 클라이언트가 직접 첫 페이지를 요청하게 한다.
     initialData:
-      initialPosts === undefined
+      initialPosts === undefined || type === 'feed'
         ? undefined
         : {
             pages: [{ posts: initialPosts, page: 0, totalPages: totalPages ?? 0 }],

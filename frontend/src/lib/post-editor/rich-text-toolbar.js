@@ -191,6 +191,15 @@ function pickLocalFile(accept) {
   });
 }
 
+const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
+
+function resolveUploadErrorMessage(error, fallbackMessage) {
+  if (error?.status === 413 || error?.code === 'MAX_UPLOAD_SIZE_EXCEEDED') {
+    return '업로드 용량 제한(20MB)을 초과했습니다.';
+  }
+  return error?.message || fallbackMessage;
+}
+
 /**
  * 이미지 파일을 백엔드에 업로드한 뒤 에디터의 지정 위치(또는 현재 커서)에 삽입한다.
  *
@@ -203,6 +212,11 @@ export async function uploadAndInsertImage(editor, file, selection = null) {
     return;
   }
 
+  if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+    toast.error('이미지 크기는 최대 20MB까지 업로드할 수 있습니다.');
+    return;
+  }
+
   const toastId = toast.loading('이미지를 업로드하는 중입니다...');
   try {
     const uploaded = await uploadImageFile(file);
@@ -210,7 +224,7 @@ export async function uploadAndInsertImage(editor, file, selection = null) {
     chain.setImage({ alt: uploaded.originalName || file.name, src: uploaded.url }).run();
     toast.success('이미지가 삽입되었습니다.', { id: toastId });
   } catch (error) {
-    toast.error(error?.message || '이미지 업로드에 실패했습니다.', { id: toastId });
+    toast.error(resolveUploadErrorMessage(error, '이미지 업로드에 실패했습니다.'), { id: toastId });
   }
 }
 
@@ -223,6 +237,11 @@ export async function uploadAndInsertImage(editor, file, selection = null) {
  */
 export async function uploadAndInsertAttachment(editor, file, selection = null) {
   if (!editor || !file) {
+    return;
+  }
+
+  if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+    toast.error('첨부파일 크기는 최대 20MB까지 업로드할 수 있습니다.');
     return;
   }
 
@@ -257,7 +276,7 @@ export async function uploadAndInsertAttachment(editor, file, selection = null) 
       .run();
     toast.success('파일이 첨부되었습니다.', { id: toastId });
   } catch (error) {
-    toast.error(error?.message || '파일 업로드에 실패했습니다.', { id: toastId });
+    toast.error(resolveUploadErrorMessage(error, '파일 업로드에 실패했습니다.'), { id: toastId });
   }
 }
 

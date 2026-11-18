@@ -47,12 +47,13 @@ export function fetchPostById(postId) {
 // POST /posts — 게시글 작성.
 // Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
 // payload: { categoryId?, title, description?, content, tags?, isPublic? }
-export function createPost({ categoryId, title, description, content, tags, isPublic } = {}) {
+export function createPost({ categoryId, title, description, content, thumbnailUrl, tags, isPublic } = {}) {
   return apiClient.post('/posts', {
     ...(categoryId != null && { categoryId }),
     title,
     description,
     content,
+    ...(thumbnailUrl !== undefined && { thumbnailUrl }),
     ...(tags !== undefined && { tags }),
     ...(isPublic !== undefined && { isPublic }),
   });
@@ -60,14 +61,15 @@ export function createPost({ categoryId, title, description, content, tags, isPu
 
 // PATCH /posts/{postId} — 게시글 수정.
 // Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
-// payload: { categoryId?, title?, description?, content?, tags?, isPublic? }
+// payload: { categoryId?, title?, description?, content?, thumbnailUrl?, tags?, isPublic? }
 // categoryId: undefined 면 기존 카테고리 유지, null 이면 카테고리 해제.
-export function updatePost(postId, { categoryId, title, description, content, tags, isPublic } = {}) {
+export function updatePost(postId, { categoryId, title, description, content, thumbnailUrl, tags, isPublic } = {}) {
   return apiClient.patch(`/posts/${postId}`, {
     ...(categoryId !== undefined && { categoryId }),
     ...(title !== undefined && { title }),
     ...(description !== undefined && { description }),
     ...(content !== undefined && { content }),
+    ...(thumbnailUrl !== undefined && { thumbnailUrl }),
     ...(tags !== undefined && { tags }),
     ...(isPublic !== undefined && { isPublic }),
   });
