@@ -246,7 +246,8 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
   }
 
   function submitTableModal({ rows, cols }) {
-    if (!editor) {
+    if (!editor || editor.isActive('table')) {
+      closeTableModal();
       return;
     }
 
