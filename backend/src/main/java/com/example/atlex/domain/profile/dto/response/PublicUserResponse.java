@@ -27,14 +27,25 @@ public class PublicUserResponse {
     private long followerCount;
     @Schema(description = "팔로잉 수", example = "5")
     private long followingCount;
+    @Schema(description = "게시글 수", example = "8")
+    private long postCount;
     @Schema(description = "현재 로그인 사용자의 팔로우 여부", example = "false")
     private boolean following;
 
     public static PublicUserResponse from(User user) {
-        return from(user, 0L, 0L, false);
+        return from(user, 0L, 0L, false, 0L);
     }
 
     public static PublicUserResponse from(User user, long followerCount, long followingCount, boolean following) {
+        return from(user, followerCount, followingCount, following, 0L);
+    }
+
+    public static PublicUserResponse from(
+        User user,
+        long followerCount,
+        long followingCount,
+        boolean following,
+        long postCount) {
         return PublicUserResponse.builder()
             .id(user.getId())
             .userId(user.getUserId())
@@ -43,6 +54,7 @@ public class PublicUserResponse {
             .info(user.getInfo())
             .followerCount(followerCount)
             .followingCount(followingCount)
+            .postCount(postCount)
             .following(following)
             .build();
     }

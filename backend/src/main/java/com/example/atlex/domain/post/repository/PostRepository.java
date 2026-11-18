@@ -142,6 +142,65 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         String keyword,
         Pageable pageable);
 
+    @EntityGraph(attributePaths = {"user", "category"})
+    @Query(value = """
+        SELECT p FROM Post p
+        WHERE p.isDeleted = false
+          AND p.isPublic = true
+          AND EXISTS (
+              SELECT f FROM Follow f
+              WHERE f.follower.id = :id AND f.following = p.user
+          )
+          AND (:tag IS NULL OR EXISTS (
+              SELECT pt FROM PostTag pt
+              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
+          ))
+          AND (:keyword IS NULL
+              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR EXISTS (
+                  SELECT pt FROM PostTag pt
+                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              ))
+        """, countQuery = """
+        SELECT COUNT(p) FROM Post p
+        WHERE p.isDeleted = false
+          AND p.isPublic = true
+          AND EXISTS (
+              SELECT f FROM Follow f
+              WHERE f.follower.id = :id AND f.following = p.user
+          )
+          AND (:tag IS NULL OR EXISTS (
+              SELECT pt FROM PostTag pt
+              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
+          ))
+          AND (:keyword IS NULL
+              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              OR EXISTS (
+                  SELECT pt FROM PostTag pt
+                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              ))
+        """)
+    Page<Post> findFollowingFeed(
+        @Param("id")
+        Long id,
+        @Param("tag")
+        String tag,
+        @Param("keyword")
+        String keyword,
+        Pageable pageable);
+
+    long countByUser_IdAndIsDeletedFalseAndIsPublicTrue(Long userId);
+
+    long countByUser_IdAndIsDeletedFalse(Long userId);
+
     @Query("SELECT p FROM Post p JOIN FETCH p.user LEFT JOIN FETCH p.category WHERE p.id = :id AND p.isDeleted = false")
     Optional<Post> findWithUserById(Long id);
 
