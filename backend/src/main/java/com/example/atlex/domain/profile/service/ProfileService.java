@@ -4,6 +4,7 @@ import com.example.atlex.domain.follow.repository.FollowRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.profile.dto.request.ProfileUpdateRequest;
 import com.example.atlex.domain.profile.dto.response.PublicUserResponse;
+import com.example.atlex.domain.user.entity.BlogSkin;
 import com.example.atlex.domain.user.entity.User;
 import com.example.atlex.domain.user.repository.UserRepository;
 import com.example.atlex.domain.user.exception.UserNotFoundException;
@@ -61,6 +62,9 @@ public class ProfileService {
             request.getName() != null ? request.getName().trim() : null,
             request.getProfileImage(),
             request.getInfo());
+        if (request.getBlogSkin() != null) {
+            user.updateBlogSkin(BlogSkin.valueOf(request.getBlogSkin()));
+        }
 
         long followerCount = followRepository.countByFollowingId(user.getId());
         long followingCount = followRepository.countByFollowerId(user.getId());

@@ -28,9 +28,10 @@ const AVATAR_COLORS = ['#6252D9', '#159D91', '#2F7ED8', '#E25555', '#7B5CE1', '#
  * API에 좌표가 없으므로 같은 응답은 항상 같은 위치를 사용하도록 노드 순서에서 좌표를 계산한다.
  *
  * @param {{ nodes?: GraphNodeResponse[], edges?: GraphEdgeResponse[] } | undefined} graph API 응답
+ * @param {{ groupByCategory?: boolean }} [options] 배치 옵션
  * @returns {{ authors: object[], edges: object[], posts: object[], tagCounts: [string, number][] }} 화면 데이터
  */
-export function toGraphViewData(graph) {
+export function toGraphViewData(graph, { groupByCategory = false } = {}) {
   const nodes = Array.isArray(graph?.nodes) ? [...graph.nodes].sort(compareNodes) : [];
   const edges = Array.isArray(graph?.edges) ? graph.edges : [];
   const authorsById = new Map();
@@ -77,7 +78,7 @@ export function toGraphViewData(graph) {
       },
     ];
   });
-  const positions = createForceDirectedPositions(postDrafts, mappedEdges);
+  const positions = createForceDirectedPositions(postDrafts, mappedEdges, groupByCategory);
   const posts = postDrafts.map((post, index) => ({
     ...post,
     radius: 24,
@@ -100,22 +101,60 @@ function compareNodes(left, right) {
   return String(left.id).localeCompare(String(right.id), 'en', { numeric: true });
 }
 
-/** 관계 간선의 인력과 노드 간 반발력을 계산해 고정된 그래프 배치를 만든다. */
-function createForceDirectedPositions(posts, edges) {
+/** 카테고리별 클러스터 중심 좌표를 계산한다. */
+function createCategoryAnchors(posts) {
+  const categories = [...new Set(posts.map((post) => post.categoryName || '미분류'))].sort((a, b) =>
+    a.localeCompare(b, 'ko'),
+  );
+  const anchors = new Map();
+
+  if (categories.length <= 1) {
+    categories.forEach((category) => {
+      anchors.set(category, { x: SVG_W / 2, y: SVG_H / 2 });
+    });
+    return anchors;
+  }
+
+  const rx = SVG_W * 0.3;
+  const ry = SVG_H * 0.27;
+
+  categories.forEach((category, index) => {
+    const angle = (Math.PI * 2 * index) / categories.length - Math.PI / 2;
+    anchors.set(category, {
+      x: SVG_W / 2 + Math.cos(angle) * rx,
+      y: SVG_H / 2 + Math.sin(angle) * ry,
+    });
+  });
+
+  return anchors;
+}
+
+/** 관계 간선의 인력, 카테고리 클러스터 인력과 노드 간 반발력을 계산해 고정된 그래프 배치를 만든다. */
+function createForceDirectedPositions(posts, edges, groupByCategory = false) {
   const seedPositions = createNodePositions(posts.length);
 
   if (posts.length <= 1) {
     return seedPositions;
   }
 
+  const categoryAnchors = groupByCategory ? createCategoryAnchors(posts) : new Map();
+  const useCategoryClustering = groupByCategory && categoryAnchors.size > 1;
   const indexById = new Map(posts.map((post, index) => [post.id, index]));
-  const layoutNodes = posts.map((post, index) => ({
-    id: post.id,
-    velocityX: 0,
-    velocityY: 0,
-    x: seedPositions[index].x,
-    y: seedPositions[index].y,
-  }));
+  const layoutNodes = posts.map((post, index) => {
+    const categoryKey = post.categoryName || '미분류';
+    const anchor = categoryAnchors.get(categoryKey) ?? { x: SVG_W / 2, y: SVG_H / 2 };
+    const localAngle = (index * 2.39996) % (Math.PI * 2);
+    const localRadius = useCategoryClustering ? 40 + (index % 4) * 22 : 0;
+
+    return {
+      id: post.id,
+      anchor,
+      velocityX: 0,
+      velocityY: 0,
+      x: useCategoryClustering ? anchor.x + Math.cos(localAngle) * localRadius : seedPositions[index].x,
+      y: useCategoryClustering ? anchor.y + Math.sin(localAngle) * localRadius : seedPositions[index].y,
+    };
+  });
   const degrees = Array.from({ length: posts.length }, () => 0);
   const linkedPairs = new Set();
   const links = edges.flatMap((edge) => {
@@ -199,9 +238,10 @@ function createForceDirectedPositions(posts, edges) {
       forceY[targetIndex] -= unitY * attraction;
     });
 
+    const clusterStrength = useCategoryClustering ? 0.014 : 0.002;
     layoutNodes.forEach((node, index) => {
-      forceX[index] += (SVG_W / 2 - node.x) * 0.002;
-      forceY[index] += (SVG_H / 2 - node.y) * 0.002;
+      forceX[index] += (node.anchor.x - node.x) * clusterStrength;
+      forceY[index] += (node.anchor.y - node.y) * clusterStrength;
       node.velocityX = Math.max(-14, Math.min(14, (node.velocityX + forceX[index]) * 0.78));
       node.velocityY = Math.max(-14, Math.min(14, (node.velocityY + forceY[index]) * 0.78));
       node.x = Math.max(minX, Math.min(maxX, node.x + node.velocityX));

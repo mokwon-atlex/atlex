@@ -13,9 +13,13 @@ export function FilterSidebar({
   activeAuthors,
   activeTags,
   authors,
+  clearAllAuthors,
+  clearAllTags,
   hasExplicitEdges,
   minSharedTags,
   resetFilters,
+  selectAllAuthors,
+  selectAllTags,
   setMinSharedTags,
   setShowExplicitEdges,
   setShowTagEdges,
@@ -101,6 +105,21 @@ export function FilterSidebar({
               className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-2.5 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
             />
           </div>
+          {authors.length > 0 ? (
+            <div className="flex items-center justify-end gap-2 text-[11px] font-bold">
+              <button type="button" onClick={selectAllAuthors} className="cursor-pointer text-primary hover:underline">
+                전체 선택
+              </button>
+              <span className="text-border">|</span>
+              <button
+                type="button"
+                onClick={clearAllAuthors}
+                className="cursor-pointer text-muted-foreground hover:text-foreground"
+              >
+                전체 해제
+              </button>
+            </div>
+          ) : null}
           {filteredAuthors.length === 0 ? (
             <p className="text-xs text-muted-foreground">일치하는 작성자가 없습니다.</p>
           ) : (
@@ -141,6 +160,21 @@ export function FilterSidebar({
             className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-2.5 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
           />
         </div>
+        {tagCounts.length > 0 ? (
+          <div className="flex items-center justify-end gap-2 text-[11px] font-bold">
+            <button type="button" onClick={selectAllTags} className="cursor-pointer text-primary hover:underline">
+              전체 선택
+            </button>
+            <span className="text-border">|</span>
+            <button
+              type="button"
+              onClick={clearAllTags}
+              className="cursor-pointer text-muted-foreground hover:text-foreground"
+            >
+              전체 해제
+            </button>
+          </div>
+        ) : null}
         {filteredTagCounts.length === 0 ? (
           <p className="text-xs text-muted-foreground">일치하는 태그가 없습니다.</p>
         ) : (

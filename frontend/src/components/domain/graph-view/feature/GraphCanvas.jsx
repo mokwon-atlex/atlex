@@ -16,6 +16,33 @@ import {
 } from '@/lib/graph-view/graph-view-utils';
 import { LockBadge } from '@/components/domain/graph-view/ui/GraphViewIcons';
 
+const STAR_PALETTE = ['#E0F2FE', '#93C5FD', '#A7F3D0', '#FDE68A', '#BAE6FD'];
+
+/** 결정론적 시드로 밤하늘 배경 별 좌표를 생성한다. */
+const BACKGROUND_STARS = Array.from({ length: 90 }, (_, index) => {
+  const seedA = Math.sin(index * 12.9898 + 78.233) * 43758.5453;
+  const seedB = Math.sin(index * 93.9898 + 19.133) * 24634.6345;
+  const seedC = Math.sin(index * 45.164 + 11.73) * 19283.412;
+  const rx = seedA - Math.floor(seedA);
+  const ry = seedB - Math.floor(seedB);
+  const rz = seedC - Math.floor(seedC);
+  return {
+    x: Math.round(-420 + rx * (SVG_W + 840)),
+    y: Math.round(-160 + ry * (SVG_H + 320)),
+    r: 0.6 + rz * 1.1,
+    opacity: 0.22 + (index % 5) * 0.14,
+  };
+});
+
+function getStarColor(postId) {
+  const str = String(postId ?? '');
+  let hash = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return STAR_PALETTE[hash % STAR_PALETTE.length];
+}
+
 /** 노드·간선 SVG와 확대, 이동, 선택 상호작용을 렌더링한다. */
 export function GraphCanvas({
   activeTab,
@@ -97,8 +124,32 @@ export function GraphCanvas({
 
     return relatedIds;
   }, [focusedEdges, focusedNodeIds]);
+  const categoryClusters = useMemo(() => {
+    if (activeTab !== 'category') return [];
+    const groups = new Map();
+    filteredPosts.forEach((post) => {
+      const key = post.categoryName || '미분류';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(post);
+    });
+    if (groups.size === 0) return [];
+
+    return [...groups.entries()].map(([name, groupPosts]) => {
+      const cx = groupPosts.reduce((sum, p) => sum + p.x, 0) / groupPosts.length;
+      const cy = groupPosts.reduce((sum, p) => sum + p.y, 0) / groupPosts.length;
+      const maxDist = groupPosts.reduce((max, p) => Math.max(max, Math.hypot(p.x - cx, p.y - cy)), 0);
+      return {
+        color: getStarColor(name),
+        name,
+        cx,
+        cy,
+        radius: Math.max(72, maxDist + 48),
+      };
+    });
+  }, [activeTab, filteredPosts]);
+
   const defaultLabelOpacity =
-    filteredPosts.length > 12
+    posts.length > 12
       ? Math.min(0.72, Math.max(0, (zoom - 1) * 1.2))
       : Math.min(0.82, Math.max(0.56, 0.72 + (zoom - 1) * 0.4));
 
@@ -216,7 +267,7 @@ export function GraphCanvas({
     <svg
       ref={svgRef}
       viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-      className="h-full w-full"
+      className="h-full w-full overflow-visible"
       onPointerCancel={finishDrag}
       onPointerDown={handleCanvasPointerDown}
       onPointerMove={handlePointerMove}
@@ -224,7 +275,57 @@ export function GraphCanvas({
       onWheel={handleWheel}
       style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
     >
+      <defs>
+        <filter id="star-glow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="2.8" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      <g pointerEvents="none">
+        {BACKGROUND_STARS.map((star, index) => (
+          <circle
+            key={index}
+            cx={star.x}
+            cy={star.y}
+            r={star.r}
+            fill={index % 3 === 0 ? '#FDE047' : '#FEF08A'}
+            opacity={star.opacity}
+          />
+        ))}
+      </g>
+
       <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
+        {categoryClusters.map((cluster) => (
+          <g key={cluster.name} pointerEvents="none">
+            <circle
+              cx={cluster.cx}
+              cy={cluster.cy}
+              r={cluster.radius}
+              fill={cluster.color}
+              fillOpacity={0.05}
+              stroke={cluster.color}
+              strokeOpacity={0.28}
+              strokeDasharray="5 6"
+              strokeWidth={1.25}
+            />
+            <text
+              x={cluster.cx}
+              y={cluster.cy - cluster.radius - 10}
+              textAnchor="middle"
+              fill={cluster.color}
+              fontSize="12"
+              fontWeight="700"
+              letterSpacing="-0.02em"
+            >
+              {cluster.name}
+            </text>
+          </g>
+        ))}
+
         {renderedEdges.map((edge) => {
           const from = postMap.get(edge.from);
           const to = postMap.get(edge.to);
@@ -254,13 +355,13 @@ export function GraphCanvas({
           const isLit =
             hoveredId === edge.from || hoveredId === edge.to || selectedId === edge.from || selectedId === edge.to;
           const hasFocus = focusedNodeIds.size > 0;
-          const edgeOpacity = hasFocus ? (isLit ? 0.96 : 0.08) : edge.isExplicit ? 0.78 : 0.36;
+          const edgeOpacity = hasFocus ? (isLit ? 0.94 : 0.08) : edge.isExplicit ? 0.72 : 0.28;
           const lineWidth = edgeWidth(edge);
           const dashArray = edge.isExplicit ? '4,4' : undefined;
           const lineEndX = edge.isExplicit ? x2 - ux * ARROW_LENGTH : x2;
           const lineEndY = edge.isExplicit ? y2 - uy * ARROW_LENGTH : y2;
           const arrowPoints = edge.isExplicit ? createArrowPoints(x2, y2, lineEndX, lineEndY, ux, uy) : null;
-          const edgeColor = isLit || edge.isExplicit ? PRIMARY : '#9BDCEB';
+          const edgeColor = isLit ? '#FEF08A' : edge.isExplicit ? '#FDE047' : '#FBBF24';
 
           return (
             <g data-graph-edge={edge.id} key={edge.id} opacity={edgeOpacity} style={{ transition: 'opacity 0.18s' }}>
@@ -289,7 +390,8 @@ export function GraphCanvas({
         })}
 
         {filteredPosts.map((post) => {
-          const radius = graphNodeRadius(connectionCountById.get(post.id));
+          const degree = connectionCountById.get(post.id) ?? 0;
+          const radius = graphNodeRadius(degree);
           const titleLines = splitNodeTitle(post.title);
           const isHovered = hoveredId === post.id;
           const isSelected = selectedId === post.id;
@@ -297,8 +399,18 @@ export function GraphCanvas({
           const isRelated = relatedNodeIds.has(post.id);
           const hasFocus = focusedNodeIds.size > 0;
           const isDimmed = hasFocus && !isFocused && !isRelated;
-          const nodeOpacity = isDimmed ? 0.18 : hasFocus && isRelated && !isFocused ? 0.88 : 1;
+          const baseBrightness = Math.min(1, 0.52 + degree * 0.14);
+          const nodeOpacity = isDimmed
+            ? 0.18
+            : hasFocus && isRelated && !isFocused
+              ? 0.9
+              : isFocused
+                ? 1
+                : baseBrightness;
           const labelOpacity = isDimmed ? 0 : isFocused ? 1 : hasFocus && isRelated ? 0.88 : defaultLabelOpacity;
+          const baseStarColor = activeTab === 'category' ? getStarColor(post.categoryName || '미분류') : '#FDE047';
+          const haloOpacity = Math.min(0.32, 0.06 + degree * 0.055);
+          const haloRadius = radius + Math.min(10, 3 + degree * 1.6);
 
           return (
             <g
@@ -326,31 +438,43 @@ export function GraphCanvas({
               }}
               tabIndex={0}
             >
-              {isFocused ? <circle cx={post.x} cy={post.y} fill={PRIMARY} opacity="0.2" r={radius + 9} /> : null}
+              {isFocused ? (
+                <circle cx={post.x} cy={post.y} fill="#FACC15" opacity="0.34" r={radius + 11} />
+              ) : (
+                <circle
+                  cx={post.x}
+                  cy={post.y}
+                  fill={activeTab === 'category' ? baseStarColor : '#F59E0B'}
+                  opacity={haloOpacity}
+                  r={haloRadius}
+                />
+              )}
               <circle
                 cx={post.x}
                 cy={post.y}
-                fill={isFocused ? '#218BAA' : PRIMARY}
-                opacity={isFocused ? 1 : 0.9}
+                fill={isFocused ? '#FEF08A' : degree >= 4 && activeTab !== 'category' ? '#FEF08A' : baseStarColor}
+                filter={isFocused || degree >= 1 ? 'url(#star-glow)' : undefined}
+                opacity={isFocused ? 1 : baseBrightness}
                 r={radius}
-                stroke={isFocused ? '#14748D' : '#3AA7C6'}
+                stroke={isFocused ? '#FACC15' : '#FEF08A'}
                 strokeDasharray={post.isPrivate ? '5,3' : undefined}
-                strokeWidth={isFocused ? 2.5 : post.isPrivate ? 2 : 1.5}
+                strokeOpacity={isFocused ? 1 : Math.min(0.92, 0.45 + degree * 0.14)}
+                strokeWidth={isFocused ? 2.5 : post.isPrivate ? 2 : 1.2}
               />
               {post.isPrivate ? <LockBadge x={post.x + radius * 0.52} y={post.y + radius * 0.52} /> : null}
               <text
-                fill={isFocused ? '#176E87' : '#3B879D'}
+                fill={isFocused ? '#F8FAFC' : '#CBD5E1'}
                 fontFamily="var(--font-nanum-gothic-coding), system-ui, sans-serif"
                 fontSize="12"
-                fontWeight={isFocused ? '800' : '700'}
+                fontWeight={isFocused ? '800' : '600'}
                 opacity={labelOpacity}
                 paintOrder="stroke"
-                stroke="rgba(248,248,245,0.96)"
+                stroke="rgba(6, 9, 19, 0.92)"
                 strokeLinejoin="round"
                 strokeWidth="4"
                 textAnchor="middle"
                 x={post.x}
-                y={post.y + radius + 14}
+                y={post.y + radius + 15}
               >
                 {titleLines.map((line, index) => (
                   <tspan key={`${post.id}-${index}`} dy={index === 0 ? 0 : 16} x={post.x}>

@@ -27,4 +27,9 @@ public class ProfileUpdateRequest {
     @Schema(description = "변경할 자기소개 (최대 255자)", example = "안녕하세요, 풀스택 개발자입니다.")
     @Size(max = 255, message = "info는 최대 255자까지 입력할 수 있습니다.")
     private String info;
+
+    // enum으로 바로 받으면 잘못된 값이 JSON 파싱 오류(500)로 처리되므로, 문자열로 받아 검증 오류(400)로 응답합니다.
+    @Schema(description = "변경할 블로그 스킨", example = "MAGAZINE", allowableValues = {"DEFAULT", "MAGAZINE", "MINIMAL"})
+    @Pattern(regexp = "DEFAULT|MAGAZINE|MINIMAL", message = "blogSkin은 DEFAULT, MAGAZINE, MINIMAL 중 하나여야 합니다.")
+    private String blogSkin;
 }

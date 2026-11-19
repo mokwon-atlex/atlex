@@ -1,7 +1,9 @@
 // API User 엔티티를 UI shape 으로 변환하는 순수 매퍼.
 // 비동기 호출 금지. 백엔드 필드명이 바뀌면 input 부분만 수정한다.
 
-// input: fetchProfileByUserId 응답 (ApiProfile: { id, userId, name, profileImage, info, followerCount, followingCount, following })
+import { normalizeBlogSkin } from '@/lib/blog-option';
+
+// input: fetchProfileByUserId 응답 (ApiProfile: { id, userId, name, profileImage, info, followerCount, followingCount, following, blogSkin })
 // output: 유저 블로그 홈 프로필 shape (CategoryBlogHomeContent 의 profile)
 export function toBlogHomeProfile(apiProfile) {
   const followerCount = Number(apiProfile.followerCount ?? 0);
@@ -17,6 +19,7 @@ export function toBlogHomeProfile(apiProfile) {
     followerCount,
     followingCount,
     following: Boolean(apiProfile.following),
+    skin: normalizeBlogSkin(apiProfile.blogSkin),
     stats: [
       { id: 'followers', label: '팔로워', value: followerCount.toLocaleString() },
       { id: 'following', label: '팔로잉', value: followingCount.toLocaleString() },

@@ -65,7 +65,10 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
     },
     enabled: activeTab !== 'mine' || Boolean(resolvedCurrentUserId),
   });
-  const graphData = useMemo(() => toGraphViewData(graphQuery.data), [graphQuery.data]);
+  const graphData = useMemo(
+    () => toGraphViewData(graphQuery.data, { groupByCategory: activeTab === 'category' }),
+    [activeTab, graphQuery.data],
+  );
   const { authors, edges, posts, tagCounts } = graphData;
   const hasExplicitEdges = edges.some((edge) => edge.isExplicit);
 
@@ -160,9 +163,29 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
     setActiveAuthors((previous) => toggleSetValue(previous, id));
   }
 
+  /** 모든 작성자를 선택한다. */
+  function selectAllAuthors() {
+    setActiveAuthors(new Set(authors.map((author) => author.id)));
+  }
+
+  /** 모든 작성자 선택을 해제한다. */
+  function clearAllAuthors() {
+    setActiveAuthors(new Set());
+  }
+
   /** 키워드 필터를 반전한다. */
   function toggleTag(tag) {
     setActiveTags((previous) => toggleSetValue(previous, tag));
+  }
+
+  /** 모든 태그를 선택한다. */
+  function selectAllTags() {
+    setActiveTags(new Set(tagCounts.map(([tag]) => tag)));
+  }
+
+  /** 모든 태그 선택을 해제한다. */
+  function clearAllTags() {
+    setActiveTags(new Set());
   }
 
   /** API 응답 기준의 모든 필터를 기본값으로 되돌린다. */
@@ -219,9 +242,13 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
               activeAuthors={activeAuthors}
               activeTags={activeTags}
               authors={authors}
+              clearAllAuthors={clearAllAuthors}
+              clearAllTags={clearAllTags}
               hasExplicitEdges={hasExplicitEdges}
               minSharedTags={minSharedTags}
               resetFilters={resetFilters}
+              selectAllAuthors={selectAllAuthors}
+              selectAllTags={selectAllTags}
               setMinSharedTags={setMinSharedTags}
               setShowExplicitEdges={setShowExplicitEdges}
               setShowTagEdges={setShowTagEdges}

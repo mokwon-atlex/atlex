@@ -32,7 +32,8 @@ CREATE TABLE users (
     terms_agreed BOOLEAN,
     privacy_agreed BOOLEAN,
     marketing_agreed BOOLEAN DEFAULT FALSE,
-    agreed_at DATETIME
+    agreed_at DATETIME,
+    blog_skin VARCHAR(20) DEFAULT 'DEFAULT'
 );
 
 CREATE TABLE follows (

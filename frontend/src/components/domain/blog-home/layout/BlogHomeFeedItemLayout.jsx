@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
  *
  * @param {Object} props
  * @param {boolean} [props.isLikeDisabled=false] 좋아요 토글을 막을지 여부
+ * @param {'row' | 'stacked'} [props.layout='row'] row 는 넓은 화면에서 썸네일을 왼쪽에, stacked 는 항상 위에 둔다
  * @param {() => void} [props.onLikeToggle] 좋아요 버튼 클릭 처리기
  */
 export default function BlogHomeFeedItemLayout({
@@ -24,6 +25,7 @@ export default function BlogHomeFeedItemLayout({
   isLiked = false,
   isLast = false,
   isPrivate = false,
+  layout = 'row',
   likes = 0,
   onLikeToggle,
   tags = [],
@@ -56,7 +58,8 @@ export default function BlogHomeFeedItemLayout({
       <div
         className={cn(
           'flex flex-col gap-5',
-          hasThumbnail ? 'lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start lg:gap-6' : '',
+          // stacked 는 좁은 카드 그리드용으로, 썸네일을 항상 위에 둔다.
+          hasThumbnail && layout === 'row' ? 'lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start lg:gap-6' : '',
         )}
       >
         <BlogHomeFeedItemThumbnailLayout thumbnailUrl={thumbnailUrl} />
