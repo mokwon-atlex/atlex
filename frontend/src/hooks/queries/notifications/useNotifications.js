@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import {
   deleteAllNotifications,
   deleteNotification,
@@ -8,6 +9,7 @@ import {
   fetchUnreadNotificationCount,
   markAllNotificationsAsRead,
   markNotificationAsRead,
+  subscribeNotifications,
 } from '@/lib/api/notifications';
 import { useAuthStore } from '@/store/authStore';
 
@@ -16,17 +18,74 @@ export const NOTIFICATION_QUERY_KEYS = {
   unreadCount: ['notifications', 'unread-count'],
 };
 
+const SSE_BASE_RETRY_DELAY_MS = 3_000;
+const SSE_MAX_RETRY_DELAY_MS = 30_000;
+
 /**
- * 읽지 않은 알림 개수를 주기적으로 조회한다.
+ * 읽지 않은 알림 개수를 조회하고, 로그인 상태에서는 SSE 스트림으로 실시간 갱신한다.
+ * SSE 연결이 끊긴 동안에는 30초 폴링을 안전망으로 유지한다.
  */
 export function useUnreadNotificationCount() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const queryClient = useQueryClient();
+  const [isStreamConnected, setIsStreamConnected] = useState(false);
+
+  useEffect(() => {
+    if (!isLoggedIn || typeof window === 'undefined') {
+      setIsStreamConnected(false);
+      return;
+    }
+
+    let cancelled = false;
+    let retryTimer = null;
+    let retryAttempt = 0;
+    let controller = null;
+
+    const connect = async () => {
+      if (cancelled) return;
+      controller = new AbortController();
+
+      try {
+        await subscribeNotifications({
+          signal: controller.signal,
+          onOpen: () => {
+            retryAttempt = 0;
+            if (!cancelled) {
+              setIsStreamConnected(true);
+            }
+          },
+          onNotification: () => {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          },
+        });
+      } catch {
+        // 연결 실패/종료 시 아래 재연결 로직으로 복구한다.
+      }
+
+      if (cancelled) return;
+      setIsStreamConnected(false);
+      const delay = Math.min(SSE_BASE_RETRY_DELAY_MS * 2 ** retryAttempt, SSE_MAX_RETRY_DELAY_MS);
+      retryAttempt += 1;
+      retryTimer = window.setTimeout(connect, delay);
+    };
+
+    connect();
+
+    return () => {
+      cancelled = true;
+      setIsStreamConnected(false);
+      if (retryTimer !== null) {
+        window.clearTimeout(retryTimer);
+      }
+      controller?.abort();
+    };
+  }, [isLoggedIn, queryClient]);
 
   return useQuery({
     queryKey: NOTIFICATION_QUERY_KEYS.unreadCount,
     queryFn: fetchUnreadNotificationCount,
     enabled: Boolean(isLoggedIn),
-    refetchInterval: 30_000,
+    refetchInterval: isStreamConnected ? false : 30_000,
     select: (data) => data?.unreadCount ?? 0,
   });
 }
