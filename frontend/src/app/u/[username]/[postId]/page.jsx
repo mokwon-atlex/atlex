@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import BlogDetailContent from '@/components/domain/blog-detail/feature/BlogDetailContent';
 import BlogDetailSidebar from '@/components/domain/blog-detail/feature/BlogDetailSidebar';
+import BlogDetailToc from '@/components/domain/blog-detail/ui/BlogDetailToc';
 import Header from '@/components/common/layout/Header';
 import { loadBlogDetailData } from '@/lib/queries/blog-detail';
 import { stripHandle } from '@/lib/url/handle';
@@ -34,7 +35,9 @@ export default async function BlogDetailPage({ params }) {
           <div className="order-1 xl:order-2">
             <BlogDetailContent {...detail} postId={postId} postAuthorUserId={authorUserId} />
           </div>
-          <div aria-hidden="true" className="hidden xl:block xl:order-3" />
+          <div className="hidden xl:block xl:order-3 xl:self-stretch">
+            <BlogDetailToc />
+          </div>
         </div>
       </div>
     </main>

@@ -28,4 +28,12 @@ public class ParagraphSuggestionRequest {
     @Schema(description = "현재 커서 직전의 최근 작성 문맥/단락 (최대 1000자 권장)", example = "먼저 Spring Boot 환경에서 Gemini API를 호출하기 위한 의존성을 설정했습니다.")
     @Size(max = 2000, message = "작성 문맥은 2000자 이하로 전달해주세요.")
     private String currentWriting;
+
+    @Schema(description = "생성 모드 (AUTO, CODE, DIAGRAM, TABLE, MATH)", example = "AUTO")
+    @Size(max = 20, message = "모드는 20자 이하로 입력해주세요.")
+    private String mode;
+
+    public ParagraphSuggestionRequest(String title, String category, List<String> tags, String currentWriting) {
+        this(title, category, tags, currentWriting, null);
+    }
 }

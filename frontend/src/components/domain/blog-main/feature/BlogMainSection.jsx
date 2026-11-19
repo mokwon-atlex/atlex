@@ -2,10 +2,19 @@
 
 import { useRouter } from 'next/navigation';
 
+import BlogMainDiscoveryBanner from '../ui/BlogMainDiscoveryBanner';
+import BlogMainTagBar from '../ui/BlogMainTagBar';
 import BlogMainToolbar from './BlogMainToolbar';
 import BlogMainInfinitePostGrid from './BlogMainInfinitePostGrid';
 
-export default function BlogMainSection({ filters, activeFilterId, initialPosts, totalPages }) {
+export default function BlogMainSection({
+  filters,
+  activeFilterId,
+  initialPosts,
+  totalPages,
+  filterTags = [],
+  graphStats = null,
+}) {
   const router = useRouter();
 
   function handleChangeFilter(nextFilterId) {
@@ -24,7 +33,11 @@ export default function BlogMainSection({ filters, activeFilterId, initialPosts,
 
   return (
     <>
+      <BlogMainDiscoveryBanner featuredPosts={initialPosts?.slice(0, 4)} graphStats={graphStats} />
+
       <BlogMainToolbar activeFilterId={activeFilterId} filters={filters} onChangeFilter={handleChangeFilter} />
+
+      <BlogMainTagBar filterId={activeFilterId} tags={filterTags} />
 
       <BlogMainInfinitePostGrid
         key={activeFilterId}
