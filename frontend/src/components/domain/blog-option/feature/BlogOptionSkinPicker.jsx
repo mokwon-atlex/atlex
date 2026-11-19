@@ -50,8 +50,8 @@ function SkinWireframe({ skinId }) {
  * 블로그 홈 스킨을 고르는 블로그 옵션 섹션이다.
  *
  * @param {Object} props
- * @param {string} props.blogSkin 현재 선택한 스킨 id
- * @param {string} props.savedBlogSkin 서버에 저장된 스킨 id
+ * @param {string | null} props.blogSkin 현재 선택한 스킨 id
+ * @param {string | null} props.savedBlogSkin 서버에 저장된 스킨 id. 아직 불러오지 못했으면 null
  * @param {(skinId: string) => void} props.onBlogSkinChange 스킨 선택 처리기
  * @param {() => void} props.onSave 저장 처리기
  */
@@ -65,7 +65,9 @@ export default function BlogOptionSkinPicker({
   onBlogSkinChange,
   onSave,
 }) {
-  const isDisabled = isLoading || isSaving;
+  // 저장된 스킨을 모르는 상태(불러오는 중·실패)에서는 사용 중 표시와 편집을 막는다.
+  const isLoaded = savedBlogSkin != null;
+  const isDisabled = isLoading || isSaving || !isLoaded;
   const isChanged = blogSkin !== savedBlogSkin;
 
   return (
@@ -76,26 +78,34 @@ export default function BlogOptionSkinPicker({
       </CardHeader>
 
       <CardContent className="space-y-3">
+        {/* 기본 radio 입력을 써서 방향키 선택과 Tab 진입·이탈을 브라우저 동작 그대로 제공한다. */}
         <div role="radiogroup" aria-label="블로그 스킨" className="grid gap-3 sm:grid-cols-3">
           {BLOG_SKINS.map((skin) => {
             const isSelected = skin.id === blogSkin;
+            const descriptionId = `blog-skin-${skin.id}-description`;
 
             return (
-              <button
+              <label
                 key={skin.id}
-                type="button"
-                role="radio"
-                aria-checked={isSelected}
-                disabled={isDisabled}
-                onClick={() => onBlogSkinChange(skin.id)}
                 className={cn(
-                  'relative flex flex-col gap-3 rounded-2xl border bg-background/60 p-3 text-left transition-[border-color,box-shadow,transform] duration-150 ease-out active:scale-[0.98] disabled:opacity-60',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'relative flex cursor-pointer flex-col gap-3 rounded-2xl border bg-background/60 p-3 text-left transition-[border-color,box-shadow,transform] duration-150 ease-out active:scale-[0.98]',
+                  'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60',
                   isSelected
                     ? 'border-primary shadow-[0_0_0_1px_var(--primary)]'
                     : 'border-border hover:border-foreground/25',
                 )}
               >
+                <input
+                  type="radio"
+                  name="blog-skin"
+                  value={skin.id}
+                  checked={isSelected}
+                  disabled={isDisabled}
+                  onChange={() => onBlogSkinChange(skin.id)}
+                  aria-label={skin.name}
+                  aria-describedby={descriptionId}
+                  className="sr-only"
+                />
                 <div className="h-20 rounded-xl bg-muted/60 p-2" aria-hidden="true">
                   <SkinWireframe skinId={skin.id} />
                 </div>
@@ -108,12 +118,14 @@ export default function BlogOptionSkinPicker({
                       </span>
                     ) : null}
                   </p>
-                  <p className="text-xs leading-5 text-muted-foreground [word-break:keep-all]">{skin.description}</p>
+                  <p id={descriptionId} className="text-xs leading-5 text-muted-foreground [word-break:keep-all]">
+                    {skin.description}
+                  </p>
                 </div>
                 {isSelected ? (
                   <Check className="absolute top-3 right-3 size-4 text-primary" aria-hidden="true" />
                 ) : null}
-              </button>
+              </label>
             );
           })}
         </div>

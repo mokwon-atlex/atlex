@@ -41,7 +41,9 @@ public class User {
     private MembershipTier membershipTier = MembershipTier.FREE;
 
     /** 블로그 홈 스킨입니다. 컬럼 추가 전에 가입한 회원은 null이며 기본 스킨으로 취급합니다. */
+    // 변경은 updateBlogSkin 으로만 하도록 공개 setter 생성을 막는다.
     @Builder.Default
+    @Setter(AccessLevel.NONE)
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private BlogSkin blogSkin = BlogSkin.DEFAULT;

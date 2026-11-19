@@ -10,7 +10,7 @@ import BlogOptionPageLayout from '@/components/domain/blog-option/layout/BlogOpt
 import { createUserBlogCategory, deleteUserBlogCategory, updateUserBlogCategory } from '@/lib/api/users';
 import { loadUserBlogCategories } from '@/lib/category/blog-categories';
 import { fetchProfileByUserId, updateProfile } from '@/lib/api/profiles';
-import { BLOG_OPTION_BIO_MAX_LENGTH, DEFAULT_BLOG_SKIN, normalizeBlogBio, normalizeBlogSkin } from '@/lib/blog-option';
+import { BLOG_OPTION_BIO_MAX_LENGTH, normalizeBlogBio, normalizeBlogSkin } from '@/lib/blog-option';
 import { useAuthStore } from '@/store/authStore';
 
 export default function BlogOptionPage() {
@@ -31,8 +31,9 @@ export default function BlogOptionPage() {
   const [categoryError, setCategoryError] = useState('');
   const [bioNotice, setBioNotice] = useState('');
   const [categoryNotice, setCategoryNotice] = useState('');
-  const [blogSkin, setBlogSkin] = useState(DEFAULT_BLOG_SKIN);
-  const [savedBlogSkin, setSavedBlogSkin] = useState(DEFAULT_BLOG_SKIN);
+  // 저장된 스킨을 불러오기 전에는 null 로 두어, 조회 실패 시 기본 스킨을 사용 중으로 잘못 표시하지 않는다.
+  const [blogSkin, setBlogSkin] = useState(null);
+  const [savedBlogSkin, setSavedBlogSkin] = useState(null);
   const [isSavingSkin, setIsSavingSkin] = useState(false);
   const [skinError, setSkinError] = useState('');
   const [skinNotice, setSkinNotice] = useState('');
@@ -72,6 +73,7 @@ export default function BlogOptionPage() {
       setIsLoading(true);
       setBioError('');
       setCategoryError('');
+      setSkinError('');
 
       try {
         const [profileResponse, nextCategories] = await Promise.all([
@@ -99,6 +101,7 @@ export default function BlogOptionPage() {
         const message = error?.message ?? '블로그 옵션 정보를 불러오지 못했습니다.';
         setBioError(message);
         setCategoryError(message);
+        setSkinError(`${message} 페이지를 새로고침한 뒤 다시 시도해 주세요.`);
       } finally {
         if (!cancelled) {
           setIsLoading(false);
