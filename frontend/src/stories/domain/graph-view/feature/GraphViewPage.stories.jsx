@@ -107,7 +107,8 @@ export const Default = {
     const firstNode = canvas.getByRole('button', { name: '정보 구조 게시글 열기' });
     const graphEdge = canvasElement.querySelector('[data-graph-edge]');
     const graphSvg = canvasElement.querySelector('svg[viewBox="0 0 840 640"]');
-    const graphLayer = graphSvg?.firstElementChild;
+    // 별자리 테마의 배경(<defs>, 배경 <rect>, 배경 별 <g>)이 앞에 오므로 transform 이 있는 확대·이동 레이어를 직접 찾는다.
+    const graphLayer = graphSvg?.querySelector(':scope > g[transform]');
 
     await expect(firstNode).toHaveAttribute('tabindex', '0');
     await expect(graphEdge).not.toBeNull();
@@ -132,7 +133,8 @@ export const Default = {
     });
 
     await expect(popupCoversNode).toBe(false);
-    await expect(graphEdge).toHaveAttribute('opacity', '0.96');
+    // 별자리 테마(#178·#181)에서 강조 간선 투명도가 0.94로 바뀌었다.
+    await expect(graphEdge).toHaveAttribute('opacity', '0.94');
     await expect(canvas.getByRole('button', { name: '독립 노드 게시글 열기' })).toHaveAttribute(
       'data-graph-node-state',
       'dimmed',
