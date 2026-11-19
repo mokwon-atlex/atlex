@@ -55,30 +55,3 @@ export async function loadGraphOverview() {
     return null;
   }
 }
-
-/**
- * 게시글 목록에서 썸네일 이미지가 설정된 글만 추려 최대 `limit`개 반환한다.
- *
- * @param {Array<object>} posts 변환된 메인 게시글 목록
- * @param {number} [limit=3] 최대 반환 개수
- * @returns {Array<object>} 이미지가 포함된 게시글 목록
- */
-export function pickPopularImagePosts(posts = [], limit = 3) {
-  return (posts ?? []).filter((post) => post?.cover?.variant === 'image' && Boolean(post?.cover?.url)).slice(0, limit);
-}
-
-/**
- * 메인 배너 3페이지에 표시할 이미지 포함 인기 게시글을 조회한다.
- *
- * @param {number} [limit=3] 최대 표시 개수
- * @returns {Promise<Array<object>>} 썸네일 이미지가 있는 인기 게시글 목록
- */
-export async function loadPopularImagePosts(limit = 3) {
-  try {
-    const data = await fetchPosts({ page: 0, size: 16, type: 'trending' });
-    const mapped = (data?.content ?? []).map(toBlogMainPost);
-    return pickPopularImagePosts(mapped, limit);
-  } catch {
-    return [];
-  }
-}

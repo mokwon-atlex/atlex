@@ -2,20 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {
-  ArrowUpRight,
-  ChevronLeft,
-  ChevronRight,
-  Flame,
-  Heart,
-  Image as ImageIcon,
-  Network,
-  Newspaper,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, Network, Newspaper, Sparkles } from 'lucide-react';
 
 import { FALLBACK_DEV_TRENDS } from '@/lib/queries/dev-trends';
-import { postDetailHref } from '@/lib/url/handle';
 
 /** 배너 자동 슬라이드 전환 주기(밀리초). */
 const SLIDE_INTERVAL_MS = 7000;
@@ -24,7 +13,6 @@ const SLIDE_INTERVAL_MS = 7000;
 const BANNER_SLIDES = [
   { id: 'graph', label: '지식 그래프' },
   { id: 'trends', label: '개발 이슈' },
-  { id: 'popular', label: '인기 게시글' },
 ];
 
 /** 배경에 자연스럽게 녹아드는 지식 그래프 노드 좌표. */
@@ -223,71 +211,10 @@ function DevTrendsSlide({ devTrends }) {
 }
 
 /**
- * 3페이지: 썸네일 이미지가 있는 인기 게시글 최대 3개를 3열 이미지 카드로 표시하는 슬라이드.
+ * 메인 페이지 최상단 2페이지 자동 슬라이드 디스커버리 배너.
+ * 1페이지: 지식 그래프 탐색, 2페이지: 개발 이슈/트렌드 RSS(폴백 포함).
  */
-function PopularImagePostsSlide({ popularImagePosts = [] }) {
-  return (
-    <div className="flex min-h-[280px] flex-col justify-between gap-3.5 rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card px-12 py-5 sm:h-[304px] sm:px-14 sm:py-6">
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/90 px-3 py-1 text-xs font-semibold text-foreground">
-          <Flame className="size-3.5 text-primary" />
-          인기 게시글
-        </span>
-        <span className="text-xs text-muted-foreground">이미지와 함께 보는 인기 아티클</span>
-      </div>
-
-      {popularImagePosts.length > 0 ? (
-        <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
-          {popularImagePosts.slice(0, 3).map((post) => {
-            const href = post?.authorUserId && post?.id ? postDetailHref(post.authorUserId, post.id) : null;
-            const cardBody = (
-              <div className="group relative h-44 overflow-hidden rounded-xl border border-border/70 bg-muted shadow-xs transition-all hover:border-foreground/20 hover:shadow-md sm:h-full">
-                <img
-                  src={post.cover.url}
-                  alt={post.title}
-                  className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-                />
-                <div className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-slate-950/65 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-xs">
-                  <Heart className="size-2.5 fill-current text-rose-400" />
-                  <span>{post.likes ?? 0}</span>
-                </div>
-                <div className="absolute inset-x-0 bottom-0 bg-slate-900/80 px-3 py-2.5 backdrop-blur-[2px]">
-                  <p className="line-clamp-2 text-center text-xs font-semibold leading-snug text-white sm:text-[13px]">
-                    {post.title}
-                  </p>
-                </div>
-              </div>
-            );
-
-            return href ? (
-              <Link key={post.id} href={href} className="block h-full">
-                {cardBody}
-              </Link>
-            ) : (
-              <div key={post.id} className="h-full">
-                {cardBody}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-background/60 p-6 text-center">
-          <ImageIcon className="mb-2 size-6 text-muted-foreground" />
-          <p className="text-sm font-semibold text-foreground">대표 이미지가 등록된 인기 게시글을 준비 중입니다</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            게시글에 썸네일 이미지를 추가하면 이곳에 3열 카드로 소개됩니다.
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * 메인 페이지 최상단 3페이지 자동 슬라이드 디스커버리 배너.
- * 1페이지: 지식 그래프 탐색, 2페이지: 개발 이슈/트렌드 RSS(폴백 포함), 3페이지: 이미지 포함 인기 게시글 3개.
- */
-export default function BlogMainDiscoveryBanner({ graphStats = null, devTrends = null, popularImagePosts = [] }) {
+export default function BlogMainDiscoveryBanner({ graphStats = null, devTrends = null }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -345,7 +272,6 @@ export default function BlogMainDiscoveryBanner({ graphStats = null, devTrends =
       <div className="transition-opacity duration-300">
         {activeIndex === 0 ? <KnowledgeGraphSlide graphStats={graphStats} /> : null}
         {activeIndex === 1 ? <DevTrendsSlide devTrends={devTrends} /> : null}
-        {activeIndex === 2 ? <PopularImagePostsSlide popularImagePosts={popularImagePosts} /> : null}
       </div>
     </section>
   );
