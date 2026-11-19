@@ -6,6 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table
 import TextAlign from '@tiptap/extension-text-align';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import CodeBlockNodeView from '@/components/domain/post-editor/ui/CodeBlockNodeView';
 import DetailsBlockNodeView from '@/components/domain/post-editor/ui/DetailsBlockNodeView';
 import MathBlockNodeView from '@/components/domain/post-editor/ui/MathBlockNodeView';
 import { AiSuggestionExtension } from '@/lib/post-editor/rich-text-ai-extension';
@@ -202,8 +203,13 @@ export const editorExtensions = [
       rel: 'noopener noreferrer',
     },
   }),
-  CodeBlockLowlight.configure({
+  CodeBlockLowlight.extend({
+    addNodeView() {
+      return ReactNodeViewRenderer(CodeBlockNodeView);
+    },
+  }).configure({
     lowlight: editorLowlight,
+    defaultLanguage: 'plaintext',
   }),
   Image.configure({
     allowBase64: true,

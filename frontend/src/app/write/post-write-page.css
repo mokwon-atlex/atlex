@@ -130,13 +130,20 @@
   font-weight: 700;
 }
 
-.post-editor-prose .tiptap [data-type='details-block'],
+.post-editor-prose .tiptap [data-type='details-block'] {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.875rem;
+  margin: 1rem 0;
+  padding: 0.875rem 1rem;
+}
+
 .post-editor-prose .tiptap [data-type='math-block'] {
   background: #fff;
   border: 1px solid #cbd5e1;
-  border-radius: 1rem;
-  margin: 1.25rem 0;
-  padding: 1rem 1rem 1.1rem;
+  border-radius: 0.75rem;
+  margin: 0.875rem 0;
+  padding: 0.625rem 0.875rem;
 }
 
 .post-editor-block__label,
