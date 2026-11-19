@@ -131,6 +131,7 @@ public class AiSuggestionService {
         if (userPrompt.isEmpty()) {
             userPrompt.append("새로운 기술 블로그 글의 문제 제기 또는 아키텍처 개요 도입부를 작성해 주세요.\n");
         }
+        appendModeInstruction(userPrompt, request.getMode());
 
         String rawSuggestion = geminiClient.generateContent(PARAGRAPH_SYSTEM_PROMPT, userPrompt.toString(), 600);
         String cleaned = cleanMarkdownSuggestion(rawSuggestion);
@@ -194,6 +195,20 @@ public class AiSuggestionService {
         }
 
         return cleaned;
+    }
+
+    private void appendModeInstruction(StringBuilder userPrompt, String rawMode) {
+        if (rawMode == null || rawMode.isBlank()) {
+            return;
+        }
+        String mode = rawMode.trim().toUpperCase();
+        switch (mode) {
+            case "CODE" -> userPrompt.append("\n[요청 형식] 문맥에 맞는 핵심 예제 코드 블록(```언어 ... ```)과 짧은 설명만 작성해 주세요.\n");
+            case "DIAGRAM" -> userPrompt.append("\n[요청 형식] 문맥에 맞는 시스템 구조나 흐름을 ```mermaid 다이어그램 블록으로만 작성해 주세요.\n");
+            case "TABLE" -> userPrompt.append("\n[요청 형식] 문맥의 핵심 개념·옵션·장단점을 비교하는 간결한 마크다운 표(| 항목 | 설명 |)로 작성해 주세요.\n");
+            case "MATH" -> userPrompt.append("\n[요청 형식] 문맥과 관련된 핵심 수식이나 복잡도 공식을 독립 수식 블록($$ ... $$)으로 작성해 주세요.\n");
+            default -> {}
+        }
     }
 
     private String cleanMarkdownSuggestion(String suggestion) {
