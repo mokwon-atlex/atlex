@@ -34,18 +34,18 @@ export const SelectAndSave = {
     const canvas = within(canvasElement);
     const saveButton = canvas.getByRole('button', { name: '저장' });
 
-    await expect(canvas.getAllByRole('radio')).toHaveLength(3);
+    await expect(canvas.getAllByRole('radio')).toHaveLength(2);
     await expect(canvas.getByRole('radio', { name: /기본/ })).toBeChecked();
     await expect(canvas.getByText('사용 중')).toBeVisible();
     await expect(saveButton).toBeDisabled();
 
-    await userEvent.click(canvas.getByRole('radio', { name: /매거진/ }));
+    await userEvent.click(canvas.getByRole('radio', { name: /미니멀/ }));
 
-    await expect(canvas.getByRole('radio', { name: /매거진/ })).toBeChecked();
+    await expect(canvas.getByRole('radio', { name: /미니멀/ })).toBeChecked();
     await expect(saveButton).toBeEnabled();
 
     await userEvent.click(saveButton);
-    await expect(args.onSave).toHaveBeenCalledWith('MAGAZINE');
+    await expect(args.onSave).toHaveBeenCalledWith('MINIMAL');
   },
 };
 
@@ -74,8 +74,8 @@ export const KeyboardArrowSelect = {
     canvas.getByRole('radio', { name: '기본' }).focus();
     await userEvent.keyboard('{ArrowRight}');
 
-    await expect(canvas.getByRole('radio', { name: '매거진' })).toBeChecked();
-    await expect(canvas.getByRole('radio', { name: '매거진' })).toHaveFocus();
+    await expect(canvas.getByRole('radio', { name: '미니멀' })).toBeChecked();
+    await expect(canvas.getByRole('radio', { name: '미니멀' })).toHaveFocus();
   },
 };
 

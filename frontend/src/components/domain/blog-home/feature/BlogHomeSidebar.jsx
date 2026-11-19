@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
  * 블로그 홈의 프로필·태그 영역이다.
  *
  * @param {Object} props
- * @param {'column' | 'row'} [props.orientation='column'] row 는 넓은 화면에서 프로필과 태그를 가로로 나란히 놓는다(매거진 스킨 하단)
+ * @param {'column' | 'row' | 'split'} [props.orientation='column'] split 은 미니멀 스킨 상단에서 프로필과 지식 화분을 좌우 반반으로 배치한다
  */
 export default function BlogHomeSidebar({
   onStatClick,
@@ -20,6 +20,20 @@ export default function BlogHomeSidebar({
   const summaryStats = profile?.stats?.filter((stat) => stat.id !== 'posts') ?? [];
   const rawPostCount = profile?.stats?.find((stat) => stat.id === 'posts')?.value ?? 0;
   const postCount = Number(String(rawPostCount).replace(/,/g, '')) || 0;
+
+  if (orientation === 'split') {
+    return (
+      <aside className="grid items-stretch gap-4 md:grid-cols-2">
+        <BlogHomeSidebarProfileLayout
+          onStatClick={onStatClick}
+          profile={profile}
+          quickActionOverrides={quickActionOverrides}
+          summaryStats={summaryStats}
+        />
+        <BlogHomeSidebarSproutLayout postCount={postCount} />
+      </aside>
+    );
+  }
 
   return (
     <aside className={cn(orientation === 'row' ? 'grid items-start gap-4 lg:grid-cols-3' : 'space-y-4')}>

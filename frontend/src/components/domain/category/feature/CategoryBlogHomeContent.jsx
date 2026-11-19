@@ -438,17 +438,10 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
   // 스킨은 화면 배치만 바꾸고, 팔로우·필터·좋아요·페이지 이동 상태는 모든 스킨이 위 로직을 그대로 공유한다.
   let body;
 
-  if (skin === 'MAGAZINE') {
+  if (skin === 'MINIMAL') {
     body = (
-      <div className="space-y-10" data-blog-skin="MAGAZINE">
-        <BlogHomeFeed feed={resolvedFeed} variant="magazine" />
-        <BlogHomeSidebar {...sidebarProps} orientation="row" />
-      </div>
-    );
-  } else if (skin === 'MINIMAL') {
-    body = (
-      <div className="mx-auto max-w-2xl space-y-10" data-blog-skin="MINIMAL">
-        <BlogHomeSidebar {...sidebarProps} />
+      <div className="mx-auto max-w-4xl space-y-8" data-blog-skin="MINIMAL">
+        <BlogHomeSidebar {...sidebarProps} orientation="split" />
         <BlogHomeFeed feed={resolvedFeed} variant="index" />
       </div>
     );

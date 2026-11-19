@@ -18,7 +18,7 @@ import { FALLBACK_DEV_TRENDS } from '@/lib/queries/dev-trends';
 import { postDetailHref } from '@/lib/url/handle';
 
 /** 배너 자동 슬라이드 전환 주기(밀리초). */
-const SLIDE_INTERVAL_MS = 10000;
+const SLIDE_INTERVAL_MS = 7000;
 
 /** 슬라이드 목록 메타데이터. */
 const BANNER_SLIDES = [
@@ -193,9 +193,9 @@ function DevTrendsSlide({ devTrends }) {
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {items.slice(0, 4).map((item) => {
           const cardContent = (
-            <div className="group flex h-full items-start justify-between gap-3 rounded-xl border border-border/80 bg-background/90 px-3.5 py-3 transition-all hover:border-foreground/20 hover:bg-background hover:shadow-xs">
+            <div className="group/trend flex h-full items-start justify-between gap-3 rounded-xl border border-border/80 bg-background/90 px-3.5 py-3 transition-all hover:border-primary/40 hover:bg-background hover:shadow-xs">
               <div className="min-w-0 flex-1 space-y-1">
-                <p className="line-clamp-1 text-xs font-bold text-foreground transition-colors group-hover:text-primary sm:text-sm">
+                <p className="line-clamp-1 text-xs font-bold text-foreground transition-colors group-hover/trend:text-primary sm:text-sm">
                   {item.title}
                 </p>
                 {item.summary ? <p className="line-clamp-1 text-[11px] text-muted-foreground">{item.summary}</p> : null}
@@ -203,7 +203,7 @@ function DevTrendsSlide({ devTrends }) {
                   {item.source} · {item.publishedAt}
                 </p>
               </div>
-              <ArrowUpRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />
+              <ArrowUpRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-hover/trend:translate-x-0.5 group-hover/trend:-translate-y-0.5 group-hover/trend:text-primary" />
             </div>
           );
 
@@ -317,7 +317,7 @@ export default function BlogMainDiscoveryBanner({ graphStats = null, devTrends =
       onMouseLeave={() => setIsPaused(false)}
       onFocusCapture={() => setIsPaused(true)}
       onBlurCapture={() => setIsPaused(false)}
-      className="group relative mb-6 overflow-hidden rounded-2xl border border-border shadow-xs"
+      className="relative mb-6 overflow-hidden rounded-2xl border border-border shadow-xs"
     >
       {/* 좌측 끝 이전 슬라이드 화살표 */}
       <button
