@@ -2,29 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {
-  ArrowUpRight,
-  ChevronLeft,
-  ChevronRight,
-  Flame,
-  Heart,
-  Image as ImageIcon,
-  Network,
-  Newspaper,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, Network, Newspaper, Sparkles } from 'lucide-react';
 
 import { FALLBACK_DEV_TRENDS } from '@/lib/queries/dev-trends';
-import { postDetailHref } from '@/lib/url/handle';
 
 /** 배너 자동 슬라이드 전환 주기(밀리초). */
-const SLIDE_INTERVAL_MS = 6000;
+const SLIDE_INTERVAL_MS = 7000;
 
 /** 슬라이드 목록 메타데이터. */
 const BANNER_SLIDES = [
   { id: 'graph', label: '지식 그래프' },
   { id: 'trends', label: '개발 이슈' },
-  { id: 'popular', label: '인기 게시글' },
 ];
 
 /** 배경에 자연스럽게 녹아드는 지식 그래프 노드 좌표. */
@@ -75,29 +63,29 @@ const NODE_MAP = Object.fromEntries(GRAPH_NODES.map((node) => [node.id, node]));
 
 /**
  * 1페이지: 지식 그래프 탐색 슬라이드.
- * 배경에 발광 노드와 연결선을 자연스럽게 녹여내어 별도의 떠 있는 카드 없이 어우러지도록 구성한다.
+ * 기존 배너의 밝은 카드 톤 위에 잘 보이는 골드·프라이머리 계열 노드와 연결선을 자연스럽게 배치한다.
  */
 function KnowledgeGraphSlide({ graphStats }) {
   return (
-    <div className="relative flex min-h-[244px] flex-col justify-between overflow-hidden rounded-2xl bg-[#0b1222] p-5 text-slate-100 sm:p-6">
-      {/* 어두운 밤하늘 톤의 방사형 배경 그라데이션 */}
+    <div className="relative flex min-h-[280px] flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card px-12 py-5 text-foreground sm:h-[304px] sm:px-14 sm:py-6">
+      {/* 은은한 방사형 배경 포인트 */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_75%_40%,rgba(234,179,8,0.12),transparent_52%),radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.12),transparent_48%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_75%_45%,rgba(217,119,6,0.12),transparent_52%),radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.08),transparent_48%)]"
       />
 
-      {/* 배너 우측·배경에 자연스럽게 스며든 지식 그래프 노드 비주얼 */}
+      {/* 기존 배너 배경에 자연스럽게 스며드는 지식 그래프 노드 비주얼 */}
       <svg
         aria-hidden="true"
         viewBox="0 0 1000 270"
         preserveAspectRatio="xMidYMid slice"
-        className="pointer-events-none absolute inset-0 h-full w-full select-none opacity-85 [mask-image:linear-gradient(to_right,transparent_8%,rgba(0,0,0,0.45)_38%,black_68%)]"
+        className="pointer-events-none absolute inset-0 h-full w-full select-none [mask-image:linear-gradient(to_right,transparent_12%,rgba(0,0,0,0.45)_40%,black_70%)]"
       >
         <defs>
           <radialGradient id="banner-node-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#fde047" stopOpacity="0.95" />
-            <stop offset="45%" stopColor="#eab308" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#eab308" stopOpacity="0" />
+            <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.65" />
+            <stop offset="50%" stopColor="#d97706" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="#d97706" stopOpacity="0" />
           </radialGradient>
         </defs>
 
@@ -112,43 +100,43 @@ function KnowledgeGraphSlide({ graphStats }) {
               y1={from.cy}
               x2={to.cx}
               y2={to.cy}
-              stroke="#ca8a04"
-              strokeOpacity="0.48"
-              strokeWidth="1.25"
+              stroke="#b45309"
+              strokeOpacity="0.32"
+              strokeWidth="1.4"
             />
           );
         })}
 
         {GRAPH_SPARKS.map((spark, index) => (
-          <circle key={index} cx={spark.cx} cy={spark.cy} r={spark.r} fill="#fef08a" fillOpacity="0.55" />
+          <circle key={index} cx={spark.cx} cy={spark.cy} r={spark.r} fill="#d97706" fillOpacity="0.45" />
         ))}
 
         {GRAPH_NODES.map((node) => (
           <g key={node.id} opacity={node.opacity}>
             <circle cx={node.cx} cy={node.cy} r={node.glow} fill="url(#banner-node-glow)" />
-            <circle cx={node.cx} cy={node.cy} r={node.r} fill="#eab308" fillOpacity="0.9" />
-            <circle cx={node.cx} cy={node.cy} r={node.r * 0.52} fill="#fef08a" />
+            <circle cx={node.cx} cy={node.cy} r={node.r} fill="#d97706" fillOpacity="0.82" />
+            <circle cx={node.cx} cy={node.cy} r={node.r * 0.48} fill="#fef3c7" />
           </g>
         ))}
       </svg>
 
       <div className="relative z-10 flex max-w-xl flex-col justify-between gap-4">
         <div className="space-y-3">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-300/20 bg-slate-900/65 px-3 py-1 text-xs font-semibold text-amber-200/90 backdrop-blur-xs">
-            <Sparkles className="size-3.5 text-amber-400" />
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-background/85 px-3 py-1 text-xs font-semibold text-muted-foreground backdrop-blur-xs">
+            <Sparkles className="size-3.5 text-primary" />
             <span>AI 기술 블로그 · 지식 그래프</span>
             {graphStats && graphStats.nodeCount > 0 ? (
-              <span className="border-l border-slate-700 pl-2 text-slate-100">
+              <span className="border-l border-border pl-2 text-foreground">
                 문서 {graphStats.nodeCount} · 연결 {graphStats.edgeCount}
               </span>
             ) : null}
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-xl font-bold leading-snug tracking-[-0.04em] text-white sm:text-2xl">
+            <h1 className="text-xl font-bold leading-snug tracking-[-0.04em] text-foreground sm:text-2xl">
               글이 하나의 지식 그래프로 연결되는 개발 블로그
             </h1>
-            <p className="max-w-lg text-xs leading-5 text-slate-300 sm:text-sm sm:leading-6">
+            <p className="max-w-lg text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
               코드 블록·Mermaid 다이어그램·수식으로 정리한 기술 아티클을 태그와 문맥 그래프 뷰로 탐색하세요.
             </p>
           </div>
@@ -157,7 +145,7 @@ function KnowledgeGraphSlide({ graphStats }) {
         <div className="pt-1">
           <Link
             href="/graph"
-            className="inline-flex h-9 items-center gap-2 rounded-xl bg-amber-400 px-4 text-xs font-bold text-slate-950 shadow-xs transition-all hover:-translate-y-0.5 hover:bg-amber-300 sm:text-sm"
+            className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-xs transition-all hover:-translate-y-0.5 hover:opacity-95 sm:text-sm"
           >
             <Network className="size-4" />
             지식 그래프 탐색
@@ -177,7 +165,7 @@ function DevTrendsSlide({ devTrends }) {
   const sourceLabel = devTrends?.sourceLabel ?? '추천 기술 이슈';
 
   return (
-    <div className="flex min-h-[244px] flex-col justify-between gap-4 rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card p-5 sm:p-6">
+    <div className="flex min-h-[280px] flex-col justify-between gap-3.5 rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card px-12 py-5 sm:h-[304px] sm:px-14 sm:py-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/90 px-3 py-1 text-xs font-semibold text-foreground">
@@ -190,12 +178,12 @@ function DevTrendsSlide({ devTrends }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+      <div className="grid flex-1 grid-cols-1 gap-2.5 sm:grid-cols-2 sm:grid-rows-2">
         {items.slice(0, 4).map((item) => {
           const cardContent = (
-            <div className="group flex h-full items-start justify-between gap-3 rounded-xl border border-border/80 bg-background/90 px-3.5 py-3 transition-all hover:border-foreground/20 hover:bg-background hover:shadow-xs">
+            <div className="group/trend flex h-full items-center justify-between gap-3 rounded-xl border border-border/80 bg-background/90 px-3.5 py-2.5 transition-all hover:border-primary/40 hover:bg-background hover:shadow-xs">
               <div className="min-w-0 flex-1 space-y-1">
-                <p className="line-clamp-1 text-xs font-bold text-foreground transition-colors group-hover:text-primary sm:text-sm">
+                <p className="line-clamp-1 text-xs font-bold text-foreground transition-colors group-hover/trend:text-primary sm:text-sm">
                   {item.title}
                 </p>
                 {item.summary ? <p className="line-clamp-1 text-[11px] text-muted-foreground">{item.summary}</p> : null}
@@ -203,16 +191,16 @@ function DevTrendsSlide({ devTrends }) {
                   {item.source} · {item.publishedAt}
                 </p>
               </div>
-              <ArrowUpRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />
+              <ArrowUpRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-hover/trend:translate-x-0.5 group-hover/trend:-translate-y-0.5 group-hover/trend:text-primary" />
             </div>
           );
 
           return item.isExternal ? (
-            <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="block">
+            <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="block h-full">
               {cardContent}
             </a>
           ) : (
-            <Link key={item.id} href={item.url} className="block">
+            <Link key={item.id} href={item.url} className="block h-full">
               {cardContent}
             </Link>
           );
@@ -223,69 +211,10 @@ function DevTrendsSlide({ devTrends }) {
 }
 
 /**
- * 3페이지: 썸네일 이미지가 있는 인기 게시글 최대 3개를 3열 이미지 카드로 표시하는 슬라이드.
+ * 메인 페이지 최상단 2페이지 자동 슬라이드 디스커버리 배너.
+ * 1페이지: 지식 그래프 탐색, 2페이지: 개발 이슈/트렌드 RSS(폴백 포함).
  */
-function PopularImagePostsSlide({ popularImagePosts = [] }) {
-  return (
-    <div className="flex min-h-[244px] flex-col justify-between gap-3.5 rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card p-5 sm:p-6">
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/90 px-3 py-1 text-xs font-semibold text-foreground">
-          <Flame className="size-3.5 text-primary" />
-          인기 게시글
-        </span>
-        <span className="text-xs text-muted-foreground">이미지와 함께 보는 인기 아티클</span>
-      </div>
-
-      {popularImagePosts.length > 0 ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {popularImagePosts.slice(0, 3).map((post) => {
-            const href = post?.authorUserId && post?.id ? postDetailHref(post.authorUserId, post.id) : null;
-            const cardBody = (
-              <div className="group relative h-40 overflow-hidden rounded-xl border border-border/70 bg-muted shadow-xs transition-all hover:border-foreground/20 hover:shadow-md sm:h-44">
-                <img
-                  src={post.cover.url}
-                  alt={post.title}
-                  className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-                />
-                <div className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-slate-950/65 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-xs">
-                  <Heart className="size-2.5 fill-current text-rose-400" />
-                  <span>{post.likes ?? 0}</span>
-                </div>
-                <div className="absolute inset-x-0 bottom-0 bg-slate-900/80 px-3 py-2.5 backdrop-blur-[2px]">
-                  <p className="line-clamp-2 text-center text-xs font-semibold leading-snug text-white sm:text-[13px]">
-                    {post.title}
-                  </p>
-                </div>
-              </div>
-            );
-
-            return href ? (
-              <Link key={post.id} href={href} className="block">
-                {cardBody}
-              </Link>
-            ) : (
-              <div key={post.id}>{cardBody}</div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-background/60 p-6 text-center">
-          <ImageIcon className="mb-2 size-6 text-muted-foreground" />
-          <p className="text-sm font-semibold text-foreground">대표 이미지가 등록된 인기 게시글을 준비 중입니다</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            게시글에 썸네일 이미지를 추가하면 이곳에 3열 카드로 소개됩니다.
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * 메인 페이지 최상단 3페이지 자동 슬라이드 디스커버리 배너.
- * 1페이지: 지식 그래프 탐색, 2페이지: 개발 이슈/트렌드 RSS(폴백 포함), 3페이지: 이미지 포함 인기 게시글 3개.
- */
-export default function BlogMainDiscoveryBanner({ graphStats = null, devTrends = null, popularImagePosts = [] }) {
+export default function BlogMainDiscoveryBanner({ graphStats = null, devTrends = null }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -309,8 +238,6 @@ export default function BlogMainDiscoveryBanner({ graphStats = null, devTrends =
     setActiveIndex((prev) => (prev + 1) % slideCount);
   }
 
-  const isDarkSlide = activeIndex === 0;
-
   return (
     <section
       aria-roledescription="carousel"
@@ -321,67 +248,30 @@ export default function BlogMainDiscoveryBanner({ graphStats = null, devTrends =
       onBlurCapture={() => setIsPaused(false)}
       className="relative mb-6 overflow-hidden rounded-2xl border border-border shadow-xs"
     >
-      {/* 슬라이드 우측 상단 페이지 번호 및 이전/다음 컨트롤 */}
-      <div className="absolute right-4 top-4 z-20 flex items-center gap-1 sm:right-5 sm:top-5">
-        <button
-          type="button"
-          onClick={handlePrevSlide}
-          aria-label="이전 배너"
-          className={[
-            'inline-flex size-7 items-center justify-center rounded-md border text-xs transition-colors',
-            isDarkSlide
-              ? 'border-slate-700 bg-slate-900/75 text-slate-200 hover:bg-slate-800'
-              : 'border-border bg-background/85 text-foreground hover:bg-muted',
-          ].join(' ')}
-        >
-          <ChevronLeft className="size-3.5" />
-        </button>
+      {/* 좌측 끝 이전 슬라이드 화살표 */}
+      <button
+        type="button"
+        onClick={handlePrevSlide}
+        aria-label="이전 배너"
+        className="absolute left-2.5 top-1/2 z-20 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-border/80 bg-background/80 text-foreground shadow-xs backdrop-blur-xs transition-all hover:bg-background sm:left-3"
+      >
+        <ChevronLeft className="size-4" />
+      </button>
 
-        {BANNER_SLIDES.map((slide, index) => {
-          const isActive = index === activeIndex;
-          return (
-            <button
-              key={slide.id}
-              type="button"
-              onClick={() => setActiveIndex(index)}
-              aria-label={`${index + 1}번 배너: ${slide.label}`}
-              aria-current={isActive ? 'true' : undefined}
-              className={[
-                'inline-flex h-7 min-w-7 items-center justify-center rounded-md border px-2 text-xs font-semibold transition-colors',
-                isActive
-                  ? isDarkSlide
-                    ? 'border-amber-400 bg-amber-400 text-slate-950'
-                    : 'border-primary bg-primary text-primary-foreground'
-                  : isDarkSlide
-                    ? 'border-slate-700 bg-slate-900/75 text-slate-300 hover:bg-slate-800'
-                    : 'border-border bg-background/85 text-muted-foreground hover:bg-muted',
-              ].join(' ')}
-            >
-              {index + 1}
-            </button>
-          );
-        })}
-
-        <button
-          type="button"
-          onClick={handleNextSlide}
-          aria-label="다음 배너"
-          className={[
-            'inline-flex size-7 items-center justify-center rounded-md border text-xs transition-colors',
-            isDarkSlide
-              ? 'border-slate-700 bg-slate-900/75 text-slate-200 hover:bg-slate-800'
-              : 'border-border bg-background/85 text-foreground hover:bg-muted',
-          ].join(' ')}
-        >
-          <ChevronRight className="size-3.5" />
-        </button>
-      </div>
+      {/* 우측 끝 다음 슬라이드 화살표 */}
+      <button
+        type="button"
+        onClick={handleNextSlide}
+        aria-label="다음 배너"
+        className="absolute right-2.5 top-1/2 z-20 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-border/80 bg-background/80 text-foreground shadow-xs backdrop-blur-xs transition-all hover:bg-background sm:right-3"
+      >
+        <ChevronRight className="size-4" />
+      </button>
 
       {/* 현재 활성 슬라이드 렌더링 */}
       <div className="transition-opacity duration-300">
         {activeIndex === 0 ? <KnowledgeGraphSlide graphStats={graphStats} /> : null}
         {activeIndex === 1 ? <DevTrendsSlide devTrends={devTrends} /> : null}
-        {activeIndex === 2 ? <PopularImagePostsSlide popularImagePosts={popularImagePosts} /> : null}
       </div>
     </section>
   );
