@@ -1,20 +1,28 @@
 import Link from 'next/link';
 import { ChevronRight, Hash } from 'lucide-react';
 
+const TAG_LABEL_BY_FILTER = {
+  trending: '트렌딩 태그',
+  latest: '인기 태그',
+  feed: '추천 태그',
+};
+
 /**
- * 메인 페이지 인기 태그 탐색 바.
+ * 메인 페이지 필터 툴바 하단의 태그 탐색 바.
  */
-export default function BlogMainTagBar({ tags = [] }) {
+export default function BlogMainTagBar({ filterId = 'trending', tags = [] }) {
   if (!tags.length) {
     return null;
   }
 
+  const label = TAG_LABEL_BY_FILTER[filterId] ?? TAG_LABEL_BY_FILTER.trending;
+
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card/60 px-4 py-2.5">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card/60 px-4 py-2.5">
       <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-0.5">
         <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-muted-foreground">
           <Hash className="size-3.5 text-primary" />
-          인기 태그
+          {label}
         </span>
         <div className="flex items-center gap-1.5">
           {tags.map((tag) => (

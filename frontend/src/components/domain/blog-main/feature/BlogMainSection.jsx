@@ -12,7 +12,7 @@ export default function BlogMainSection({
   activeFilterId,
   initialPosts,
   totalPages,
-  trendingTags = [],
+  filterTags = [],
   graphStats = null,
 }) {
   const router = useRouter();
@@ -33,11 +33,11 @@ export default function BlogMainSection({
 
   return (
     <>
-      <BlogMainDiscoveryBanner featuredPost={initialPosts?.[0]} graphStats={graphStats} />
-
-      <BlogMainTagBar tags={trendingTags} />
+      <BlogMainDiscoveryBanner featuredPosts={initialPosts?.slice(0, 4)} graphStats={graphStats} />
 
       <BlogMainToolbar activeFilterId={activeFilterId} filters={filters} onChangeFilter={handleChangeFilter} />
+
+      <BlogMainTagBar filterId={activeFilterId} tags={filterTags} />
 
       <BlogMainInfinitePostGrid
         key={activeFilterId}

@@ -1,7 +1,7 @@
 import BlogMainSection from '@/components/domain/blog-main/feature/BlogMainSection';
 import Header from '@/components/common/layout/Header';
 import { blogMainFilters } from '@/data/blog-main/blog-main-posts';
-import { loadGraphOverview, loadMainPosts, loadTrendingTags } from '@/lib/queries/blog-main';
+import { loadGraphOverview, loadMainPosts, loadTagsByFilter } from '@/lib/queries/blog-main';
 
 export const metadata = {
   title: 'User Blog Main',
@@ -17,11 +17,12 @@ export default async function MainPage({ searchParams }) {
 
   const activeFilter = blogMainFilters.find((filter) => filter.id === filterId) ?? blogMainFilters[0];
 
-  const [{ posts, totalPages }, trendingTags, graphStats] = await Promise.all([
+  const [{ posts, totalPages }, filterTags, graphStats] = await Promise.all([
     loadMainPosts({
       filterId: activeFilter.id,
+      size: 16,
     }),
-    loadTrendingTags(10),
+    loadTagsByFilter(activeFilter.id, 12),
     loadGraphOverview(),
   ]);
 
@@ -35,7 +36,7 @@ export default async function MainPage({ searchParams }) {
           activeFilterId={activeFilter.id}
           initialPosts={posts}
           totalPages={totalPages}
-          trendingTags={trendingTags}
+          filterTags={filterTags}
           graphStats={graphStats}
         />
       </div>

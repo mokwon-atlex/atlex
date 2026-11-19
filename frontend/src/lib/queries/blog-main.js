@@ -3,7 +3,7 @@ import { fetchPosts } from '@/lib/api/posts';
 import { fetchAllTags } from '@/lib/api/tags';
 import { toBlogMainPost } from '@/lib/mappers/post';
 
-export async function loadMainPosts({ page = 0, size = 10, filterId, type, tag } = {}) {
+export async function loadMainPosts({ page = 0, size = 16, filterId, type, tag } = {}) {
   // 에러는 삼키지 않고 그대로 전파한다 — 호출부(app/page.jsx)에서 Next.js 에러 화면으로 surfacing.
   const resolvedType = type ?? filterId;
   const data = await fetchPosts({ page, size, type: resolvedType, tag });
@@ -14,15 +14,23 @@ export async function loadMainPosts({ page = 0, size = 10, filterId, type, tag }
 }
 
 /**
- * 메인 탐색 바에 표시할 트렌딩 태그 목록을 조회한다.
+ * 현재 선택된 메인 필터(trending, latest, feed)에 맞는 태그 목록을 조회한다.
  * 부가 탐색 요소이므로 조회 실패 시 빈 배열을 반환해 메인 피드 렌더링을 막지 않는다.
  *
- * @param {number} [size=10] 조회할 최대 태그 개수
+ * @param {string} [filterId='trending'] 현재 보기 필터
+ * @param {number} [size=12] 조회할 최대 태그 개수
  * @returns {Promise<Array<{ name: string, postCount: number }>>}
  */
-export async function loadTrendingTags(size = 10) {
+export async function loadTagsByFilter(filterId = 'trending', size = 12) {
+  const sortByFilter = {
+    trending: 'trending',
+    latest: 'popular',
+    feed: 'alphabet',
+  };
+  const sort = sortByFilter[filterId] ?? 'trending';
+
   try {
-    const data = await fetchAllTags({ sort: 'trending', page: 0, size });
+    const data = await fetchAllTags({ sort, page: 0, size });
     return (data?.content ?? []).map((tag) => ({
       name: tag.name,
       postCount: tag.postCount ?? 0,
