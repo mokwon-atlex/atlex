@@ -2,7 +2,7 @@ export const SVG_W = 840;
 export const SVG_H = 640;
 export const ARROW_LENGTH = 20;
 export const ARROW_HEIGHT = 16;
-export const PRIMARY = '#FEF3C7';
+export const PRIMARY = '#FACC15';
 export const PRIMARY_SOFT = '#1E1B12';
 export const CANVAS_BG = 'radial-gradient(circle at 50% 45%, #0E172A 0%, #070B16 55%, #03050A 100%)';
 
