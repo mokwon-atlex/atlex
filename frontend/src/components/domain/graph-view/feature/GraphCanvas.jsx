@@ -97,6 +97,28 @@ export function GraphCanvas({
 
     return relatedIds;
   }, [focusedEdges, focusedNodeIds]);
+  const categoryClusters = useMemo(() => {
+    const groups = new Map();
+    filteredPosts.forEach((post) => {
+      const key = post.categoryName || '미분류';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(post);
+    });
+    if (groups.size <= 1) return [];
+
+    return [...groups.entries()].map(([name, groupPosts]) => {
+      const cx = groupPosts.reduce((sum, p) => sum + p.x, 0) / groupPosts.length;
+      const cy = groupPosts.reduce((sum, p) => sum + p.y, 0) / groupPosts.length;
+      const maxDist = groupPosts.reduce((max, p) => Math.max(max, Math.hypot(p.x - cx, p.y - cy)), 0);
+      return {
+        name,
+        cx,
+        cy,
+        radius: Math.max(72, maxDist + 48),
+      };
+    });
+  }, [filteredPosts]);
+
   const defaultLabelOpacity =
     filteredPosts.length > 12
       ? Math.min(0.72, Math.max(0, (zoom - 1) * 1.2))
@@ -225,6 +247,31 @@ export function GraphCanvas({
       style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
     >
       <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
+        {categoryClusters.map((cluster) => (
+          <g key={cluster.name} pointerEvents="none">
+            <circle
+              cx={cluster.cx}
+              cy={cluster.cy}
+              r={cluster.radius}
+              fill="currentColor"
+              fillOpacity={0.03}
+              stroke="currentColor"
+              strokeOpacity={0.14}
+              strokeDasharray="6 6"
+              strokeWidth={1.5}
+              className="text-primary"
+            />
+            <text
+              x={cluster.cx}
+              y={cluster.cy - cluster.radius - 10}
+              textAnchor="middle"
+              className="fill-muted-foreground text-[12px] font-bold tracking-tight"
+            >
+              {cluster.name}
+            </text>
+          </g>
+        ))}
+
         {renderedEdges.map((edge) => {
           const from = postMap.get(edge.from);
           const to = postMap.get(edge.to);
