@@ -154,6 +154,29 @@ class AiSuggestionServiceTest {
             // then
             assertThat(response.getSuggestion()).isEqualTo("```java\nSystem.out.println(\"hi\");\n```");
         }
+
+        @Test
+        @DisplayName("생성 모드(DIAGRAM)가 전달되면 프롬프트에 Mermaid 다이어그램 요청 형식을 포함한다")
+        void includesModeInstructionInPrompt() {
+            // given
+            ParagraphSuggestionRequest request = new ParagraphSuggestionRequest(
+                "인증 아키텍처",
+                "백엔드",
+                List.of("JWT"),
+                "클라이언트와 서버의 토큰 검증 흐름입니다.",
+                "DIAGRAM");
+            when(geminiClient.generateContent(anyString(), anyString(), anyInt()))
+                .thenReturn("```mermaid\nflowchart LR\nA[\"Client\"] --> B[\"API\"]\n```");
+
+            // when
+            AiSuggestionResponse response = aiSuggestionService.suggestParagraph(request);
+
+            // then
+            ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+            verify(geminiClient).generateContent(anyString(), promptCaptor.capture(), anyInt());
+            assertThat(promptCaptor.getValue()).contains("mermaid");
+            assertThat(response.getSuggestion()).contains("```mermaid");
+        }
     }
 
     @Nested

@@ -3,7 +3,7 @@
 // [Section] tiptap 리치 텍스트 에디터를 Card(dashed) 안에 렌더하는 본문 섹션.
 // 에디터가 비어 있을 때만 placeholder를 absolute로 겹쳐서 표시한다.
 import { EditorContent } from '@tiptap/react';
-import { Loader2, Sparkles, Trash2 } from 'lucide-react';
+import { Code2, GitFork, Loader2, Sigma, Sparkles, Table2, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/common/ui/button';
 import { Card, CardContent, CardTitle } from '@/components/common/ui/card';
@@ -41,29 +41,83 @@ export default function PostEditorContentSection({
     <div className="flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 p-5 sm:p-7">
         <Card size="sm" className="flex h-full min-h-0 flex-col gap-4 bg-background p-5 sm:p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="text-lg">본문</CardTitle>
             {onRequestParagraphAi ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="xs"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={onRequestParagraphAi}
-                disabled={isSuggestingParagraph}
-                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                title="현재 커서 위치에 AI가 다음 문장을 이어서 추천합니다 (단축키: Ctrl + J, 적용: Tab, 취소: Esc)"
-              >
-                {isSuggestingParagraph ? (
-                  <Loader2 className="size-3 animate-spin text-primary" />
-                ) : (
-                  <Sparkles className="size-3 text-primary" />
-                )}
-                <span>{isSuggestingParagraph ? '작성 중...' : 'AI 이어쓰기'}</span>
-                <span className="rounded border border-border/60 bg-muted/40 px-1 text-[10px] text-muted-foreground">
-                  Ctrl+J
-                </span>
-              </Button>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onRequestParagraphAi('CODE')}
+                  disabled={isSuggestingParagraph}
+                  className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  title="문맥에 맞는 예제 코드 블록을 AI로 생성해 삽입합니다"
+                >
+                  <Code2 className="size-3 text-primary" />
+                  <span>코드</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onRequestParagraphAi('DIAGRAM')}
+                  disabled={isSuggestingParagraph}
+                  className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  title="문맥에 맞는 Mermaid 다이어그램을 AI로 생성해 삽입합니다"
+                >
+                  <GitFork className="size-3 text-primary" />
+                  <span>다이어그램</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onRequestParagraphAi('TABLE')}
+                  disabled={isSuggestingParagraph}
+                  className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  title="문맥을 비교·정리하는 마크다운 표를 AI로 생성해 삽입합니다"
+                >
+                  <Table2 className="size-3 text-primary" />
+                  <span>표</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onRequestParagraphAi('MATH')}
+                  disabled={isSuggestingParagraph}
+                  className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  title="문맥과 관련된 수식 블록을 AI로 생성해 삽입합니다"
+                >
+                  <Sigma className="size-3 text-primary" />
+                  <span>수식</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onRequestParagraphAi('AUTO')}
+                  disabled={isSuggestingParagraph}
+                  className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  title="현재 커서 위치에 AI가 다음 문장을 이어서 추천합니다 (단축키: Ctrl + J, 적용: Tab, 취소: Esc)"
+                >
+                  {isSuggestingParagraph ? (
+                    <Loader2 className="size-3 animate-spin text-primary" />
+                  ) : (
+                    <Sparkles className="size-3 text-primary" />
+                  )}
+                  <span>{isSuggestingParagraph ? '작성 중...' : 'AI 이어쓰기'}</span>
+                  <span className="rounded border border-border/60 bg-muted/40 px-1 text-[10px] text-muted-foreground">
+                    Ctrl+J
+                  </span>
+                </Button>
+              </div>
             ) : null}
           </div>
 

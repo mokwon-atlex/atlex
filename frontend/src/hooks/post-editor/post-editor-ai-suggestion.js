@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { fetchDescriptionAiSuggestion, fetchParagraphAiSuggestion, fetchTitleAiSuggestion } from '@/lib/api/ai';
+import { markdownToTiptapHtml } from '@/lib/post-editor/markdown-to-html';
 
 const DEBOUNCE_DELAY_MS = 600;
 
@@ -103,12 +104,14 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
 
       let currentWritingOverride;
       let insertDirectly = false;
+      let mode = 'AUTO';
 
       if (typeof optionsOrWritingOverride === 'string') {
         currentWritingOverride = optionsOrWritingOverride;
       } else if (optionsOrWritingOverride && typeof optionsOrWritingOverride === 'object') {
         currentWritingOverride = optionsOrWritingOverride.currentWritingOverride;
         insertDirectly = Boolean(optionsOrWritingOverride.insertDirectly);
+        mode = optionsOrWritingOverride.mode || 'AUTO';
       }
 
       let currentWriting = currentWritingOverride;
@@ -133,6 +136,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
           {
             category,
             currentWriting,
+            mode,
             tags,
             title,
           },
@@ -141,18 +145,30 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
 
         if (res?.suggestion) {
           let suggestionText = res.suggestion;
-          if (
-            lastChar &&
-            !/[\s\n]/.test(lastChar) &&
-            !suggestionText.startsWith(' ') &&
-            !suggestionText.startsWith('\n')
-          ) {
-            suggestionText = ` ${suggestionText}`;
-          }
-
           if (insertDirectly) {
-            editor.chain().focus().clearAiSuggestion().insertContent(suggestionText).run();
+            const convertedHtml = markdownToTiptapHtml(suggestionText);
+            if (convertedHtml) {
+              editor.chain().focus().clearAiSuggestion().insertContent(convertedHtml).run();
+            } else {
+              if (
+                lastChar &&
+                !/[\s\n]/.test(lastChar) &&
+                !suggestionText.startsWith(' ') &&
+                !suggestionText.startsWith('\n')
+              ) {
+                suggestionText = ` ${suggestionText}`;
+              }
+              editor.chain().focus().clearAiSuggestion().insertContent(suggestionText).run();
+            }
           } else {
+            if (
+              lastChar &&
+              !/[\s\n]/.test(lastChar) &&
+              !suggestionText.startsWith(' ') &&
+              !suggestionText.startsWith('\n')
+            ) {
+              suggestionText = ` ${suggestionText}`;
+            }
             editor.commands.setAiSuggestion(suggestionText);
           }
           queryClient.invalidateQueries({ queryKey: ['aiTokens'] });

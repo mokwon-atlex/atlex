@@ -420,9 +420,12 @@ export default function PostEditorPage({ postId }) {
               editor={richText.editor}
               isEditorEmpty={richText.isEditorEmpty}
               isSuggestingParagraph={aiSuggestion.isSuggestingParagraph}
-              onRequestParagraphAi={() => {
+              onRequestParagraphAi={(mode = 'AUTO') => {
                 richText.editor?.commands.focus();
-                aiSuggestion.requestParagraphSuggestion();
+                aiSuggestion.requestParagraphSuggestion({
+                  insertDirectly: mode !== 'AUTO',
+                  mode,
+                });
               }}
               onCancelParagraphAi={abortParagraphSuggestion}
               userId={userId}
