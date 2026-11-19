@@ -570,3 +570,55 @@ export const AccountSwitchReloadsLikeState = {
     });
   },
 };
+
+/** 매거진 스킨은 첫 글을 크게, 나머지를 카드 그리드로 보여 주고 프로필은 목록 아래에 둔다. */
+export const MagazineSkin = {
+  args: {
+    categories: mockCategories,
+    feed: mockFeed,
+    profile: { ...mockProfile, skin: 'MAGAZINE' },
+    tags: mockTags,
+  },
+  play: async ({ canvasElement }) => {
+    const skinRoot = canvasElement.querySelector('[data-blog-skin]');
+
+    await expect(skinRoot).toHaveAttribute('data-blog-skin', 'MAGAZINE');
+    await expect(skinRoot.querySelectorAll('article')).toHaveLength(mockPosts.length);
+    // 피드가 프로필 영역보다 먼저 나온다.
+    await expect(skinRoot.firstElementChild.tagName).toBe('SECTION');
+  },
+};
+
+/** 미니멀 스킨은 가운데 1단에 연도별 제목 목록만 보여 준다. */
+export const MinimalSkin = {
+  args: {
+    categories: mockCategories,
+    feed: mockFeed,
+    profile: { ...mockProfile, skin: 'MINIMAL' },
+    tags: mockTags,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const skinRoot = canvasElement.querySelector('[data-blog-skin]');
+
+    await expect(skinRoot).toHaveAttribute('data-blog-skin', 'MINIMAL');
+    await expect(canvas.getByRole('heading', { name: '2024' })).toBeVisible();
+    await expect(canvas.getByRole('region', { name: '2024년 글' }).querySelectorAll('li')).toHaveLength(
+      mockPosts.length,
+    );
+    await expect(skinRoot.querySelectorAll('article')).toHaveLength(0);
+  },
+};
+
+/** 알 수 없는 스킨 값은 기본 스킨으로 보여 준다. */
+export const UnknownSkinFallsBackToDefault = {
+  args: {
+    categories: mockCategories,
+    feed: mockFeed,
+    profile: { ...mockProfile, skin: 'NEON' },
+    tags: mockTags,
+  },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.querySelector('[data-blog-skin]')).toHaveAttribute('data-blog-skin', 'DEFAULT');
+  },
+};

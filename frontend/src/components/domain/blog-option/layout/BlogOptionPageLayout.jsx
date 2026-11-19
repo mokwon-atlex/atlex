@@ -7,7 +7,7 @@ import Header from '@/components/common/layout/Header';
 import { buttonVariants } from '@/components/common/ui/button';
 import { cn } from '@/lib/utils';
 
-export default function BlogOptionPageLayout({ blogUserId, bioSection, categorySection, githubSection }) {
+export default function BlogOptionPageLayout({ blogUserId, bioSection, categorySection, skinSection, githubSection }) {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,var(--muted),var(--background)_42%)] text-foreground">
       <Header blogUserId={blogUserId} />
@@ -17,7 +17,7 @@ export default function BlogOptionPageLayout({ blogUserId, bioSection, categoryS
           <div className="space-y-2">
             <h1 className="text-2xl font-black tracking-tight sm:text-3xl">블로그 옵션</h1>
             <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-              유저 소개글, 카테고리 및 GitHub 자동 백업을 관리하는 전용 페이지입니다.
+              유저 소개글, 카테고리, 블로그 스킨 및 GitHub 자동 백업을 관리하는 전용 페이지입니다.
             </p>
           </div>
 
@@ -34,6 +34,7 @@ export default function BlogOptionPageLayout({ blogUserId, bioSection, categoryS
           {categorySection}
         </div>
 
+        {skinSection ? <div className="w-full">{skinSection}</div> : null}
         {githubSection ? <div className="w-full">{githubSection}</div> : null}
       </div>
     </main>

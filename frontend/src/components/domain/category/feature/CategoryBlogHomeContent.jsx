@@ -11,6 +11,7 @@ import BlogHomeFeed from '@/components/domain/blog-home/feature/BlogHomeFeed';
 import BlogHomeSidebar from '@/components/domain/blog-home/feature/BlogHomeSidebar';
 import BlogHomeBodyLayout from '@/components/domain/blog-home/layout/BlogHomeBodyLayout';
 import BlogHomeFollowListModal from '@/components/domain/blog-home/layout/BlogHomeFollowListModal';
+import { normalizeBlogSkin } from '@/lib/blog-option';
 import { ALL_CATEGORY_ID, findCategoryById } from '@/lib/category/category-picker';
 import { followUser, unfollowUser } from '@/lib/api/follows';
 import { addPostLike, fetchUserBlogPosts, removePostLike } from '@/lib/api/posts';
@@ -421,25 +422,49 @@ export default function CategoryBlogHomeContent({ categories = [], feed, profile
     ),
   };
 
+  const skin = normalizeBlogSkin(profile.skin);
+  const sidebarProps = {
+    onStatClick: (statId) => setFollowModalTab(statId),
+    onTagSelect: setSelectedTagId,
+    profile: {
+      ...profile,
+      stats: resolvedStats,
+      quickActions: resolvedQuickActions,
+    },
+    quickActionOverrides,
+    tags: resolvedTags,
+  };
+
+  // 스킨은 화면 배치만 바꾸고, 팔로우·필터·좋아요·페이지 이동 상태는 모든 스킨이 위 로직을 그대로 공유한다.
+  let body;
+
+  if (skin === 'MAGAZINE') {
+    body = (
+      <div className="space-y-10" data-blog-skin="MAGAZINE">
+        <BlogHomeFeed feed={resolvedFeed} variant="magazine" />
+        <BlogHomeSidebar {...sidebarProps} orientation="row" />
+      </div>
+    );
+  } else if (skin === 'MINIMAL') {
+    body = (
+      <div className="mx-auto max-w-2xl space-y-10" data-blog-skin="MINIMAL">
+        <BlogHomeSidebar {...sidebarProps} />
+        <BlogHomeFeed feed={resolvedFeed} variant="index" />
+      </div>
+    );
+  } else {
+    body = (
+      <div data-blog-skin="DEFAULT">
+        <BlogHomeBodyLayout sidebar={<BlogHomeSidebar {...sidebarProps} />}>
+          <BlogHomeFeed feed={resolvedFeed} />
+        </BlogHomeBodyLayout>
+      </div>
+    );
+  }
+
   return (
     <>
-      <BlogHomeBodyLayout
-        sidebar={
-          <BlogHomeSidebar
-            onStatClick={(statId) => setFollowModalTab(statId)}
-            onTagSelect={setSelectedTagId}
-            profile={{
-              ...profile,
-              stats: resolvedStats,
-              quickActions: resolvedQuickActions,
-            }}
-            quickActionOverrides={quickActionOverrides}
-            tags={resolvedTags}
-          />
-        }
-      >
-        <BlogHomeFeed feed={resolvedFeed} />
-      </BlogHomeBodyLayout>
+      {body}
 
       <BlogHomeFollowListModal
         activeTab={followModalTab}
