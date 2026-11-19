@@ -287,7 +287,14 @@ export function GraphCanvas({
 
       <g pointerEvents="none">
         {BACKGROUND_STARS.map((star, index) => (
-          <circle key={index} cx={star.x} cy={star.y} r={star.r} fill="#FEF9C3" opacity={star.opacity} />
+          <circle
+            key={index}
+            cx={star.x}
+            cy={star.y}
+            r={star.r}
+            fill={index % 3 === 0 ? '#FDE047' : '#FEF08A'}
+            opacity={star.opacity}
+          />
         ))}
       </g>
 
@@ -354,7 +361,7 @@ export function GraphCanvas({
           const lineEndX = edge.isExplicit ? x2 - ux * ARROW_LENGTH : x2;
           const lineEndY = edge.isExplicit ? y2 - uy * ARROW_LENGTH : y2;
           const arrowPoints = edge.isExplicit ? createArrowPoints(x2, y2, lineEndX, lineEndY, ux, uy) : null;
-          const edgeColor = isLit ? '#FEF9C3' : edge.isExplicit ? '#FEF3C7' : '#FDE68A';
+          const edgeColor = isLit ? '#FEF08A' : edge.isExplicit ? '#FDE047' : '#FBBF24';
 
           return (
             <g data-graph-edge={edge.id} key={edge.id} opacity={edgeOpacity} style={{ transition: 'opacity 0.18s' }}>
@@ -401,7 +408,7 @@ export function GraphCanvas({
                 ? 1
                 : baseBrightness;
           const labelOpacity = isDimmed ? 0 : isFocused ? 1 : hasFocus && isRelated ? 0.88 : defaultLabelOpacity;
-          const baseStarColor = activeTab === 'category' ? getStarColor(post.categoryName || '미분류') : '#FEF3C7';
+          const baseStarColor = activeTab === 'category' ? getStarColor(post.categoryName || '미분류') : '#FDE047';
           const haloOpacity = Math.min(0.32, 0.06 + degree * 0.055);
           const haloRadius = radius + Math.min(10, 3 + degree * 1.6);
 
@@ -432,20 +439,26 @@ export function GraphCanvas({
               tabIndex={0}
             >
               {isFocused ? (
-                <circle cx={post.x} cy={post.y} fill="#FDE68A" opacity="0.28" r={radius + 11} />
+                <circle cx={post.x} cy={post.y} fill="#FACC15" opacity="0.34" r={radius + 11} />
               ) : (
-                <circle cx={post.x} cy={post.y} fill={baseStarColor} opacity={haloOpacity} r={haloRadius} />
+                <circle
+                  cx={post.x}
+                  cy={post.y}
+                  fill={activeTab === 'category' ? baseStarColor : '#F59E0B'}
+                  opacity={haloOpacity}
+                  r={haloRadius}
+                />
               )}
               <circle
                 cx={post.x}
                 cy={post.y}
-                fill={isFocused || degree >= 4 ? '#FFFFFF' : baseStarColor}
+                fill={isFocused ? '#FEF08A' : degree >= 4 && activeTab !== 'category' ? '#FEF08A' : baseStarColor}
                 filter={isFocused || degree >= 1 ? 'url(#star-glow)' : undefined}
                 opacity={isFocused ? 1 : baseBrightness}
                 r={radius}
-                stroke={isFocused ? '#FDE68A' : '#FEF9C3'}
+                stroke={isFocused ? '#FACC15' : '#FEF08A'}
                 strokeDasharray={post.isPrivate ? '5,3' : undefined}
-                strokeOpacity={isFocused ? 1 : Math.min(0.9, 0.35 + degree * 0.14)}
+                strokeOpacity={isFocused ? 1 : Math.min(0.92, 0.45 + degree * 0.14)}
                 strokeWidth={isFocused ? 2.5 : post.isPrivate ? 2 : 1.2}
               />
               {post.isPrivate ? <LockBadge x={post.x + radius * 0.52} y={post.y + radius * 0.52} /> : null}
