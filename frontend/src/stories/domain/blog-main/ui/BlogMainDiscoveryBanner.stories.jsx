@@ -69,11 +69,11 @@ export const Default = {
     await expect(canvas.getByText('문서 18 · 연결 34')).toBeInTheDocument();
     await expect(canvas.queryByText('Spotlight')).not.toBeInTheDocument();
 
-    await userEvent.click(canvas.getByRole('button', { name: '2번 배너: 개발 이슈' }));
+    await userEvent.click(canvas.getByRole('button', { name: '다음 배너' }));
     await expect(canvas.getByText('주요 개발 이슈 · 요즘 뜨는 기술')).toBeInTheDocument();
     await expect(canvas.getByText(FALLBACK_DEV_TRENDS[0].title)).toBeInTheDocument();
 
-    await userEvent.click(canvas.getByRole('button', { name: '3번 배너: 인기 게시글' }));
+    await userEvent.click(canvas.getByRole('button', { name: '다음 배너' }));
     await expect(canvas.getByText('인기 게시글')).toBeInTheDocument();
     await expect(canvas.getByText('React 19 Server Actions 실전 도입기')).toBeInTheDocument();
     await expect(canvas.getByText('지식 그래프 시각화 성능 최적화 가이드')).toBeInTheDocument();
@@ -93,7 +93,7 @@ export const EmptyPopularImages = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole('button', { name: '3번 배너: 인기 게시글' }));
+    await userEvent.click(canvas.getByRole('button', { name: '이전 배너' }));
     await expect(canvas.getByText('대표 이미지가 등록된 인기 게시글을 준비 중입니다')).toBeInTheDocument();
   },
 };
