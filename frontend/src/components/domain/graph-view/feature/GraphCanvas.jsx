@@ -27,8 +27,8 @@ const BACKGROUND_STARS = Array.from({ length: 90 }, (_, index) => {
   const ry = seedB - Math.floor(seedB);
   const rz = seedC - Math.floor(seedC);
   return {
-    x: Math.round(rx * SVG_W),
-    y: Math.round(ry * SVG_H),
+    x: Math.round(-420 + rx * (SVG_W + 840)),
+    y: Math.round(-160 + ry * (SVG_H + 320)),
     r: 0.6 + rz * 1.1,
     opacity: 0.22 + (index % 5) * 0.14,
   };
@@ -267,7 +267,7 @@ export function GraphCanvas({
     <svg
       ref={svgRef}
       viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-      className="h-full w-full"
+      className="h-full w-full overflow-visible"
       onPointerCancel={finishDrag}
       onPointerDown={handleCanvasPointerDown}
       onPointerMove={handlePointerMove}
@@ -276,11 +276,6 @@ export function GraphCanvas({
       style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
     >
       <defs>
-        <radialGradient id="cosmos-bg" cx="50%" cy="45%" r="72%">
-          <stop offset="0%" stopColor="#0E172A" />
-          <stop offset="55%" stopColor="#070B16" />
-          <stop offset="100%" stopColor="#03050A" />
-        </radialGradient>
         <filter id="star-glow" x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="2.8" result="blur" />
           <feMerge>
@@ -290,11 +285,9 @@ export function GraphCanvas({
         </filter>
       </defs>
 
-      <rect width={SVG_W} height={SVG_H} fill="url(#cosmos-bg)" pointerEvents="none" />
-
       <g pointerEvents="none">
         {BACKGROUND_STARS.map((star, index) => (
-          <circle key={index} cx={star.x} cy={star.y} r={star.r} fill="#E2E8F0" opacity={star.opacity} />
+          <circle key={index} cx={star.x} cy={star.y} r={star.r} fill="#FEF9C3" opacity={star.opacity} />
         ))}
       </g>
 
@@ -361,7 +354,7 @@ export function GraphCanvas({
           const lineEndX = edge.isExplicit ? x2 - ux * ARROW_LENGTH : x2;
           const lineEndY = edge.isExplicit ? y2 - uy * ARROW_LENGTH : y2;
           const arrowPoints = edge.isExplicit ? createArrowPoints(x2, y2, lineEndX, lineEndY, ux, uy) : null;
-          const edgeColor = isLit ? '#BAE6FD' : edge.isExplicit ? '#7DD3FC' : '#60A5FA';
+          const edgeColor = isLit ? '#FEF9C3' : edge.isExplicit ? '#FEF3C7' : '#FDE68A';
 
           return (
             <g data-graph-edge={edge.id} key={edge.id} opacity={edgeOpacity} style={{ transition: 'opacity 0.18s' }}>
@@ -408,7 +401,7 @@ export function GraphCanvas({
                 ? 1
                 : baseBrightness;
           const labelOpacity = isDimmed ? 0 : isFocused ? 1 : hasFocus && isRelated ? 0.88 : defaultLabelOpacity;
-          const baseStarColor = activeTab === 'category' ? getStarColor(post.categoryName || '미분류') : '#BAE6FD';
+          const baseStarColor = activeTab === 'category' ? getStarColor(post.categoryName || '미분류') : '#FEF3C7';
           const haloOpacity = Math.min(0.32, 0.06 + degree * 0.055);
           const haloRadius = radius + Math.min(10, 3 + degree * 1.6);
 
@@ -439,7 +432,7 @@ export function GraphCanvas({
               tabIndex={0}
             >
               {isFocused ? (
-                <circle cx={post.x} cy={post.y} fill="#BAE6FD" opacity="0.28" r={radius + 11} />
+                <circle cx={post.x} cy={post.y} fill="#FDE68A" opacity="0.28" r={radius + 11} />
               ) : (
                 <circle cx={post.x} cy={post.y} fill={baseStarColor} opacity={haloOpacity} r={haloRadius} />
               )}
@@ -450,7 +443,7 @@ export function GraphCanvas({
                 filter={isFocused || degree >= 1 ? 'url(#star-glow)' : undefined}
                 opacity={isFocused ? 1 : baseBrightness}
                 r={radius}
-                stroke={isFocused ? '#7DD3FC' : '#E0F2FE'}
+                stroke={isFocused ? '#FDE68A' : '#FEF9C3'}
                 strokeDasharray={post.isPrivate ? '5,3' : undefined}
                 strokeOpacity={isFocused ? 1 : Math.min(0.9, 0.35 + degree * 0.14)}
                 strokeWidth={isFocused ? 2.5 : post.isPrivate ? 2 : 1.2}
