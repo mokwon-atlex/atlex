@@ -14,6 +14,8 @@ export default function BlogMainSection({
   totalPages,
   filterTags = [],
   graphStats = null,
+  devTrends = null,
+  popularImagePosts = [],
 }) {
   const router = useRouter();
 
@@ -33,7 +35,7 @@ export default function BlogMainSection({
 
   return (
     <>
-      <BlogMainDiscoveryBanner featuredPosts={initialPosts?.slice(0, 4)} graphStats={graphStats} />
+      <BlogMainDiscoveryBanner graphStats={graphStats} devTrends={devTrends} popularImagePosts={popularImagePosts} />
 
       <BlogMainToolbar activeFilterId={activeFilterId} filters={filters} onChangeFilter={handleChangeFilter} />
 
