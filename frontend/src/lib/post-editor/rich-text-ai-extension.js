@@ -1,6 +1,7 @@
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
+import { markdownToTiptapContent } from '@/lib/post-editor/markdown-to-html';
 
 export const aiSuggestionPluginKey = new PluginKey('aiSuggestionPlugin');
 
@@ -56,6 +57,13 @@ export const AiSuggestionExtension = Extension.create({
         ({ editor, commands }) => {
           let suggestion = editor.storage.aiSuggestion.suggestion;
           if (!suggestion) return false;
+
+          const convertedNodes = markdownToTiptapContent(suggestion);
+          if (convertedNodes) {
+            commands.insertContent(convertedNodes);
+            commands.clearAiSuggestion();
+            return true;
+          }
 
           const pos = editor.state.selection.from;
           if (pos > 0) {

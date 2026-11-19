@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { fetchDescriptionAiSuggestion, fetchParagraphAiSuggestion, fetchTitleAiSuggestion } from '@/lib/api/ai';
-import { markdownToTiptapHtml } from '@/lib/post-editor/markdown-to-html';
+import { markdownToTiptapContent } from '@/lib/post-editor/markdown-to-html';
 
 const DEBOUNCE_DELAY_MS = 600;
 
@@ -146,9 +146,9 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         if (res?.suggestion) {
           let suggestionText = res.suggestion;
           if (insertDirectly) {
-            const convertedHtml = markdownToTiptapHtml(suggestionText);
-            if (convertedHtml) {
-              editor.chain().focus().clearAiSuggestion().insertContent(convertedHtml).run();
+            const convertedNodes = markdownToTiptapContent(suggestionText);
+            if (convertedNodes) {
+              editor.chain().focus().clearAiSuggestion().insertContent(convertedNodes).run();
             } else {
               if (
                 lastChar &&
