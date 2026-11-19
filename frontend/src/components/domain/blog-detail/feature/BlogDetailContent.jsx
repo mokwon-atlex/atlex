@@ -2,6 +2,7 @@ import BlogDetailArticle from '@/components/domain/blog-detail/ui/BlogDetailArti
 import BlogDetailAuthorCard from '@/components/domain/blog-detail/ui/BlogDetailAuthorCard';
 import { BlogDetailComments } from '@/components/domain/blog-detail/ui/BlogDetailComments';
 import BlogDetailHero from '@/components/domain/blog-detail/ui/BlogDetailHero';
+import BlogDetailRelatedPosts from '@/components/domain/blog-detail/ui/BlogDetailRelatedPosts';
 
 /**
  * 게시글 상세 화면의 최상위 레이아웃. postId를 BlogDetailHero로 전달해
@@ -35,6 +36,7 @@ export default function BlogDetailContent({
   postId,
   publishedAt,
   readTime,
+  relatedGraph,
   title,
   updatedAt,
   visibilityLabel,
@@ -59,6 +61,8 @@ export default function BlogDetailContent({
       <BlogDetailArticle contentBlocks={contentBlocks ?? []} />
 
       {authorCard ? <BlogDetailAuthorCard authorCard={authorCard} /> : null}
+
+      <BlogDetailRelatedPosts currentPostId={currentPostId} graph={relatedGraph} />
 
       {currentPostId ? <BlogDetailComments postId={currentPostId} postAuthorUserId={authorUserId} /> : null}
     </div>

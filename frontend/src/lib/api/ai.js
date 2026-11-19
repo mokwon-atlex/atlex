@@ -20,11 +20,12 @@ export async function fetchTitleAiSuggestion({ currentTitle, category, tags }, s
  * @param {string} [params.category] 카테고리
  * @param {string[]} [params.tags] 태그 목록
  * @param {string} params.currentWriting 직전 작성 문맥/단락
+ * @param {string} [params.mode] 생성 모드 (AUTO, CODE, DIAGRAM, TABLE, MATH)
  * @param {AbortSignal} [signal] 요청 취소 시그널
  * @returns {Promise<{ suggestion: string }>}
  */
-export async function fetchParagraphAiSuggestion({ title, category, tags, currentWriting }, signal) {
-  return apiClient.post('/ai/suggest/paragraph', { title, category, tags, currentWriting }, { signal });
+export async function fetchParagraphAiSuggestion({ title, category, tags, currentWriting, mode }, signal) {
+  return apiClient.post('/ai/suggest/paragraph', { title, category, tags, currentWriting, mode }, { signal });
 }
 
 /**
