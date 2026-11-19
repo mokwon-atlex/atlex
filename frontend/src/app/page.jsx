@@ -1,7 +1,14 @@
 import BlogMainSection from '@/components/domain/blog-main/feature/BlogMainSection';
 import Header from '@/components/common/layout/Header';
 import { blogMainFilters } from '@/data/blog-main/blog-main-posts';
-import { loadGraphOverview, loadMainPosts, loadTagsByFilter } from '@/lib/queries/blog-main';
+import {
+  loadGraphOverview,
+  loadMainPosts,
+  loadPopularImagePosts,
+  loadTagsByFilter,
+  pickPopularImagePosts,
+} from '@/lib/queries/blog-main';
+import { loadDevTrends } from '@/lib/queries/dev-trends';
 
 export const metadata = {
   title: 'User Blog Main',
@@ -17,14 +24,20 @@ export default async function MainPage({ searchParams }) {
 
   const activeFilter = blogMainFilters.find((filter) => filter.id === filterId) ?? blogMainFilters[0];
 
-  const [{ posts, totalPages }, filterTags, graphStats] = await Promise.all([
+  const isTrendingFilter = activeFilter.id === 'trending';
+
+  const [{ posts, totalPages }, filterTags, graphStats, devTrends, fetchedPopularImagePosts] = await Promise.all([
     loadMainPosts({
       filterId: activeFilter.id,
       size: 16,
     }),
     loadTagsByFilter(activeFilter.id, 12),
     loadGraphOverview(),
+    loadDevTrends(4),
+    isTrendingFilter ? Promise.resolve(null) : loadPopularImagePosts(3),
   ]);
+
+  const popularImagePosts = isTrendingFilter ? pickPopularImagePosts(posts, 3) : (fetchedPopularImagePosts ?? []);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -38,6 +51,8 @@ export default async function MainPage({ searchParams }) {
           totalPages={totalPages}
           filterTags={filterTags}
           graphStats={graphStats}
+          devTrends={devTrends}
+          popularImagePosts={popularImagePosts}
         />
       </div>
     </main>
