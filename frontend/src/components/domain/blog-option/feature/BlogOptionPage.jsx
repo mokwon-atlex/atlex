@@ -5,11 +5,12 @@ import { useEffect, useState } from 'react';
 import BlogOptionBioForm from '@/components/domain/blog-option/feature/BlogOptionBioForm';
 import BlogOptionCategoryManager from '@/components/domain/blog-option/feature/BlogOptionCategoryManager';
 import BlogOptionGitHubSync from '@/components/domain/blog-option/feature/BlogOptionGitHubSync';
+import BlogOptionSkinPicker from '@/components/domain/blog-option/feature/BlogOptionSkinPicker';
 import BlogOptionPageLayout from '@/components/domain/blog-option/layout/BlogOptionPageLayout';
 import { createUserBlogCategory, deleteUserBlogCategory, updateUserBlogCategory } from '@/lib/api/users';
 import { loadUserBlogCategories } from '@/lib/category/blog-categories';
 import { fetchProfileByUserId, updateProfile } from '@/lib/api/profiles';
-import { BLOG_OPTION_BIO_MAX_LENGTH, normalizeBlogBio } from '@/lib/blog-option';
+import { BLOG_OPTION_BIO_MAX_LENGTH, DEFAULT_BLOG_SKIN, normalizeBlogBio, normalizeBlogSkin } from '@/lib/blog-option';
 import { useAuthStore } from '@/store/authStore';
 
 export default function BlogOptionPage() {
@@ -30,6 +31,11 @@ export default function BlogOptionPage() {
   const [categoryError, setCategoryError] = useState('');
   const [bioNotice, setBioNotice] = useState('');
   const [categoryNotice, setCategoryNotice] = useState('');
+  const [blogSkin, setBlogSkin] = useState(DEFAULT_BLOG_SKIN);
+  const [savedBlogSkin, setSavedBlogSkin] = useState(DEFAULT_BLOG_SKIN);
+  const [isSavingSkin, setIsSavingSkin] = useState(false);
+  const [skinError, setSkinError] = useState('');
+  const [skinNotice, setSkinNotice] = useState('');
 
   function resetCategoryEditor() {
     setEditingCategoryId('');
@@ -81,6 +87,9 @@ export default function BlogOptionPage() {
         const limitedBio = nextBio.slice(0, BLOG_OPTION_BIO_MAX_LENGTH);
         setBio(limitedBio);
         setSavedBio(limitedBio);
+        const nextBlogSkin = normalizeBlogSkin(profileResponse?.blogSkin);
+        setBlogSkin(nextBlogSkin);
+        setSavedBlogSkin(nextBlogSkin);
         setCategories(nextCategories);
       } catch (error) {
         if (cancelled) {
@@ -123,6 +132,28 @@ export default function BlogOptionPage() {
       setBioError(error?.message ?? '소개글 저장에 실패했습니다.');
     } finally {
       setIsSavingBio(false);
+    }
+  }
+
+  async function handleSaveBlogSkin() {
+    if (!userId) {
+      return;
+    }
+
+    setIsSavingSkin(true);
+    setSkinError('');
+    setSkinNotice('');
+
+    try {
+      const response = await updateProfile(userId, { blogSkin });
+      const nextBlogSkin = normalizeBlogSkin(response?.blogSkin ?? blogSkin);
+      setBlogSkin(nextBlogSkin);
+      setSavedBlogSkin(nextBlogSkin);
+      setSkinNotice('스킨을 저장했습니다. 내 블로그에서 바로 확인할 수 있습니다.');
+    } catch (error) {
+      setSkinError(error?.message ?? '스킨 저장에 실패했습니다.');
+    } finally {
+      setIsSavingSkin(false);
     }
   }
 
@@ -277,6 +308,22 @@ export default function BlogOptionPage() {
           onCancelEditCategory={handleCancelEditCategory}
           onUpdateCategory={handleUpdateCategory}
           onDeleteCategory={handleDeleteCategory}
+        />
+      }
+      skinSection={
+        <BlogOptionSkinPicker
+          blogSkin={blogSkin}
+          savedBlogSkin={savedBlogSkin}
+          isLoading={isLoading}
+          isSaving={isSavingSkin}
+          errorMessage={skinError}
+          noticeMessage={skinNotice}
+          onBlogSkinChange={(skinId) => {
+            setBlogSkin(skinId);
+            setSkinError('');
+            setSkinNotice('');
+          }}
+          onSave={handleSaveBlogSkin}
         />
       }
       githubSection={<BlogOptionGitHubSync />}

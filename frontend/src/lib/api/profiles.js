@@ -10,7 +10,7 @@ export function fetchProfileByUserId(userId) {
 }
 
 // PATCH /profiles/{userId} — 프로필 수정. Authorization 헤더 필요.
-// payload: { name?, profileImage?, info? }
+// payload: { name?, profileImage?, info?, blogSkin? } — blogSkin 은 'DEFAULT' | 'MAGAZINE' | 'MINIMAL'
 export function updateProfile(userId, body) {
   return apiClient.patch(`/profiles/${userId}`, body);
 }
