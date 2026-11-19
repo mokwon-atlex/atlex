@@ -3,10 +3,12 @@ package com.example.atlex.domain.post.service;
 import com.example.atlex.domain.post.dto.response.PostLikeResponse;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.post.entity.PostLike;
+import com.example.atlex.domain.post.event.PostLikedEvent;
 import com.example.atlex.domain.post.repository.PostLikeRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ public class PostLikeService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final PostAccessService postAccessService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PostLikeResponse like(Long postId, Long userId) {
@@ -43,6 +46,9 @@ public class PostLikeService {
         }
 
         postRepository.increaseLikes(postId);
+        if (post.getUser() != null) {
+            eventPublisher.publishEvent(new PostLikedEvent(postId, userId, post.getUser().getId()));
+        }
         return PostLikeResponse.of(postId, true, postRepository.findLikesByPostId(postId));
     }
 

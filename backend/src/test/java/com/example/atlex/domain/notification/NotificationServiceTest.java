@@ -3,15 +3,22 @@ package com.example.atlex.domain.notification;
 import com.example.atlex.domain.comment.entity.Comment;
 import com.example.atlex.domain.comment.event.CommentCreatedEvent;
 import com.example.atlex.domain.comment.repository.CommentRepository;
+import com.example.atlex.domain.follow.event.UserFollowedEvent;
 import com.example.atlex.domain.notification.entity.Notification;
+import com.example.atlex.domain.notification.entity.NotificationSetting;
 import com.example.atlex.domain.notification.entity.NotificationType;
 import com.example.atlex.domain.notification.repository.NotificationRepository;
 import com.example.atlex.domain.notification.repository.NotificationSettingRepository;
 import com.example.atlex.domain.notification.service.NotificationService;
+import com.example.atlex.domain.notification.service.NotificationSseService;
 import com.example.atlex.domain.post.entity.Post;
+import com.example.atlex.domain.post.event.PostLikedEvent;
 import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.user.entity.User;
 import com.example.atlex.domain.user.repository.UserRepository;
+
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +49,8 @@ class NotificationServiceTest {
     PostRepository postRepository;
     @Mock
     CommentRepository commentRepository;
+    @Mock
+    NotificationSseService notificationSseService;
 
     @InjectMocks
     NotificationService notificationService;
@@ -129,5 +139,74 @@ class NotificationServiceTest {
         notificationService.notifyCommentCreated(new CommentCreatedEvent(COMMENT_ID, POST_ID, 2L, 1L, null));
 
         verify(notificationRepository, never()).save(any(Notification.class));
+    }
+
+    @Test
+    @DisplayName("알림이 저장되면 수신자에게 SSE 알림 이벤트를 전송한다")
+    void notifyCommentCreated_sendsSseEvent() {
+        User postAuthor = user(1L);
+        User commenter = user(2L);
+        Post post = Post.builder().id(POST_ID).title("테스트 글").user(postAuthor).build();
+        Comment comment = Comment.builder().id(COMMENT_ID).post(post).user(commenter).content("새 댓글").build();
+        stubReferences(postAuthor, commenter, post, comment);
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        notificationService.notifyCommentCreated(new CommentCreatedEvent(COMMENT_ID, POST_ID, 2L, 1L, null));
+
+        verify(notificationSseService).sendNotification(eq(1L), any());
+    }
+
+    @Test
+    @DisplayName("다른 사용자가 게시글에 좋아요를 누르면 좋아요 알림을 생성하고 SSE로 전송한다")
+    void notifyPostLiked_createsAndSendsSse() {
+        User postAuthor = user(1L);
+        User liker = user(2L);
+        Post post = Post.builder().id(POST_ID).title("좋아요 테스트 글").user(postAuthor).build();
+        when(userRepository.getReferenceById(1L)).thenReturn(postAuthor);
+        when(userRepository.getReferenceById(2L)).thenReturn(liker);
+        when(postRepository.getReferenceById(POST_ID)).thenReturn(post);
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        notificationService.notifyPostLiked(new PostLikedEvent(POST_ID, 2L, 1L));
+
+        Notification saved = captureSavedNotification();
+        assertEquals(NotificationType.LIKE, saved.getType());
+        verify(notificationSseService).sendNotification(eq(1L), any());
+    }
+
+    @Test
+    @DisplayName("다른 사용자가 팔로우하면 팔로우 알림을 생성하고 SSE로 전송한다")
+    void notifyUserFollowed_createsAndSendsSse() {
+        User target = user(1L);
+        User follower = user(2L);
+        when(userRepository.getReferenceById(1L)).thenReturn(target);
+        when(userRepository.getReferenceById(2L)).thenReturn(follower);
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        notificationService.notifyUserFollowed(new UserFollowedEvent(2L, 1L));
+
+        Notification saved = captureSavedNotification();
+        assertEquals(NotificationType.FOLLOW, saved.getType());
+        verify(notificationSseService).sendNotification(eq(1L), any());
+    }
+
+    @Test
+    @DisplayName("서비스 공지 발송 시 공지 알림 설정이 켜진 활성 사용자에게만 공지 알림을 전송한다")
+    void notifyServiceNotice_respectsNoticeSetting() {
+        User admin = user(1L);
+        User enabledUser = user(2L);
+        User disabledUser = user(3L);
+        when(userRepository.getReferenceById(1L)).thenReturn(admin);
+        when(userRepository.findAllByActiveTrue()).thenReturn(List.of(admin, enabledUser, disabledUser));
+        when(notificationSettingRepository.findByUser_Id(2L)).thenReturn(Optional.empty());
+        when(notificationSettingRepository.findByUser_Id(3L))
+            .thenReturn(Optional.of(NotificationSetting.builder().noticeEnabled(false).build()));
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        int sentCount = notificationService.notifyServiceNotice(1L, null);
+
+        assertEquals(1, sentCount);
+        verify(notificationSseService).sendNotification(eq(2L), any());
+        verify(notificationSseService, never()).sendNotification(eq(3L), any());
     }
 }

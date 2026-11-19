@@ -214,4 +214,16 @@ class NotificationControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value("SUCCESS"));
     }
+
+    @Test
+    @DisplayName("인증된 사용자는 SSE 알림 스트림을 구독할 수 있고 미인증 요청은 401을 반환한다")
+    void subscribeSse() throws Exception {
+        mockMvc.perform(get("/api/v1/notifications/subscribe"))
+            .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/api/v1/notifications/subscribe")
+            .header("Authorization", "Bearer " + recipientToken)
+            .accept(MediaType.TEXT_EVENT_STREAM))
+            .andExpect(status().isOk());
+    }
 }

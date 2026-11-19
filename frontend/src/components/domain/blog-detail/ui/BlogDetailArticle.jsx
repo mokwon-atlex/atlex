@@ -4,7 +4,8 @@ import katex from 'katex';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { textfieldVariants } from '@/components/common/ui/textfield';
-import { highlightCodeToHtml } from '@/lib/post-editor/rich-text-code';
+import { renderMermaidSvg } from '@/lib/post-editor/mermaid-render';
+import { getCodeLanguageLabel, highlightCodeToHtml } from '@/lib/post-editor/rich-text-code';
 import styles from './BlogDetailArticle.module.css';
 
 /**
@@ -58,18 +59,98 @@ function RichTextArticle({ html, onLinkClick }) {
       }
     });
 
-    container.querySelectorAll('pre code').forEach((codeEl) => {
+    let cancelled = false;
+
+    container.querySelectorAll('pre code').forEach((codeEl, index) => {
       if (codeEl.closest('[data-type="math-block"]')) {
+        return;
+      }
+      const preEl = codeEl.closest('pre');
+      if (!preEl || preEl.dataset.enhanced === 'true') {
         return;
       }
       const rawCode = codeEl.textContent ?? '';
       if (!rawCode) {
         return;
       }
+      preEl.dataset.enhanced = 'true';
+
       const languageClass = Array.from(codeEl.classList).find((name) => name.startsWith('language-'));
-      const language = languageClass ? languageClass.replace('language-', '') : '';
+      const language = languageClass ? languageClass.replace('language-', '').toLowerCase() : '';
+
+      if (language === 'mermaid') {
+        const wrapper = document.createElement('div');
+        wrapper.className = styles.mermaidBlock;
+
+        const header = document.createElement('div');
+        header.className = styles.mermaidHeader;
+        header.textContent = 'Mermaid';
+
+        const body = document.createElement('div');
+        body.className = styles.mermaidBody;
+        body.textContent = '다이어그램을 불러오는 중입니다...';
+
+        wrapper.appendChild(header);
+        wrapper.appendChild(body);
+        preEl.replaceWith(wrapper);
+
+        renderMermaidSvg(rawCode, `mermaid-detail-${index}-${Date.now()}`)
+          .then((svg) => {
+            if (cancelled) return;
+            if (svg) {
+              body.innerHTML = svg;
+            }
+          })
+          .catch(() => {
+            if (cancelled) return;
+            const fallbackPre = document.createElement('pre');
+            const fallbackCode = document.createElement('code');
+            fallbackCode.textContent = rawCode;
+            fallbackPre.appendChild(fallbackCode);
+            body.replaceWith(fallbackPre);
+          });
+        return;
+      }
+
       codeEl.innerHTML = highlightCodeToHtml(rawCode, language);
+
+      const wrapper = document.createElement('div');
+      wrapper.className = styles.codeBlockWrapper;
+
+      const header = document.createElement('div');
+      header.className = styles.codeBlockHeader;
+
+      const langLabel = document.createElement('span');
+      langLabel.className = styles.codeBlockLang;
+      langLabel.textContent = getCodeLanguageLabel(language);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = styles.codeBlockCopyBtn;
+      copyBtn.textContent = '복사';
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(rawCode);
+          copyBtn.textContent = '복사됨';
+          window.setTimeout(() => {
+            copyBtn.textContent = '복사';
+          }, 1500);
+        } catch {
+          // 클립보드 권한이 없는 경우 무시한다.
+        }
+      });
+
+      header.appendChild(langLabel);
+      header.appendChild(copyBtn);
+
+      preEl.parentNode?.insertBefore(wrapper, preEl);
+      wrapper.appendChild(header);
+      wrapper.appendChild(preEl);
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [html]);
 
   return (

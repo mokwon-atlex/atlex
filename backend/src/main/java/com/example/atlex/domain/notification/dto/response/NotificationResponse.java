@@ -63,8 +63,8 @@ public class NotificationResponse {
     public static NotificationResponse from(Notification notification) {
         Post post = notification.getPost();
         Comment comment = notification.getComment();
-        boolean postDeleted = post == null || Boolean.TRUE.equals(post.getIsDeleted());
-        boolean commentDeleted = comment == null || Boolean.TRUE.equals(comment.getIsDeleted());
+        boolean postDeleted = post != null && Boolean.TRUE.equals(post.getIsDeleted());
+        boolean commentDeleted = comment != null && Boolean.TRUE.equals(comment.getIsDeleted());
 
         return NotificationResponse.builder()
             .id(notification.getId())
@@ -74,11 +74,11 @@ public class NotificationResponse {
             .actorUserId(notification.getActor().getUserId())
             .actorName(notification.getActor().getName())
             .postId(post != null ? post.getId() : null)
-            .postTitle(postDeleted ? "삭제된 게시글" : post.getTitle())
+            .postTitle(post == null ? null : (postDeleted ? "삭제된 게시글" : post.getTitle()))
             .postAuthorUserId(post != null && post.getUser() != null ? post.getUser().getUserId() : null)
             .postDeleted(postDeleted)
             .commentId(comment != null ? comment.getId() : null)
-            .commentContent(commentDeleted ? null : comment.getContent())
+            .commentContent(comment == null || commentDeleted ? null : comment.getContent())
             .commentDeleted(commentDeleted)
             .build();
     }
