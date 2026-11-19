@@ -5,12 +5,15 @@ import com.example.atlex.domain.notification.dto.response.NotificationResponse;
 import com.example.atlex.domain.notification.dto.response.NotificationSettingResponse;
 import com.example.atlex.domain.notification.dto.response.UnreadNotificationCountResponse;
 import com.example.atlex.domain.notification.service.NotificationService;
+import com.example.atlex.domain.notification.service.NotificationSseService;
 import com.example.atlex.global.response.ApiResponse;
 import com.example.atlex.global.security.principal.PrincipalDetails;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
@@ -27,6 +31,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class NotificationController implements NotificationControllerDocs {
 
     private final NotificationService notificationService;
+    private final NotificationSseService notificationSseService;
+
+    @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribe(
+        @AuthenticationPrincipal
+        PrincipalDetails principalDetails,
+        HttpServletResponse response) {
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache");
+        return notificationSseService.subscribe(principalDetails.user().getId());
+    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getNotifications(

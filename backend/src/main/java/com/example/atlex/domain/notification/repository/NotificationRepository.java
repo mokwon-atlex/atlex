@@ -25,6 +25,14 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
      */
     boolean existsByRecipient_IdAndTypeAndComment_Id(Long recipientId, NotificationType type, Long commentId);
 
+    boolean existsByRecipient_IdAndTypeAndActor_IdAndPost_Id(
+        Long recipientId,
+        NotificationType type,
+        Long actorId,
+        Long postId);
+
+    boolean existsByRecipient_IdAndTypeAndActor_Id(Long recipientId, NotificationType type, Long actorId);
+
     @EntityGraph(attributePaths = {"actor", "post", "post.user", "comment"})
     Page<Notification> findByRecipient_IdOrderByCreatedAtDesc(Long recipientId, Pageable pageable);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, CheckCheck, Loader2, MessageSquare, Trash2, X } from 'lucide-react';
+import { Bell, CheckCheck, Heart, Loader2, Megaphone, MessageSquare, Trash2, UserPlus, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -16,9 +16,17 @@ import {
   useNotificationList,
   useUnreadNotificationCount,
 } from '@/hooks/queries/notifications/useNotifications';
-import { postDetailHref } from '@/lib/url/handle';
+import { postDetailHref, userBlogHref } from '@/lib/url/handle';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
+
+const NOTIFICATION_TYPE_META = {
+  COMMENT: { icon: MessageSquare, actionText: '님이 게시글에 댓글을 남겼습니다.' },
+  REPLY: { icon: MessageSquare, actionText: '님이 회원님의 댓글에 답글을 남겼습니다.' },
+  LIKE: { icon: Heart, actionText: '님이 회원님의 게시글을 좋아합니다.' },
+  FOLLOW: { icon: UserPlus, actionText: '님이 회원님을 팔로우하기 시작했습니다.' },
+  NOTICE: { icon: Megaphone, actionText: '새로운 서비스 공지가 도착했습니다.' },
+};
 
 function formatRelativeTime(iso) {
   if (!iso) return '';
@@ -61,6 +69,24 @@ export default function NotificationPopover({ mounted, onNotification }) {
   const handleItemClick = (item) => {
     if (!item.isRead) {
       markReadMutation.mutate(item.id);
+    }
+
+    if (item.type === 'FOLLOW') {
+      if (!item.actorUserId) {
+        toast.error('사용자 정보를 찾을 수 없습니다.');
+        return;
+      }
+      setOpen(false);
+      router.push(userBlogHref(item.actorUserId));
+      return;
+    }
+
+    if (item.type === 'NOTICE') {
+      setOpen(false);
+      if (!item.postDeleted && item.postId && item.postAuthorUserId) {
+        router.push(postDetailHref(item.postAuthorUserId, item.postId));
+      }
+      return;
     }
 
     if (item.postDeleted || !item.postId || !item.postAuthorUserId) {
@@ -136,7 +162,7 @@ export default function NotificationPopover({ mounted, onNotification }) {
 
         {!mounted || !isLoggedIn ? (
           <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-            <p className="text-sm text-muted-foreground">로그인 후 새 댓글과 답글 알림을 확인할 수 있습니다.</p>
+            <p className="text-sm text-muted-foreground">로그인 후 새 알림을 확인할 수 있습니다.</p>
             <Link
               href="/account"
               onClick={() => setOpen(false)}
@@ -154,8 +180,8 @@ export default function NotificationPopover({ mounted, onNotification }) {
         ) : (
           <div className="max-h-96 divide-y divide-border overflow-y-auto">
             {notifications.map((item) => {
-              const actionText =
-                item.type === 'REPLY' ? '님이 회원님의 댓글에 답글을 남겼습니다.' : '님이 게시글에 댓글을 남겼습니다.';
+              const meta = NOTIFICATION_TYPE_META[item.type] ?? NOTIFICATION_TYPE_META.COMMENT;
+              const Icon = meta.icon;
 
               return (
                 <div
@@ -171,14 +197,22 @@ export default function NotificationPopover({ mounted, onNotification }) {
                     className="flex min-w-0 flex-1 items-start gap-3 text-left"
                   >
                     <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                      <MessageSquare className="size-4" />
+                      <Icon className="size-4" />
                     </div>
                     <div className="min-w-0 flex-1 space-y-1">
                       <p className="text-xs leading-relaxed text-foreground">
-                        <span className="font-semibold">{item.actorName || item.actorUserId}</span>
-                        {actionText}
+                        {item.type === 'NOTICE' ? (
+                          meta.actionText
+                        ) : (
+                          <>
+                            <span className="font-semibold">{item.actorName || item.actorUserId}</span>
+                            {meta.actionText}
+                          </>
+                        )}
                       </p>
-                      <p className="truncate text-xs font-medium text-muted-foreground">{item.postTitle}</p>
+                      {item.postTitle ? (
+                        <p className="truncate text-xs font-medium text-muted-foreground">{item.postTitle}</p>
+                      ) : null}
                       {item.commentContent ? (
                         <p className="line-clamp-2 rounded bg-muted/60 px-2 py-1 text-xs text-muted-foreground">
                           {item.commentContent}
