@@ -28,9 +28,10 @@ const AVATAR_COLORS = ['#6252D9', '#159D91', '#2F7ED8', '#E25555', '#7B5CE1', '#
  * API에 좌표가 없으므로 같은 응답은 항상 같은 위치를 사용하도록 노드 순서에서 좌표를 계산한다.
  *
  * @param {{ nodes?: GraphNodeResponse[], edges?: GraphEdgeResponse[] } | undefined} graph API 응답
+ * @param {{ groupByCategory?: boolean }} [options] 배치 옵션
  * @returns {{ authors: object[], edges: object[], posts: object[], tagCounts: [string, number][] }} 화면 데이터
  */
-export function toGraphViewData(graph) {
+export function toGraphViewData(graph, { groupByCategory = false } = {}) {
   const nodes = Array.isArray(graph?.nodes) ? [...graph.nodes].sort(compareNodes) : [];
   const edges = Array.isArray(graph?.edges) ? graph.edges : [];
   const authorsById = new Map();
@@ -77,7 +78,7 @@ export function toGraphViewData(graph) {
       },
     ];
   });
-  const positions = createForceDirectedPositions(postDrafts, mappedEdges);
+  const positions = createForceDirectedPositions(postDrafts, mappedEdges, groupByCategory);
   const posts = postDrafts.map((post, index) => ({
     ...post,
     radius: 24,
@@ -129,15 +130,15 @@ function createCategoryAnchors(posts) {
 }
 
 /** 관계 간선의 인력, 카테고리 클러스터 인력과 노드 간 반발력을 계산해 고정된 그래프 배치를 만든다. */
-function createForceDirectedPositions(posts, edges) {
+function createForceDirectedPositions(posts, edges, groupByCategory = false) {
   const seedPositions = createNodePositions(posts.length);
 
   if (posts.length <= 1) {
     return seedPositions;
   }
 
-  const categoryAnchors = createCategoryAnchors(posts);
-  const useCategoryClustering = categoryAnchors.size > 1;
+  const categoryAnchors = groupByCategory ? createCategoryAnchors(posts) : new Map();
+  const useCategoryClustering = groupByCategory && categoryAnchors.size > 1;
   const indexById = new Map(posts.map((post, index) => [post.id, index]));
   const layoutNodes = posts.map((post, index) => {
     const categoryKey = post.categoryName || '미분류';

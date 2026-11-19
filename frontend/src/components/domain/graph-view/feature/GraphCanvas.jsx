@@ -98,6 +98,7 @@ export function GraphCanvas({
     return relatedIds;
   }, [focusedEdges, focusedNodeIds]);
   const categoryClusters = useMemo(() => {
+    if (activeTab !== 'category') return [];
     const groups = new Map();
     filteredPosts.forEach((post) => {
       const key = post.categoryName || '미분류';
@@ -117,7 +118,7 @@ export function GraphCanvas({
         radius: Math.max(72, maxDist + 48),
       };
     });
-  }, [filteredPosts]);
+  }, [activeTab, filteredPosts]);
 
   const defaultLabelOpacity =
     filteredPosts.length > 12
