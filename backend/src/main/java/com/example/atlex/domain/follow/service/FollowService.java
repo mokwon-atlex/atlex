@@ -4,6 +4,7 @@ import com.example.atlex.domain.auth.exception.AuthenticationException;
 import com.example.atlex.domain.follow.dto.response.FollowStatusResponse;
 import com.example.atlex.domain.follow.dto.response.FollowUserResponse;
 import com.example.atlex.domain.follow.entity.Follow;
+import com.example.atlex.domain.follow.event.UserFollowedEvent;
 import com.example.atlex.domain.follow.exception.SelfFollowNotAllowedException;
 import com.example.atlex.domain.follow.repository.FollowRepository;
 import com.example.atlex.domain.user.entity.User;
@@ -11,6 +12,7 @@ import com.example.atlex.domain.user.exception.UserNotFoundException;
 import com.example.atlex.domain.user.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,7 @@ public class FollowService {
 
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public FollowStatusResponse follow(String targetUserId, User loginUser) {
@@ -36,6 +39,7 @@ public class FollowService {
 
         if (!followRepository.existsByFollowerAndFollowing(loginUser, targetUser)) {
             followRepository.save(Follow.builder().follower(loginUser).following(targetUser).build());
+            eventPublisher.publishEvent(new UserFollowedEvent(loginUser.getId(), targetUser.getId()));
         }
 
         return buildStatusResponse(targetUser, true);

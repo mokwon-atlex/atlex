@@ -1,7 +1,9 @@
 package com.example.atlex.domain.notification.event;
 
 import com.example.atlex.domain.comment.event.CommentCreatedEvent;
+import com.example.atlex.domain.follow.event.UserFollowedEvent;
 import com.example.atlex.domain.notification.service.NotificationService;
+import com.example.atlex.domain.post.event.PostLikedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,34 @@ public class NotificationEventListener {
             notificationService.notifyCommentCreated(event);
         } catch (RuntimeException e) {
             log.warn("댓글 알림 생성 실패: commentId={}, actorId={}", event.commentId(), event.actorId(), e);
+        }
+    }
+
+    /**
+     * 게시글 좋아요 이벤트로 알림을 생성한다.
+     *
+     * @param event 게시글 좋아요 이벤트
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handlePostLiked(PostLikedEvent event) {
+        try {
+            notificationService.notifyPostLiked(event);
+        } catch (RuntimeException e) {
+            log.warn("좋아요 알림 생성 실패: postId={}, actorId={}", event.postId(), event.actorId(), e);
+        }
+    }
+
+    /**
+     * 사용자 팔로우 이벤트로 알림을 생성한다.
+     *
+     * @param event 사용자 팔로우 이벤트
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleUserFollowed(UserFollowedEvent event) {
+        try {
+            notificationService.notifyUserFollowed(event);
+        } catch (RuntimeException e) {
+            log.warn("팔로우 알림 생성 실패: followerId={}, followingId={}", event.followerId(), event.followingId(), e);
         }
     }
 }
