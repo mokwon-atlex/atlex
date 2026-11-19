@@ -141,18 +141,18 @@ class AiSuggestionServiceTest {
         }
 
         @Test
-        @DisplayName("Gemini 응답의 앞뒤 백틱이나 따옴표를 정제한다")
-        void cleansBackticksAndQuotesInParagraph() {
+        @DisplayName("Gemini 응답이 전체 markdown 코드 펜스로 감싸진 경우 래퍼를 제거하고 코드 블록은 보존한다")
+        void cleansMarkdownFenceWrapperWhilePreservingCodeBlocks() {
             // given
             ParagraphSuggestionRequest request = new ParagraphSuggestionRequest(null, null, null, "문맥");
             when(geminiClient.generateContent(anyString(), anyString(), anyInt()))
-                .thenReturn("```다음 단락 내용입니다.```");
+                .thenReturn("```markdown\n```java\nSystem.out.println(\"hi\");\n```\n```");
 
             // when
             AiSuggestionResponse response = aiSuggestionService.suggestParagraph(request);
 
             // then
-            assertThat(response.getSuggestion()).isEqualTo("다음 단락 내용입니다.");
+            assertThat(response.getSuggestion()).isEqualTo("```java\nSystem.out.println(\"hi\");\n```");
         }
     }
 
