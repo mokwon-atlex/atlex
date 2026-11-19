@@ -2,9 +2,9 @@ export const SVG_W = 840;
 export const SVG_H = 640;
 export const ARROW_LENGTH = 20;
 export const ARROW_HEIGHT = 16;
-export const PRIMARY = '#7DD3FC';
-export const PRIMARY_SOFT = '#0F1B2E';
-export const CANVAS_BG = '#060913';
+export const PRIMARY = '#FEF3C7';
+export const PRIMARY_SOFT = '#1E1B12';
+export const CANVAS_BG = 'radial-gradient(circle at 50% 45%, #0E172A 0%, #070B16 55%, #03050A 100%)';
 
 const TAG_META = {
   철학: { color: '#6252D9', bg: '#ECE9FF', text: '#4C36B8' },
