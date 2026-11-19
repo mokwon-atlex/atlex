@@ -319,11 +319,16 @@ class ProfileControllerTest {
     @Test
     @DisplayName("스킨 컬럼이 비어 있는 기존 회원도 DEFAULT로 응답")
     void getProfile_nullBlogSkin_returnsDefault() throws Exception {
-        User legacyUser = userRepository.findByUserIdAndActiveTrue("emptyprofile").orElseThrow();
-        legacyUser.setBlogSkin(null);
-        userRepository.saveAndFlush(legacyUser);
+        userRepository.saveAndFlush(User.builder()
+            .userId("legacyuser")
+            .email("legacy@test.com")
+            .password("pw")
+            .name("기존회원")
+            .active(true)
+            .blogSkin(null)
+            .build());
 
-        mockMvc.perform(get("/api/v1/profiles/{userId}", "emptyprofile"))
+        mockMvc.perform(get("/api/v1/profiles/{userId}", "legacyuser"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.blogSkin").value("DEFAULT"));
     }
