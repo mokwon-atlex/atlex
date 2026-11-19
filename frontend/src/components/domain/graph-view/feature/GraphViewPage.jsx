@@ -65,7 +65,10 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
     },
     enabled: activeTab !== 'mine' || Boolean(resolvedCurrentUserId),
   });
-  const graphData = useMemo(() => toGraphViewData(graphQuery.data), [graphQuery.data]);
+  const graphData = useMemo(
+    () => toGraphViewData(graphQuery.data, { groupByCategory: activeTab === 'category' }),
+    [activeTab, graphQuery.data],
+  );
   const { authors, edges, posts, tagCounts } = graphData;
   const hasExplicitEdges = edges.some((edge) => edge.isExplicit);
 

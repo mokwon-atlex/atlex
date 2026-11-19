@@ -18,6 +18,7 @@ export function GraphToolbar({
   const tabs = [
     { id: 'all', label: '탐색' },
     { id: 'mine', label: '내 포스트' },
+    { id: 'category', label: '카테고리별' },
   ];
 
   return (
