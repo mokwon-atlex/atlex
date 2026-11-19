@@ -79,7 +79,7 @@ const NODE_MAP = Object.fromEntries(GRAPH_NODES.map((node) => [node.id, node]));
  */
 function KnowledgeGraphSlide({ graphStats }) {
   return (
-    <div className="relative flex min-h-[272px] flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card px-12 py-5 text-foreground sm:px-14 sm:py-6">
+    <div className="relative flex min-h-[280px] flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card px-12 py-5 text-foreground sm:h-[304px] sm:px-14 sm:py-6">
       {/* 은은한 방사형 배경 포인트 */}
       <div
         aria-hidden="true"
@@ -177,7 +177,7 @@ function DevTrendsSlide({ devTrends }) {
   const sourceLabel = devTrends?.sourceLabel ?? '추천 기술 이슈';
 
   return (
-    <div className="flex min-h-[272px] flex-col justify-between gap-4 rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card px-12 py-5 sm:px-14 sm:py-6">
+    <div className="flex min-h-[280px] flex-col justify-between gap-3.5 rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card px-12 py-5 sm:h-[304px] sm:px-14 sm:py-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/90 px-3 py-1 text-xs font-semibold text-foreground">
@@ -190,10 +190,10 @@ function DevTrendsSlide({ devTrends }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+      <div className="grid flex-1 grid-cols-1 gap-2.5 sm:grid-cols-2 sm:grid-rows-2">
         {items.slice(0, 4).map((item) => {
           const cardContent = (
-            <div className="group/trend flex h-full items-start justify-between gap-3 rounded-xl border border-border/80 bg-background/90 px-3.5 py-3 transition-all hover:border-primary/40 hover:bg-background hover:shadow-xs">
+            <div className="group/trend flex h-full items-center justify-between gap-3 rounded-xl border border-border/80 bg-background/90 px-3.5 py-2.5 transition-all hover:border-primary/40 hover:bg-background hover:shadow-xs">
               <div className="min-w-0 flex-1 space-y-1">
                 <p className="line-clamp-1 text-xs font-bold text-foreground transition-colors group-hover/trend:text-primary sm:text-sm">
                   {item.title}
@@ -208,11 +208,11 @@ function DevTrendsSlide({ devTrends }) {
           );
 
           return item.isExternal ? (
-            <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="block">
+            <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="block h-full">
               {cardContent}
             </a>
           ) : (
-            <Link key={item.id} href={item.url} className="block">
+            <Link key={item.id} href={item.url} className="block h-full">
               {cardContent}
             </Link>
           );
@@ -227,7 +227,7 @@ function DevTrendsSlide({ devTrends }) {
  */
 function PopularImagePostsSlide({ popularImagePosts = [] }) {
   return (
-    <div className="flex min-h-[272px] flex-col justify-between gap-3.5 rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card px-12 py-5 sm:px-14 sm:py-6">
+    <div className="flex min-h-[280px] flex-col justify-between gap-3.5 rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card px-12 py-5 sm:h-[304px] sm:px-14 sm:py-6">
       <div className="flex items-center gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/90 px-3 py-1 text-xs font-semibold text-foreground">
           <Flame className="size-3.5 text-primary" />
@@ -237,11 +237,11 @@ function PopularImagePostsSlide({ popularImagePosts = [] }) {
       </div>
 
       {popularImagePosts.length > 0 ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
           {popularImagePosts.slice(0, 3).map((post) => {
             const href = post?.authorUserId && post?.id ? postDetailHref(post.authorUserId, post.id) : null;
             const cardBody = (
-              <div className="group relative h-44 overflow-hidden rounded-xl border border-border/70 bg-muted shadow-xs transition-all hover:border-foreground/20 hover:shadow-md sm:h-[188px]">
+              <div className="group relative h-44 overflow-hidden rounded-xl border border-border/70 bg-muted shadow-xs transition-all hover:border-foreground/20 hover:shadow-md sm:h-full">
                 <img
                   src={post.cover.url}
                   alt={post.title}
@@ -260,11 +260,13 @@ function PopularImagePostsSlide({ popularImagePosts = [] }) {
             );
 
             return href ? (
-              <Link key={post.id} href={href} className="block">
+              <Link key={post.id} href={href} className="block h-full">
                 {cardBody}
               </Link>
             ) : (
-              <div key={post.id}>{cardBody}</div>
+              <div key={post.id} className="h-full">
+                {cardBody}
+              </div>
             );
           })}
         </div>
