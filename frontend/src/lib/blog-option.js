@@ -66,8 +66,7 @@ export const DEFAULT_BLOG_SKIN = 'DEFAULT';
 /** 블로그 홈 스킨 목록. id 는 백엔드 BlogSkin 값과 같아야 한다. */
 export const BLOG_SKINS = [
   { id: 'DEFAULT', name: '기본', description: '프로필 사이드바와 글 목록으로 구성된 기본 화면' },
-  { id: 'MAGAZINE', name: '매거진', description: '최신 글을 크게 보여 주고 나머지는 카드로 정리' },
-  { id: 'MINIMAL', name: '미니멀', description: '가운데 1단에 연도별 제목 목록만 담백하게' },
+  { id: 'MINIMAL', name: '미니멀', description: '상단 좌우에 프로필과 지식 화분을 두고, 아래에 연도별 글 목록을 배치' },
 ];
 
 /** 알 수 없는 값이나 빈 값은 기본 스킨으로 본다. */

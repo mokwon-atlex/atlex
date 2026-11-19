@@ -12,26 +12,15 @@ function SkinWireframe({ skinId }) {
   const cell = 'rounded-[3px] bg-border';
   const accent = 'rounded-[3px] bg-primary/50';
 
-  if (skinId === 'MAGAZINE') {
-    return (
-      <div className="grid h-full grid-cols-3 grid-rows-[1.4fr_1fr_0.7fr] gap-1">
-        <i className={cn(accent, 'col-span-3')} />
-        <i className={cell} />
-        <i className={cell} />
-        <i className={cell} />
-        <i className={cn(cell, 'col-span-3 opacity-70')} />
-      </div>
-    );
-  }
-
   if (skinId === 'MINIMAL') {
     return (
-      <div className="flex h-full flex-col items-center gap-1">
-        <i className="size-4 shrink-0 rounded-full bg-border" />
-        <i className={cn(accent, 'h-1.5 w-3/5')} />
-        <i className={cn(cell, 'h-1.5 w-3/5')} />
-        <i className={cn(cell, 'h-1.5 w-3/5')} />
-        <i className={cn(cell, 'h-1.5 w-3/5')} />
+      <div className="grid h-full grid-cols-2 grid-rows-[1.2fr_1fr] gap-1">
+        <i className={cell} />
+        <i className={cell} />
+        <div className="col-span-2 flex flex-col justify-center gap-1">
+          <i className={cn(accent, 'h-1.5 w-full')} />
+          <i className={cn(cell, 'h-1.5 w-4/5')} />
+        </div>
       </div>
     );
   }
@@ -79,7 +68,7 @@ export default function BlogOptionSkinPicker({
 
       <CardContent className="space-y-3">
         {/* 기본 radio 입력을 써서 방향키 선택과 Tab 진입·이탈을 브라우저 동작 그대로 제공한다. */}
-        <div role="radiogroup" aria-label="블로그 스킨" className="grid gap-3 sm:grid-cols-3">
+        <div role="radiogroup" aria-label="블로그 스킨" className="grid gap-3 sm:grid-cols-2">
           {BLOG_SKINS.map((skin) => {
             const isSelected = skin.id === blogSkin;
             const descriptionId = `blog-skin-${skin.id}-description`;

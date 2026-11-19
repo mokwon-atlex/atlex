@@ -572,7 +572,8 @@ export const AccountSwitchReloadsLikeState = {
 };
 
 /** 매거진 스킨은 첫 글을 크게, 나머지를 카드 그리드로 보여 주고 프로필은 목록 아래에 둔다. */
-export const MagazineSkin = {
+/** 기존 매거진 스킨 값은 기본 스킨으로 폴백한다. */
+export const MagazineSkinFallsBackToDefault = {
   args: {
     categories: mockCategories,
     feed: mockFeed,
@@ -582,10 +583,7 @@ export const MagazineSkin = {
   play: async ({ canvasElement }) => {
     const skinRoot = canvasElement.querySelector('[data-blog-skin]');
 
-    await expect(skinRoot).toHaveAttribute('data-blog-skin', 'MAGAZINE');
-    await expect(skinRoot.querySelectorAll('article')).toHaveLength(mockPosts.length);
-    // 피드가 프로필 영역보다 먼저 나온다.
-    await expect(skinRoot.firstElementChild.tagName).toBe('SECTION');
+    await expect(skinRoot).toHaveAttribute('data-blog-skin', 'DEFAULT');
   },
 };
 
