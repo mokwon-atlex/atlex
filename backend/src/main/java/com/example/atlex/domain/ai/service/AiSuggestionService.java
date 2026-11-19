@@ -210,7 +210,6 @@ public class AiSuggestionService {
             default -> {}
         }
     }
-
     private String cleanMarkdownSuggestion(String suggestion) {
         if (suggestion == null) {
             return "";
