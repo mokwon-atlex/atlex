@@ -309,6 +309,66 @@ class ProfileControllerTest {
     }
 
     @Test
+    @DisplayName("공개 프로필 조회 시 블로그 스킨 기본값은 DEFAULT")
+    void getProfile_defaultBlogSkin() throws Exception {
+        mockMvc.perform(get("/api/v1/profiles/{userId}", "testuser"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.blogSkin").value("DEFAULT"));
+    }
+
+    @Test
+    @DisplayName("스킨 컬럼이 비어 있는 기존 회원도 DEFAULT로 응답")
+    void getProfile_nullBlogSkin_returnsDefault() throws Exception {
+        User legacyUser = userRepository.findByUserIdAndActiveTrue("emptyprofile").orElseThrow();
+        legacyUser.setBlogSkin(null);
+        userRepository.saveAndFlush(legacyUser);
+
+        mockMvc.perform(get("/api/v1/profiles/{userId}", "emptyprofile"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.blogSkin").value("DEFAULT"));
+    }
+
+    @Test
+    @DisplayName("본인 블로그 스킨 PATCH -> 200 및 다른 필드 유지")
+    void updateProfile_blogSkin_success() throws Exception {
+        mockMvc.perform(patch("/api/v1/profiles/{userId}", "profileuser")
+            .header("Authorization", "Bearer " + profileToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"blogSkin\":\"MAGAZINE\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.blogSkin").value("MAGAZINE"))
+            .andExpect(jsonPath("$.data.name").value("profile"))
+            .andExpect(jsonPath("$.data.info").value("original info"));
+
+        mockMvc.perform(get("/api/v1/profiles/{userId}", "profileuser"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.blogSkin").value("MAGAZINE"));
+    }
+
+    @Test
+    @DisplayName("다른 사용자 블로그 스킨 PATCH -> 403")
+    void updateProfile_blogSkin_otherUser_forbidden() throws Exception {
+        mockMvc.perform(patch("/api/v1/profiles/{userId}", "testuser")
+            .header("Authorization", "Bearer " + otherToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"blogSkin\":\"MINIMAL\"}"))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+    }
+
+    @Test
+    @DisplayName("목록에 없는 블로그 스킨 PATCH -> 400")
+    void updateProfile_blogSkin_invalid() throws Exception {
+        mockMvc.perform(patch("/api/v1/profiles/{userId}", "testuser")
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"blogSkin\":\"NEON\"}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.errors[0].data.key").value("blogSkin"));
+    }
+
+    @Test
     @DisplayName("프로필 PATCH info 255자 초과 -> 400")
     void updateProfile_infoTooLong() throws Exception {
         String longInfo = "a".repeat(256);
