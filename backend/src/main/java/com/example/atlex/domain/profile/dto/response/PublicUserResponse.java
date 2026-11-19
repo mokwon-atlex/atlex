@@ -1,5 +1,6 @@
 package com.example.atlex.domain.profile.dto.response;
 
+import com.example.atlex.domain.user.entity.BlogSkin;
 import com.example.atlex.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -32,6 +33,9 @@ public class PublicUserResponse {
     @Schema(description = "현재 로그인 사용자의 팔로우 여부", example = "false")
     private boolean following;
 
+    @Schema(description = "블로그 홈 스킨", example = "DEFAULT")
+    private BlogSkin blogSkin;
+
     public static PublicUserResponse from(User user) {
         return from(user, 0L, 0L, false, 0L);
     }
@@ -56,6 +60,7 @@ public class PublicUserResponse {
             .followingCount(followingCount)
             .postCount(postCount)
             .following(following)
+            .blogSkin(user.getBlogSkinOrDefault())
             .build();
     }
 }

@@ -31,7 +31,8 @@ public interface ProfileControllerDocs {
                 "userId": "john123",
                 "name": "홍길동",
                 "profileImage": "https://example.com/images/profile.jpg",
-                "info": "안녕하세요, 백엔드 개발자입니다."
+                "info": "안녕하세요, 백엔드 개발자입니다.",
+                "blogSkin": "DEFAULT"
               },
               "errors": null
             }"""))),
@@ -49,7 +50,7 @@ public interface ProfileControllerDocs {
         @AuthenticationPrincipal
         PrincipalDetails principalDetails);
 
-    @Operation(summary = "공개 프로필 수정", description = "본인의 공개 프로필(닉네임, 프로필 이미지, 자기소개)을 수정합니다. Authorization 헤더 필수.")
+    @Operation(summary = "공개 프로필 수정", description = "본인의 공개 프로필(닉네임, 프로필 이미지, 자기소개, 블로그 스킨)을 수정합니다. Authorization 헤더 필수.")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
@@ -61,7 +62,8 @@ public interface ProfileControllerDocs {
                 "userId": "john123",
                 "name": "새닉네임",
                 "profileImage": "https://example.com/images/new_profile.jpg",
-                "info": "안녕하세요, 풀스택 개발자입니다."
+                "info": "안녕하세요, 풀스택 개발자입니다.",
+                "blogSkin": "MAGAZINE"
               },
               "errors": null
             }"""))),

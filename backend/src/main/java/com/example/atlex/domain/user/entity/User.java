@@ -40,6 +40,12 @@ public class User {
     @Column(length = 20)
     private MembershipTier membershipTier = MembershipTier.FREE;
 
+    /** 블로그 홈 스킨입니다. 컬럼 추가 전에 가입한 회원은 null이며 기본 스킨으로 취급합니다. */
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private BlogSkin blogSkin = BlogSkin.DEFAULT;
+
     @CreatedDate
     private LocalDateTime createdAt;
 
@@ -106,5 +112,16 @@ public class User {
         if (info != null) {
             this.info = info;
         }
+    }
+
+    public void updateBlogSkin(BlogSkin blogSkin) {
+        if (blogSkin != null) {
+            this.blogSkin = blogSkin;
+        }
+    }
+
+    /** 컬럼 추가 전 회원(null)도 기본 스킨으로 응답합니다. */
+    public BlogSkin getBlogSkinOrDefault() {
+        return blogSkin != null ? blogSkin : BlogSkin.DEFAULT;
     }
 }
