@@ -16,6 +16,33 @@ import {
 } from '@/lib/graph-view/graph-view-utils';
 import { LockBadge } from '@/components/domain/graph-view/ui/GraphViewIcons';
 
+const STAR_PALETTE = ['#E0F2FE', '#93C5FD', '#A7F3D0', '#FDE68A', '#BAE6FD'];
+
+/** 결정론적 시드로 밤하늘 배경 별 좌표를 생성한다. */
+const BACKGROUND_STARS = Array.from({ length: 90 }, (_, index) => {
+  const seedA = Math.sin(index * 12.9898 + 78.233) * 43758.5453;
+  const seedB = Math.sin(index * 93.9898 + 19.133) * 24634.6345;
+  const seedC = Math.sin(index * 45.164 + 11.73) * 19283.412;
+  const rx = seedA - Math.floor(seedA);
+  const ry = seedB - Math.floor(seedB);
+  const rz = seedC - Math.floor(seedC);
+  return {
+    x: Math.round(rx * SVG_W),
+    y: Math.round(ry * SVG_H),
+    r: 0.6 + rz * 1.1,
+    opacity: 0.22 + (index % 5) * 0.14,
+  };
+});
+
+function getStarColor(postId) {
+  const str = String(postId ?? '');
+  let hash = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return STAR_PALETTE[hash % STAR_PALETTE.length];
+}
+
 /** 노드·간선 SVG와 확대, 이동, 선택 상호작용을 렌더링한다. */
 export function GraphCanvas({
   activeTab,
@@ -247,6 +274,29 @@ export function GraphCanvas({
       onWheel={handleWheel}
       style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
     >
+      <defs>
+        <radialGradient id="cosmos-bg" cx="50%" cy="45%" r="72%">
+          <stop offset="0%" stopColor="#0E172A" />
+          <stop offset="55%" stopColor="#070B16" />
+          <stop offset="100%" stopColor="#03050A" />
+        </radialGradient>
+        <filter id="star-glow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="2.8" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      <rect width={SVG_W} height={SVG_H} fill="url(#cosmos-bg)" pointerEvents="none" />
+
+      <g pointerEvents="none">
+        {BACKGROUND_STARS.map((star, index) => (
+          <circle key={index} cx={star.x} cy={star.y} r={star.r} fill="#E2E8F0" opacity={star.opacity} />
+        ))}
+      </g>
+
       <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
         {categoryClusters.map((cluster) => (
           <g key={cluster.name} pointerEvents="none">
@@ -254,19 +304,21 @@ export function GraphCanvas({
               cx={cluster.cx}
               cy={cluster.cy}
               r={cluster.radius}
-              fill="currentColor"
-              fillOpacity={0.03}
-              stroke="currentColor"
-              strokeOpacity={0.14}
-              strokeDasharray="6 6"
-              strokeWidth={1.5}
-              className="text-primary"
+              fill="#7DD3FC"
+              fillOpacity={0.04}
+              stroke="#7DD3FC"
+              strokeOpacity={0.22}
+              strokeDasharray="5 6"
+              strokeWidth={1.25}
             />
             <text
               x={cluster.cx}
               y={cluster.cy - cluster.radius - 10}
               textAnchor="middle"
-              className="fill-muted-foreground text-[12px] font-bold tracking-tight"
+              fill="#CBD5E1"
+              fontSize="12"
+              fontWeight="700"
+              letterSpacing="-0.02em"
             >
               {cluster.name}
             </text>
@@ -302,13 +354,13 @@ export function GraphCanvas({
           const isLit =
             hoveredId === edge.from || hoveredId === edge.to || selectedId === edge.from || selectedId === edge.to;
           const hasFocus = focusedNodeIds.size > 0;
-          const edgeOpacity = hasFocus ? (isLit ? 0.96 : 0.08) : edge.isExplicit ? 0.78 : 0.36;
+          const edgeOpacity = hasFocus ? (isLit ? 0.94 : 0.08) : edge.isExplicit ? 0.72 : 0.28;
           const lineWidth = edgeWidth(edge);
           const dashArray = edge.isExplicit ? '4,4' : undefined;
           const lineEndX = edge.isExplicit ? x2 - ux * ARROW_LENGTH : x2;
           const lineEndY = edge.isExplicit ? y2 - uy * ARROW_LENGTH : y2;
           const arrowPoints = edge.isExplicit ? createArrowPoints(x2, y2, lineEndX, lineEndY, ux, uy) : null;
-          const edgeColor = isLit || edge.isExplicit ? PRIMARY : '#9BDCEB';
+          const edgeColor = isLit ? '#BAE6FD' : edge.isExplicit ? '#7DD3FC' : '#60A5FA';
 
           return (
             <g data-graph-edge={edge.id} key={edge.id} opacity={edgeOpacity} style={{ transition: 'opacity 0.18s' }}>
@@ -374,31 +426,37 @@ export function GraphCanvas({
               }}
               tabIndex={0}
             >
-              {isFocused ? <circle cx={post.x} cy={post.y} fill={PRIMARY} opacity="0.2" r={radius + 9} /> : null}
+              {isFocused ? (
+                <circle cx={post.x} cy={post.y} fill="#BAE6FD" opacity="0.22" r={radius + 10} />
+              ) : (
+                <circle cx={post.x} cy={post.y} fill={getStarColor(post.id)} opacity="0.14" r={radius + 5} />
+              )}
               <circle
                 cx={post.x}
                 cy={post.y}
-                fill={isFocused ? '#218BAA' : PRIMARY}
-                opacity={isFocused ? 1 : 0.9}
+                fill={isFocused ? '#FFFFFF' : getStarColor(post.id)}
+                filter={isFocused || connectionCountById.get(post.id) >= 2 ? 'url(#star-glow)' : undefined}
+                opacity={isFocused ? 1 : 0.94}
                 r={radius}
-                stroke={isFocused ? '#14748D' : '#3AA7C6'}
+                stroke={isFocused ? '#7DD3FC' : '#E0F2FE'}
                 strokeDasharray={post.isPrivate ? '5,3' : undefined}
-                strokeWidth={isFocused ? 2.5 : post.isPrivate ? 2 : 1.5}
+                strokeOpacity={isFocused ? 1 : 0.55}
+                strokeWidth={isFocused ? 2.5 : post.isPrivate ? 2 : 1.2}
               />
               {post.isPrivate ? <LockBadge x={post.x + radius * 0.52} y={post.y + radius * 0.52} /> : null}
               <text
-                fill={isFocused ? '#176E87' : '#3B879D'}
+                fill={isFocused ? '#F8FAFC' : '#CBD5E1'}
                 fontFamily="var(--font-nanum-gothic-coding), system-ui, sans-serif"
                 fontSize="12"
-                fontWeight={isFocused ? '800' : '700'}
+                fontWeight={isFocused ? '800' : '600'}
                 opacity={labelOpacity}
                 paintOrder="stroke"
-                stroke="rgba(248,248,245,0.96)"
+                stroke="rgba(6, 9, 19, 0.92)"
                 strokeLinejoin="round"
                 strokeWidth="4"
                 textAnchor="middle"
                 x={post.x}
-                y={post.y + radius + 14}
+                y={post.y + radius + 15}
               >
                 {titleLines.map((line, index) => (
                   <tspan key={`${post.id}-${index}`} dy={index === 0 ? 0 : 16} x={post.x}>
