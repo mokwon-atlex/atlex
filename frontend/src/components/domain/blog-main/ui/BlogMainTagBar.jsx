@@ -18,9 +18,9 @@ export default function BlogMainTagBar({ filterId = 'trending', tags = [] }) {
   const label = TAG_LABEL_BY_FILTER[filterId] ?? TAG_LABEL_BY_FILTER.trending;
 
   return (
-    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-card/60 px-4 py-2.5">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/80 bg-card/70 px-3.5 py-2">
       <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-0.5">
-        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-muted-foreground">
+        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
           <Hash className="size-3.5 text-primary" />
           {label}
         </span>
@@ -29,10 +29,12 @@ export default function BlogMainTagBar({ filterId = 'trending', tags = [] }) {
             <Link
               key={tag.name}
               href={`/tags/${encodeURIComponent(tag.name)}`}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border/80 bg-background px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:border-foreground/30 hover:bg-accent"
             >
               <span>#{tag.name}</span>
-              {tag.postCount > 0 ? <span className="text-[11px] text-muted-foreground">{tag.postCount}</span> : null}
+              {tag.postCount > 0 ? (
+                <span className="text-[11px] text-muted-foreground tabular-nums">{tag.postCount}</span>
+              ) : null}
             </Link>
           ))}
         </div>

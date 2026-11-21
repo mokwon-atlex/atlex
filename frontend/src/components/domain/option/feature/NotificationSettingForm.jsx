@@ -100,17 +100,17 @@ function NotificationSettingForm() {
   }
 
   return (
-    <Card className="rounded-xl border-border/60 bg-card/80 backdrop-blur">
+    <Card className="rounded-lg border-border/80 bg-card shadow-2xs">
       <CardHeader>
         <CardTitle>알림 설정</CardTitle>
         <CardDescription>원하는 알림만 선택해서 받아볼 수 있습니다.</CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-4">
         {NOTIFICATIONS.map((item) => (
           <div
             key={item.key}
-            className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-4 py-4"
+            className="flex items-center justify-between rounded-md border border-border/70 bg-muted/30 px-4 py-3.5"
           >
             <div>
               <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>

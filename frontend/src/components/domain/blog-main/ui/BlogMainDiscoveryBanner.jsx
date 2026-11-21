@@ -67,7 +67,7 @@ const NODE_MAP = Object.fromEntries(GRAPH_NODES.map((node) => [node.id, node]));
  */
 function KnowledgeGraphSlide({ graphStats }) {
   return (
-    <div className="relative flex min-h-[280px] flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-muted/60 via-card to-card px-12 py-5 text-foreground sm:h-[304px] sm:px-14 sm:py-6">
+    <div className="relative flex min-h-[280px] flex-col justify-between overflow-hidden rounded-lg bg-gradient-to-br from-muted/60 via-card to-card px-12 py-5 text-foreground sm:h-[304px] sm:px-14 sm:py-6">
       {/* 은은한 방사형 배경 포인트 */}
       <div
         aria-hidden="true"
@@ -246,7 +246,7 @@ export default function BlogMainDiscoveryBanner({ graphStats = null, devTrends =
       onMouseLeave={() => setIsPaused(false)}
       onFocusCapture={() => setIsPaused(true)}
       onBlurCapture={() => setIsPaused(false)}
-      className="relative mb-6 overflow-hidden rounded-2xl border border-border shadow-xs"
+      className="relative mb-5 overflow-hidden rounded-lg border border-border/80 shadow-2xs"
     >
       {/* 좌측 끝 이전 슬라이드 화살표 */}
       <button

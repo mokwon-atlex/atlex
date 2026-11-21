@@ -2,7 +2,7 @@ export default function BlogMainFilterBar({ filters = [], activeFilterId, onChan
   return (
     <div className="min-w-0">
       {/* 작은 화면에서는 가로 스크롤로 처리해 칩이 어수선하게 줄바꿈되지 않게 합니다. */}
-      <div className="flex min-w-0 gap-2 overflow-x-auto rounded-[1.15rem] border border-border bg-muted/50 p-1">
+      <div className="inline-flex min-w-0 max-w-full gap-1 overflow-x-auto rounded-lg border border-border/80 bg-muted/60 p-1">
         {filters.map((filter) => {
           const isActive = filter.id === activeFilterId;
 
@@ -13,10 +13,10 @@ export default function BlogMainFilterBar({ filters = [], activeFilterId, onChan
               aria-pressed={isActive}
               onClick={() => onChangeFilter?.(filter.id)}
               className={[
-                'shrink-0 rounded-[0.95rem] px-4 py-2.5 text-[0.86rem] font-semibold transition',
+                'shrink-0 rounded-md border px-3.5 py-1.5 text-xs font-medium transition-colors',
                 isActive
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-card/70 hover:text-foreground',
+                  ? 'border-border/70 bg-background text-foreground shadow-2xs'
+                  : 'border-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground',
               ].join(' ')}
             >
               <span>{filter.label}</span>
