@@ -81,25 +81,9 @@ class AdminUserControllerTest {
     }
 
     @Test
-    @DisplayName("deprecated 전체 사용자 조회도 일반 사용자는 403")
-    void deprecated_전체사용자조회_일반사용자_403() throws Exception {
-        mockMvc.perform(get("/api/v1/users/all")
-            .header("Authorization", userToken))
-            .andExpect(status().isForbidden());
-    }
-
-    @Test
     @DisplayName("관리자는 200")
     void 관리자_200() throws Exception {
         mockMvc.perform(get("/api/v1/admin/users")
-            .header("Authorization", adminToken))
-            .andExpect(status().isOk());
-    }
-
-    @Test
-    @DisplayName("deprecated 전체 사용자 조회는 관리자 200")
-    void deprecated_전체사용자조회_관리자_200() throws Exception {
-        mockMvc.perform(get("/api/v1/users/all")
             .header("Authorization", adminToken))
             .andExpect(status().isOk());
     }

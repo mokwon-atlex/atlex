@@ -1,7 +1,6 @@
 package com.example.atlex.domain.user.controller;
 
 import com.example.atlex.domain.user.dto.request.ChangePasswordRequest;
-import com.example.atlex.domain.user.dto.request.EmailCheckRequest;
 import com.example.atlex.domain.user.dto.request.SignupRequest;
 import com.example.atlex.domain.user.dto.request.UpdateRequest;
 import com.example.atlex.domain.user.dto.response.UserResponse;
@@ -20,8 +19,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.List;
 
 @Tag(name = "User", description = "사용자 계정 관련 API")
 public interface UserControllerDocs {
@@ -127,13 +124,6 @@ public interface UserControllerDocs {
     ResponseEntity<ApiResponse<Void>> checkEmail(
         @Parameter(description = "중복 확인할 이메일", example = "john@example.com") @RequestParam
         String email);
-
-    @Operation(deprecated = true, summary = "[Deprecated] 이메일 중복 확인 - GET /api/v1/users?email={email} 사용 권장")
-    ResponseEntity<ApiResponse<Void>> checkEmailDeprecated(@Valid @RequestBody
-    EmailCheckRequest request);
-
-    @Operation(deprecated = true, summary = "[Deprecated] 전체 사용자 조회 - GET /api/v1/admin/users 사용 권장")
-    ResponseEntity<ApiResponse<List<UserResponse>>> findAllDeprecated();
 
     @Operation(summary = "사용자 정보 수정", description = "본인의 아이디/이메일/닉네임을 수정합니다. Authorization 헤더 필수.")
     @SecurityRequirement(name = "bearerAuth")

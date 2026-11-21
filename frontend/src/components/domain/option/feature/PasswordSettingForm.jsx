@@ -109,7 +109,7 @@ function PasswordSettingForm() {
   }
 
   return (
-    <Card className="rounded-3xl border-border/60 bg-card/80 shadow-sm backdrop-blur">
+    <Card className="rounded-lg border-border/80 bg-card shadow-2xs">
       <CardHeader>
         <CardTitle>비밀번호 변경</CardTitle>
         <CardDescription>안전한 계정 관리를 위해 비밀번호를 변경해 주세요.</CardDescription>

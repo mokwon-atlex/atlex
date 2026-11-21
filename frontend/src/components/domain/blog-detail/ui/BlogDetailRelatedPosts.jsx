@@ -34,7 +34,7 @@ export default function BlogDetailRelatedPosts({ currentPostId, graph }) {
   const radius = 72;
 
   return (
-    <section className="rounded-2xl border border-border bg-card/60 p-5 sm:p-6">
+    <section className="rounded-lg border border-border/80 bg-card/70 p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Network className="size-4 text-primary" />
@@ -50,7 +50,7 @@ export default function BlogDetailRelatedPosts({ currentPostId, graph }) {
       </div>
 
       <div className="grid grid-cols-1 items-center gap-5 md:grid-cols-[280px_minmax(0,1fr)]">
-        <div className="flex items-center justify-center rounded-xl border border-border/80 bg-background/80 p-2">
+        <div className="flex items-center justify-center rounded-md border border-border/80 bg-background/80 p-2">
           <svg viewBox="0 0 280 210" className="h-[210px] w-[280px]" role="img" aria-label="연관 글 미니 지식 그래프">
             {relatedNodes.map((node, index) => {
               const angle = (Math.PI * 2 * index) / relatedNodes.length - Math.PI / 2;

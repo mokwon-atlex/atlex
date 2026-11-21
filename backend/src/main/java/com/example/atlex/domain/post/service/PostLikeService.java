@@ -6,7 +6,7 @@ import com.example.atlex.domain.post.entity.PostLike;
 import com.example.atlex.domain.post.event.PostLikedEvent;
 import com.example.atlex.domain.post.repository.PostLikeRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -19,7 +19,7 @@ public class PostLikeService {
 
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final UserReader userReader;
     private final PostAccessService postAccessService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -35,7 +35,7 @@ public class PostLikeService {
         try {
             postLikeRepository.saveAndFlush(PostLike.builder()
                 .post(post)
-                .user(userRepository.getReferenceById(userId))
+                .user(userReader.getReferenceById(userId))
                 .build());
         } catch (DataIntegrityViolationException e) {
             // 순차 중복은 위 existsBy로 이미 걸러진다. 여기 도달하는 것은 "진짜 동시 요청"이 (user_id, post_id)

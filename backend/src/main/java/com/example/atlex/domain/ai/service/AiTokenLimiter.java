@@ -3,7 +3,7 @@ package com.example.atlex.domain.ai.service;
 import com.example.atlex.domain.ai.exception.TooManyAiRequestsException;
 import com.example.atlex.domain.user.entity.MembershipTier;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -17,7 +17,7 @@ import java.time.Duration;
 public class AiTokenLimiter {
 
     private final StringRedisTemplate redisTemplate;
-    private final UserRepository userRepository;
+    private final UserReader userReader;
 
     private static final int FREE_TIER_LIMIT = 2500;
     private static final int PREMIUM_TIER_LIMIT = 5000;
@@ -28,8 +28,7 @@ public class AiTokenLimiter {
         if ("anonymous".equals(userIdStr)) {
             throw new TooManyAiRequestsException();
         }
-        User user = userRepository.findByUserId(userIdStr)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userReader.getActiveUserByUserId(userIdStr);
 
         Long userId = user.getId();
         MembershipTier tier = user.getMembershipTier();
@@ -63,8 +62,7 @@ public class AiTokenLimiter {
         if ("anonymous".equals(userIdStr)) {
             return 0;
         }
-        User user = userRepository.findByUserId(userIdStr)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userReader.getActiveUserByUserId(userIdStr);
 
         Long userId = user.getId();
         MembershipTier tier = user.getMembershipTier();
@@ -89,8 +87,7 @@ public class AiTokenLimiter {
         if ("anonymous".equals(userIdStr)) {
             return 0;
         }
-        User user = userRepository.findByUserId(userIdStr)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userReader.getActiveUserByUserId(userIdStr);
         return (user.getMembershipTier() == MembershipTier.PREMIUM) ? PREMIUM_TIER_LIMIT : FREE_TIER_LIMIT;
     }
 }

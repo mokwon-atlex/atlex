@@ -1,7 +1,7 @@
 package com.example.atlex.domain.notification.service;
 
 import com.example.atlex.domain.comment.event.CommentCreatedEvent;
-import com.example.atlex.domain.comment.repository.CommentRepository;
+import com.example.atlex.domain.comment.service.CommentReader;
 import com.example.atlex.domain.follow.event.UserFollowedEvent;
 import com.example.atlex.domain.notification.dto.request.NotificationSettingUpdateRequest;
 import com.example.atlex.domain.notification.dto.response.NotificationResponse;
@@ -15,9 +15,9 @@ import com.example.atlex.domain.notification.repository.NotificationRepository;
 import com.example.atlex.domain.notification.repository.NotificationSettingRepository;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.post.event.PostLikedEvent;
-import com.example.atlex.domain.post.repository.PostRepository;
+import com.example.atlex.domain.post.service.PostReader;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,9 +37,9 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationSettingRepository notificationSettingRepository;
-    private final UserRepository userRepository;
-    private final PostRepository postRepository;
-    private final CommentRepository commentRepository;
+    private final UserReader userReader;
+    private final PostReader postReader;
+    private final CommentReader commentReader;
     private final NotificationSseService notificationSseService;
 
     /**
@@ -68,11 +68,11 @@ public class NotificationService {
         }
 
         Notification saved = notificationRepository.save(Notification.builder()
-            .recipient(userRepository.getReferenceById(recipientId))
-            .actor(userRepository.getReferenceById(event.actorId()))
+            .recipient(userReader.getReferenceById(recipientId))
+            .actor(userReader.getReferenceById(event.actorId()))
             .type(type)
-            .post(postRepository.getReferenceById(event.postId()))
-            .comment(commentRepository.getReferenceById(event.commentId()))
+            .post(postReader.getReferenceById(event.postId()))
+            .comment(commentReader.getReferenceById(event.commentId()))
             .build());
         if (saved != null) {
             notificationSseService.sendNotification(recipientId, NotificationResponse.from(saved));
@@ -104,10 +104,10 @@ public class NotificationService {
         }
 
         Notification saved = notificationRepository.save(Notification.builder()
-            .recipient(userRepository.getReferenceById(recipientId))
-            .actor(userRepository.getReferenceById(event.actorId()))
+            .recipient(userReader.getReferenceById(recipientId))
+            .actor(userReader.getReferenceById(event.actorId()))
             .type(NotificationType.LIKE)
-            .post(postRepository.getReferenceById(event.postId()))
+            .post(postReader.getReferenceById(event.postId()))
             .build());
         if (saved != null) {
             notificationSseService.sendNotification(recipientId, NotificationResponse.from(saved));
@@ -138,8 +138,8 @@ public class NotificationService {
         }
 
         Notification saved = notificationRepository.save(Notification.builder()
-            .recipient(userRepository.getReferenceById(recipientId))
-            .actor(userRepository.getReferenceById(event.followerId()))
+            .recipient(userReader.getReferenceById(recipientId))
+            .actor(userReader.getReferenceById(event.followerId()))
             .type(NotificationType.FOLLOW)
             .build());
         if (saved != null) {
@@ -156,9 +156,9 @@ public class NotificationService {
      */
     @Transactional
     public int notifyServiceNotice(Long adminUserId, Long postId) {
-        Post noticePost = postId != null ? postRepository.getReferenceById(postId) : null;
-        User adminUser = userRepository.getReferenceById(adminUserId);
-        List<User> activeUsers = userRepository.findAllByActiveTrue();
+        Post noticePost = postId != null ? postReader.getReferenceById(postId) : null;
+        User adminUser = userReader.getReferenceById(adminUserId);
+        List<User> activeUsers = userReader.findAllActiveUsers();
         int sentCount = 0;
 
         for (User recipient : activeUsers) {
@@ -228,7 +228,7 @@ public class NotificationService {
         NotificationSettingUpdateRequest request) {
         NotificationSetting setting = notificationSettingRepository.findByUser_Id(userId)
             .orElseGet(() -> notificationSettingRepository.save(
-                NotificationSetting.defaultFor(userRepository.getReferenceById(userId))));
+                NotificationSetting.defaultFor(userReader.getReferenceById(userId))));
 
         setting.update(
             request.getCommentEnabled(),

@@ -37,12 +37,10 @@ export default function BlogHomeFeedItemLayout({
   return (
     <article
       className={cn(
-        'relative rounded-2xl border border-border bg-card px-5 py-6 shadow-xs md:px-6 md:py-7',
+        'relative rounded-lg border border-border/80 bg-card px-5 py-5 shadow-2xs md:px-5 md:py-5',
         isPrivate ? 'opacity-[0.85]' : '',
         // href 가 있으면 카드 전체가 클릭 가능함을 보여준다.
-        href
-          ? 'transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-md'
-          : '',
+        href ? 'transition-colors duration-150 hover:border-foreground/25' : '',
         className,
       )}
     >

@@ -136,7 +136,7 @@ public class UserService {
         User user = userRepository.findByUserIdAndActiveTrue(userId)
             .orElseThrow(UserNotFoundException::new);
 
-        user.setMembershipTier(com.example.atlex.domain.user.entity.MembershipTier.PREMIUM);
+        user.upgradeMembership();
         return UserResponse.from(user);
     }
 }

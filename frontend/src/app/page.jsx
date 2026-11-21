@@ -32,7 +32,7 @@ export default async function MainPage({ searchParams }) {
     <main className="min-h-screen bg-background text-foreground">
       <Header />
 
-      <div className="mx-auto w-full max-w-content-wide px-5 pb-12 pt-7 sm:px-8 lg:px-10">
+      <div className="mx-auto w-full max-w-content-wide px-4 pb-10 pt-5 sm:px-6 lg:px-8">
         <BlogMainSection
           filters={blogMainFilters}
           activeFilterId={activeFilter.id}

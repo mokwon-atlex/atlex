@@ -13,7 +13,7 @@ import com.example.atlex.domain.post.service.PostAccessService;
 import com.example.atlex.global.exception.common.CustomException;
 import com.example.atlex.global.exception.error.ErrorCode;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,7 +44,7 @@ class CommentServiceTest {
     @Mock
     PostAccessService postAccessService;
     @Mock
-    UserRepository userRepository;
+    UserReader userReader;
     @Mock
     ApplicationEventPublisher eventPublisher;
 
@@ -92,7 +92,7 @@ class CommentServiceTest {
         User author = user(1L, "author");
         Post privatePost = post(10L, author, false);
         when(postAccessService.getAccessiblePost(10L, 1L)).thenReturn(privatePost);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(author));
+        when(userReader.getActiveUser(1L)).thenReturn(author);
         when(commentRepository.save(any(Comment.class))).thenAnswer(inv -> inv.getArgument(0));
 
         commentService.createComment(10L, new CommentCreateRequest("내 댓글"), 1L);
@@ -107,7 +107,7 @@ class CommentServiceTest {
         Post post = post(10L, author, true);
         Comment parent = comment(100L, post, author, "부모");
         when(postAccessService.getAccessiblePost(10L, 1L)).thenReturn(post);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(author));
+        when(userReader.getActiveUser(1L)).thenReturn(author);
         when(commentRepository.findActiveWithAuthorById(100L)).thenReturn(Optional.of(parent));
         when(commentRepository.save(any(Comment.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -124,7 +124,7 @@ class CommentServiceTest {
         User commenter = user(2L, "commenter");
         Post post = post(10L, postAuthor, true);
         when(postAccessService.getAccessiblePost(10L, 2L)).thenReturn(post);
-        when(userRepository.findById(2L)).thenReturn(Optional.of(commenter));
+        when(userReader.getActiveUser(2L)).thenReturn(commenter);
         when(commentRepository.save(any(Comment.class))).thenAnswer(inv -> inv.getArgument(0));
 
         commentService.createComment(10L, new CommentCreateRequest("댓글"), 2L);
@@ -147,7 +147,7 @@ class CommentServiceTest {
         Post post = post(10L, postAuthor, true);
         Comment parent = comment(100L, post, parentAuthor, "부모");
         when(postAccessService.getAccessiblePost(10L, 3L)).thenReturn(post);
-        when(userRepository.findById(3L)).thenReturn(Optional.of(replier));
+        when(userReader.getActiveUser(3L)).thenReturn(replier);
         when(commentRepository.findActiveWithAuthorById(100L)).thenReturn(Optional.of(parent));
         when(commentRepository.save(any(Comment.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -165,7 +165,7 @@ class CommentServiceTest {
         Post post = post(10L, author, true);
         Comment childReply = reply(101L, comment(100L, post, author, "부모"), author, "답글");
         when(postAccessService.getAccessiblePost(10L, 1L)).thenReturn(post);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(author));
+        when(userReader.getActiveUser(1L)).thenReturn(author);
         when(commentRepository.findActiveWithAuthorById(101L)).thenReturn(Optional.of(childReply));
 
         CustomException e = assertThrows(CustomException.class,
@@ -182,7 +182,7 @@ class CommentServiceTest {
         Post post = post(10L, author, true);
         Comment otherPostComment = comment(200L, post(20L, author, true), author, "다른 글 댓글");
         when(postAccessService.getAccessiblePost(10L, 1L)).thenReturn(post);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(author));
+        when(userReader.getActiveUser(1L)).thenReturn(author);
         when(commentRepository.findActiveWithAuthorById(200L)).thenReturn(Optional.of(otherPostComment));
 
         CustomException e = assertThrows(CustomException.class,
@@ -198,7 +198,7 @@ class CommentServiceTest {
         User author = user(1L, "author");
         Post post = post(10L, author, true);
         when(postAccessService.getAccessiblePost(10L, 1L)).thenReturn(post);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(author));
+        when(userReader.getActiveUser(1L)).thenReturn(author);
         when(commentRepository.findActiveWithAuthorById(100L)).thenReturn(Optional.empty());
 
         CustomException e = assertThrows(CustomException.class,

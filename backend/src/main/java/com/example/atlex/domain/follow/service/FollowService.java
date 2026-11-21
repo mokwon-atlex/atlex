@@ -8,8 +8,7 @@ import com.example.atlex.domain.follow.event.UserFollowedEvent;
 import com.example.atlex.domain.follow.exception.SelfFollowNotAllowedException;
 import com.example.atlex.domain.follow.repository.FollowRepository;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.exception.UserNotFoundException;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FollowService {
 
     private final FollowRepository followRepository;
-    private final UserRepository userRepository;
+    private final UserReader userReader;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -32,7 +31,7 @@ public class FollowService {
         if (loginUser == null) {
             throw new AuthenticationException();
         }
-        User targetUser = findActiveUser(targetUserId);
+        User targetUser = userReader.getActiveUserByUserId(targetUserId);
         if (targetUser.getId().equals(loginUser.getId())) {
             throw new SelfFollowNotAllowedException();
         }
@@ -50,7 +49,7 @@ public class FollowService {
         if (loginUser == null) {
             throw new AuthenticationException();
         }
-        User targetUser = findActiveUser(targetUserId);
+        User targetUser = userReader.getActiveUserByUserId(targetUserId);
         if (targetUser.getId().equals(loginUser.getId())) {
             throw new SelfFollowNotAllowedException();
         }
@@ -61,7 +60,7 @@ public class FollowService {
 
     @Transactional(readOnly = true)
     public List<FollowUserResponse> getFollowers(String targetUserId) {
-        User targetUser = findActiveUser(targetUserId);
+        User targetUser = userReader.getActiveUserByUserId(targetUserId);
         return followRepository.findAllByFollowingIdOrderByCreatedAtDesc(targetUser.getId()).stream()
             .map(follow -> FollowUserResponse.from(follow.getFollower()))
             .filter(user -> user != null)
@@ -70,18 +69,11 @@ public class FollowService {
 
     @Transactional(readOnly = true)
     public List<FollowUserResponse> getFollowing(String targetUserId) {
-        User targetUser = findActiveUser(targetUserId);
+        User targetUser = userReader.getActiveUserByUserId(targetUserId);
         return followRepository.findAllByFollowerIdOrderByCreatedAtDesc(targetUser.getId()).stream()
             .map(follow -> FollowUserResponse.from(follow.getFollowing()))
             .filter(user -> user != null)
             .toList();
-    }
-
-    private User findActiveUser(String userId) {
-        if (userId == null || userId.isBlank()) {
-            throw new UserNotFoundException();
-        }
-        return userRepository.findByUserIdAndActiveTrue(userId).orElseThrow(UserNotFoundException::new);
     }
 
     private FollowStatusResponse buildStatusResponse(User targetUser, boolean following) {

@@ -2,18 +2,22 @@ package com.example.atlex.domain.post;
 
 import com.example.atlex.global.exception.common.CustomException;
 import com.example.atlex.global.exception.error.ErrorCode;
-import com.example.atlex.domain.graph.service.GraphIndexService;
+import com.example.atlex.domain.category.exception.CategoryNotFoundException;
+import com.example.atlex.domain.category.service.CategoryReader;
+import com.example.atlex.domain.comment.service.CommentReader;
 import com.example.atlex.domain.post.dto.request.PostCreateRequest;
 import com.example.atlex.domain.post.dto.request.PostUpdateRequest;
 import com.example.atlex.domain.category.entity.Category;
 import com.example.atlex.domain.post.entity.Post;
-import com.example.atlex.domain.category.repository.CategoryRepository;
+import com.example.atlex.domain.post.event.PostGraphSyncEvent;
 import com.example.atlex.domain.post.repository.PostFavoriteRepository;
 import com.example.atlex.domain.post.repository.PostLikeRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.post.service.PostService;
+import com.example.atlex.domain.tag.service.PostTagService;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
+import com.example.atlex.global.exception.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,9 +36,6 @@ import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.Optional;
-
-import com.example.atlex.domain.tag.repository.PostTagRepository;
-import com.example.atlex.domain.tag.repository.TagRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -55,23 +56,17 @@ class PostServiceTest {
     @Mock
     PostRepository postRepository;
     @Mock
-    UserRepository userRepository;
+    UserReader userReader;
     @Mock
-    CategoryRepository categoryRepository;
-    @Mock
-    GraphIndexService graphIndexService;
+    CategoryReader categoryReader;
     @Mock
     PostLikeRepository postLikeRepository;
     @Mock
     PostFavoriteRepository postFavoriteRepository;
     @Mock
-    com.example.atlex.domain.comment.repository.CommentRepository commentRepository;
+    CommentReader commentReader;
     @Mock
-    PostTagRepository postTagRepository;
-    @Mock
-    TagRepository tagRepository;
-    @Mock
-    com.example.atlex.domain.tag.service.TagService tagService;
+    PostTagService postTagService;
     @Mock
     org.springframework.context.ApplicationEventPublisher eventPublisher;
 
@@ -81,15 +76,12 @@ class PostServiceTest {
     void setUp() {
         postService = new PostService(
             postRepository,
-            userRepository,
-            categoryRepository,
-            graphIndexService,
+            userReader,
+            categoryReader,
             postLikeRepository,
             postFavoriteRepository,
-            commentRepository,
-            postTagRepository,
-            tagRepository,
-            tagService,
+            commentReader,
+            postTagService,
             eventPublisher);
         lenient().when(postRepository.findAllPublic(any(), any(), any(), any(Pageable.class)))
             .thenReturn(Page.empty());
@@ -240,15 +232,15 @@ class PostServiceTest {
             category.getId(),
             null,
             true);
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        when(categoryRepository.findByIdAndUser_Id(category.getId(), user.getId()))
-            .thenReturn(Optional.of(category));
+        when(userReader.getActiveUser(user.getId())).thenReturn(user);
+        when(categoryReader.getOwnedCategory(category.getId(), user.getId()))
+            .thenReturn(category);
         when(postRepository.save(any(Post.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
         postService.createPost(request, user.getId());
 
-        verify(categoryRepository).findByIdAndUser_Id(category.getId(), user.getId());
+        verify(categoryReader).getOwnedCategory(category.getId(), user.getId());
     }
 
     @Test
@@ -263,9 +255,9 @@ class PostServiceTest {
             10L,
             null,
             true);
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        when(categoryRepository.findByIdAndUser_Id(10L, user.getId()))
-            .thenReturn(Optional.empty());
+        when(userReader.getActiveUser(user.getId())).thenReturn(user);
+        when(categoryReader.getOwnedCategory(10L, user.getId()))
+            .thenThrow(new CategoryNotFoundException());
 
         CustomException exception = assertThrows(
             CustomException.class,
@@ -293,12 +285,12 @@ class PostServiceTest {
             .content("content")
             .isPublic(true)
             .build();
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userReader.getActiveUser(user.getId())).thenReturn(user);
         when(postRepository.save(any(Post.class))).thenReturn(savedPost);
 
         postService.createPost(request, user.getId());
 
-        verify(graphIndexService).refreshPostGraph(savedPost.getId());
+        verify(eventPublisher).publishEvent(PostGraphSyncEvent.refresh(savedPost.getId()));
     }
 
     @Test
@@ -320,15 +312,14 @@ class PostServiceTest {
             .content("content")
             .isPublic(true)
             .build();
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userReader.getActiveUser(user.getId())).thenReturn(user);
         when(postRepository.save(any(Post.class))).thenReturn(savedPost);
-        when(tagService.getOrCreateTag(any(String.class)))
-            .thenAnswer(inv -> com.example.atlex.domain.tag.entity.Tag.of(inv.getArgument(0)));
+        when(postTagService.syncPostTags(eq(user), eq(savedPost), any())).thenReturn(List.of("Java", "Spring"));
 
         com.example.atlex.domain.post.dto.response.PostResponse response = postService.createPost(request,
             user.getId());
 
-        verify(postTagRepository).saveAll(any());
+        verify(postTagService).syncPostTags(eq(user), eq(savedPost), any());
         assertEquals(List.of("Java", "Spring"), response.getTags());
     }
 
@@ -352,12 +343,12 @@ class PostServiceTest {
             null,
             null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
-        when(categoryRepository.findByIdAndUser_Id(category.getId(), author.getId()))
-            .thenReturn(Optional.of(category));
+        when(categoryReader.getOwnedCategory(category.getId(), author.getId()))
+            .thenReturn(category);
 
         postService.updatePost(post.getId(), request, author.getId());
 
-        verify(categoryRepository).findByIdAndUser_Id(category.getId(), author.getId());
+        verify(categoryReader).getOwnedCategory(category.getId(), author.getId());
         assertEquals(category, post.getCategory());
     }
 
@@ -380,8 +371,8 @@ class PostServiceTest {
             null,
             null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
-        when(categoryRepository.findByIdAndUser_Id(10L, author.getId()))
-            .thenReturn(Optional.empty());
+        when(categoryReader.getOwnedCategory(10L, author.getId()))
+            .thenThrow(new CategoryNotFoundException());
 
         CustomException exception = assertThrows(
             CustomException.class,
@@ -413,7 +404,7 @@ class PostServiceTest {
 
         postService.updatePost(post.getId(), request, author.getId());
 
-        verify(graphIndexService).refreshPostGraph(post.getId());
+        verify(eventPublisher).publishEvent(PostGraphSyncEvent.refresh(post.getId()));
     }
 
     @Test
@@ -436,15 +427,12 @@ class PostServiceTest {
             List.of("Backend", "Spring"),
             null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
-        when(tagService.getOrCreateTag(any()))
-            .thenAnswer(inv -> com.example.atlex.domain.tag.entity.Tag.of(inv.getArgument(0)));
-        when(postTagRepository.findTagNamesByPostId(post.getId())).thenReturn(List.of("Backend", "Spring"));
+        when(postTagService.findTagNamesByPostId(post.getId())).thenReturn(List.of("Backend", "Spring"));
 
         com.example.atlex.domain.post.dto.response.PostResponse response = postService.updatePost(post.getId(), request,
             author.getId());
 
-        verify(postTagRepository).deleteByPostId(post.getId());
-        verify(postTagRepository).saveAll(any());
+        verify(postTagService).replacePostTags(eq(author), eq(post), any());
         assertEquals(List.of("Backend", "Spring"), response.getTags());
     }
 
@@ -468,18 +456,12 @@ class PostServiceTest {
             List.of("Java", "java", "JAVA", "Spring", "spring"),
             null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
-        when(tagService.getOrCreateTag(any()))
-            .thenAnswer(inv -> com.example.atlex.domain.tag.entity.Tag.of(inv.getArgument(0)));
-        when(postTagRepository.findTagNamesByPostId(post.getId())).thenReturn(List.of("Java", "Spring"));
+        when(postTagService.findTagNamesByPostId(post.getId())).thenReturn(List.of("Java", "Spring"));
 
         com.example.atlex.domain.post.dto.response.PostResponse response = postService.updatePost(post.getId(), request,
             author.getId());
 
-        verify(tagService).getOrCreateTag("Java");
-        verify(tagService).getOrCreateTag("Spring");
-        verify(tagService, org.mockito.Mockito.never()).getOrCreateTag("java");
-        verify(tagService, org.mockito.Mockito.never()).getOrCreateTag("JAVA");
-        verify(tagService, org.mockito.Mockito.never()).getOrCreateTag("spring");
+        verify(postTagService).replacePostTags(eq(author), eq(post), any());
         assertEquals(List.of("Java", "Spring"), response.getTags());
     }
 
@@ -504,9 +486,11 @@ class PostServiceTest {
             elevenTags,
             null);
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
+        org.mockito.Mockito.doThrow(new ValidationException())
+            .when(postTagService).replacePostTags(eq(author), eq(post), any());
 
         assertThrows(
-            com.example.atlex.global.exception.ValidationException.class,
+            ValidationException.class,
             () -> postService.updatePost(post.getId(), request, author.getId()));
     }
 
@@ -522,7 +506,7 @@ class PostServiceTest {
             .isPublic(true)
             .build();
         when(postRepository.findWithUserById(post.getId())).thenReturn(Optional.of(post));
-        when(postTagRepository.findTagNamesByPostId(post.getId())).thenReturn(List.of("Java", "JPA"));
+        when(postTagService.findTagNamesByPostId(post.getId())).thenReturn(List.of("Java", "JPA"));
 
         com.example.atlex.domain.post.dto.response.PostResponse response = postService.getPost(post.getId(),
             author.getId());
@@ -632,7 +616,7 @@ class PostServiceTest {
 
         postService.deletePost(post.getId(), author.getId());
 
-        verify(graphIndexService).removePostGraph(post.getId());
+        verify(eventPublisher).publishEvent(PostGraphSyncEvent.remove(post.getId()));
     }
 
     private String getListDescription(String description, String content) {

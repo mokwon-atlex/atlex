@@ -66,10 +66,10 @@ export default function CodeBlockNodeView({ node, updateAttributes }) {
   };
 
   return (
-    <NodeViewWrapper className="my-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-xs">
+    <NodeViewWrapper className="my-3 overflow-hidden rounded-lg border border-border/80 bg-muted/40 shadow-2xs">
       <div
         contentEditable={false}
-        className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-100/80 px-3 py-1.5 text-xs text-slate-600 select-none"
+        className="flex items-center justify-between gap-2 border-b border-border/80 bg-muted/70 px-3 py-1.5 text-xs text-muted-foreground select-none"
       >
         <select
           aria-label="코드 블록 언어 선택"

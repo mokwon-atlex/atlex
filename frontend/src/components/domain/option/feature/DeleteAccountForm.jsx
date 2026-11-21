@@ -61,7 +61,7 @@ function DeleteAccountForm() {
   }
 
   return (
-    <Card className="rounded-3xl border-destructive/20 bg-card/80 shadow-sm backdrop-blur">
+    <Card className="rounded-lg border-destructive/30 bg-card shadow-2xs">
       <CardHeader>
         <CardTitle className="text-destructive">회원 탈퇴</CardTitle>
 

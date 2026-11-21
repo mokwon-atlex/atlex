@@ -1,11 +1,9 @@
 package com.example.atlex.domain.user.service;
 
-import com.example.atlex.domain.auth.repository.RefreshTokenRepository;
-import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
-import com.example.atlex.domain.user.exception.UserNotFoundException;
+import com.example.atlex.domain.user.event.UserDeactivatedEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,20 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserDeletionService {
 
-    private final UserRepository userRepository;
-    private final PostRepository postRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final UserReader userReader;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void delete(String userId) {
-        User user = userRepository.findByUserIdAndActiveTrue(userId)
-            .orElseThrow(UserNotFoundException::new);
-
-        Long id = user.getId();
+        User user = userReader.getActiveUserByUserId(userId);
         user.deactivate();
-        postRepository.softDeleteAllByUserId(id);
-        if (refreshTokenRepository.existsById(id)) {
-            refreshTokenRepository.deleteById(id);
-        }
+        eventPublisher.publishEvent(new UserDeactivatedEvent(user.getId()));
     }
 }

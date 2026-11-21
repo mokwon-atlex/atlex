@@ -70,10 +70,10 @@ export default function BlogDetailToc() {
 
   return (
     <aside className="sticky top-24 space-y-4">
-      <div className="rounded-xl border border-border bg-card/60 p-3.5">
+      <div className="rounded-lg border border-border/80 bg-card/70 p-3.5">
         <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-muted-foreground">
           <span>읽기 진행률</span>
-          <span className="text-foreground">{progress}%</span>
+          <span className="text-foreground tabular-nums">{progress}%</span>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
@@ -84,7 +84,7 @@ export default function BlogDetailToc() {
       </div>
 
       {headings.length > 0 ? (
-        <nav aria-label="본문 목차" className="rounded-xl border border-border bg-card/60 p-3.5">
+        <nav aria-label="본문 목차" className="rounded-lg border border-border/80 bg-card/70 p-3.5">
           <div className="mb-2.5 flex items-center gap-1.5 text-xs font-bold tracking-wide text-foreground">
             <ListTree className="size-3.5 text-primary" />
             <span>목차</span>

@@ -30,10 +30,10 @@ const MENUS = [
 
 function OptionSidebar({ activeMenu, onChangeMenu }) {
   return (
-    <Card className="h-fit rounded-3xl border-border/60 bg-card/80 backdrop-blur">
-      <CardContent className="p-3">
-        <div className="mb-4 px-3 pt-2">
-          <h2 className="text-sm font-bold text-foreground">계정 설정</h2>
+    <Card className="h-fit rounded-lg border-border/80 bg-card shadow-2xs">
+      <CardContent className="p-2.5">
+        <div className="mb-3 px-2.5 pt-1.5">
+          <h2 className="text-sm font-semibold text-foreground">계정 설정</h2>
 
           <p className="mt-1 text-xs leading-5 text-muted-foreground">프로필 및 계정 정보를 관리할 수 있습니다.</p>
         </div>
@@ -47,21 +47,15 @@ function OptionSidebar({ activeMenu, onChangeMenu }) {
                 key={menu.id}
                 type="button"
                 onClick={() => onChangeMenu(menu.id)}
-                className={`w-full rounded-2xl px-4 py-3 text-left transition-colors ${
+                className={`w-full rounded-md border px-3 py-2.5 text-left transition-colors ${
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                    ? 'border-border/70 bg-accent text-foreground shadow-2xs'
+                    : 'border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground'
                 }`}
               >
-                <span className="block text-sm font-semibold">{menu.title}</span>
+                <span className="block text-sm font-medium">{menu.title}</span>
 
-                <span
-                  className={`mt-1 block text-xs leading-5 ${
-                    isActive ? 'text-primary-foreground/80' : 'text-muted-foreground'
-                  }`}
-                >
-                  {menu.description}
-                </span>
+                <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{menu.description}</span>
               </button>
             );
           })}

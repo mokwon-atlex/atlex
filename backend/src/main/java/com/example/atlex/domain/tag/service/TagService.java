@@ -11,9 +11,8 @@ import org.springframework.data.domain.Page;
 import com.example.atlex.domain.tag.repository.projection.TagPostCountProjection;
 import com.example.atlex.domain.tag.repository.projection.TagThumbnailProjection;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
-import com.example.atlex.domain.user.exception.UserNotFoundException;
-import com.example.atlex.global.exception.ValidationException;
+import com.example.atlex.domain.user.service.UserReader;
+import com.example.atlex.global.pagination.CursorPageRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -31,14 +30,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TagService {
 
-    private static final int DEFAULT_LIMIT = 10;
-    private static final int MAX_LIMIT = 50;
     /** 트렌딩 정렬에서 최근 글 수를 집계하는 기간(일) */
     private static final int TRENDING_PERIOD_DAYS = 30;
 
     private final PostTagRepository postTagRepository;
     private final TagRepository tagRepository;
-    private final UserRepository userRepository;
+    private final UserReader userReader;
     /** 트렌딩 집계 기준 시각을 계산하는 시계 */
     private final Clock clock;
 
@@ -48,20 +45,19 @@ public class TagService {
         Integer limit,
         Long cursor,
         Long loginUserId) {
-        User owner = findActiveUser(userId);
-        int effectiveLimit = normalizeLimit(limit);
-        validateCursor(cursor);
+        User owner = userReader.getActiveUserByUserId(userId);
+        CursorPageRequest pageRequest = CursorPageRequest.of(limit, cursor);
         boolean isOwner = owner.getId().equals(loginUserId);
 
         List<Tag> fetched = postTagRepository.findTagPage(
             owner.getId(),
-            cursor,
+            pageRequest.cursor(),
             isOwner,
-            PageRequest.of(0, effectiveLimit + 1));
+            pageRequest.toFetchPageable());
 
-        boolean hasNext = fetched.size() > effectiveLimit;
+        boolean hasNext = fetched.size() > pageRequest.limit();
         List<Tag> tags = hasNext
-            ? List.copyOf(fetched.subList(0, effectiveLimit))
+            ? List.copyOf(fetched.subList(0, pageRequest.limit()))
             : fetched;
 
         if (tags.isEmpty()) {
@@ -143,25 +139,6 @@ public class TagService {
             .name(p.getName())
             .postCount(p.getPostCount() != null ? p.getPostCount() : 0L)
             .build());
-    }
-
-    private User findActiveUser(String userId) {
-        return userRepository.findByUserIdAndActiveTrue(userId)
-            .orElseThrow(UserNotFoundException::new);
-    }
-
-    private int normalizeLimit(Integer limit) {
-        int requestedLimit = limit == null ? DEFAULT_LIMIT : limit;
-        if (requestedLimit <= 0) {
-            throw new ValidationException();
-        }
-        return Math.min(requestedLimit, MAX_LIMIT);
-    }
-
-    private void validateCursor(Long cursor) {
-        if (cursor != null && cursor <= 0) {
-            throw new ValidationException();
-        }
     }
 
     /**

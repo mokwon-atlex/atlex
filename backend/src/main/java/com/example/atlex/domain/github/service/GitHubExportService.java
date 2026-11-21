@@ -3,9 +3,8 @@ package com.example.atlex.domain.github.service;
 import com.example.atlex.domain.github.dto.response.PostMarkdownExportResponse;
 import com.example.atlex.domain.github.util.FrontmatterUtils;
 import com.example.atlex.domain.post.entity.Post;
-import com.example.atlex.domain.post.exception.PostNotFoundException;
-import com.example.atlex.domain.post.repository.PostRepository;
-import com.example.atlex.domain.tag.repository.PostTagRepository;
+import com.example.atlex.domain.post.service.PostAccessService;
+import com.example.atlex.domain.tag.service.PostTagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,8 +18,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GitHubExportService {
 
-    private final PostRepository postRepository;
-    private final PostTagRepository postTagRepository;
+    private final PostAccessService postAccessService;
+    private final PostTagService postTagService;
 
     /**
      * 게시글을 Frontmatter 포함 마크다운으로 직렬화하여 반환합니다.
@@ -28,20 +27,9 @@ public class GitHubExportService {
      */
     @Transactional(readOnly = true)
     public PostMarkdownExportResponse exportPostMarkdown(Long postId, Long currentUserId) {
-        Post post = postRepository.findWithUserById(postId)
-            .orElseThrow(PostNotFoundException::new);
+        Post post = postAccessService.getAccessiblePost(postId, currentUserId);
 
-        if (Boolean.TRUE.equals(post.getIsDeleted())) {
-            throw new PostNotFoundException();
-        }
-
-        if (Boolean.FALSE.equals(post.getIsPublic())) {
-            if (currentUserId == null || !post.getUser().getId().equals(currentUserId)) {
-                throw new PostNotFoundException();
-            }
-        }
-
-        List<String> tags = postTagRepository.findTagNamesByPostId(postId);
+        List<String> tags = postTagService.findTagNamesByPostId(postId);
         String markdown = FrontmatterUtils.buildMarkdown(post, tags);
         String filename = FrontmatterUtils.generateSafeFilename(postId, post.getTitle());
 
