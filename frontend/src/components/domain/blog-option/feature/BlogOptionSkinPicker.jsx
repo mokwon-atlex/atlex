@@ -77,11 +77,11 @@ export default function BlogOptionSkinPicker({
               <label
                 key={skin.id}
                 className={cn(
-                  'relative flex cursor-pointer flex-col gap-3 rounded-2xl border bg-background/60 p-3 text-left transition-[border-color,box-shadow,transform] duration-150 ease-out active:scale-[0.98]',
+                  'relative flex cursor-pointer flex-col gap-3 rounded-lg border bg-background/60 p-3 text-left transition-colors duration-150',
                   'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60',
                   isSelected
                     ? 'border-primary shadow-[0_0_0_1px_var(--primary)]'
-                    : 'border-border hover:border-foreground/25',
+                    : 'border-border/80 hover:border-foreground/25',
                 )}
               >
                 <input
@@ -95,7 +95,7 @@ export default function BlogOptionSkinPicker({
                   aria-describedby={descriptionId}
                   className="sr-only"
                 />
-                <div className="h-20 rounded-xl bg-muted/60 p-2" aria-hidden="true">
+                <div className="h-20 rounded-md bg-muted/60 p-2" aria-hidden="true">
                   <SkinWireframe skinId={skin.id} />
                 </div>
                 <div className="space-y-1">

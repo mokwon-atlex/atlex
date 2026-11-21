@@ -47,7 +47,7 @@ export default function PolicyLayout({ children, sidebar }) {
 
           {/* 사이드바 구역 */}
           <aside className="order-1 lg:order-2">
-            <div className="sticky top-24 rounded-xl border border-border bg-card p-4 shadow-sm">
+            <div className="sticky top-24 rounded-lg border border-border/80 bg-card p-4 shadow-2xs">
               <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted-foreground">목차</h3>
               <ul className="space-y-1">{sidebar}</ul>
             </div>
