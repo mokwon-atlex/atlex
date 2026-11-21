@@ -63,6 +63,15 @@ public class PostResponse {
     }
 
     public static PostResponse from(Post post, List<String> tags, boolean liked, boolean favorited) {
+        return from(post, tags, liked, favorited, post.getHits());
+    }
+
+    public static PostResponse from(
+        Post post,
+        List<String> tags,
+        boolean liked,
+        boolean favorited,
+        Integer hits) {
         return PostResponse.builder()
             .id(post.getId())
             .categoryId(post.getCategory() != null ? post.getCategory().getId() : null)
@@ -74,7 +83,7 @@ public class PostResponse {
             .authorId(post.getUser().getId())
             .authorUserId(post.getUser().getUserId())
             .authorName(post.getUser().getName())
-            .hits(post.getHits())
+            .hits(hits)
             .likes(post.getLikes())
             .liked(liked)
             .favorited(favorited)

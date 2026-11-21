@@ -1,6 +1,6 @@
 package com.example.atlex.domain.graph.service;
 
-import com.example.atlex.domain.follow.repository.FollowRepository;
+import com.example.atlex.domain.follow.service.FollowReader;
 import com.example.atlex.domain.graph.config.GraphProperties;
 import com.example.atlex.domain.graph.dto.response.GraphEdgeResponse;
 import com.example.atlex.domain.graph.dto.response.GraphNodeResponse;
@@ -9,9 +9,8 @@ import com.example.atlex.domain.graph.entity.PostRelation;
 import com.example.atlex.domain.graph.repository.PostRelationRepository;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.post.exception.PostNotFoundException;
-import com.example.atlex.domain.post.repository.PostRepository;
-import com.example.atlex.domain.tag.repository.PostTagRepository;
-import com.example.atlex.domain.tag.repository.projection.PostTagNameProjection;
+import com.example.atlex.domain.post.service.PostReader;
+import com.example.atlex.domain.tag.service.PostTagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -35,20 +34,20 @@ public class GraphService {
     private static final int MAX_CENTER_LIMIT = 50;
     public static final int MAX_GRAPH_NODES = 100;
 
-    private final PostRepository postRepository;
-    private final PostTagRepository postTagRepository;
+    private final PostReader postReader;
+    private final PostTagService postTagService;
     private final PostRelationRepository postRelationRepository;
-    private final FollowRepository followRepository;
+    private final FollowReader followReader;
     private final GraphProperties graphProperties;
 
     @Transactional(readOnly = true)
     public PostGraphResponse getGraph(String userId, Long categoryId, Double minScore, Long viewerId) {
         String normalizedUserId = normalizeUserId(userId);
         double effectiveMinScore = minScore == null ? graphProperties.getMinScore() : minScore;
-        List<Post> visiblePosts = postRepository.findGraphVisiblePosts(viewerId, normalizedUserId, categoryId);
+        List<Post> visiblePosts = postReader.findGraphVisiblePosts(viewerId, normalizedUserId, categoryId);
         List<Post> posts = selectPrioritizedPosts(visiblePosts, viewerId, normalizedUserId, effectiveMinScore);
         List<Long> visiblePostIds = posts.stream().map(Post::getId).toList();
-        Map<Long, List<String>> tagNamesByPostId = findTagNamesByPostId(visiblePostIds);
+        Map<Long, List<String>> tagNamesByPostId = postTagService.findTagNamesByPostIds(visiblePostIds);
 
         List<GraphNodeResponse> nodes = posts.stream()
             .map(post -> GraphNodeResponse.from(post, tagNamesByPostId.getOrDefault(post.getId(), List.of())))
@@ -106,9 +105,7 @@ public class GraphService {
             }
         }
 
-        Set<Long> followingUserIds = followRepository.findAllByFollowerIdOrderByCreatedAtDesc(viewerId).stream()
-            .map(follow -> follow.getFollowing().getId())
-            .collect(Collectors.toSet());
+        Set<Long> followingUserIds = followReader.findFollowingUserIds(viewerId);
 
         Map<Long, Post> selected = new LinkedHashMap<>();
         // 1순위: 내 글
@@ -153,7 +150,7 @@ public class GraphService {
 
     @Transactional(readOnly = true)
     public PostGraphResponse getPostGraph(Long postId, Double minScore, Integer limit, Long viewerId) {
-        Post centerPost = postRepository.findWithUserById(postId)
+        Post centerPost = postReader.findWithUserById(postId)
             .orElseThrow(PostNotFoundException::new);
 
         if (!isVisibleTo(centerPost, viewerId)) {
@@ -175,7 +172,7 @@ public class GraphService {
         }
 
         List<Long> postIds = postsById.keySet().stream().toList();
-        Map<Long, List<String>> tagNamesByPostId = findTagNamesByPostId(postIds);
+        Map<Long, List<String>> tagNamesByPostId = postTagService.findTagNamesByPostIds(postIds);
 
         List<GraphNodeResponse> nodes = postsById.values().stream()
             .map(post -> GraphNodeResponse.from(post, tagNamesByPostId.getOrDefault(post.getId(), List.of())))
@@ -199,21 +196,6 @@ public class GraphService {
             return DEFAULT_CENTER_LIMIT;
         }
         return Math.max(1, Math.min(limit, MAX_CENTER_LIMIT));
-    }
-
-    private Map<Long, List<String>> findTagNamesByPostId(List<Long> postIds) {
-        Map<Long, List<String>> tagNamesByPostId = new LinkedHashMap<>();
-        postIds.forEach(postId -> tagNamesByPostId.put(postId, new ArrayList<>()));
-        if (postIds.isEmpty()) {
-            return tagNamesByPostId;
-        }
-
-        for (PostTagNameProjection tagName : postTagRepository.findTagNamesByPostIds(postIds)) {
-            tagNamesByPostId
-                .computeIfAbsent(tagName.getPostId(), ignored -> new ArrayList<>())
-                .add(tagName.getTagName());
-        }
-        return tagNamesByPostId;
     }
 
     private boolean isVisibleTo(Post post, Long viewerId) {

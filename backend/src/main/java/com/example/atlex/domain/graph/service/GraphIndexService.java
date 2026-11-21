@@ -13,8 +13,8 @@ import com.example.atlex.domain.graph.repository.PostRelationRepository;
 import com.example.atlex.domain.graph.repository.projection.KeywordDocumentFrequencyProjection;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.post.exception.PostNotFoundException;
-import com.example.atlex.domain.post.repository.PostRepository;
-import com.example.atlex.domain.tag.repository.PostTagRepository;
+import com.example.atlex.domain.post.service.PostReader;
+import com.example.atlex.domain.tag.service.PostTagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -31,8 +31,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class GraphIndexService {
 
-    private final PostRepository postRepository;
-    private final PostTagRepository postTagRepository;
+    private final PostReader postReader;
+    private final PostTagService postTagService;
     private final KeywordRepository keywordRepository;
     private final PostKeywordRepository postKeywordRepository;
     private final PostRelationRepository postRelationRepository;
@@ -54,7 +54,7 @@ public class GraphIndexService {
     }
 
     public int rebuildPublicGraph() {
-        List<Long> postIds = postRepository.findAllPublicGraphSourcePosts()
+        List<Long> postIds = postReader.findAllPublicGraphSourcePosts()
             .stream()
             .map(Post::getId)
             .toList();
@@ -69,7 +69,7 @@ public class GraphIndexService {
 
     @Transactional
     public void refreshPostKeywords(Long postId) {
-        Post post = postRepository.findWithUserById(postId)
+        Post post = postReader.findWithUserById(postId)
             .orElseThrow(PostNotFoundException::new);
 
         postKeywordRepository.deleteByPostId(postId);
@@ -77,12 +77,12 @@ public class GraphIndexService {
             return;
         }
 
-        List<String> tagNames = postTagRepository.findTagNamesByPostId(postId);
+        List<String> tagNames = postTagService.findTagNamesByPostId(postId);
         Map<String, KeywordOccurrence> occurrences = keywordExtractor.extract(
             post.getTitle(),
             post.getContent(),
             tagNames);
-        long totalPosts = Math.max(postRepository.countByIsDeletedFalseAndIsPublicTrue(), 1L);
+        long totalPosts = Math.max(postReader.countPublicPosts(), 1L);
         List<String> keywordNames = occurrences.keySet().stream().toList();
         KeywordResolution keywordResolution = findOrCreateKeywords(keywordNames);
         Map<Long, Long> documentFrequencyByKeywordId = countDocumentFrequencies(
@@ -111,7 +111,7 @@ public class GraphIndexService {
 
     @Transactional
     public void refreshRelations(Long postId) {
-        Post sourcePost = postRepository.findWithUserById(postId)
+        Post sourcePost = postReader.findWithUserById(postId)
             .orElseThrow(PostNotFoundException::new);
 
         postRelationRepository.deleteBySourcePostId(postId);
