@@ -198,10 +198,9 @@ class NotificationServiceTest {
         User disabledUser = user(3L);
         when(userReader.getReferenceById(1L)).thenReturn(admin);
         when(userReader.findAllActiveUsers()).thenReturn(List.of(admin, enabledUser, disabledUser));
-        when(notificationSettingRepository.findByUser_Id(2L)).thenReturn(Optional.empty());
-        when(notificationSettingRepository.findByUser_Id(3L))
-            .thenReturn(Optional.of(NotificationSetting.builder().noticeEnabled(false).build()));
-        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(notificationSettingRepository.findAllByUser_IdIn(List.of(2L, 3L)))
+            .thenReturn(List.of(NotificationSetting.builder().user(disabledUser).noticeEnabled(false).build()));
+        when(notificationRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         int sentCount = notificationService.notifyServiceNotice(1L, null);
 
