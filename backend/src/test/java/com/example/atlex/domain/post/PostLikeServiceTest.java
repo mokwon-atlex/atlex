@@ -8,7 +8,7 @@ import com.example.atlex.domain.post.repository.PostLikeRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
 import com.example.atlex.domain.post.service.PostAccessService;
 import com.example.atlex.domain.post.service.PostLikeService;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,7 +35,7 @@ class PostLikeServiceTest {
     @Mock
     PostRepository postRepository;
     @Mock
-    UserRepository userRepository;
+    UserReader userReader;
     @Mock
     PostAccessService postAccessService;
     @Mock

@@ -1,6 +1,6 @@
 package com.example.atlex.domain.report;
 
-import com.example.atlex.domain.comment.repository.CommentRepository;
+import com.example.atlex.domain.comment.service.CommentReader;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.post.service.PostAccessService;
 import com.example.atlex.domain.report.dto.request.ReportCreateRequest;
@@ -10,7 +10,7 @@ import com.example.atlex.domain.report.entity.ReportTargetType;
 import com.example.atlex.domain.report.repository.ReportRepository;
 import com.example.atlex.domain.report.service.ReportService;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import com.example.atlex.global.exception.common.CustomException;
 import com.example.atlex.global.exception.error.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -36,9 +36,9 @@ class ReportServiceTest {
     @Mock
     ReportRepository reportRepository;
     @Mock
-    CommentRepository commentRepository;
+    CommentReader commentReader;
     @Mock
-    UserRepository userRepository;
+    UserReader userReader;
     @Mock
     PostAccessService postAccessService;
 

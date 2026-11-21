@@ -8,9 +8,9 @@ import com.example.atlex.domain.post.exception.PostNotFoundException;
 import com.example.atlex.domain.post.repository.PostFavoriteRepository;
 import com.example.atlex.domain.post.service.PostAccessService;
 import com.example.atlex.domain.post.service.PostFavoriteService;
-import com.example.atlex.domain.tag.repository.PostTagRepository;
+import com.example.atlex.domain.tag.service.PostTagService;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,11 +40,11 @@ class PostFavoriteServiceTest {
     @Mock
     PostFavoriteRepository postFavoriteRepository;
     @Mock
-    UserRepository userRepository;
+    UserReader userReader;
     @Mock
     PostAccessService postAccessService;
     @Mock
-    PostTagRepository postTagRepository;
+    PostTagService postTagService;
 
     @InjectMocks
     PostFavoriteService postFavoriteService;
