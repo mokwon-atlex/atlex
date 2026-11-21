@@ -5,27 +5,19 @@ import com.example.atlex.domain.post.dto.request.PostUpdateRequest;
 import com.example.atlex.domain.post.dto.response.PostResponse;
 import com.example.atlex.domain.post.dto.response.PostSummaryResponse;
 import com.example.atlex.domain.category.entity.Category;
-import com.example.atlex.domain.comment.repository.CommentRepository;
-import com.example.atlex.domain.graph.service.GraphIndexService;
+import com.example.atlex.domain.category.service.CategoryReader;
+import com.example.atlex.domain.comment.service.CommentReader;
 import com.example.atlex.domain.post.entity.Post;
-import com.example.atlex.domain.category.repository.CategoryRepository;
+import com.example.atlex.domain.post.event.PostGraphSyncEvent;
 import com.example.atlex.domain.post.repository.PostFavoriteRepository;
 import com.example.atlex.domain.post.repository.PostLikeRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
-import com.example.atlex.domain.tag.entity.PostTag;
-import com.example.atlex.domain.tag.entity.Tag;
-import com.example.atlex.domain.tag.repository.PostTagRepository;
-import com.example.atlex.domain.tag.repository.TagRepository;
-import com.example.atlex.domain.tag.repository.projection.PostTagNameProjection;
-import com.example.atlex.domain.tag.service.TagService;
+import com.example.atlex.domain.tag.service.PostTagService;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
-import com.example.atlex.domain.category.exception.CategoryNotFoundException;
+import com.example.atlex.domain.user.service.UserReader;
 import com.example.atlex.domain.post.exception.PostDeleteForbiddenException;
 import com.example.atlex.domain.post.exception.PostNotFoundException;
 import com.example.atlex.domain.post.exception.PostUpdateForbiddenException;
-import com.example.atlex.domain.user.exception.UserNotFoundException;
-import com.example.atlex.global.exception.ValidationException;
 import com.example.atlex.global.security.sanitizer.HtmlSanitizer;
 import lombok.RequiredArgsConstructor;
 import com.example.atlex.domain.github.event.PostGitHubSyncEvent;
@@ -37,8 +29,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -50,26 +40,21 @@ import java.util.Set;
 public class PostService {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
-    private final GraphIndexService graphIndexService;
+    private final UserReader userReader;
+    private final CategoryReader categoryReader;
     private final PostLikeRepository postLikeRepository;
     private final PostFavoriteRepository postFavoriteRepository;
-    private final CommentRepository commentRepository;
-    private final PostTagRepository postTagRepository;
-    private final TagRepository tagRepository;
-    private final TagService tagService;
+    private final CommentReader commentReader;
+    private final PostTagService postTagService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PostResponse createPost(PostCreateRequest request, Long id) {
-        User user = userRepository.findById(id)
-            .orElseThrow(UserNotFoundException::new);
+        User user = userReader.getActiveUser(id);
 
         Category category = null;
         if (request.getCategoryId() != null) {
-            category = categoryRepository.findByIdAndUser_Id(request.getCategoryId(), user.getId())
-                .orElseThrow(CategoryNotFoundException::new);
+            category = categoryReader.getOwnedCategory(request.getCategoryId(), user.getId());
         }
 
         String sanitizedTitle = HtmlSanitizer.sanitizePlainText(request.getTitle());
@@ -89,8 +74,8 @@ public class PostService {
             .build();
 
         Post savedPost = postRepository.save(post);
-        List<String> tags = syncPostTags(user, savedPost, sanitizedTags);
-        graphIndexService.refreshPostGraph(savedPost.getId());
+        List<String> tags = postTagService.syncPostTags(user, savedPost, sanitizedTags);
+        eventPublisher.publishEvent(PostGraphSyncEvent.refresh(savedPost.getId()));
         eventPublisher.publishEvent(PostGitHubSyncEvent.create(savedPost.getId(), user.getId()));
 
         return PostResponse.from(savedPost, tags);
@@ -165,26 +150,15 @@ public class PostService {
         }
 
         List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
-        Map<Long, List<String>> tagMap = findTagNamesByPostIds(postIds);
+        Map<Long, List<String>> tagMap = postTagService.findTagNamesByPostIds(postIds);
         Set<Long> likedPostIds = findLikedPostIds(id, postIds);
-        Map<Long, Long> commentCountMap = findCommentCountsByPostIds(postIds);
+        Map<Long, Long> commentCountMap = commentReader.countActiveByPostIds(postIds);
 
         return posts.map(post -> PostSummaryResponse.from(
             post,
             tagMap.getOrDefault(post.getId(), List.of()),
             likedPostIds.contains(post.getId()),
             commentCountMap.getOrDefault(post.getId(), 0L)));
-    }
-
-    private Map<Long, Long> findCommentCountsByPostIds(List<Long> postIds) {
-        if (postIds.isEmpty()) {
-            return Map.of();
-        }
-        Map<Long, Long> counts = new java.util.HashMap<>();
-        for (Object[] row : commentRepository.countActiveByPostIds(postIds)) {
-            counts.put((Long)row[0], ((Number)row[1]).longValue());
-        }
-        return counts;
     }
 
     private String normalizeType(String type) {
@@ -221,7 +195,7 @@ public class PostService {
             throw new PostNotFoundException();
         }
 
-        List<String> tags = postTagRepository.findTagNamesByPostId(postId);
+        List<String> tags = postTagService.findTagNamesByPostId(postId);
         boolean liked = id != null && postLikeRepository.existsByPost_IdAndUser_Id(postId, id);
         boolean favorited = id != null && postFavoriteRepository.existsByPost_IdAndUser_Id(postId, id);
         return PostResponse.from(post, tags, liked, favorited);
@@ -237,10 +211,9 @@ public class PostService {
         }
 
         if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findByIdAndUser_Id(
+            Category category = categoryReader.getOwnedCategory(
                 request.getCategoryId(),
-                post.getUser().getId())
-                .orElseThrow(CategoryNotFoundException::new);
+                post.getUser().getId());
             post.updateCategory(category);
         } else if (request.isCategoryCleared()) {
             post.updateCategory(null);
@@ -263,14 +236,11 @@ public class PostService {
             post.clearThumbnail();
         }
 
-        if (sanitizedTags != null) {
-            postTagRepository.deleteByPostId(post.getId());
-            syncPostTags(post.getUser(), post, sanitizedTags);
-        }
+        postTagService.replacePostTags(post.getUser(), post, sanitizedTags);
 
-        graphIndexService.refreshPostGraph(post.getId());
+        eventPublisher.publishEvent(PostGraphSyncEvent.refresh(post.getId()));
         eventPublisher.publishEvent(PostGitHubSyncEvent.update(post.getId(), id));
-        List<String> tags = postTagRepository.findTagNamesByPostId(post.getId());
+        List<String> tags = postTagService.findTagNamesByPostId(post.getId());
         // 수정 응답으로 상세 화면을 갱신해도 좋아요·즐겨찾기 상태가 풀리지 않도록 함께 내려준다.
         boolean liked = postLikeRepository.existsByPost_IdAndUser_Id(post.getId(), id);
         boolean favorited = postFavoriteRepository.existsByPost_IdAndUser_Id(post.getId(), id);
@@ -288,43 +258,8 @@ public class PostService {
 
         String postTitle = post.getTitle();
         post.softDelete();
-        graphIndexService.removePostGraph(post.getId());
+        eventPublisher.publishEvent(PostGraphSyncEvent.remove(post.getId()));
         eventPublisher.publishEvent(PostGitHubSyncEvent.delete(postId, postTitle, id));
-    }
-
-    private List<String> syncPostTags(User user, Post post, List<String> rawTags) {
-        if (rawTags == null || rawTags.isEmpty()) {
-            return List.of();
-        }
-
-        Map<String, String> distinctTags = new LinkedHashMap<>();
-        for (String rawTag : rawTags) {
-            if (rawTag == null) {
-                continue;
-            }
-            String trimmed = rawTag.trim();
-            if (trimmed.isBlank()) {
-                continue;
-            }
-            distinctTags.putIfAbsent(trimmed.toLowerCase(Locale.ROOT), trimmed);
-        }
-
-        List<String> normalizedTags = new ArrayList<>(distinctTags.values());
-        if (normalizedTags.isEmpty()) {
-            return List.of();
-        }
-
-        if (normalizedTags.size() > 10) {
-            throw new ValidationException();
-        }
-
-        List<PostTag> postTags = new ArrayList<>(normalizedTags.size());
-        for (String tagName : normalizedTags) {
-            Tag tag = tagService.getOrCreateTag(tagName);
-            postTags.add(PostTag.of(user, post, tag));
-        }
-        postTagRepository.saveAll(postTags);
-        return normalizedTags;
     }
 
     // 비로그인이거나 조회 결과가 비면 조회 없이 빈 집합을 돌려준다.
@@ -334,19 +269,5 @@ public class PostService {
         }
 
         return Set.copyOf(postLikeRepository.findLikedPostIds(userId, postIds));
-    }
-
-    private Map<Long, List<String>> findTagNamesByPostIds(List<Long> postIds) {
-        if (postIds.isEmpty()) {
-            return Map.of();
-        }
-
-        Map<Long, List<String>> tagNamesByPostId = new LinkedHashMap<>();
-        for (PostTagNameProjection projection : postTagRepository.findTagNamesByPostIds(postIds)) {
-            tagNamesByPostId
-                .computeIfAbsent(projection.getPostId(), ignored -> new ArrayList<>())
-                .add(projection.getTagName());
-        }
-        return tagNamesByPostId;
     }
 }

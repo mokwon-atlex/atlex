@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users")
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -41,9 +40,7 @@ public class User {
     private MembershipTier membershipTier = MembershipTier.FREE;
 
     /** 블로그 홈 스킨입니다. 컬럼 추가 전에 가입한 회원은 null이며 기본 스킨으로 취급합니다. */
-    // 변경은 updateBlogSkin 으로만 하도록 공개 setter 생성을 막는다.
     @Builder.Default
-    @Setter(AccessLevel.NONE)
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private BlogSkin blogSkin = BlogSkin.DEFAULT;
@@ -104,6 +101,11 @@ public class User {
         this.lockedUntil = null;
     }
 
+    /** 계정을 지정한 시각까지 잠급니다. */
+    public void lockUntil(LocalDateTime lockedUntil) {
+        this.lockedUntil = lockedUntil;
+    }
+
     public void updateProfile(String name, String profileImage, String info) {
         if (name != null) {
             this.name = name;
@@ -125,5 +127,10 @@ public class User {
     /** 컬럼 추가 전 회원(null)도 기본 스킨으로 응답합니다. */
     public BlogSkin getBlogSkinOrDefault() {
         return blogSkin != null ? blogSkin : BlogSkin.DEFAULT;
+    }
+
+    /** 멤버십 등급을 프리미엄으로 승급합니다. */
+    public void upgradeMembership() {
+        this.membershipTier = MembershipTier.PREMIUM;
     }
 }

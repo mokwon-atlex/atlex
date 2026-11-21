@@ -30,9 +30,9 @@ export function updateUserPassword(userId, currentPassword, newPassword) {
   });
 }
 
-// POST /users/email/check
+// GET /users?email={email}
 export function checkUserEmail(email) {
-  return apiClient.post('/users/email/check', { email });
+  return apiClient.get('/users', { params: { email } });
 }
 
 // GET /users/{userId}/categories
