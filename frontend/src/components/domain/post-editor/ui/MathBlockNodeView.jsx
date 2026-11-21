@@ -25,8 +25,8 @@ export default function MathBlockNodeView({ editor, getPos, node, deleteNode, se
       as="div"
       data-type="math-block"
       contentEditable={false}
-      className={`group relative my-4 rounded-xl border bg-background px-4 py-3 transition-colors ${
-        selected ? 'border-foreground ring-2 ring-foreground/20' : 'border-border hover:border-foreground/40'
+      className={`group relative my-4 rounded-lg border bg-background px-4 py-3 transition-colors ${
+        selected ? 'border-foreground ring-2 ring-foreground/20' : 'border-border/80 hover:border-foreground/40'
       }`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">

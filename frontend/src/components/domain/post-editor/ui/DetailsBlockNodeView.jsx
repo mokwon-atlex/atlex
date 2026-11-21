@@ -15,8 +15,8 @@ export default function DetailsBlockNodeView({ node, updateAttributes, deleteNod
     <NodeViewWrapper
       as="div"
       data-type="details-block"
-      className={`group my-4 rounded-xl border bg-background px-4 py-3 transition-colors ${
-        selected ? 'border-foreground ring-2 ring-foreground/20' : 'border-border'
+      className={`group my-4 rounded-lg border bg-background px-4 py-3 transition-colors ${
+        selected ? 'border-foreground ring-2 ring-foreground/20' : 'border-border/80'
       }`}
     >
       <div contentEditable={false} className="flex items-center gap-2">

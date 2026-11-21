@@ -28,19 +28,19 @@ const POLICIES = [
 
 function PolicySettingForm() {
   return (
-    <Card className="rounded-3xl border-border/60 bg-card/80 shadow-sm backdrop-blur">
+    <Card className="rounded-lg border-border/80 bg-card shadow-2xs">
       <CardHeader>
         <CardTitle>서비스 정책</CardTitle>
 
         <CardDescription>Atlex 서비스 이용과 관련된 정책을 확인할 수 있습니다.</CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2.5">
         {POLICIES.map((policy) => (
           <Link
             key={policy.title}
             href="/policy"
-            className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-muted/30 px-5 py-4 text-left transition-colors hover:bg-muted/60"
+            className="flex w-full items-center justify-between rounded-md border border-border/70 bg-muted/30 px-4 py-3.5 text-left transition-colors hover:border-foreground/20 hover:bg-muted/60"
           >
             <span>
               <span className="block text-sm font-semibold text-foreground">{policy.title}</span>

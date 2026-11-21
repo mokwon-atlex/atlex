@@ -94,7 +94,7 @@ export default function PostEditorSidebar({
               </Textfield>
             </div>
 
-            <div className="mt-4 rounded-xl border border-border bg-muted/40 p-4">
+            <div className="mt-4 rounded-lg border border-border/80 bg-muted/40 p-3.5">
               <div className="border-b border-border pb-4">
                 <Textfield size="default" weight="semibold">
                   {activeGroup.title}
@@ -124,8 +124,8 @@ export default function PostEditorSidebar({
                       onClick={() => onExecuteItem(activeGroup.id, item)}
                       className={
                         isActive
-                          ? 'h-auto justify-start rounded-xl border-foreground bg-foreground px-4 py-4 text-left text-sm font-semibold text-background hover:bg-foreground/90 hover:text-background'
-                          : 'h-auto justify-start rounded-xl px-4 py-4 text-left text-sm font-semibold'
+                          ? 'h-auto justify-start rounded-md border-foreground bg-foreground px-3.5 py-3 text-left text-sm font-medium text-background hover:bg-foreground/90 hover:text-background'
+                          : 'h-auto justify-start rounded-md px-3.5 py-3 text-left text-sm font-medium'
                       }
                     >
                       {item}
