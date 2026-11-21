@@ -13,6 +13,7 @@ import com.example.atlex.domain.post.event.PostGraphSyncEvent;
 import com.example.atlex.domain.post.repository.PostFavoriteRepository;
 import com.example.atlex.domain.post.repository.PostLikeRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
+import com.example.atlex.domain.post.service.PostHitLimiter;
 import com.example.atlex.domain.post.service.PostService;
 import com.example.atlex.domain.tag.service.PostTagService;
 import com.example.atlex.domain.user.entity.User;
@@ -68,6 +69,8 @@ class PostServiceTest {
     @Mock
     PostTagService postTagService;
     @Mock
+    PostHitLimiter postHitLimiter;
+    @Mock
     org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     private PostService postService;
@@ -82,8 +85,11 @@ class PostServiceTest {
             postFavoriteRepository,
             commentReader,
             postTagService,
+            postHitLimiter,
             eventPublisher);
-        lenient().when(postRepository.findAllPublic(any(), any(), any(), any(Pageable.class)))
+        lenient().when(postRepository.findAll(
+            org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Post>>any(),
+            any(Pageable.class)))
             .thenReturn(Page.empty());
     }
 
@@ -92,7 +98,7 @@ class PostServiceTest {
     void getPostList_latest() {
         Pageable request = PageRequest.of(2, 7, Sort.by(Sort.Order.asc("title")));
 
-        postService.getPostList(" latest ", null, null, request, null);
+        postService.getPostList(" latest ", null, null, null, null, request, null);
 
         Pageable applied = captureAnonymousPageable();
         assertEquals(2, applied.getPageNumber());
@@ -105,7 +111,7 @@ class PostServiceTest {
     @ValueSource(strings = {" ", "unknown", "LATEST-invalid"})
     @DisplayName("type이 없거나 유효하지 않으면 latest로 처리한다")
     void getPostList_invalidTypeFallsBackToLatest(String type) {
-        postService.getPostList(type, null, null, PageRequest.of(0, 10), null);
+        postService.getPostList(type, null, null, null, null, PageRequest.of(0, 10), null);
 
         assertSort(captureAnonymousPageable(), Sort.Order.desc("createdAt"));
     }
@@ -115,7 +121,7 @@ class PostServiceTest {
     void getPostList_trending() {
         Pageable request = PageRequest.of(0, 10, Sort.by(Sort.Order.asc("createdAt")));
 
-        postService.getPostList("TRENDING", null, null, request, null);
+        postService.getPostList("TRENDING", null, null, null, null, request, null);
 
         assertSort(
             captureAnonymousPageable(),
@@ -125,39 +131,43 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("로그인 사용자는 기존 visible 조회 정책을 사용한다")
+    @DisplayName("로그인 사용자는 Specification 기반 조회를 사용한다")
     void getPostList_authenticatedUsesVisiblePolicy() {
-        when(postRepository.findAllVisibleTo(any(Long.class), isNull(), isNull(), isNull(), any(Pageable.class)))
-            .thenReturn(Page.empty());
+        postService.getPostList("latest", null, null, null, null, PageRequest.of(0, 10), 1L);
 
-        postService.getPostList("latest", null, null, PageRequest.of(0, 10), 1L);
-
-        verify(postRepository).findAllVisibleTo(any(Long.class), isNull(), isNull(), isNull(), any(Pageable.class));
-    }
-
-    @Test
-    @DisplayName("빈 userId는 필터 없는 null로 정규화한다")
-    void getPostList_blankUserIdUsesNoFilter() {
-        postService.getPostList("latest", "   ", null, PageRequest.of(0, 10), null);
-
-        verify(postRepository).findAllPublic(isNull(), isNull(), isNull(), any(Pageable.class));
-    }
-
-    @Test
-    @DisplayName("tag가 주어지면 정규화하여 레포지토리에 전달한다")
-    void getPostList_withTag() {
-        postService.getPostList("latest", null, null, "  Java  ", PageRequest.of(0, 10), null);
-
-        verify(postRepository).findAllPublic(isNull(), isNull(), org.mockito.ArgumentMatchers.eq("Java"),
+        verify(postRepository).findAll(
+            org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Post>>any(),
             any(Pageable.class));
     }
 
     @Test
-    @DisplayName("빈 tag는 null로 정규화한다")
-    void getPostList_blankTagUsesNoFilter() {
-        postService.getPostList("latest", null, null, "   ", PageRequest.of(0, 10), null);
+    @DisplayName("빈 userId는 필터 없는 조회로 처리한다")
+    void getPostList_blankUserIdUsesNoFilter() {
+        postService.getPostList("latest", "   ", null, null, null, PageRequest.of(0, 10), null);
 
-        verify(postRepository).findAllPublic(isNull(), isNull(), isNull(), any(Pageable.class));
+        verify(postRepository).findAll(
+            org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Post>>any(),
+            any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("tag가 주어지면 Specification 기반 조회를 호출한다")
+    void getPostList_withTag() {
+        postService.getPostList("latest", null, null, "  Java  ", null, PageRequest.of(0, 10), null);
+
+        verify(postRepository).findAll(
+            org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Post>>any(),
+            any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("빈 tag는 필터 없는 조회로 처리한다")
+    void getPostList_blankTagUsesNoFilter() {
+        postService.getPostList("latest", null, null, "   ", null, PageRequest.of(0, 10), null);
+
+        verify(postRepository).findAll(
+            org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Post>>any(),
+            any(Pageable.class));
     }
 
     @Test
@@ -575,12 +585,14 @@ class PostServiceTest {
         User author = User.builder().id(1L).userId("owner").name("owner").build();
         Post liked = Post.builder().id(10L).user(author).title("t1").content("c1").build();
         Post notLiked = Post.builder().id(11L).user(author).title("t2").content("c2").build();
-        when(postRepository.findAllVisibleTo(eq(2L), isNull(), isNull(), isNull(), any(Pageable.class)))
+        when(postRepository.findAll(
+            org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Post>>any(),
+            any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of(liked, notLiked)));
         when(postLikeRepository.findLikedPostIds(2L, List.of(10L, 11L))).thenReturn(List.of(10L));
 
         List<com.example.atlex.domain.post.dto.response.PostSummaryResponse> content = postService
-            .getPostList("latest", null, null, PageRequest.of(0, 10), 2L).getContent();
+            .getPostList("latest", null, null, null, null, PageRequest.of(0, 10), 2L).getContent();
 
         assertTrue(content.get(0).isLiked());
         assertFalse(content.get(1).isLiked());
@@ -591,10 +603,12 @@ class PostServiceTest {
     void getPostList_anonymousIsNotLiked() {
         User author = User.builder().id(1L).userId("owner").name("owner").build();
         Post post = Post.builder().id(10L).user(author).title("t1").content("c1").build();
-        when(postRepository.findAllPublic(isNull(), isNull(), isNull(), any(Pageable.class)))
+        when(postRepository.findAll(
+            org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Post>>any(),
+            any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of(post)));
 
-        assertFalse(postService.getPostList("latest", null, null, PageRequest.of(0, 10), null)
+        assertFalse(postService.getPostList("latest", null, null, null, null, PageRequest.of(0, 10), null)
             .getContent()
             .get(0)
             .isLiked());
@@ -619,6 +633,37 @@ class PostServiceTest {
         verify(eventPublisher).publishEvent(PostGraphSyncEvent.remove(post.getId()));
     }
 
+    @Test
+    @DisplayName("상세 조회 시 Redis 중복 체크를 통과하면 조회수를 증가시킨다")
+    void getPost_increasesHitsWhenLimiterAllows() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder().id(100L).user(author).title("t").content("c").hits(5).isPublic(true).build();
+        when(postRepository.findWithUserById(100L)).thenReturn(Optional.of(post));
+        when(postHitLimiter.shouldIncreaseHit(100L, 2L, "127.0.0.1")).thenReturn(true);
+        when(postRepository.findHitsByPostId(100L)).thenReturn(6);
+
+        com.example.atlex.domain.post.dto.response.PostResponse response = postService.getPost(100L, 2L,
+            "127.0.0.1");
+
+        verify(postRepository).increaseHits(100L);
+        assertEquals(6, response.getHits());
+    }
+
+    @Test
+    @DisplayName("상세 조회 시 Redis 중복 체크에 걸리면 조회수를 증가시키지 않는다")
+    void getPost_skipsHitsWhenLimiterBlocks() {
+        User author = User.builder().id(1L).userId("owner").name("owner").build();
+        Post post = Post.builder().id(100L).user(author).title("t").content("c").hits(5).isPublic(true).build();
+        when(postRepository.findWithUserById(100L)).thenReturn(Optional.of(post));
+        when(postHitLimiter.shouldIncreaseHit(100L, 2L, "127.0.0.1")).thenReturn(false);
+
+        com.example.atlex.domain.post.dto.response.PostResponse response = postService.getPost(100L, 2L,
+            "127.0.0.1");
+
+        verify(postRepository, never()).increaseHits(100L);
+        assertEquals(5, response.getHits());
+    }
+
     private String getListDescription(String description, String content) {
         User author = User.builder()
             .id(1L)
@@ -632,11 +677,15 @@ class PostServiceTest {
             .description(description)
             .content(content)
             .build();
-        when(postRepository.findAllPublic(isNull(), isNull(), isNull(), any(Pageable.class)))
+        when(postRepository.findAll(
+            org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Post>>any(),
+            any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of(post)));
 
         return postService.getPostList(
             "latest",
+            null,
+            null,
             null,
             null,
             PageRequest.of(0, 10),
@@ -648,7 +697,9 @@ class PostServiceTest {
 
     private Pageable captureAnonymousPageable() {
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(postRepository).findAllPublic(isNull(), isNull(), isNull(), captor.capture());
+        verify(postRepository).findAll(
+            org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<Post>>any(),
+            captor.capture());
         return captor.getValue();
     }
 
