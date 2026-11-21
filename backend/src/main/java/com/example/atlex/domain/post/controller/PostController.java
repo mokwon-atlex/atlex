@@ -7,6 +7,7 @@ import com.example.atlex.domain.post.dto.request.PostUpdateRequest;
 import com.example.atlex.domain.post.dto.response.PostResponse;
 import com.example.atlex.domain.post.dto.response.PostSummaryResponse;
 import com.example.atlex.domain.post.service.PostService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -70,10 +71,23 @@ public class PostController implements PostControllerDocs {
         @AuthenticationPrincipal
         PrincipalDetails principalDetails,
         @PathVariable
-        Long postId) {
+        Long postId,
+        HttpServletRequest request) {
         Long id = principalDetails != null ? principalDetails.user().getId() : null;
-        PostResponse response = postService.getPost(postId, id);
+        String clientIp = extractClientIp(request);
+        PostResponse response = postService.getPost(postId, id, clientIp);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     @PatchMapping("/{postId}")

@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.core.annotations.ParameterObject;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -144,7 +145,9 @@ public interface PostControllerDocs {
         @Parameter(hidden = true) @AuthenticationPrincipal
         PrincipalDetails principalDetails,
         @Parameter(description = "조회할 게시글 ID", example = "1") @PathVariable
-        Long postId);
+        Long postId,
+        @Parameter(hidden = true)
+        HttpServletRequest request);
 
     @Operation(summary = "게시글 수정", description = "본인이 작성한 게시글을 수정합니다. Authorization 헤더 필수.")
     @SecurityRequirement(name = "bearerAuth")

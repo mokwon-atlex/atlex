@@ -12,6 +12,7 @@ import com.example.atlex.domain.post.event.PostGraphSyncEvent;
 import com.example.atlex.domain.post.repository.PostFavoriteRepository;
 import com.example.atlex.domain.post.repository.PostLikeRepository;
 import com.example.atlex.domain.post.repository.PostRepository;
+import com.example.atlex.domain.post.repository.PostSpecifications;
 import com.example.atlex.domain.tag.service.PostTagService;
 import com.example.atlex.domain.user.entity.User;
 import com.example.atlex.domain.user.service.UserReader;
@@ -46,6 +47,7 @@ public class PostService {
     private final PostFavoriteRepository postFavoriteRepository;
     private final CommentReader commentReader;
     private final PostTagService postTagService;
+    private final PostHitLimiter postHitLimiter;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -86,35 +88,14 @@ public class PostService {
         String type,
         String userId,
         Long categoryId,
-        Pageable pageable,
-        Long id) {
-        return getPostList(type, userId, categoryId, null, pageable, id);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<PostSummaryResponse> getPostList(
-        String type,
-        String userId,
-        Long categoryId,
-        String tag,
-        Pageable pageable,
-        Long id) {
-        return getPostList(type, userId, categoryId, tag, null, pageable, id);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<PostSummaryResponse> getPostList(
-        String type,
-        String userId,
-        Long categoryId,
         String tag,
         String keyword,
         Pageable pageable,
         Long id) {
         String normalizedType = normalizeType(type);
-        String normalizedUserId = normalizeUserId(userId);
-        String normalizedTag = normalizeTag(tag);
-        String normalizedKeyword = normalizeKeyword(keyword);
+        String normalizedUserId = normalizeBlankToNull(userId);
+        String normalizedTag = normalizeBlankToNull(tag);
+        String normalizedKeyword = normalizeBlankToNull(keyword);
         Sort sort = "trending".equals(normalizedType)
             ? Sort.by(
                 Sort.Order.desc("likes"),
@@ -123,31 +104,17 @@ public class PostService {
             : Sort.by(Sort.Order.desc("createdAt"));
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        Page<Post> posts;
-        if ("feed".equals(normalizedType)) {
-            posts = id == null
-                ? Page.empty(sortedPageable)
-                : postRepository.findFollowingFeed(id, normalizedTag, normalizedKeyword, sortedPageable);
-        } else if (normalizedKeyword == null) {
-            posts = (id != null)
-                ? postRepository.findAllVisibleTo(id, normalizedUserId, categoryId, normalizedTag, sortedPageable)
-                : postRepository.findAllPublic(normalizedUserId, categoryId, normalizedTag, sortedPageable);
-        } else {
-            posts = (id != null)
-                ? postRepository.findAllVisibleTo(
+        Page<Post> posts = ("feed".equals(normalizedType) && id == null)
+            ? Page.empty(sortedPageable)
+            : postRepository.findAll(
+                PostSpecifications.search(
+                    normalizedType,
                     id,
                     normalizedUserId,
                     categoryId,
                     normalizedTag,
-                    normalizedKeyword,
-                    sortedPageable)
-                : postRepository.findAllPublic(
-                    normalizedUserId,
-                    categoryId,
-                    normalizedTag,
-                    normalizedKeyword,
-                    sortedPageable);
-        }
+                    normalizedKeyword),
+                sortedPageable);
 
         List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
         Map<Long, List<String>> tagMap = postTagService.findTagNamesByPostIds(postIds);
@@ -172,20 +139,17 @@ public class PostService {
         return "latest";
     }
 
-    private String normalizeUserId(String userId) {
-        return userId == null || userId.isBlank() ? null : userId.trim();
+    private String normalizeBlankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
-    private String normalizeTag(String tag) {
-        return tag == null || tag.isBlank() ? null : tag.trim();
-    }
-
-    private String normalizeKeyword(String keyword) {
-        return keyword == null || keyword.isBlank() ? null : keyword.trim();
-    }
-
-    @Transactional(readOnly = true)
+    @Transactional
     public PostResponse getPost(Long postId, Long id) {
+        return getPost(postId, id, null);
+    }
+
+    @Transactional
+    public PostResponse getPost(Long postId, Long id, String clientIp) {
         Post post = postRepository.findWithUserById(postId)
             .orElseThrow(PostNotFoundException::new);
 
@@ -195,10 +159,17 @@ public class PostService {
             throw new PostNotFoundException();
         }
 
+        int resolvedHits = post.getHits() != null ? post.getHits() : 0;
+        if (postHitLimiter.shouldIncreaseHit(postId, id, clientIp)) {
+            postRepository.increaseHits(postId);
+            Integer latestHits = postRepository.findHitsByPostId(postId);
+            resolvedHits = latestHits != null ? latestHits : resolvedHits + 1;
+        }
+
         List<String> tags = postTagService.findTagNamesByPostId(postId);
         boolean liked = id != null && postLikeRepository.existsByPost_IdAndUser_Id(postId, id);
         boolean favorited = id != null && postFavoriteRepository.existsByPost_IdAndUser_Id(postId, id);
-        return PostResponse.from(post, tags, liked, favorited);
+        return PostResponse.from(post, tags, liked, favorited, resolvedHits);
     }
 
     @Transactional

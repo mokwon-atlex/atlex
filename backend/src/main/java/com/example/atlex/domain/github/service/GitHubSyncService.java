@@ -9,8 +9,8 @@ import com.example.atlex.domain.github.repository.GitHubSyncLogRepository;
 import com.example.atlex.domain.github.util.AesEncryptionUtils;
 import com.example.atlex.domain.github.util.FrontmatterUtils;
 import com.example.atlex.domain.post.entity.Post;
-import com.example.atlex.domain.post.repository.PostRepository;
-import com.example.atlex.domain.tag.repository.PostTagRepository;
+import com.example.atlex.domain.post.service.PostReader;
+import com.example.atlex.domain.tag.service.PostTagService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,8 +31,8 @@ public class GitHubSyncService {
     private final GitHubApiClient gitHubApiClient;
     private final GitHubSyncConfigRepository gitHubSyncConfigRepository;
     private final GitHubSyncLogRepository gitHubSyncLogRepository;
-    private final PostRepository postRepository;
-    private final PostTagRepository postTagRepository;
+    private final PostReader postReader;
+    private final PostTagService postTagService;
 
     @Value("${github.encryption-key}")
     private String encryptionKey;
@@ -53,7 +53,7 @@ public class GitHubSyncService {
             return;
         }
 
-        Post post = postRepository.findWithUserById(postId).orElse(null);
+        Post post = postReader.findWithUserById(postId).orElse(null);
         if (post == null) {
             log.warn("GitHub 동기화 대상 게시글을 찾을 수 없음: postId={}", postId);
             return;
@@ -206,10 +206,10 @@ public class GitHubSyncService {
      * 게시글 동기화를 실제로 실행하고 생성된 커밋 SHA를 반환합니다.
      */
     private String executePostSync(GitHubSyncConfig config, Long postId, SyncType syncType, String[] outPath) {
-        Post post = postRepository.findWithUserById(postId)
+        Post post = postReader.findWithUserById(postId)
             .orElseThrow(() -> new GitHubApiException("동기화 대상 게시글을 찾을 수 없습니다: postId=" + postId));
 
-        List<String> tags = postTagRepository.findTagNamesByPostId(postId);
+        List<String> tags = postTagService.findTagNamesByPostId(postId);
         String markdown = FrontmatterUtils.buildMarkdown(post, tags);
         String filename = FrontmatterUtils.generateSafeFilename(postId, post.getTitle());
         String fullPath = config.getDirectoryPath() + filename;

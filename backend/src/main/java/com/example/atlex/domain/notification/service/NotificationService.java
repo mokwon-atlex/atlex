@@ -25,8 +25,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 사용자 활동에 대한 서비스 내부 알림 생성 규칙을 담당한다.
@@ -158,33 +161,43 @@ public class NotificationService {
     public int notifyServiceNotice(Long adminUserId, Long postId) {
         Post noticePost = postId != null ? postReader.getReferenceById(postId) : null;
         User adminUser = userReader.getReferenceById(adminUserId);
-        List<User> activeUsers = userReader.findAllActiveUsers();
-        int sentCount = 0;
+        List<User> recipients = userReader.findAllActiveUsers().stream()
+            .filter(user -> !Objects.equals(user.getId(), adminUserId))
+            .toList();
+        if (recipients.isEmpty()) {
+            return 0;
+        }
 
-        for (User recipient : activeUsers) {
-            if (Objects.equals(recipient.getId(), adminUserId)) {
+        List<Long> recipientIds = recipients.stream().map(User::getId).toList();
+        Map<Long, Boolean> noticeEnabledByUserId = notificationSettingRepository.findAllByUser_IdIn(recipientIds)
+            .stream()
+            .collect(Collectors.toMap(
+                setting -> setting.getUser().getId(),
+                NotificationSetting::isNoticeEnabled,
+                (first, ignored) -> first));
+
+        List<Notification> toSave = new ArrayList<>();
+        for (User recipient : recipients) {
+            if (!noticeEnabledByUserId.getOrDefault(recipient.getId(), true)) {
                 continue;
             }
-            boolean noticeEnabled = notificationSettingRepository.findByUser_Id(recipient.getId())
-                .map(NotificationSetting::isNoticeEnabled)
-                .orElse(true);
-            if (!noticeEnabled) {
-                continue;
-            }
-
-            Notification saved = notificationRepository.save(Notification.builder()
+            toSave.add(Notification.builder()
                 .recipient(recipient)
                 .actor(adminUser)
                 .type(NotificationType.NOTICE)
                 .post(noticePost)
                 .build());
-            if (saved != null) {
-                notificationSseService.sendNotification(recipient.getId(), NotificationResponse.from(saved));
-            }
-            sentCount++;
         }
 
-        return sentCount;
+        if (toSave.isEmpty()) {
+            return 0;
+        }
+
+        List<Notification> savedNotifications = notificationRepository.saveAll(toSave);
+        for (Notification saved : savedNotifications) {
+            notificationSseService.sendNotification(saved.getRecipient().getId(), NotificationResponse.from(saved));
+        }
+        return savedNotifications.size();
     }
 
     @Transactional(readOnly = true)
