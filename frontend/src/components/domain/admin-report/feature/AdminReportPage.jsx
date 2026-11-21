@@ -124,7 +124,7 @@ function AdminReportContent() {
 
         <aside
           aria-label="신고 상세"
-          className="rounded-xl border border-border bg-card p-5 lg:sticky lg:top-6 lg:self-start"
+          className="rounded-lg border border-border/80 bg-card p-5 shadow-2xs lg:sticky lg:top-6 lg:self-start"
         >
           <AdminReportDetail reportId={selectedReportId} />
         </aside>
@@ -139,9 +139,9 @@ function AdminReportContent() {
  */
 export function AdminReportPage() {
   return (
-    <main className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,var(--muted),var(--background)_45%)]">
+    <main className="flex min-h-screen flex-col bg-background">
       <Header />
-      <div className="mx-auto w-full max-w-content-narrow flex-1 px-5 pb-12 pt-7 sm:px-8 lg:px-10">
+      <div className="mx-auto w-full max-w-content-narrow flex-1 px-4 pb-10 pt-5 sm:px-6 lg:px-8">
         <RequireAuth>
           <AdminReportContent />
         </RequireAuth>

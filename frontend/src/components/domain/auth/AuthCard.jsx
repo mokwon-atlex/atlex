@@ -26,11 +26,11 @@ function AuthCard({ mode, onModeChange }) {
 
   return (
     <section className="flex items-center justify-center py-6">
-      <div className="w-full rounded-3xl border border-border/60 bg-background p-6 lg:p-8">
+      <div className="w-full rounded-lg border border-border/80 bg-card p-6 shadow-2xs lg:p-7">
         <LoginLogo />
 
-        <div className="mt-6 border-b border-border/60 pb-5">
-          <h2 className="text-2xl font-black tracking-tight text-foreground">{title}</h2>
+        <div className="mt-5 border-b border-border/70 pb-4">
+          <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
 
           <Textfield variant="muted" size="sm" className="mt-2 leading-6">
             {description}
