@@ -1,7 +1,7 @@
 package com.example.atlex.domain.report.service;
 
-import com.example.atlex.domain.comment.repository.CommentRepository;
-import com.example.atlex.domain.post.repository.PostRepository;
+import com.example.atlex.domain.comment.service.CommentReader;
+import com.example.atlex.domain.post.service.PostReader;
 import com.example.atlex.domain.report.dto.request.ReportProcessRequest;
 import com.example.atlex.domain.report.dto.response.AdminReportDetailResponse;
 import com.example.atlex.domain.report.dto.response.AdminReportResponse;
@@ -13,7 +13,7 @@ import com.example.atlex.domain.report.exception.InvalidReportStatusException;
 import com.example.atlex.domain.report.exception.ReportAlreadyProcessedException;
 import com.example.atlex.domain.report.exception.ReportNotFoundException;
 import com.example.atlex.domain.report.repository.ReportRepository;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,9 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminReportService {
 
     private final ReportRepository reportRepository;
-    private final PostRepository postRepository;
-    private final CommentRepository commentRepository;
-    private final UserRepository userRepository;
+    private final PostReader postReader;
+    private final CommentReader commentReader;
+    private final UserReader userReader;
 
     /**
      * 신고 목록을 조회한다.
@@ -87,7 +87,7 @@ public class AdminReportService {
             throw new ReportAlreadyProcessedException();
         }
 
-        report.process(userRepository.getReferenceById(adminId), request.getStatus(), request.getResultMemo().strip());
+        report.process(userReader.getReferenceById(adminId), request.getStatus(), request.getResultMemo().strip());
         return AdminReportResponse.from(report);
     }
 
@@ -96,11 +96,11 @@ public class AdminReportService {
      */
     private ReportTargetResponse findTarget(Report report) {
         if (report.getTargetType() == ReportTargetType.POST) {
-            return postRepository.findById(report.getTargetId())
+            return postReader.findById(report.getTargetId())
                 .map(ReportTargetResponse::from)
                 .orElse(null);
         }
-        return commentRepository.findById(report.getTargetId())
+        return commentReader.findById(report.getTargetId())
             .map(ReportTargetResponse::from)
             .orElse(null);
     }

@@ -1,8 +1,7 @@
 package com.example.atlex.domain.report.service;
 
 import com.example.atlex.domain.comment.entity.Comment;
-import com.example.atlex.domain.comment.exception.CommentNotFoundException;
-import com.example.atlex.domain.comment.repository.CommentRepository;
+import com.example.atlex.domain.comment.service.CommentReader;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.post.service.PostAccessService;
 import com.example.atlex.domain.report.dto.request.ReportCreateRequest;
@@ -14,7 +13,7 @@ import com.example.atlex.domain.report.exception.DuplicateReportException;
 import com.example.atlex.domain.report.exception.ReportDescriptionRequiredException;
 import com.example.atlex.domain.report.exception.SelfReportNotAllowedException;
 import com.example.atlex.domain.report.repository.ReportRepository;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -30,8 +29,8 @@ import java.util.Objects;
 public class ReportService {
 
     private final ReportRepository reportRepository;
-    private final CommentRepository commentRepository;
-    private final UserRepository userRepository;
+    private final CommentReader commentReader;
+    private final UserReader userReader;
     private final PostAccessService postAccessService;
 
     /**
@@ -67,8 +66,7 @@ public class ReportService {
      */
     @Transactional
     public ReportResponse reportComment(Long commentId, ReportCreateRequest request, Long reporterId) {
-        Comment comment = commentRepository.findActiveWithAuthorById(commentId)
-            .orElseThrow(CommentNotFoundException::new);
+        Comment comment = commentReader.getActiveCommentWithAuthor(commentId);
         // 비공개 게시물의 댓글은 게시물과 동일하게 작성자 외에는 존재를 숨긴다.
         postAccessService.getAccessiblePost(comment.getPost().getId(), reporterId);
         if (Objects.equals(comment.getUser().getId(), reporterId)) {
@@ -92,7 +90,7 @@ public class ReportService {
         }
 
         Report report = Report.builder()
-            .reporter(userRepository.getReferenceById(reporterId))
+            .reporter(userReader.getReferenceById(reporterId))
             .targetType(targetType)
             .targetId(targetId)
             .reason(request.getReason())

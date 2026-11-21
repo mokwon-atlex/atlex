@@ -28,8 +28,9 @@ input[type='password']::-webkit-textfield-decoration-container {
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground selection:bg-primary/20 selection:text-foreground;
     font-family: var(--font-geist-sans), 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
   html {

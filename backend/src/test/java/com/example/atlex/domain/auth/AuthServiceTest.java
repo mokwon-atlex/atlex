@@ -125,7 +125,7 @@ class AuthServiceTest {
     @DisplayName("잠긴 계정 로그인 시 TooManyLoginAttemptsException")
     void 잠긴계정_로그인_예외() {
         User user = activeUser(5);
-        user.setLockedUntil(LocalDateTime.now().plusMinutes(10));
+        user.lockUntil(LocalDateTime.now().plusMinutes(10));
         when(userRepository.findByUserId("testUser")).thenReturn(Optional.of(user));
 
         assertThrows(TooManyLoginAttemptsException.class,

@@ -6,37 +6,32 @@ import com.example.atlex.domain.category.dto.response.CategoryListItemResponse;
 import com.example.atlex.domain.category.dto.response.CategoryListResponse;
 import com.example.atlex.domain.category.dto.response.CategoryResponse;
 import com.example.atlex.domain.category.entity.Category;
+import com.example.atlex.domain.category.event.CategoryDeletedEvent;
 import com.example.atlex.domain.category.repository.CategoryRepository;
-import com.example.atlex.domain.post.repository.PostRepository;
-import com.example.atlex.domain.category.repository.projection.CategoryPostCountProjection;
-import com.example.atlex.domain.category.repository.projection.CategoryThumbnailProjection;
+import com.example.atlex.domain.post.service.PostReader;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import com.example.atlex.domain.category.exception.CategoryNotFoundException;
 import com.example.atlex.domain.category.exception.DuplicateCategoryNameException;
-import com.example.atlex.domain.user.exception.UserNotFoundException;
 import com.example.atlex.global.exception.AccessDeniedException;
-import com.example.atlex.global.exception.ValidationException;
+import com.example.atlex.global.pagination.CursorPageRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
 
-    private static final int DEFAULT_LIMIT = 10;
-    private static final int MAX_LIMIT = 50;
-
     private final CategoryRepository categoryRepository;
-    private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final PostReader postReader;
+    private final UserReader userReader;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public CategoryListResponse getCategories(
@@ -44,19 +39,18 @@ public class CategoryService {
         Integer limit,
         Long cursor,
         Long loginUserId) {
-        User owner = findActiveUser(userId);
+        User owner = userReader.getActiveUserByUserId(userId);
         boolean ownerView = loginUserId != null && owner.getId().equals(loginUserId);
-        int effectiveLimit = normalizeLimit(limit);
-        validateCursor(cursor);
+        CursorPageRequest pageRequest = CursorPageRequest.of(limit, cursor);
 
         List<Category> fetched = categoryRepository.findCategoryPage(
             owner.getId(),
-            cursor == null ? Long.MAX_VALUE : cursor,
-            PageRequest.of(0, effectiveLimit + 1));
+            pageRequest.cursor() == null ? Long.MAX_VALUE : pageRequest.cursor(),
+            pageRequest.toFetchPageable());
 
-        boolean hasNext = fetched.size() > effectiveLimit;
+        boolean hasNext = fetched.size() > pageRequest.limit();
         List<Category> categories = hasNext
-            ? List.copyOf(fetched.subList(0, effectiveLimit))
+            ? List.copyOf(fetched.subList(0, pageRequest.limit()))
             : fetched;
 
         if (categories.isEmpty()) {
@@ -70,18 +64,8 @@ public class CategoryService {
         List<Long> categoryIds = categories.stream()
             .map(Category::getId)
             .toList();
-        Map<Long, Long> postCounts = postRepository
-            .countPostsByCategoryIds(categoryIds, ownerView)
-            .stream()
-            .collect(Collectors.toMap(
-                CategoryPostCountProjection::getCategoryId,
-                CategoryPostCountProjection::getPostCount));
-        Map<Long, String> thumbnails = postRepository
-            .findLatestThumbnailsByCategoryIds(categoryIds, ownerView)
-            .stream()
-            .collect(Collectors.toMap(
-                CategoryThumbnailProjection::getCategoryId,
-                CategoryThumbnailProjection::getThumbnailUrl));
+        Map<Long, Long> postCounts = postReader.countPostsByCategoryIds(categoryIds, ownerView);
+        Map<Long, String> thumbnails = postReader.findLatestThumbnailsByCategoryIds(categoryIds, ownerView);
 
         List<CategoryListItemResponse> content = categories.stream()
             .map(category -> CategoryListItemResponse.builder()
@@ -144,17 +128,12 @@ public class CategoryService {
         User owner = findOwner(userId, loginUserId);
         findOwnedCategory(categoryId, owner.getId());
 
-        postRepository.clearCategoryByCategoryId(categoryId);
+        eventPublisher.publishEvent(new CategoryDeletedEvent(categoryId));
         categoryRepository.deleteById(categoryId);
     }
 
-    private User findActiveUser(String userId) {
-        return userRepository.findByUserIdAndActiveTrue(userId)
-            .orElseThrow(UserNotFoundException::new);
-    }
-
     private User findOwner(String userId, Long loginUserId) {
-        User owner = findActiveUser(userId);
+        User owner = userReader.getActiveUserByUserId(userId);
         if (loginUserId == null || !owner.getId().equals(loginUserId)) {
             throw new AccessDeniedException();
         }
@@ -172,20 +151,6 @@ public class CategoryService {
             : categoryRepository.existsByUser_IdAndNameAndIdNot(ownerId, name, categoryId);
         if (duplicated) {
             throw new DuplicateCategoryNameException();
-        }
-    }
-
-    private int normalizeLimit(Integer limit) {
-        int requestedLimit = limit == null ? DEFAULT_LIMIT : limit;
-        if (requestedLimit <= 0) {
-            throw new ValidationException();
-        }
-        return Math.min(requestedLimit, MAX_LIMIT);
-    }
-
-    private void validateCursor(Long cursor) {
-        if (cursor != null && cursor <= 0) {
-            throw new ValidationException();
         }
     }
 }

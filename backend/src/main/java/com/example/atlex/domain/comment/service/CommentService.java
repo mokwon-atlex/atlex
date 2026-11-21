@@ -13,8 +13,7 @@ import com.example.atlex.domain.comment.repository.CommentRepository;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.post.service.PostAccessService;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.exception.UserNotFoundException;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,7 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final PostAccessService postAccessService;
-    private final UserRepository userRepository;
+    private final UserReader userReader;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -46,8 +45,7 @@ public class CommentService {
     public CommentResponse createComment(Long postId, CommentCreateRequest request, Long userId) {
         Post post = postAccessService.getAccessiblePost(postId, userId);
 
-        User user = userRepository.findById(userId)
-            .orElseThrow(UserNotFoundException::new);
+        User user = userReader.getActiveUser(userId);
 
         Comment parent = request.getParentId() == null ? null : findReplyableParent(request.getParentId(), postId);
 

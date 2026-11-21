@@ -48,7 +48,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/tags", "/api/v1/tags/**").permitAll()
                 .requestMatchers("/api/v1/github/**").authenticated()
                 .requestMatchers("/api/v1/ai/**").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/v1/users/all").hasRole("ADMIN")
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .headers(headers -> headers.frameOptions(options -> options.sameOrigin()))

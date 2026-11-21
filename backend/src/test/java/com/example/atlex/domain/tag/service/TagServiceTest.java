@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import com.example.atlex.domain.tag.entity.Tag;
 import com.example.atlex.domain.tag.repository.PostTagRepository;
 import com.example.atlex.domain.tag.repository.TagRepository;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +31,7 @@ class TagServiceTest {
     private TagRepository tagRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserReader userReader;
 
     @InjectMocks
     private TagService tagService;

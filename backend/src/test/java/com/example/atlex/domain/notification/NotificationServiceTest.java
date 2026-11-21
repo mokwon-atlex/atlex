@@ -2,7 +2,7 @@ package com.example.atlex.domain.notification;
 
 import com.example.atlex.domain.comment.entity.Comment;
 import com.example.atlex.domain.comment.event.CommentCreatedEvent;
-import com.example.atlex.domain.comment.repository.CommentRepository;
+import com.example.atlex.domain.comment.service.CommentReader;
 import com.example.atlex.domain.follow.event.UserFollowedEvent;
 import com.example.atlex.domain.notification.entity.Notification;
 import com.example.atlex.domain.notification.entity.NotificationSetting;
@@ -13,9 +13,9 @@ import com.example.atlex.domain.notification.service.NotificationService;
 import com.example.atlex.domain.notification.service.NotificationSseService;
 import com.example.atlex.domain.post.entity.Post;
 import com.example.atlex.domain.post.event.PostLikedEvent;
-import com.example.atlex.domain.post.repository.PostRepository;
+import com.example.atlex.domain.post.service.PostReader;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,11 +44,11 @@ class NotificationServiceTest {
     @Mock
     NotificationSettingRepository notificationSettingRepository;
     @Mock
-    UserRepository userRepository;
+    UserReader userReader;
     @Mock
-    PostRepository postRepository;
+    PostReader postReader;
     @Mock
-    CommentRepository commentRepository;
+    CommentReader commentReader;
     @Mock
     NotificationSseService notificationSseService;
 
@@ -66,10 +66,10 @@ class NotificationServiceTest {
      * 알림 저장에 필요한 수신자·행동자·원본 자원 참조를 준비한다.
      */
     private void stubReferences(User recipient, User actor, Post post, Comment comment) {
-        when(userRepository.getReferenceById(recipient.getId())).thenReturn(recipient);
-        when(userRepository.getReferenceById(actor.getId())).thenReturn(actor);
-        when(postRepository.getReferenceById(POST_ID)).thenReturn(post);
-        when(commentRepository.getReferenceById(COMMENT_ID)).thenReturn(comment);
+        when(userReader.getReferenceById(recipient.getId())).thenReturn(recipient);
+        when(userReader.getReferenceById(actor.getId())).thenReturn(actor);
+        when(postReader.getReferenceById(POST_ID)).thenReturn(post);
+        when(commentReader.getReferenceById(COMMENT_ID)).thenReturn(comment);
     }
 
     private Notification captureSavedNotification() {
@@ -162,9 +162,9 @@ class NotificationServiceTest {
         User postAuthor = user(1L);
         User liker = user(2L);
         Post post = Post.builder().id(POST_ID).title("좋아요 테스트 글").user(postAuthor).build();
-        when(userRepository.getReferenceById(1L)).thenReturn(postAuthor);
-        when(userRepository.getReferenceById(2L)).thenReturn(liker);
-        when(postRepository.getReferenceById(POST_ID)).thenReturn(post);
+        when(userReader.getReferenceById(1L)).thenReturn(postAuthor);
+        when(userReader.getReferenceById(2L)).thenReturn(liker);
+        when(postReader.getReferenceById(POST_ID)).thenReturn(post);
         when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         notificationService.notifyPostLiked(new PostLikedEvent(POST_ID, 2L, 1L));
@@ -179,8 +179,8 @@ class NotificationServiceTest {
     void notifyUserFollowed_createsAndSendsSse() {
         User target = user(1L);
         User follower = user(2L);
-        when(userRepository.getReferenceById(1L)).thenReturn(target);
-        when(userRepository.getReferenceById(2L)).thenReturn(follower);
+        when(userReader.getReferenceById(1L)).thenReturn(target);
+        when(userReader.getReferenceById(2L)).thenReturn(follower);
         when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         notificationService.notifyUserFollowed(new UserFollowedEvent(2L, 1L));
@@ -196,8 +196,8 @@ class NotificationServiceTest {
         User admin = user(1L);
         User enabledUser = user(2L);
         User disabledUser = user(3L);
-        when(userRepository.getReferenceById(1L)).thenReturn(admin);
-        when(userRepository.findAllByActiveTrue()).thenReturn(List.of(admin, enabledUser, disabledUser));
+        when(userReader.getReferenceById(1L)).thenReturn(admin);
+        when(userReader.findAllActiveUsers()).thenReturn(List.of(admin, enabledUser, disabledUser));
         when(notificationSettingRepository.findByUser_Id(2L)).thenReturn(Optional.empty());
         when(notificationSettingRepository.findByUser_Id(3L))
             .thenReturn(Optional.of(NotificationSetting.builder().noticeEnabled(false).build()));

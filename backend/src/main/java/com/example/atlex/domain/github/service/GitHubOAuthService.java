@@ -13,8 +13,7 @@ import com.example.atlex.domain.github.repository.GitHubSyncConfigRepository;
 import com.example.atlex.domain.github.util.AesEncryptionUtils;
 import com.example.atlex.domain.github.util.OAuthStateUtils;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.exception.UserNotFoundException;
-import com.example.atlex.domain.user.repository.UserRepository;
+import com.example.atlex.domain.user.service.UserReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,7 +34,7 @@ public class GitHubOAuthService {
 
     private final GitHubApiClient gitHubApiClient;
     private final GitHubSyncConfigRepository gitHubSyncConfigRepository;
-    private final UserRepository userRepository;
+    private final UserReader userReader;
 
     @Value("${github.client-id:}")
     private String clientId;
@@ -73,8 +72,7 @@ public class GitHubOAuthService {
      */
     @Transactional
     public GitHubConfigResponse handleCallback(Long userId, String code, String state) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(UserNotFoundException::new);
+        User user = userReader.getActiveUser(userId);
 
         if (state == null || state.isBlank()) {
             throw new GitHubOAuthFailedException("OAuth state 값이 누락되었습니다.");

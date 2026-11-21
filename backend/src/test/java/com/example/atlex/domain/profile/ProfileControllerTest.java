@@ -152,21 +152,6 @@ class ProfileControllerTest {
     }
 
     @Test
-    @DisplayName("기존 GET /api/v1/users/all 비로그인 → 401")
-    void getAllUsers_anonymous_unauthorized() throws Exception {
-        mockMvc.perform(get("/api/v1/users/all"))
-            .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @DisplayName("GET /api/v1/users/all 일반 사용자 → 403")
-    void getAllUsers_regularUser_forbidden() throws Exception {
-        mockMvc.perform(get("/api/v1/users/all")
-            .header("Authorization", "Bearer " + token))
-            .andExpect(status().isForbidden());
-    }
-
-    @Test
     @DisplayName("공개 프로필 응답에 id, userId, name, profileImage, info 포함 및 민감 필드 없음")
     void getProfile_responseFields() throws Exception {
         mockMvc.perform(get("/api/v1/profiles/{userId}", "testuser"))

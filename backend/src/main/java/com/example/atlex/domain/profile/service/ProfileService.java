@@ -1,13 +1,12 @@
 package com.example.atlex.domain.profile.service;
 
-import com.example.atlex.domain.follow.repository.FollowRepository;
-import com.example.atlex.domain.post.repository.PostRepository;
+import com.example.atlex.domain.follow.service.FollowReader;
+import com.example.atlex.domain.post.service.PostReader;
 import com.example.atlex.domain.profile.dto.request.ProfileUpdateRequest;
 import com.example.atlex.domain.profile.dto.response.PublicUserResponse;
 import com.example.atlex.domain.user.entity.BlogSkin;
 import com.example.atlex.domain.user.entity.User;
-import com.example.atlex.domain.user.repository.UserRepository;
-import com.example.atlex.domain.user.exception.UserNotFoundException;
+import com.example.atlex.domain.user.service.UserReader;
 import com.example.atlex.global.exception.AccessDeniedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,9 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProfileService {
 
-    private final FollowRepository followRepository;
-    private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final FollowReader followReader;
+    private final PostReader postReader;
+    private final UserReader userReader;
 
     @Transactional(readOnly = true)
     public PublicUserResponse getPublicProfile(String userId) {
@@ -28,31 +27,20 @@ public class ProfileService {
 
     @Transactional(readOnly = true)
     public PublicUserResponse getPublicProfile(String userId, User loginUser) {
-        if (userId == null || userId.isBlank()) {
-            throw new UserNotFoundException();
-        }
-        User user = userRepository.findByUserIdAndActiveTrue(userId)
-            .orElseThrow(UserNotFoundException::new);
-        long followerCount = followRepository.countByFollowingId(user.getId());
-        long followingCount = followRepository.countByFollowerId(user.getId());
+        User user = userReader.getActiveUserByUserId(userId);
+        long followerCount = followReader.countFollowers(user.getId());
+        long followingCount = followReader.countFollowing(user.getId());
         boolean isOwner = loginUser != null && user.getId().equals(loginUser.getId());
-        long postCount = isOwner
-            ? postRepository.countByUser_IdAndIsDeletedFalse(user.getId())
-            : postRepository.countByUser_IdAndIsDeletedFalseAndIsPublicTrue(user.getId());
+        long postCount = postReader.countUserPosts(user.getId(), isOwner);
         boolean following = loginUser != null
             && !loginUser.getId().equals(user.getId())
-            && followRepository.existsByFollowerAndFollowing(loginUser, user);
+            && followReader.isFollowing(loginUser, user);
         return PublicUserResponse.from(user, followerCount, followingCount, following, postCount);
     }
 
     @Transactional
     public PublicUserResponse updatePublicProfile(String userId, ProfileUpdateRequest request, User loginUser) {
-        if (userId == null || userId.isBlank()) {
-            throw new UserNotFoundException();
-        }
-
-        User user = userRepository.findByUserIdAndActiveTrue(userId)
-            .orElseThrow(UserNotFoundException::new);
+        User user = userReader.getActiveUserByUserId(userId);
 
         if (loginUser == null || !user.getId().equals(loginUser.getId())) {
             throw new AccessDeniedException();
@@ -66,9 +54,9 @@ public class ProfileService {
             user.updateBlogSkin(BlogSkin.valueOf(request.getBlogSkin()));
         }
 
-        long followerCount = followRepository.countByFollowingId(user.getId());
-        long followingCount = followRepository.countByFollowerId(user.getId());
-        long postCount = postRepository.countByUser_IdAndIsDeletedFalse(user.getId());
+        long followerCount = followReader.countFollowers(user.getId());
+        long followingCount = followReader.countFollowing(user.getId());
+        long postCount = postReader.countUserPosts(user.getId(), true);
         return PublicUserResponse.from(user, followerCount, followingCount, false, postCount);
     }
 }

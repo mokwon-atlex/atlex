@@ -50,9 +50,9 @@ export default function Header({
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center justify-between px-5 pb-6 pt-5 sm:px-8 sm:pt-6 lg:px-10">
-        <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background/85 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-content-wide items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-3">
           {logoHref ? (
             <Link href={logoHref} className="inline-flex">
               {logoImage}
@@ -63,9 +63,9 @@ export default function Header({
 
           {blogUserId && (
             <>
-              <span className="hidden h-6 w-px bg-border/60 md:block" />
+              <span className="hidden text-sm text-muted-foreground/60 md:inline">/</span>
               <Link href={`/@${blogUserId}`} className="flex items-center">
-                <h1 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">
+                <h1 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">
                   {blogUserId}&apos;s blog
                 </h1>
               </Link>
@@ -73,8 +73,8 @@ export default function Header({
           )}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <SearchDialog onSearch={onSearch} />
 
             <NotificationPopover mounted={mounted} onNotification={onNotification} />
@@ -82,10 +82,10 @@ export default function Header({
             {mounted && isLoggedIn && (
               <Link
                 href="/write"
-                className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-border px-3 text-muted-foreground transition-all hover:bg-accent hover:text-accent-foreground sm:px-4"
+                className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-card px-2.5 text-xs font-medium text-foreground shadow-2xs transition-colors hover:bg-accent hover:text-accent-foreground sm:px-3"
               >
-                <PenLine className="size-4" strokeWidth={2.5} />
-                <span className="hidden text-sm font-bold sm:inline">글쓰기</span>
+                <PenLine className="size-3.5" strokeWidth={2} />
+                <span className="hidden sm:inline">글쓰기</span>
               </Link>
             )}
           </div>
