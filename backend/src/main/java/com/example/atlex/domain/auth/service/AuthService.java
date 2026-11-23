@@ -14,9 +14,11 @@ import com.example.atlex.domain.auth.exception.AuthenticationException;
 import com.example.atlex.domain.auth.exception.InvalidTokenException;
 import com.example.atlex.domain.auth.exception.TooManyLoginAttemptsException;
 import com.example.atlex.domain.user.service.UserReader;
+import com.example.atlex.global.exception.AccessDeniedException;
 import com.example.atlex.global.exception.ValidationException;
 import com.example.atlex.global.security.jwt.JwtProvider;
 import com.example.atlex.domain.user.entity.User;
+import com.example.atlex.domain.user.entity.UserRole;
 import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,6 +43,27 @@ public class AuthService {
     // 로그인 실패 시 failCount/lockedUntil 저장이 롤백되지 않도록 방지.
     @Transactional(noRollbackFor = AuthenticationException.class)
     public TokenResponse login(String userId, String password) {
+        User user = authenticateUser(userId, password);
+        return issueTokenResponse(user);
+    }
+
+    /**
+     * 관리자 전용 로그인을 수행합니다. {@link UserRole#ADMIN} 권한이 없으면 403 예외를 반환합니다.
+     *
+     * @param userId 관리자 아이디
+     * @param password 비밀번호
+     * @return 발급된 JWT 토큰 응답
+     */
+    @Transactional(noRollbackFor = AuthenticationException.class)
+    public TokenResponse adminLogin(String userId, String password) {
+        User user = authenticateUser(userId, password);
+        if (user.getRole() != UserRole.ADMIN) {
+            throw new AccessDeniedException("관리자 권한이 필요합니다.");
+        }
+        return issueTokenResponse(user);
+    }
+
+    private User authenticateUser(String userId, String password) {
         User user = userReader.findByUserId(userId)
             .orElseThrow(AuthenticationException::new);
 
@@ -65,7 +88,7 @@ public class AuthService {
             user.clearLockState();
         }
 
-        return issueTokenResponse(user);
+        return user;
     }
 
     @Transactional

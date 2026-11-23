@@ -45,6 +45,13 @@ public class AuthController implements AuthControllerDocs {
         return ResponseEntity.ok(ApiResponse.success(response, "로그인 성공"));
     }
 
+    @PostMapping("/admin/login")
+    public ResponseEntity<ApiResponse<TokenResponse>> adminLogin(@Valid @RequestBody
+    LoginRequest request) {
+        TokenResponse response = authService.adminLogin(request.getUserId(), request.getPassword());
+        return ResponseEntity.ok(ApiResponse.success(response, "관리자 로그인 성공"));
+    }
+
     @PostMapping("/reissue")
     public ResponseEntity<ApiResponse<TokenResponse>> reissue(@Valid @RequestBody
     ReissueRequest request) {

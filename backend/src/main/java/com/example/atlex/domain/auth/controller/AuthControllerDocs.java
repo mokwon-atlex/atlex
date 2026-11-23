@@ -74,6 +74,15 @@ public interface AuthControllerDocs {
     ResponseEntity<ApiResponse<TokenResponse>> login(@Valid @RequestBody
     LoginRequest request);
 
+    @Operation(summary = "관리자 전용 로그인", description = "ADMIN 권한 계정의 아이디/비밀번호로 로그인하여 JWT 토큰을 발급받습니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "관리자 로그인 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "아이디 또는 비밀번호 불일치"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 없음 또는 계정 잠금/비활성화")
+    })
+    ResponseEntity<ApiResponse<TokenResponse>> adminLogin(@Valid @RequestBody
+    LoginRequest request);
+
     @Operation(summary = "토큰 재발급", description = "리프레시 토큰으로 새로운 액세스·리프레시 토큰을 발급받습니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "재발급 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
