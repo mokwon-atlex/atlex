@@ -62,6 +62,7 @@ export const AiSuggestionExtension = Extension.create({
           if (convertedNodes) {
             commands.insertContent(convertedNodes);
             commands.clearAiSuggestion();
+            editor.storage.aiSuggestion.onAccept?.(suggestion);
             return true;
           }
 
@@ -75,6 +76,7 @@ export const AiSuggestionExtension = Extension.create({
 
           commands.insertContent(suggestion);
           commands.clearAiSuggestion();
+          editor.storage.aiSuggestion.onAccept?.(suggestion);
           return true;
         },
     };

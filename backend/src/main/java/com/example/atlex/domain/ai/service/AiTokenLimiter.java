@@ -24,6 +24,21 @@ public class AiTokenLimiter {
     private static final Duration FREE_TIER_TTL = Duration.ofHours(24);
     private static final Duration PREMIUM_TIER_TTL = Duration.ofHours(5);
 
+    /**
+     * AI 제안 요청 전에 최소 요구 토큰 보유 여부만 확인합니다(차감하지 않음).
+     *
+     * @param userIdStr 사용자 로그인 아이디
+     * @param requiredTokens 기능별 필요 토큰 수
+     */
+    public void ensureTokensAvailable(String userIdStr, int requiredTokens) {
+        if ("anonymous".equals(userIdStr)) {
+            throw new TooManyAiRequestsException();
+        }
+        if (getRemainingTokens(userIdStr) < requiredTokens) {
+            throw new TooManyAiRequestsException();
+        }
+    }
+
     public void checkAndConsumeToken(String userIdStr, int requiredTokens) {
         if ("anonymous".equals(userIdStr)) {
             throw new TooManyAiRequestsException();

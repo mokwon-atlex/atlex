@@ -219,6 +219,29 @@ class AiSuggestionServiceTest {
             // then
             assertThat(response.getSuggestion())
                 .isEqualTo("Spring Boot와 Gemini를 연동하여 블로그 AI 코파일럿을 구축하는 전 과정을 정리했습니다.");
+            verify(aiTokenLimiter).ensureTokensAvailable("anonymous", 150);
+            org.mockito.Mockito.verify(aiTokenLimiter, org.mockito.Mockito.never())
+                .checkAndConsumeToken(anyString(), anyInt());
+        }
+    }
+
+    @Nested
+    @DisplayName("AI 토큰 실제 사용 차감 (consumeTokens)")
+    class ConsumeTokensTest {
+
+        @Test
+        @DisplayName("적용된 AI 제안 유형에 따라 토큰을 차감하고 잔여 토큰 상태를 반환한다")
+        void consumesTokensBySuggestionType() {
+            when(aiTokenLimiter.getRemainingTokens("anonymous")).thenReturn(2200);
+            when(aiTokenLimiter.getMaxTokens("anonymous")).thenReturn(2500);
+
+            var response = aiSuggestionService.consumeTokens(
+                new com.example.atlex.domain.ai.dto.request.AiConsumeRequest(
+                    com.example.atlex.domain.ai.dto.request.AiSuggestionType.PARAGRAPH));
+
+            verify(aiTokenLimiter).checkAndConsumeToken("anonymous", 300);
+            assertThat(response.getRemainingTokens()).isEqualTo(2200);
+            assertThat(response.getMaxTokens()).isEqualTo(2500);
         }
     }
 }

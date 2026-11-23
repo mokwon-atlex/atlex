@@ -1,9 +1,12 @@
 package com.example.atlex.domain.ai.service;
 
+import com.example.atlex.domain.ai.dto.request.AiConsumeRequest;
+import com.example.atlex.domain.ai.dto.request.AiSuggestionType;
 import com.example.atlex.domain.ai.dto.request.DescriptionSuggestionRequest;
 import com.example.atlex.domain.ai.dto.request.ParagraphSuggestionRequest;
 import com.example.atlex.domain.ai.dto.request.TitleSuggestionRequest;
 import com.example.atlex.domain.ai.dto.response.AiSuggestionResponse;
+import com.example.atlex.domain.ai.dto.response.AiTokenResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -84,7 +87,7 @@ public class AiSuggestionService {
             return AiSuggestionResponse.builder().suggestion("").build();
         }
 
-        aiTokenLimiter.checkAndConsumeToken(resolveCurrentUserKey(), 50);
+        aiTokenLimiter.ensureTokensAvailable(resolveCurrentUserKey(), AiSuggestionType.TITLE.getCost());
 
         StringBuilder userPrompt = new StringBuilder();
         userPrompt.append("현재 입력된 제목: ").append(currentTitle).append("\n");
@@ -107,7 +110,7 @@ public class AiSuggestionService {
      * 게시글 본문 다음 콘텐츠(문장, 코드 블록, 표, 다이어그램, 수식)를 제안합니다.
      */
     public AiSuggestionResponse suggestParagraph(ParagraphSuggestionRequest request) {
-        aiTokenLimiter.checkAndConsumeToken(resolveCurrentUserKey(), 300);
+        aiTokenLimiter.ensureTokensAvailable(resolveCurrentUserKey(), AiSuggestionType.PARAGRAPH.getCost());
 
         StringBuilder userPrompt = new StringBuilder();
         if (request.getTitle() != null && !request.getTitle().isBlank()) {
@@ -145,7 +148,7 @@ public class AiSuggestionService {
      * 게시글 본문 내용을 바탕으로 메타 요약(Description)을 제안합니다.
      */
     public AiSuggestionResponse suggestDescription(DescriptionSuggestionRequest request) {
-        aiTokenLimiter.checkAndConsumeToken(resolveCurrentUserKey(), 150);
+        aiTokenLimiter.ensureTokensAvailable(resolveCurrentUserKey(), AiSuggestionType.DESCRIPTION.getCost());
 
         String preprocessedContent = preprocessContentForDescription(request.getContent());
 
@@ -273,9 +276,24 @@ public class AiSuggestionService {
         return "anonymous";
     }
 
-    public com.example.atlex.domain.ai.dto.response.AiTokenResponse getTokenStatus() {
+    public AiTokenResponse getTokenStatus() {
         String key = resolveCurrentUserKey();
-        return com.example.atlex.domain.ai.dto.response.AiTokenResponse.builder()
+        return AiTokenResponse.builder()
+            .remainingTokens(aiTokenLimiter.getRemainingTokens(key))
+            .maxTokens(aiTokenLimiter.getMaxTokens(key))
+            .build();
+    }
+
+    /**
+     * AI 제안이 실제로 본문·제목·설명에 적용되었을 때 해당 기능 단위의 토큰을 차감합니다.
+     *
+     * @param request 적용된 AI 제안 유형
+     * @return 차감 후 잔여 토큰 상태
+     */
+    public AiTokenResponse consumeTokens(AiConsumeRequest request) {
+        String key = resolveCurrentUserKey();
+        aiTokenLimiter.checkAndConsumeToken(key, request.getType().getCost());
+        return AiTokenResponse.builder()
             .remainingTokens(aiTokenLimiter.getRemainingTokens(key))
             .maxTokens(aiTokenLimiter.getMaxTokens(key))
             .build();
