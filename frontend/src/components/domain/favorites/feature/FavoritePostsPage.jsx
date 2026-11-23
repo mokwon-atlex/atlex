@@ -23,7 +23,7 @@ function FavoritePostsContent() {
   const totalPages = data?.totalPages ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <h1 className="text-2xl font-bold tracking-tight text-foreground">즐겨찾기</h1>
 
       {isLoading ? (
@@ -72,7 +72,7 @@ export function FavoritePostsPage() {
   return (
     <main className="flex min-h-screen flex-col bg-background">
       <Header />
-      <div className="mx-auto w-full max-w-content-wide flex-1 px-5 pb-12 pt-7 sm:px-8 lg:px-10">
+      <div className="mx-auto w-full max-w-content-wide flex-1 px-4 pb-10 pt-5 sm:px-6 lg:px-8">
         <RequireAuth>
           <FavoritePostsContent />
         </RequireAuth>

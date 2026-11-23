@@ -8,7 +8,7 @@ export function EdgeKeywordTooltip({ edge, x, y }) {
   return (
     <foreignObject className="pointer-events-none overflow-visible" height="48" width="220" x={x - 110} y={y - 24}>
       <div className="flex h-12 items-center justify-center">
-        <div className="flex max-w-[210px] items-center gap-1.5 rounded-full border border-border bg-card/95 px-2.5 py-1.5 shadow-lg shadow-slate-900/12 backdrop-blur-sm">
+        <div className="flex max-w-[210px] items-center gap-1.5 rounded-md border border-border/80 bg-card/95 px-2.5 py-1 shadow-sm backdrop-blur-sm">
           {visibleTags.map((tag) => {
             const meta = edge.isExplicit ? { bg: '#F3F4F6', text: '#4B5563' } : tagMeta(tag);
 

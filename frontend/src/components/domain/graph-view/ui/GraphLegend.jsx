@@ -3,7 +3,7 @@ export function GraphLegend() {
   const items = [{ label: '게시글 링크', width: 1.35 }];
 
   return (
-    <div className="absolute bottom-20 left-6 hidden flex-col gap-1.5 rounded-xl border border-border bg-card/90 px-5 py-3 shadow-md backdrop-blur-sm md:flex">
+    <div className="absolute bottom-20 left-4 hidden flex-col gap-1.5 rounded-lg border border-border/80 bg-card/90 px-4 py-2.5 shadow-sm backdrop-blur-md md:flex">
       {items.map((item) => {
         return (
           <div key={item.label} className="flex items-center gap-3">

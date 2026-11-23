@@ -311,7 +311,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
               type="button"
               aria-label="범례"
               aria-pressed={showLegend}
-              className="absolute bottom-6 left-4 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-md transition-colors hover:bg-muted hover:text-foreground aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+              className="absolute bottom-6 left-4 flex h-9 w-9 items-center justify-center rounded-lg border border-border/80 bg-card/90 text-muted-foreground shadow-2xs backdrop-blur-xs transition-colors hover:border-foreground/25 hover:bg-accent hover:text-foreground aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
               onClick={() => setShowLegend((value) => !value)}
             >
               <HelpCircle className="size-4" />
