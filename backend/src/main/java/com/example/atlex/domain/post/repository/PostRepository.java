@@ -5,8 +5,10 @@ import com.example.atlex.domain.category.repository.projection.CategoryPostCount
 import com.example.atlex.domain.category.repository.projection.CategoryThumbnailProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,188 +16,11 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface PostRepository extends JpaRepository<Post, Long> {
+public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 
-    default Page<Post> findAllPublic(
-        String userId,
-        Long categoryId,
-        String tag,
-        Pageable pageable) {
-        return findAllPublic(userId, categoryId, tag, null, pageable);
-    }
-
+    @Override
     @EntityGraph(attributePaths = {"user", "category"})
-    @Query(value = """
-        SELECT p FROM Post p
-        WHERE p.isDeleted = false
-          AND p.isPublic = true
-          AND (:userId IS NULL OR p.user.userId = :userId)
-          AND (:categoryId IS NULL OR p.category.id = :categoryId)
-          AND (:tag IS NULL OR EXISTS (
-              SELECT pt FROM PostTag pt
-              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
-          ))
-          AND (:keyword IS NULL
-              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR EXISTS (
-                  SELECT pt FROM PostTag pt
-                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              ))
-        """, countQuery = """
-        SELECT COUNT(p) FROM Post p
-        WHERE p.isDeleted = false
-          AND p.isPublic = true
-          AND (:userId IS NULL OR p.user.userId = :userId)
-          AND (:categoryId IS NULL OR p.category.id = :categoryId)
-          AND (:tag IS NULL OR EXISTS (
-              SELECT pt FROM PostTag pt
-              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
-          ))
-          AND (:keyword IS NULL
-              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR EXISTS (
-                  SELECT pt FROM PostTag pt
-                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              ))
-        """)
-    Page<Post> findAllPublic(
-        @Param("userId")
-        String userId,
-        @Param("categoryId")
-        Long categoryId,
-        @Param("tag")
-        String tag,
-        @Param("keyword")
-        String keyword,
-        Pageable pageable);
-
-    // 현재 정책: 로그인 사용자는 공개 글 + 본인 비공개 글을 목록에서 조회할 수 있음.
-    default Page<Post> findAllVisibleTo(
-        Long id,
-        String userId,
-        Long categoryId,
-        String tag,
-        Pageable pageable) {
-        return findAllVisibleTo(id, userId, categoryId, tag, null, pageable);
-    }
-
-    @EntityGraph(attributePaths = {"user", "category"})
-    @Query(value = """
-        SELECT p FROM Post p
-        WHERE p.isDeleted = false
-          AND (p.isPublic = true OR p.user.id = :id)
-          AND (:userId IS NULL OR p.user.userId = :userId)
-          AND (:categoryId IS NULL OR p.category.id = :categoryId)
-          AND (:tag IS NULL OR EXISTS (
-              SELECT pt FROM PostTag pt
-              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
-          ))
-          AND (:keyword IS NULL
-              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR EXISTS (
-                  SELECT pt FROM PostTag pt
-                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              ))
-        """, countQuery = """
-        SELECT COUNT(p) FROM Post p
-        WHERE p.isDeleted = false
-          AND (p.isPublic = true OR p.user.id = :id)
-          AND (:userId IS NULL OR p.user.userId = :userId)
-          AND (:categoryId IS NULL OR p.category.id = :categoryId)
-          AND (:tag IS NULL OR EXISTS (
-              SELECT pt FROM PostTag pt
-              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
-          ))
-          AND (:keyword IS NULL
-              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR EXISTS (
-                  SELECT pt FROM PostTag pt
-                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              ))
-        """)
-    Page<Post> findAllVisibleTo(
-        @Param("id")
-        Long id,
-        @Param("userId")
-        String userId,
-        @Param("categoryId")
-        Long categoryId,
-        @Param("tag")
-        String tag,
-        @Param("keyword")
-        String keyword,
-        Pageable pageable);
-
-    @EntityGraph(attributePaths = {"user", "category"})
-    @Query(value = """
-        SELECT p FROM Post p
-        WHERE p.isDeleted = false
-          AND p.isPublic = true
-          AND EXISTS (
-              SELECT f FROM Follow f
-              WHERE f.follower.id = :id AND f.following = p.user
-          )
-          AND (:tag IS NULL OR EXISTS (
-              SELECT pt FROM PostTag pt
-              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
-          ))
-          AND (:keyword IS NULL
-              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR EXISTS (
-                  SELECT pt FROM PostTag pt
-                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              ))
-        """, countQuery = """
-        SELECT COUNT(p) FROM Post p
-        WHERE p.isDeleted = false
-          AND p.isPublic = true
-          AND EXISTS (
-              SELECT f FROM Follow f
-              WHERE f.follower.id = :id AND f.following = p.user
-          )
-          AND (:tag IS NULL OR EXISTS (
-              SELECT pt FROM PostTag pt
-              WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tag)
-          ))
-          AND (:keyword IS NULL
-              OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(p.user.userId) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR EXISTS (
-                  SELECT pt FROM PostTag pt
-                  WHERE pt.post = p AND LOWER(pt.tag.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              ))
-        """)
-    Page<Post> findFollowingFeed(
-        @Param("id")
-        Long id,
-        @Param("tag")
-        String tag,
-        @Param("keyword")
-        String keyword,
-        Pageable pageable);
+    Page<Post> findAll(Specification<Post> spec, Pageable pageable);
 
     long countByUser_IdAndIsDeletedFalseAndIsPublicTrue(Long userId);
 
@@ -294,5 +119,15 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // UPDATE 이후 영속성 컨텍스트의 stale 값 대신 최신 likes를 DB에서 다시 읽는다.
     @Query("SELECT p.likes FROM Post p WHERE p.id = :postId")
     Integer findLikesByPostId(@Param("postId")
+    Long postId);
+
+    // 조회수는 동시성 경합을 줄이기 위해 원자적 UPDATE로 증가시킨다.
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Post p SET p.hits = p.hits + 1 WHERE p.id = :postId")
+    void increaseHits(@Param("postId")
+    Long postId);
+
+    @Query("SELECT p.hits FROM Post p WHERE p.id = :postId")
+    Integer findHitsByPostId(@Param("postId")
     Long postId);
 }

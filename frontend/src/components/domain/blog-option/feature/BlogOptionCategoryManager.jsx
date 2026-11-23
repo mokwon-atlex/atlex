@@ -44,10 +44,10 @@ export default function BlogOptionCategoryManager({
               value={categoryName}
               onChange={(event) => onCategoryNameChange(event.target.value)}
               placeholder="카테고리 이름"
-              className="h-11 rounded-xl"
+              className="h-9 rounded-md"
               disabled={isLoading || isAdding}
             />
-            <Button type="submit" variant="secondary" className="h-11 rounded-xl px-5" disabled={isLoading || isAdding}>
+            <Button type="submit" variant="secondary" className="h-9 rounded-md px-4" disabled={isLoading || isAdding}>
               {isAdding ? (
                 <>
                   <LoaderCircle className="size-4 animate-spin" />
@@ -74,7 +74,7 @@ export default function BlogOptionCategoryManager({
 
           <div className="max-h-[23rem] space-y-3 overflow-y-auto pr-1">
             {isLoading ? (
-              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
+              <div className="rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
                 카테고리를 불러오는 중입니다.
               </div>
             ) : categories.length ? (
@@ -94,7 +94,7 @@ export default function BlogOptionCategoryManager({
                 />
               ))
             ) : (
-              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
+              <div className="rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
                 아직 등록된 카테고리가 없습니다.
               </div>
             )}

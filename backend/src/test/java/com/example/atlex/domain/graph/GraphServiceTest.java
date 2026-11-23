@@ -1,15 +1,14 @@
 package com.example.atlex.domain.graph;
 
-import com.example.atlex.domain.follow.repository.FollowRepository;
+import com.example.atlex.domain.follow.service.FollowReader;
 import com.example.atlex.domain.graph.dto.response.PostGraphResponse;
 import com.example.atlex.domain.graph.entity.PostRelation;
 import com.example.atlex.domain.graph.repository.PostRelationRepository;
 import com.example.atlex.domain.graph.config.GraphProperties;
 import com.example.atlex.domain.graph.service.GraphService;
 import com.example.atlex.domain.post.entity.Post;
-import com.example.atlex.domain.post.repository.PostRepository;
-import com.example.atlex.domain.tag.repository.PostTagRepository;
-import com.example.atlex.domain.tag.repository.projection.PostTagNameProjection;
+import com.example.atlex.domain.post.service.PostReader;
+import com.example.atlex.domain.tag.service.PostTagService;
 import com.example.atlex.domain.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -33,13 +34,13 @@ import static org.mockito.Mockito.when;
 class GraphServiceTest {
 
     @Mock
-    PostRepository postRepository;
+    PostReader postReader;
     @Mock
-    PostTagRepository postTagRepository;
+    PostTagService postTagService;
     @Mock
     PostRelationRepository postRelationRepository;
     @Mock
-    FollowRepository followRepository;
+    FollowReader followReader;
 
     @Test
     @DisplayName("전체 그래프 조회 시 태그를 게시글 ID 목록으로 한 번에 조회한다")
@@ -49,19 +50,18 @@ class GraphServiceTest {
         Post first = Post.builder().id(10L).user(user).title("first").content("first").isPublic(true).build();
         Post second = Post.builder().id(11L).user(user).title("second").content("second").isPublic(true).build();
 
-        when(postRepository.findGraphVisiblePosts(null, null, null)).thenReturn(List.of(first, second));
-        when(postTagRepository.findTagNamesByPostIds(List.of(10L, 11L))).thenReturn(List.of(
-            new TestPostTagName(10L, "graph"),
-            new TestPostTagName(10L, "spring"),
-            new TestPostTagName(11L, "jpa")));
+        when(postReader.findGraphVisiblePosts(null, null, null)).thenReturn(List.of(first, second));
+        when(postTagService.findTagNamesByPostIds(List.of(10L, 11L))).thenReturn(Map.of(
+            10L, List.of("graph", "spring"),
+            11L, List.of("jpa")));
         when(postRelationRepository.findVisibleEdges(eq(List.of(10L, 11L)), eq(0.15))).thenReturn(List.of());
 
         PostGraphResponse response = service.getGraph(null, null, null, null);
 
         assertEquals(List.of("graph", "spring"), response.getNodes().get(0).getTags());
         assertEquals(List.of("jpa"), response.getNodes().get(1).getTags());
-        verify(postTagRepository).findTagNamesByPostIds(List.of(10L, 11L));
-        verify(postTagRepository, never()).findTagNamesByPostId(anyLong());
+        verify(postTagService).findTagNamesByPostIds(List.of(10L, 11L));
+        verify(postTagService, never()).findTagNamesByPostId(anyLong());
     }
 
     @Test
@@ -73,19 +73,19 @@ class GraphServiceTest {
         Post target = Post.builder().id(11L).user(user).title("target").content("target").isPublic(true).build();
         PostRelation relation = PostRelation.of(center, target, 0.5, "spring");
 
-        when(postRepository.findWithUserById(10L)).thenReturn(Optional.of(center));
+        when(postReader.findWithUserById(10L)).thenReturn(Optional.of(center));
         when(postRelationRepository.findVisibleCenteredEdges(eq(10L), eq(0.15), any(Pageable.class)))
             .thenReturn(List.of(relation));
-        when(postTagRepository.findTagNamesByPostIds(List.of(10L, 11L))).thenReturn(List.of(
-            new TestPostTagName(10L, "spring"),
-            new TestPostTagName(11L, "graph")));
+        when(postTagService.findTagNamesByPostIds(List.of(10L, 11L))).thenReturn(Map.of(
+            10L, List.of("spring"),
+            11L, List.of("graph")));
 
         PostGraphResponse response = service.getPostGraph(10L, null, null, null);
 
         assertEquals(List.of("spring"), response.getNodes().get(0).getTags());
         assertEquals(List.of("graph"), response.getNodes().get(1).getTags());
-        verify(postTagRepository).findTagNamesByPostIds(List.of(10L, 11L));
-        verify(postTagRepository, never()).findTagNamesByPostId(anyLong());
+        verify(postTagService).findTagNamesByPostIds(List.of(10L, 11L));
+        verify(postTagService, never()).findTagNamesByPostId(anyLong());
     }
 
     @Test
@@ -106,10 +106,10 @@ class GraphServiceTest {
         }
 
         PostRelation relation = PostRelation.of(ownPost, relatedPost, 0.8, "spring");
-        when(postRepository.findGraphVisiblePosts(1L, null, null)).thenReturn(allPosts);
+        when(postReader.findGraphVisiblePosts(1L, null, null)).thenReturn(allPosts);
         when(postRelationRepository.findVisibleEdges(any(), eq(0.15))).thenReturn(List.of(relation));
-        when(followRepository.findAllByFollowerIdOrderByCreatedAtDesc(1L)).thenReturn(List.of());
-        when(postTagRepository.findTagNamesByPostIds(any())).thenReturn(List.of());
+        when(followReader.findFollowingUserIds(1L)).thenReturn(Set.of());
+        when(postTagService.findTagNamesByPostIds(any())).thenReturn(Map.of());
 
         PostGraphResponse response = service.getGraph(null, null, null, 1L);
 
@@ -120,24 +120,10 @@ class GraphServiceTest {
 
     private GraphService newService() {
         return new GraphService(
-            postRepository,
-            postTagRepository,
+            postReader,
+            postTagService,
             postRelationRepository,
-            followRepository,
+            followReader,
             new GraphProperties(1.5, 1.0, 2.0, 8, 50, 5, 0.15));
-    }
-
-    private record TestPostTagName(
-        Long postId,
-        String tagName) implements PostTagNameProjection {
-        @Override
-        public Long getPostId() {
-            return postId;
-        }
-
-        @Override
-        public String getTagName() {
-            return tagName;
-        }
     }
 }

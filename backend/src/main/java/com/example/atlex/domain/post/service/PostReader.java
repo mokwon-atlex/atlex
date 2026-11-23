@@ -91,4 +91,44 @@ public class PostReader {
     public Post getReferenceById(Long postId) {
         return postRepository.getReferenceById(postId);
     }
+
+    /**
+     * 작성자와 카테고리 정보를 함께 포함한 활성 게시글을 조회합니다.
+     *
+     * @param postId 게시글 ID
+     * @return 게시글 Optional
+     */
+    public Optional<Post> findWithUserById(Long postId) {
+        return postRepository.findWithUserById(postId);
+    }
+
+    /**
+     * 삭제되지 않은 전체 공개 게시글 수를 조회합니다.
+     *
+     * @return 공개 게시글 수
+     */
+    public long countPublicPosts() {
+        return postRepository.countByIsDeletedFalseAndIsPublicTrue();
+    }
+
+    /**
+     * 지식 그래프 인덱싱 대상이 되는 전체 공개 게시글 목록을 조회합니다.
+     *
+     * @return 공개 게시글 목록
+     */
+    public List<Post> findAllPublicGraphSourcePosts() {
+        return postRepository.findAllPublicGraphSourcePosts();
+    }
+
+    /**
+     * 그래프 화면에서 조회자에게 노출 가능한 게시글 목록을 조회합니다.
+     *
+     * @param viewerId 조회자 PK (비로그인이면 null)
+     * @param userId 작성자 로그인 아이디 필터 (null이면 전체)
+     * @param categoryId 카테고리 ID 필터 (null이면 전체)
+     * @return 노출 가능한 게시글 목록
+     */
+    public List<Post> findGraphVisiblePosts(Long viewerId, String userId, Long categoryId) {
+        return postRepository.findGraphVisiblePosts(viewerId, userId, categoryId);
+    }
 }

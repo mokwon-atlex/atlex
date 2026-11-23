@@ -12,8 +12,8 @@ import com.example.atlex.domain.graph.service.GraphIndexService;
 import com.example.atlex.domain.graph.keyword.KeywordExtractor;
 import com.example.atlex.domain.graph.keyword.KeywordWeightCalculator;
 import com.example.atlex.domain.post.entity.Post;
-import com.example.atlex.domain.post.repository.PostRepository;
-import com.example.atlex.domain.tag.repository.PostTagRepository;
+import com.example.atlex.domain.post.service.PostReader;
+import com.example.atlex.domain.tag.service.PostTagService;
 import com.example.atlex.domain.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,9 +44,9 @@ import static org.mockito.Mockito.when;
 class GraphIndexServiceTest {
 
     @Mock
-    PostRepository postRepository;
+    PostReader postReader;
     @Mock
-    PostTagRepository postTagRepository;
+    PostTagService postTagService;
     @Mock
     KeywordRepository keywordRepository;
     @Mock
@@ -70,9 +70,9 @@ class GraphIndexServiceTest {
         Keyword graph = Keyword.builder().id(101L).name("graph").documentFrequency(0).build();
         Keyword jpa = Keyword.builder().id(102L).name("jpa").documentFrequency(0).build();
 
-        when(postRepository.findWithUserById(10L)).thenReturn(Optional.of(post));
-        when(postRepository.countByIsDeletedFalseAndIsPublicTrue()).thenReturn(10L);
-        when(postTagRepository.findTagNamesByPostId(10L)).thenReturn(List.of("JPA"));
+        when(postReader.findWithUserById(10L)).thenReturn(Optional.of(post));
+        when(postReader.countPublicPosts()).thenReturn(10L);
+        when(postTagService.findTagNamesByPostId(10L)).thenReturn(List.of("JPA"));
         when(keywordRepository.findAllByNameIn(List.of("spring", "graph", "jpa")))
             .thenReturn(List.of(spring, graph));
         when(keywordRepository.saveAll(any())).thenReturn(List.of(jpa));
@@ -110,7 +110,7 @@ class GraphIndexServiceTest {
         Keyword spring = Keyword.builder().id(100L).name("spring").documentFrequency(2).build();
         Keyword graph = Keyword.builder().id(101L).name("graph").documentFrequency(2).build();
 
-        when(postRepository.findWithUserById(10L)).thenReturn(Optional.of(source));
+        when(postReader.findWithUserById(10L)).thenReturn(Optional.of(source));
         when(postKeywordRepository.findByPostIdOrderByWeightDesc(10L)).thenReturn(List.of(
             PostKeyword.of(source, spring, 1, 1, 0, 5.0),
             PostKeyword.of(source, graph, 1, 0, 0, 3.0)));
@@ -142,7 +142,7 @@ class GraphIndexServiceTest {
         Post first = Post.builder().id(10L).user(user).title("first").content("first").isPublic(true).build();
         Post second = Post.builder().id(11L).user(user).title("second").content("second").isPublic(true).build();
 
-        when(postRepository.findAllPublicGraphSourcePosts()).thenReturn(List.of(first, second));
+        when(postReader.findAllPublicGraphSourcePosts()).thenReturn(List.of(first, second));
         GraphIndexService service = spy(newService(transactionOperations));
         doNothing().when(service).refreshPostKeywords(anyLong());
         doNothing().when(service).refreshRelations(anyLong());
@@ -166,8 +166,8 @@ class GraphIndexServiceTest {
         GraphProperties graphProperties = defaultGraphProperties();
 
         return new GraphIndexService(
-            postRepository,
-            postTagRepository,
+            postReader,
+            postTagService,
             keywordRepository,
             postKeywordRepository,
             postRelationRepository,

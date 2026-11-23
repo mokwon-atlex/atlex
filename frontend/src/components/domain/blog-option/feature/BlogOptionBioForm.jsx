@@ -35,7 +35,7 @@ export default function BlogOptionBioForm({
             value={bio}
             onChange={(event) => onBioChange(event.target.value)}
             placeholder="방문자에게 보여줄 소개글을 입력해 주세요"
-            className="min-h-40 rounded-2xl"
+            className="min-h-40 rounded-md"
             maxLength={BLOG_OPTION_BIO_MAX_LENGTH}
             disabled={isLoading || isSaving}
           />

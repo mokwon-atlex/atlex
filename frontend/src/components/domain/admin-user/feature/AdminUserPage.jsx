@@ -55,7 +55,7 @@ function AdminUserContent() {
       ) : users.length === 0 ? (
         <p className="py-12 text-center text-sm text-muted-foreground">회원이 없습니다.</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-card">
+        <div className="overflow-x-auto rounded-lg border border-border/80 bg-card shadow-2xs">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">전체 회원 목록 ({users.length}명)</caption>
             <thead className="border-b border-border text-xs text-muted-foreground">
