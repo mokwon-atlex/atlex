@@ -1,6 +1,8 @@
 package com.example.atlex.domain.auth.controller;
 
 import com.example.atlex.domain.auth.dto.request.LoginRequest;
+import com.example.atlex.domain.auth.dto.request.OAuth2ExchangeRequest;
+import com.example.atlex.domain.auth.dto.request.OAuth2OnboardingRequest;
 import com.example.atlex.domain.auth.dto.request.ReissueRequest;
 import com.example.atlex.domain.auth.dto.response.TokenResponse;
 import com.example.atlex.domain.auth.service.AuthService;
@@ -48,6 +50,21 @@ public class AuthController implements AuthControllerDocs {
     ReissueRequest request) {
         TokenResponse response = authService.reissue(request.getRefreshToken());
         return ResponseEntity.ok(ApiResponse.success(response, "토큰이 성공적으로 재발급되었습니다."));
+    }
+
+    @PostMapping("/oauth2/exchange")
+    public ResponseEntity<ApiResponse<TokenResponse>> exchangeOAuth2Code(@Valid @RequestBody
+    OAuth2ExchangeRequest request) {
+        TokenResponse response = authService.exchangeOAuth2Code(request.getCode());
+        return ResponseEntity.ok(ApiResponse.success(response, "소셜 로그인 성공"));
+    }
+
+    @PostMapping("/oauth2/onboarding")
+    public ResponseEntity<ApiResponse<TokenResponse>> completeOAuth2Onboarding(@Valid @RequestBody
+    OAuth2OnboardingRequest request) {
+        TokenResponse response = authService.completeOAuth2Onboarding(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success(response, "소셜 회원가입 및 로그인이 완료되었습니다."));
     }
 
     @PostMapping("/logout")

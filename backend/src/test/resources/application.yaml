@@ -10,6 +10,40 @@ spring:
       ddl-auto: create-drop
     show-sql: false
 
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: test-oauth2-github-id
+            client-secret: test-oauth2-github-secret
+            scope:
+              - read:user
+              - user:email
+          google:
+            client-id: test-oauth2-google-id
+            client-secret: test-oauth2-google-secret
+            scope:
+              - profile
+              - email
+          kakao:
+            client-id: test-oauth2-kakao-id
+            client-secret: test-oauth2-kakao-secret
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - profile_nickname
+              - profile_image
+              - account_email
+            client-name: Kakao
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
 jwt:
   secret: djksdjl23423213njn23jdsadnakjfnej_atlex_2026
 
@@ -33,3 +67,7 @@ github:
   client-secret: test-client-secret
   redirect-uri: http://localhost:3000/blog_option
   encryption-key: test-encryption-key-for-unit-test!
+
+app:
+  oauth2:
+    redirect-uri: http://localhost:3000/oauth/callback

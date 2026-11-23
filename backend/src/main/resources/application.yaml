@@ -18,6 +18,40 @@ spring:
       hibernate:
         format_sql: true
 
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${OAUTH2_GITHUB_CLIENT_ID:unconfigured}
+            client-secret: ${OAUTH2_GITHUB_CLIENT_SECRET:unconfigured}
+            scope:
+              - read:user
+              - user:email
+          google:
+            client-id: ${OAUTH2_GOOGLE_CLIENT_ID:unconfigured}
+            client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET:unconfigured}
+            scope:
+              - profile
+              - email
+          kakao:
+            client-id: ${OAUTH2_KAKAO_CLIENT_ID:unconfigured}
+            client-secret: ${OAUTH2_KAKAO_CLIENT_SECRET:unconfigured}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - profile_nickname
+              - profile_image
+              - account_email
+            client-name: Kakao
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
   h2:
     console:
       enabled: true
@@ -62,6 +96,10 @@ github:
   client-secret: ${GITHUB_CLIENT_SECRET:}
   redirect-uri: ${GITHUB_REDIRECT_URI:http://localhost:3000/blog_option}
   encryption-key: ${GITHUB_TOKEN_ENCRYPTION_KEY}
+
+app:
+  oauth2:
+    redirect-uri: ${OAUTH2_FRONTEND_REDIRECT_URI:http://localhost:3000/oauth/callback}
 
 
 ---
