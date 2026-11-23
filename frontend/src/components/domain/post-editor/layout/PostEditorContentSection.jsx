@@ -50,7 +50,7 @@ export default function PostEditorContentSection({
   return (
     <div className="flex flex-1 flex-col">
       {(onRequestParagraphAi || isTableActive) && (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/20 px-5 py-2 sm:px-7">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-5 py-2.5 sm:px-8">
           {onRequestParagraphAi ? (
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="mr-1 text-[11px] font-medium text-muted-foreground">AI 도우미</span>
@@ -188,14 +188,14 @@ export default function PostEditorContentSection({
       <div
         data-editor-canvas
         onClick={handleCanvasClick}
-        className="relative flex min-h-[480px] flex-1 cursor-text flex-col px-5 py-6 sm:px-7"
+        className="relative flex min-h-[480px] flex-1 cursor-text flex-col px-5 py-7 sm:px-8"
       >
         {isEditorEmpty && bodyPlaceholder ? (
           <Textfield
             variant="muted"
             size="default"
             whitespace="preline"
-            className="pointer-events-none absolute inset-x-5 top-6 leading-8 sm:inset-x-7"
+            className="pointer-events-none absolute inset-x-5 top-7 leading-8 sm:inset-x-8"
           >
             {bodyPlaceholder}
           </Textfield>

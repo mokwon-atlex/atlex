@@ -352,7 +352,7 @@ export default function PostEditorPage({ postId }) {
         />
 
         {(validationError || activeMutation.isError || aiSuggestion.aiError) && (
-          <div className="px-5 pt-4 sm:px-7">
+          <div className="mx-auto w-full max-w-4xl px-5 pt-4 sm:px-8">
             <Alert
               variant={aiSuggestion.aiError && !validationError && !activeMutation.isError ? 'default' : 'destructive'}
             >
