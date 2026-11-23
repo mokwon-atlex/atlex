@@ -10,7 +10,7 @@ export function NodePopup({ position, post }) {
   return (
     <div
       data-node-popup
-      className="pointer-events-none absolute z-50 overflow-hidden rounded-xl border border-border bg-card shadow-2xl shadow-slate-900/15"
+      className="pointer-events-none absolute z-50 overflow-hidden rounded-lg border border-border/80 bg-card shadow-lg dark:shadow-black/40"
       style={{
         left: position.x,
         maxHeight: position.maxHeight ?? 330,
