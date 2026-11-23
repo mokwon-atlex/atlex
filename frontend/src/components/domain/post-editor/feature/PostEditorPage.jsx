@@ -17,6 +17,7 @@ import PostEditorTableModal from '@/components/domain/post-editor/layout/PostEdi
 import PostEditorTitleSection from '@/components/domain/post-editor/layout/PostEditorTitleSection';
 import PostEditorToolRail from '@/components/domain/post-editor/layout/PostEditorToolRail';
 import PostEditorTopBar from '@/components/domain/post-editor/layout/PostEditorTopBar';
+import PostEditorBottomBar from '@/components/domain/post-editor/layout/PostEditorBottomBar';
 import PostEditorCanvasLayout from '@/components/domain/post-editor/layout/PostEditorCanvasLayout';
 import PostEditorShell from '@/components/domain/post-editor/layout/PostEditorShell';
 import { postEditorCopy } from '@/data/post-editor/post-editor-copy';
@@ -330,12 +331,6 @@ export default function PostEditorPage({ postId }) {
         <PostEditorTopBar
           logoLabel={postEditorCopy.logoLabel}
           onOpenDraftModal={() => setIsDraftModalOpen(true)}
-          onSaveDraft={handleSaveDraft}
-          onPublish={handlePublish}
-          publishDisabled={activeMutation.isPending}
-          publishButtonLabel={
-            activeMutation.isPending ? (isEditMode ? '수정 중…' : '게시 중…') : isEditMode ? '수정 완료' : '게시'
-          }
           remainingTokens={tokenStatus?.remainingTokens}
           maxTokens={tokenStatus?.maxTokens}
         />
@@ -354,6 +349,50 @@ export default function PostEditorPage({ postId }) {
           }}
           onDismissTitleSuggestion={aiSuggestion.dismissTitleSuggestion}
           onRequestTitleSuggestion={aiSuggestion.requestTitleSuggestion}
+        />
+
+        {(validationError || activeMutation.isError || aiSuggestion.aiError) && (
+          <div className="px-5 pt-4 sm:px-7">
+            <Alert
+              variant={aiSuggestion.aiError && !validationError && !activeMutation.isError ? 'default' : 'destructive'}
+            >
+              <AlertDescription>
+                {validationError ||
+                  activeMutation.error?.message ||
+                  aiSuggestion.aiError ||
+                  (isEditMode
+                    ? '수정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                    : '게시에 실패했습니다. 잠시 후 다시 시도해 주세요.')}
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        <PostEditorCanvasLayout
+          content={
+            <PostEditorContentSection
+              bodyPlaceholder={postEditorCopy.bodyPlaceholder}
+              editor={richText.editor}
+              isEditorEmpty={richText.isEditorEmpty}
+              isSuggestingParagraph={aiSuggestion.isSuggestingParagraph}
+              onRequestParagraphAi={(mode = 'AUTO') => {
+                richText.editor?.commands.focus();
+                aiSuggestion.requestParagraphSuggestion({
+                  insertDirectly: mode !== 'AUTO',
+                  mode,
+                });
+              }}
+              onCancelParagraphAi={abortParagraphSuggestion}
+              userId={userId}
+            />
+          }
+          toolRail={
+            <PostEditorToolRail
+              toolCategories={postEditorToolCategories}
+              getItemState={richText.getToolbarItemState}
+              onExecuteItem={richText.executeToolbarItem}
+            />
+          }
         />
 
         <PostEditorMetaSection
@@ -395,48 +434,14 @@ export default function PostEditorPage({ postId }) {
           }}
         />
 
-        {(validationError || activeMutation.isError || aiSuggestion.aiError) && (
-          <div className="px-5 pt-4 sm:px-7">
-            <Alert
-              variant={aiSuggestion.aiError && !validationError && !activeMutation.isError ? 'default' : 'destructive'}
-            >
-              <AlertDescription>
-                {validationError ||
-                  activeMutation.error?.message ||
-                  aiSuggestion.aiError ||
-                  (isEditMode
-                    ? '수정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
-                    : '게시에 실패했습니다. 잠시 후 다시 시도해 주세요.')}
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
-
-        <PostEditorCanvasLayout
-          content={
-            <PostEditorContentSection
-              bodyPlaceholder={postEditorCopy.bodyPlaceholder}
-              bodyText={richText.bodyText}
-              editor={richText.editor}
-              isEditorEmpty={richText.isEditorEmpty}
-              isSuggestingParagraph={aiSuggestion.isSuggestingParagraph}
-              onRequestParagraphAi={(mode = 'AUTO') => {
-                richText.editor?.commands.focus();
-                aiSuggestion.requestParagraphSuggestion({
-                  insertDirectly: mode !== 'AUTO',
-                  mode,
-                });
-              }}
-              onCancelParagraphAi={abortParagraphSuggestion}
-              userId={userId}
-            />
-          }
-          toolRail={
-            <PostEditorToolRail
-              toolCategories={postEditorToolCategories}
-              getItemState={richText.getToolbarItemState}
-              onExecuteItem={richText.executeToolbarItem}
-            />
+        <PostEditorBottomBar
+          charCount={richText.bodyText.length}
+          isPublic={isPublic}
+          onSaveDraft={handleSaveDraft}
+          onPublish={handlePublish}
+          publishDisabled={activeMutation.isPending}
+          publishButtonLabel={
+            activeMutation.isPending ? (isEditMode ? '수정 중…' : '게시 중…') : isEditMode ? '수정 완료' : '게시'
           }
         />
       </PostEditorShell>
