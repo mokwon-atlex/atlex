@@ -6,6 +6,7 @@ const PROVIDERS = [
   {
     id: 'github',
     label: 'GitHub로 계속하기',
+    enabled: true,
     className:
       'border border-zinc-800 bg-zinc-900 text-white hover:bg-zinc-800 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:bg-zinc-900',
     icon: (
@@ -17,7 +18,8 @@ const PROVIDERS = [
   {
     id: 'google',
     label: 'Google로 계속하기',
-    className: 'border border-border bg-background text-foreground hover:bg-muted/60',
+    enabled: false,
+    className: 'border border-border bg-muted/40 text-muted-foreground',
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4">
         <path
@@ -42,9 +44,10 @@ const PROVIDERS = [
   {
     id: 'kakao',
     label: 'Kakao로 계속하기',
-    className: 'border border-[#F5DC00] bg-[#FEE500] text-[#191919] hover:bg-[#FDD800]',
+    enabled: false,
+    className: 'border border-border bg-muted/40 text-muted-foreground',
     icon: (
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 fill-[#191919]">
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 fill-current">
         <path d="M12 3.5C6.75 3.5 2.5 6.82 2.5 10.92c0 2.66 1.78 4.99 4.44 6.29l-1.13 4.13c-.1.35.3.63.61.43l4.94-3.27c.21.02.42.03.64.03 5.25 0 9.5-3.32 9.5-7.42S17.25 3.5 12 3.5Z" />
       </svg>
     ),
@@ -52,21 +55,38 @@ const PROVIDERS = [
 ];
 
 /**
- * GitHub, Google, Kakao OAuth2 로그인 진입 버튼 목록입니다.
+ * OAuth2 소셜 로그인 버튼 목록입니다.
+ * 현재 GitHub만 활성화되어 있으며 Google·Kakao는 키 등록 전까지 준비 중으로 비활성화합니다.
  */
 function SocialLoginButtons() {
   return (
     <div className="flex flex-col gap-2.5" aria-label="소셜 로그인">
-      {PROVIDERS.map((provider) => (
-        <a
-          key={provider.id}
-          href={getOAuth2AuthorizationUrl(provider.id)}
-          className={`flex h-10 w-full items-center justify-center gap-2.5 rounded-lg text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${provider.className}`}
-        >
-          {provider.icon}
-          <span>{provider.label}</span>
-        </a>
-      ))}
+      {PROVIDERS.map((provider) =>
+        provider.enabled ? (
+          <a
+            key={provider.id}
+            href={getOAuth2AuthorizationUrl(provider.id)}
+            className={`flex h-10 w-full items-center justify-center gap-2.5 rounded-lg text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${provider.className}`}
+          >
+            {provider.icon}
+            <span>{provider.label}</span>
+          </a>
+        ) : (
+          <button
+            key={provider.id}
+            type="button"
+            disabled
+            aria-disabled="true"
+            className={`flex h-10 w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-lg text-sm font-semibold opacity-65 ${provider.className}`}
+          >
+            {provider.icon}
+            <span>{provider.label}</span>
+            <span className="rounded bg-background/80 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              준비 중
+            </span>
+          </button>
+        ),
+      )}
     </div>
   );
 }

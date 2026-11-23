@@ -101,6 +101,9 @@ app:
   oauth2:
     redirect-uri: ${OAUTH2_FRONTEND_REDIRECT_URI:http://localhost:3000/oauth/callback}
 
+server:
+  forward-headers-strategy: framework
+
 
 ---
 # 운영 프로파일: SPRING_PROFILES_ACTIVE=prod

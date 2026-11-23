@@ -26,7 +26,7 @@ function isCurrentPasswordError(error, message) {
   );
 }
 
-function PasswordSettingForm() {
+function PasswordSettingForm({ hasPassword = true }) {
   const userId = useAuthStore((state) => state.user?.userId);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -106,6 +106,17 @@ function PasswordSettingForm() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  if (!hasPassword) {
+    return (
+      <Card className="rounded-lg border-border/80 bg-card shadow-2xs">
+        <CardHeader>
+          <CardTitle>비밀번호 설정</CardTitle>
+          <CardDescription>소셜 로그인으로 연결된 계정은 별도의 비밀번호를 사용하지 않습니다.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
   }
 
   return (

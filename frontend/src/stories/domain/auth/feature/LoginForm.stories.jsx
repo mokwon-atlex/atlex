@@ -24,13 +24,7 @@ export const Default = {
       'href',
       '/oauth2/authorization/github',
     );
-    await expect(canvas.getByRole('link', { name: /Google로 계속하기/i })).toHaveAttribute(
-      'href',
-      '/oauth2/authorization/google',
-    );
-    await expect(canvas.getByRole('link', { name: /Kakao로 계속하기/i })).toHaveAttribute(
-      'href',
-      '/oauth2/authorization/kakao',
-    );
+    await expect(canvas.getByRole('button', { name: /Google로 계속하기/i })).toBeDisabled();
+    await expect(canvas.getByRole('button', { name: /Kakao로 계속하기/i })).toBeDisabled();
   },
 };
