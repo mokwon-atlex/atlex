@@ -47,3 +47,12 @@ export async function fetchDescriptionAiSuggestion({ title, content }, signal) {
 export async function fetchAiTokens() {
   return apiClient.get('/ai/suggest/tokens');
 }
+
+/**
+ * AI 제안을 실제로 본문·제목·설명에 적용했을 때 토큰을 차감합니다.
+ * @param {'TITLE'|'PARAGRAPH'|'DESCRIPTION'} type
+ * @returns {Promise<{ remainingTokens: number, maxTokens: number }>}
+ */
+export async function consumeAiTokens(type) {
+  return apiClient.post('/ai/suggest/consume', { type });
+}

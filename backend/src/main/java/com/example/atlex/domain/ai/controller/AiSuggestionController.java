@@ -1,8 +1,10 @@
 package com.example.atlex.domain.ai.controller;
 
+import com.example.atlex.domain.ai.dto.request.AiConsumeRequest;
 import com.example.atlex.domain.ai.dto.request.ParagraphSuggestionRequest;
 import com.example.atlex.domain.ai.dto.request.TitleSuggestionRequest;
 import com.example.atlex.domain.ai.dto.response.AiSuggestionResponse;
+import com.example.atlex.domain.ai.dto.response.AiTokenResponse;
 import com.example.atlex.domain.ai.service.AiSuggestionService;
 import com.example.atlex.global.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -48,8 +50,15 @@ public class AiSuggestionController implements AiSuggestionControllerDocs {
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/tokens")
-    public ResponseEntity<ApiResponse<com.example.atlex.domain.ai.dto.response.AiTokenResponse>> getTokenStatus() {
-        com.example.atlex.domain.ai.dto.response.AiTokenResponse response = aiSuggestionService.getTokenStatus();
+    public ResponseEntity<ApiResponse<AiTokenResponse>> getTokenStatus() {
+        AiTokenResponse response = aiSuggestionService.getTokenStatus();
         return ResponseEntity.ok(ApiResponse.success(response, "토큰 상태를 조회했습니다."));
+    }
+
+    @PostMapping("/consume")
+    public ResponseEntity<ApiResponse<AiTokenResponse>> consumeTokens(@Valid @RequestBody
+    AiConsumeRequest request) {
+        AiTokenResponse response = aiSuggestionService.consumeTokens(request);
+        return ResponseEntity.ok(ApiResponse.success(response, "AI 토큰이 차감되었습니다."));
     }
 }
