@@ -45,7 +45,7 @@ export default function ProfileMenu() {
     <Popover>
       <PopoverTrigger
         aria-label="프로필"
-        className="inline-flex h-14 w-14 cursor-pointer items-center justify-center overflow-hidden rounded-full border-[3px] border-primary/40 bg-card text-center text-[0.62rem] font-semibold leading-4 text-muted-foreground transition-colors hover:border-primary/70"
+        className="inline-flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-primary/40 bg-card text-center text-[0.6rem] font-semibold leading-3.5 text-muted-foreground transition-colors hover:border-primary/70"
       >
         {profileImageSrc ? (
           /* eslint-disable-next-line @next/next/no-img-element */

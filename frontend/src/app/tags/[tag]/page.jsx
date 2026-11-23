@@ -21,10 +21,10 @@ export default async function TagPostsPage({ params }) {
     <main className="min-h-screen bg-background text-foreground">
       <Header />
 
-      <div className="mx-auto w-full max-w-content-wide px-5 pb-12 pt-7 sm:px-8 lg:px-10">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
+      <div className="mx-auto w-full max-w-content-wide px-4 pb-10 pt-5 sm:px-6 lg:px-8">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-border/80 pb-4">
           <div className="flex items-center gap-2.5">
-            <span className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-muted/50 text-foreground">
+            <span className="inline-flex size-9 items-center justify-center rounded-md border border-border/80 bg-muted/50 text-foreground">
               <Hash className="size-4" />
             </span>
             <div>
