@@ -4,7 +4,15 @@ import { Field, FieldLabel, FieldError } from '@/components/common/ui/field';
 import { Input } from '@/components/common/ui/input';
 import { Button } from '@/components/common/ui/button';
 
-export function NicknameField({ value, onChange, onBlur, onCheckDuplicate, checkResult, error }) {
+export function NicknameField({
+  value,
+  onChange,
+  onBlur,
+  onCheckDuplicate,
+  checkResult,
+  error,
+  showCheckButton = true,
+}) {
   const isInvalid = !!error || checkResult?.ok === false;
 
   return (
@@ -21,9 +29,11 @@ export function NicknameField({ value, onChange, onBlur, onCheckDuplicate, check
           aria-invalid={isInvalid || undefined}
           className="flex-1"
         />
-        <Button type="button" variant="secondary" onClick={onCheckDuplicate} className="shrink-0">
-          중복확인
-        </Button>
+        {showCheckButton && (
+          <Button type="button" variant="secondary" onClick={onCheckDuplicate} className="shrink-0">
+            중복확인
+          </Button>
+        )}
       </div>
 
       {checkResult && (

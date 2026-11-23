@@ -2,6 +2,7 @@ package com.example.atlex.domain.user.service;
 
 import com.example.atlex.domain.user.entity.User;
 import com.example.atlex.domain.user.exception.DuplicateEmailException;
+import com.example.atlex.domain.user.exception.DuplicateNameException;
 import com.example.atlex.domain.user.exception.DuplicateUserIdException;
 import com.example.atlex.domain.user.exception.PrivacyNotAgreedException;
 import com.example.atlex.domain.user.exception.TermsNotAgreedException;
@@ -124,6 +125,9 @@ public class UserReader {
         if (userRepository.existsByUserId(cleanUserId)) {
             throw new DuplicateUserIdException();
         }
+        if (userRepository.existsByName(cleanName)) {
+            throw new DuplicateNameException();
+        }
         if (userRepository.existsByEmail(cleanEmail)) {
             throw new DuplicateEmailException();
         }
@@ -139,5 +143,31 @@ public class UserReader {
             .agreedAt(LocalDateTime.now())
             .build();
         return userRepository.save(user);
+    }
+
+    /**
+     * 로그인 아이디(블로그 핸들) 사용 가능 여부를 확인합니다.
+     *
+     * @param userId 확인할 아이디
+     * @return 사용 가능하면 true
+     */
+    public boolean isUserIdAvailable(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return false;
+        }
+        return !userRepository.existsByUserId(userId.trim());
+    }
+
+    /**
+     * 닉네임 사용 가능 여부를 확인합니다.
+     *
+     * @param name 확인할 닉네임
+     * @return 사용 가능하면 true
+     */
+    public boolean isNameAvailable(String name) {
+        if (name == null || name.isBlank()) {
+            return false;
+        }
+        return !userRepository.existsByName(name.trim());
     }
 }

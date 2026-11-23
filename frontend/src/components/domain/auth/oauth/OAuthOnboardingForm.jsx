@@ -9,6 +9,7 @@ import { Field, FieldGroup, FieldLabel } from '@/components/common/ui/field';
 import { Input } from '@/components/common/ui/input';
 import { UserIdField } from '@/components/common/layout/UserIdField';
 import { NicknameField } from '@/components/common/layout/NicknameField';
+import { checkOAuth2AvailabilityApi } from '@/lib/api/auth';
 import { useCompleteOAuth2Onboarding } from '@/hooks/queries/auth/useOAuth2Auth';
 
 const PROVIDER_LABELS = {
@@ -32,6 +33,8 @@ function OAuthOnboardingForm({ onboardingToken, provider, initialEmail, suggeste
   const [userId, setUserId] = useState('');
   const [name, setName] = useState(() => sanitizeNickname(suggestedName));
   const [email, setEmail] = useState(initialEmail ?? '');
+  const [userIdCheck, setUserIdCheck] = useState(null);
+  const [nicknameCheck, setNicknameCheck] = useState(null);
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
   const [marketingAgreed, setMarketingAgreed] = useState(false);
@@ -50,6 +53,42 @@ function OAuthOnboardingForm({ onboardingToken, provider, initialEmail, suggeste
     setTermsAgreed(next);
     setPrivacyAgreed(next);
     setMarketingAgreed(next);
+  }
+
+  async function handleCheckUserId() {
+    const trimmed = userId.trim();
+    if (trimmed.length < 4 || trimmed.length > 15 || /\s/.test(trimmed)) {
+      setUserIdCheck({ ok: false, message: '아이디는 공백 없이 4자 이상 15자 이하로 입력해주세요.' });
+      return;
+    }
+    try {
+      const result = await checkOAuth2AvailabilityApi({ userId: trimmed });
+      setUserIdCheck(
+        result?.userIdAvailable
+          ? { ok: true, message: '사용 가능한 아이디입니다.' }
+          : { ok: false, message: '이미 사용 중인 아이디입니다.' },
+      );
+    } catch {
+      setUserIdCheck({ ok: false, message: '아이디 중복 확인에 실패했습니다.' });
+    }
+  }
+
+  async function handleCheckNickname() {
+    const trimmed = name.trim();
+    if (trimmed.length < 2 || trimmed.length > 10 || !/^[a-zA-Z가-힣0-9]+$/.test(trimmed)) {
+      setNicknameCheck({ ok: false, message: '닉네임은 한글·영문·숫자 2~10자로 입력해주세요.' });
+      return;
+    }
+    try {
+      const result = await checkOAuth2AvailabilityApi({ name: trimmed });
+      setNicknameCheck(
+        result?.nameAvailable
+          ? { ok: true, message: '사용 가능한 닉네임입니다.' }
+          : { ok: false, message: '이미 사용 중인 닉네임입니다.' },
+      );
+    } catch {
+      setNicknameCheck({ ok: false, message: '닉네임 중복 확인에 실패했습니다.' });
+    }
   }
 
   async function handleSubmit(e) {
@@ -80,9 +119,25 @@ function OAuthOnboardingForm({ onboardingToken, provider, initialEmail, suggeste
       </div>
 
       <FieldGroup className="gap-4">
-        <UserIdField value={userId} onChange={(e) => setUserId(e.target.value)} showCheckButton={false} />
+        <UserIdField
+          value={userId}
+          onChange={(e) => {
+            setUserId(e.target.value);
+            setUserIdCheck(null);
+          }}
+          onCheckDuplicate={handleCheckUserId}
+          checkResult={userIdCheck}
+        />
 
-        <NicknameField value={name} onChange={(e) => setName(e.target.value)} showCheckButton={false} />
+        <NicknameField
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+            setNicknameCheck(null);
+          }}
+          onCheckDuplicate={handleCheckNickname}
+          checkResult={nicknameCheck}
+        />
 
         {!initialEmail && (
           <Field>
