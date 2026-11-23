@@ -7,6 +7,7 @@ import com.example.atlex.domain.user.dto.response.UserResponse;
 import com.example.atlex.domain.user.entity.User;
 import com.example.atlex.domain.user.repository.UserRepository;
 import com.example.atlex.domain.user.exception.DuplicateEmailException;
+import com.example.atlex.domain.user.exception.DuplicateNameException;
 import com.example.atlex.domain.user.exception.DuplicateUserIdException;
 import com.example.atlex.domain.user.exception.InvalidCurrentPasswordException;
 import com.example.atlex.domain.user.exception.PrivacyNotAgreedException;
@@ -44,6 +45,10 @@ public class UserService {
 
         if (userRepository.existsByUserId(cleanUserId)) {
             throw new DuplicateUserIdException();
+        }
+
+        if (userRepository.existsByName(cleanName)) {
+            throw new DuplicateNameException();
         }
 
         if (userRepository.existsByEmail(cleanEmail)) {
@@ -107,6 +112,13 @@ public class UserService {
             request.setEmail(cleanEmail);
         }
 
+        if (request.getName() != null) {
+            String cleanName = request.getName().trim();
+            if (!cleanName.equals(user.getName()) && userRepository.existsByName(cleanName)) {
+                throw new DuplicateNameException();
+            }
+        }
+
         user.update(
             request.getUserId(),
             request.getEmail(),
@@ -120,7 +132,7 @@ public class UserService {
         User user = userRepository.findByUserIdAndActiveTrue(userId)
             .orElseThrow(UserNotFoundException::new);
 
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+        if (user.getPassword() == null || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new InvalidCurrentPasswordException();
         }
 

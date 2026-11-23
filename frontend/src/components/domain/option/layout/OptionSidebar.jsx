@@ -28,7 +28,9 @@ const MENUS = [
   },
 ];
 
-function OptionSidebar({ activeMenu, onChangeMenu }) {
+function OptionSidebar({ activeMenu, onChangeMenu, hasPassword = true }) {
+  const visibleMenus = hasPassword ? MENUS : MENUS.filter((menu) => menu.id !== 'password');
+
   return (
     <Card className="h-fit rounded-lg border-border/80 bg-card shadow-2xs">
       <CardContent className="p-2.5">
@@ -39,7 +41,7 @@ function OptionSidebar({ activeMenu, onChangeMenu }) {
         </div>
 
         <nav className="space-y-1">
-          {MENUS.map((menu) => {
+          {visibleMenus.map((menu) => {
             const isActive = activeMenu === menu.id;
 
             return (

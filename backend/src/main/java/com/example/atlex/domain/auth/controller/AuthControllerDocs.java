@@ -1,7 +1,10 @@
 package com.example.atlex.domain.auth.controller;
 
 import com.example.atlex.domain.auth.dto.request.LoginRequest;
+import com.example.atlex.domain.auth.dto.request.OAuth2ExchangeRequest;
+import com.example.atlex.domain.auth.dto.request.OAuth2OnboardingRequest;
 import com.example.atlex.domain.auth.dto.request.ReissueRequest;
+import com.example.atlex.domain.auth.dto.response.OAuth2AvailabilityResponse;
 import com.example.atlex.domain.auth.dto.response.TokenResponse;
 import com.example.atlex.domain.user.dto.request.SignupRequest;
 import com.example.atlex.domain.user.dto.response.UserResponse;
@@ -18,6 +21,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "Auth", description = "인증 관련 API (로그인, 토큰 재발급, 로그아웃)")
 public interface AuthControllerDocs {
@@ -72,6 +76,15 @@ public interface AuthControllerDocs {
     ResponseEntity<ApiResponse<TokenResponse>> login(@Valid @RequestBody
     LoginRequest request);
 
+    @Operation(summary = "관리자 전용 로그인", description = "ADMIN 권한 계정의 아이디/비밀번호로 로그인하여 JWT 토큰을 발급받습니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "관리자 로그인 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "아이디 또는 비밀번호 불일치"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 없음 또는 계정 잠금/비활성화")
+    })
+    ResponseEntity<ApiResponse<TokenResponse>> adminLogin(@Valid @RequestBody
+    LoginRequest request);
+
     @Operation(summary = "토큰 재발급", description = "리프레시 토큰으로 새로운 액세스·리프레시 토큰을 발급받습니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "재발급 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
@@ -96,6 +109,31 @@ public interface AuthControllerDocs {
     })
     ResponseEntity<ApiResponse<TokenResponse>> reissue(@Valid @RequestBody
     ReissueRequest request);
+
+    @Operation(summary = "OAuth2 일회용 코드 교환", description = "OAuth2 콜백으로 받은 일회용 코드를 JWT 액세스·리프레시 토큰으로 교환합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "소셜 로그인 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 일회용 코드")
+    })
+    ResponseEntity<ApiResponse<TokenResponse>> exchangeOAuth2Code(@Valid @RequestBody
+    OAuth2ExchangeRequest request);
+
+    @Operation(summary = "OAuth2 온보딩 아이디·닉네임 중복 확인", description = "온보딩 단계에서 입력한 아이디 또는 닉네임의 사용 가능 여부를 확인합니다.")
+    ResponseEntity<ApiResponse<OAuth2AvailabilityResponse>> checkOAuth2Availability(
+        @RequestParam(required = false)
+        String userId,
+        @RequestParam(required = false)
+        String name);
+
+    @Operation(summary = "OAuth2 신규 사용자 온보딩", description = "신규 소셜 사용자가 약관 동의, 아이디, 닉네임을 입력해 계정을 생성하고 JWT 토큰을 발급받습니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "온보딩 및 로그인 완료"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "약관 미동의 또는 입력값 오류"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 온보딩 토큰"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "아이디 또는 이메일 중복")
+    })
+    ResponseEntity<ApiResponse<TokenResponse>> completeOAuth2Onboarding(@Valid @RequestBody
+    OAuth2OnboardingRequest request);
 
     @Operation(summary = "로그아웃", description = "현재 로그인된 사용자의 리프레시 토큰을 무효화합니다. Authorization 헤더 필수.")
     @SecurityRequirement(name = "bearerAuth")

@@ -12,14 +12,49 @@ export function loginApi({ userId, password }) {
   return apiClient.post('/auth/login', { userId, password }, { [SKIP_AUTH_REFRESH]: true });
 }
 
+// POST /auth/admin/login
+// 관리자 전용 로그인 엔드포인트. ADMIN 권한이 아니면 403 이 반환된다.
+export function adminLoginApi({ userId, password }) {
+  return apiClient.post('/auth/admin/login', { userId, password }, { [SKIP_AUTH_REFRESH]: true });
+}
+
 // POST /auth/logout
 // Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
 export function logoutApi() {
   return apiClient.post('/auth/logout');
 }
 
-// POST /auth/signup
+// POST /auth/signup (Deprecated - OAuth2 온보딩으로 전환)
 // _skipAuthRefresh: 회원가입도 인증 전 엔드포인트라 기존 토큰을 붙이지 않는다(loginApi 와 동일 이유).
 export function signupApi(payload) {
   return apiClient.post('/auth/signup', payload, { [SKIP_AUTH_REFRESH]: true });
+}
+
+// POST /auth/oauth2/exchange
+// OAuth2 콜백으로 받은 일회용 코드를 JWT 액세스·리프레시 토큰으로 교환한다.
+export function exchangeOAuth2CodeApi({ code }) {
+  return apiClient.post('/auth/oauth2/exchange', { code }, { [SKIP_AUTH_REFRESH]: true });
+}
+
+// POST /auth/oauth2/onboarding
+// 신규 소셜 사용자의 초기 프로필 및 약관 동의를 완료하고 JWT 토큰을 발급받는다.
+export function completeOAuth2OnboardingApi(payload) {
+  return apiClient.post('/auth/oauth2/onboarding', payload, { [SKIP_AUTH_REFRESH]: true });
+}
+
+// GET /auth/oauth2/check
+// 온보딩 단계에서 아이디(userId) 또는 닉네임(name) 사용 가능 여부를 조회한다.
+export function checkOAuth2AvailabilityApi({ userId, name }) {
+  return apiClient.get('/auth/oauth2/check', {
+    params: {
+      ...(userId ? { userId } : {}),
+      ...(name ? { name } : {}),
+    },
+    [SKIP_AUTH_REFRESH]: true,
+  });
+}
+
+// OAuth2 제공자별 백엔드 인가 엔드포인트 경로 반환
+export function getOAuth2AuthorizationUrl(provider) {
+  return `/oauth2/authorization/${provider}`;
 }
