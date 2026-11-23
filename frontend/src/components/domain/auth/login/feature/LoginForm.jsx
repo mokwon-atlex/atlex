@@ -10,6 +10,7 @@ import { UserIdField } from '@/components/common/layout/UserIdField';
 import { PasswordField } from '@/components/common/layout/PasswordField';
 
 import { useLogin } from '@/hooks/queries/auth/useLogin';
+import { SocialLoginButtons } from '@/components/domain/auth/login/feature/SocialLoginButtons';
 
 /** 아이디 저장을 위한 로컬 스토리지 키 */
 const SAVED_USER_ID_KEY = 'atlex_saved_user_id';
@@ -138,50 +139,45 @@ function LoginForm({ onSwitchMode }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6">
-      <FieldGroup className="gap-5">
-        <UserIdField value={userId} onChange={(e) => setUserId(e.target.value)} showCheckButton={false} />
+    <div className="mt-6 space-y-6">
+      <SocialLoginButtons />
 
-        <PasswordField
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          showConfirm={false}
-          showChecks={false}
-        />
+      <div className="relative flex items-center py-1">
+        <div className="flex-1 border-t border-border/70" />
+        <span className="px-3 text-xs font-medium text-muted-foreground">관리자 · 테스트 계정 로그인</span>
+        <div className="flex-1 border-t border-border/70" />
+      </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+      <form onSubmit={handleSubmit}>
+        <FieldGroup className="gap-4">
+          <UserIdField value={userId} onChange={(e) => setUserId(e.target.value)} showCheckButton={false} />
 
-        <div className="flex items-center justify-between">
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
-            <Checkbox checked={rememberId} onCheckedChange={handleRememberIdChange} />
-            아이디 저장
-          </label>
+          <PasswordField
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            showConfirm={false}
+            showChecks={false}
+          />
 
-          <div className="flex items-center gap-2 text-sm">
-            <button type="button" className="font-semibold text-primary hover:underline">
-              아이디 찾기
-            </button>
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <span className="text-muted-foreground">|</span>
-
-            <button type="button" className="font-semibold text-primary hover:underline">
-              비밀번호 초기화
-            </button>
+          <div className="flex items-center justify-between">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+              <Checkbox checked={rememberId} onCheckedChange={handleRememberIdChange} />
+              아이디 저장
+            </label>
           </div>
-        </div>
 
-        <Button type="submit" disabled={isPending} className="h-10 w-full rounded-lg text-sm font-bold">
-          {isPending ? '로그인 중...' : '로그인'}
-        </Button>
+          <Button type="submit" disabled={isPending} className="h-10 w-full rounded-lg text-sm font-bold">
+            {isPending ? '로그인 중...' : '로그인'}
+          </Button>
 
-        <p className="border-t border-border/60 pt-5 text-center text-sm text-muted-foreground">
-          아직 계정이 없으신가요?{' '}
-          <button type="button" onClick={onSwitchMode} className="font-semibold text-primary hover:underline">
-            회원가입
-          </button>
-        </p>
-      </FieldGroup>
-    </form>
+          <p className="border-t border-border/60 pt-4 text-center text-xs leading-5 text-muted-foreground">
+            일반 회원은 GitHub, Google, Kakao 소셜 로그인으로 바로 시작할 수 있습니다.
+          </p>
+        </FieldGroup>
+      </form>
+    </div>
   );
 }
 

@@ -1,6 +1,8 @@
 package com.example.atlex.domain.auth.controller;
 
 import com.example.atlex.domain.auth.dto.request.LoginRequest;
+import com.example.atlex.domain.auth.dto.request.OAuth2ExchangeRequest;
+import com.example.atlex.domain.auth.dto.request.OAuth2OnboardingRequest;
 import com.example.atlex.domain.auth.dto.request.ReissueRequest;
 import com.example.atlex.domain.auth.dto.response.TokenResponse;
 import com.example.atlex.domain.user.dto.request.SignupRequest;
@@ -96,6 +98,24 @@ public interface AuthControllerDocs {
     })
     ResponseEntity<ApiResponse<TokenResponse>> reissue(@Valid @RequestBody
     ReissueRequest request);
+
+    @Operation(summary = "OAuth2 일회용 코드 교환", description = "OAuth2 콜백으로 받은 일회용 코드를 JWT 액세스·리프레시 토큰으로 교환합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "소셜 로그인 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 일회용 코드")
+    })
+    ResponseEntity<ApiResponse<TokenResponse>> exchangeOAuth2Code(@Valid @RequestBody
+    OAuth2ExchangeRequest request);
+
+    @Operation(summary = "OAuth2 신규 사용자 온보딩", description = "신규 소셜 사용자가 약관 동의, 아이디, 닉네임을 입력해 계정을 생성하고 JWT 토큰을 발급받습니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "온보딩 및 로그인 완료"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "약관 미동의 또는 입력값 오류"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 온보딩 토큰"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "아이디 또는 이메일 중복")
+    })
+    ResponseEntity<ApiResponse<TokenResponse>> completeOAuth2Onboarding(@Valid @RequestBody
+    OAuth2OnboardingRequest request);
 
     @Operation(summary = "로그아웃", description = "현재 로그인된 사용자의 리프레시 토큰을 무효화합니다. Authorization 헤더 필수.")
     @SecurityRequirement(name = "bearerAuth")
