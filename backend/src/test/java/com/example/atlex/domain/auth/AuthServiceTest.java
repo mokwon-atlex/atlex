@@ -14,6 +14,7 @@ import com.example.atlex.domain.auth.service.AuthService;
 import com.example.atlex.domain.user.entity.User;
 import com.example.atlex.domain.user.entity.UserRole;
 import com.example.atlex.domain.user.service.UserReader;
+import com.example.atlex.global.exception.AccessDeniedException;
 import com.example.atlex.global.security.jwt.JwtProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -225,5 +226,38 @@ class AuthServiceTest {
         assertEquals("atlexdev", response.getUserId());
         verify(socialAccountRepository).save(any(SocialAccount.class));
         verify(oAuth2CodeStore).deleteOnboardingToken("onboard-token");
+    }
+
+    @Test
+    @DisplayName("관리자 전용 로그인 - ADMIN 계정은 토큰을 발급한다")
+    void 관리자_전용_로그인_성공() {
+        User admin = User.builder()
+            .id(1L)
+            .userId("admin")
+            .password("encoded")
+            .active(true)
+            .failCount(0)
+            .role(UserRole.ADMIN)
+            .build();
+        when(userReader.findByUserId("admin")).thenReturn(Optional.of(admin));
+        when(passwordEncoder.matches("correct", "encoded")).thenReturn(true);
+        when(jwtProvider.createAccessToken(1L)).thenReturn("access");
+        when(jwtProvider.createRefreshToken(1L)).thenReturn("refresh");
+        when(tokenRepository.findById(1L)).thenReturn(Optional.empty());
+
+        TokenResponse response = authService.adminLogin("admin", "correct");
+
+        assertEquals(UserRole.ADMIN, response.getRole());
+    }
+
+    @Test
+    @DisplayName("관리자 전용 로그인 - 일반 USER 계정은 AccessDeniedException을 던진다")
+    void 관리자_전용_로그인_일반유저_차단() {
+        User normal = activeUser(0);
+        when(userReader.findByUserId("testUser")).thenReturn(Optional.of(normal));
+        when(passwordEncoder.matches("correct", "encoded")).thenReturn(true);
+
+        assertThrows(AccessDeniedException.class,
+            () -> authService.adminLogin("testUser", "correct"));
     }
 }

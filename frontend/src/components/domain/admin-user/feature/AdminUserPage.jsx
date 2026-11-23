@@ -104,7 +104,7 @@ export function AdminUserPage() {
     <main className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,var(--muted),var(--background)_45%)]">
       <Header />
       <div className="mx-auto w-full max-w-content-narrow flex-1 px-5 pb-12 pt-7 sm:px-8 lg:px-10">
-        <RequireAuth>
+        <RequireAuth redirectTo="/admin/login">
           <AdminUserContent />
         </RequireAuth>
       </div>

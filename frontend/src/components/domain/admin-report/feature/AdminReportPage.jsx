@@ -142,7 +142,7 @@ export function AdminReportPage() {
     <main className="flex min-h-screen flex-col bg-background">
       <Header />
       <div className="mx-auto w-full max-w-content-narrow flex-1 px-4 pb-10 pt-5 sm:px-6 lg:px-8">
-        <RequireAuth>
+        <RequireAuth redirectTo="/admin/login">
           <AdminReportContent />
         </RequireAuth>
       </div>

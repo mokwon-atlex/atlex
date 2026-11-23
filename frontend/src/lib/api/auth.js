@@ -12,6 +12,12 @@ export function loginApi({ userId, password }) {
   return apiClient.post('/auth/login', { userId, password }, { [SKIP_AUTH_REFRESH]: true });
 }
 
+// POST /auth/admin/login
+// 관리자 전용 로그인 엔드포인트. ADMIN 권한이 아니면 403 이 반환된다.
+export function adminLoginApi({ userId, password }) {
+  return apiClient.post('/auth/admin/login', { userId, password }, { [SKIP_AUTH_REFRESH]: true });
+}
+
 // POST /auth/logout
 // Authorization 헤더는 client.js 의 request interceptor 가 store 에서 토큰을 읽어 자동 첨부한다.
 export function logoutApi() {
