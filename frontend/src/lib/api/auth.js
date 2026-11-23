@@ -42,6 +42,18 @@ export function completeOAuth2OnboardingApi(payload) {
   return apiClient.post('/auth/oauth2/onboarding', payload, { [SKIP_AUTH_REFRESH]: true });
 }
 
+// GET /auth/oauth2/check
+// 온보딩 단계에서 아이디(userId) 또는 닉네임(name) 사용 가능 여부를 조회한다.
+export function checkOAuth2AvailabilityApi({ userId, name }) {
+  return apiClient.get('/auth/oauth2/check', {
+    params: {
+      ...(userId ? { userId } : {}),
+      ...(name ? { name } : {}),
+    },
+    [SKIP_AUTH_REFRESH]: true,
+  });
+}
+
 // OAuth2 제공자별 백엔드 인가 엔드포인트 경로 반환
 export function getOAuth2AuthorizationUrl(provider) {
   return `/oauth2/authorization/${provider}`;

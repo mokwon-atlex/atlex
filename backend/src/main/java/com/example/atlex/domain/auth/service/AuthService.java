@@ -1,6 +1,7 @@
 package com.example.atlex.domain.auth.service;
 
 import com.example.atlex.domain.auth.dto.request.OAuth2OnboardingRequest;
+import com.example.atlex.domain.auth.dto.response.OAuth2AvailabilityResponse;
 import com.example.atlex.domain.auth.dto.response.TokenResponse;
 import com.example.atlex.domain.auth.entity.RefreshToken;
 import com.example.atlex.domain.auth.entity.SocialAccount;
@@ -201,6 +202,13 @@ public class AuthService {
             .userId(user.getUserId())
             .role(user.getRole())
             .build();
+    }
+
+    @Transactional(readOnly = true)
+    public OAuth2AvailabilityResponse checkOAuth2Availability(String userId, String name) {
+        Boolean userIdAvailable = (userId != null && !userId.isBlank()) ? userReader.isUserIdAvailable(userId) : null;
+        Boolean nameAvailable = (name != null && !name.isBlank()) ? userReader.isNameAvailable(name) : null;
+        return new OAuth2AvailabilityResponse(userIdAvailable, nameAvailable);
     }
 
     @Transactional

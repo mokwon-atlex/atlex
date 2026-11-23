@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -116,5 +117,57 @@ class OAuth2AuthControllerTest {
 
         assertTrue(socialAccountRepository.existsByProviderAndProviderId(SocialProvider.KAKAO, "kakao-999"));
         verify(oAuth2CodeStore).deleteOnboardingToken("onboard-1");
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/auth/oauth2/check - 아이디·닉네임 사용 가능 여부를 반환한다")
+    void oauth2_check_availability() throws Exception {
+        userRepository.save(User.builder()
+            .userId("takenid")
+            .email("taken@example.com")
+            .name("중복닉네임")
+            .termsAgreed(true)
+            .privacyAgreed(true)
+            .agreedAt(LocalDateTime.now())
+            .build());
+
+        mockMvc.perform(get("/api/v1/auth/oauth2/check")
+            .param("userId", "takenid")
+            .param("name", "중복닉네임"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.userIdAvailable").value(false))
+            .andExpect(jsonPath("$.data.nameAvailable").value(false));
+
+        mockMvc.perform(get("/api/v1/auth/oauth2/check")
+            .param("userId", "freshid")
+            .param("name", "새닉네임"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.userIdAvailable").value(true))
+            .andExpect(jsonPath("$.data.nameAvailable").value(true));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/oauth2/onboarding - 닉네임 중복 시 409 DUPLICATE_NAME 반환")
+    void oauth2_onboarding_duplicate_name() throws Exception {
+        userRepository.save(User.builder()
+            .userId("existingid")
+            .email("existing@example.com")
+            .name("중복닉네임")
+            .termsAgreed(true)
+            .privacyAgreed(true)
+            .agreedAt(LocalDateTime.now())
+            .build());
+
+        when(oAuth2CodeStore.getOnboardingPayload("onboard-dup")).thenReturn(
+            new OAuth2OnboardingPayload(SocialProvider.GITHUB, "gh-dup", "new@example.com", "새유저"));
+
+        OAuth2OnboardingRequest request = new OAuth2OnboardingRequest(
+            "onboard-dup", "newuser1", "중복닉네임", null, true, true, false);
+
+        mockMvc.perform(post("/api/v1/auth/oauth2/onboarding")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("DUPLICATE_NAME"));
     }
 }
