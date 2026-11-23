@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { fetchDescriptionAiSuggestion, fetchParagraphAiSuggestion, fetchTitleAiSuggestion } from '@/lib/api/ai';
+import {
+  consumeAiTokens,
+  fetchDescriptionAiSuggestion,
+  fetchParagraphAiSuggestion,
+  fetchTitleAiSuggestion,
+} from '@/lib/api/ai';
 import { markdownToTiptapContent } from '@/lib/post-editor/markdown-to-html';
 
 const DEBOUNCE_DELAY_MS = 600;
@@ -21,6 +26,36 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
   const clearAiError = useCallback(() => {
     setAiError('');
   }, []);
+
+  // AI 제안이 실제로 본문·제목·설명에 적용되었을 때만 토큰을 차감하고 캐시를 갱신한다.
+  const consumeAndRefreshTokens = useCallback(
+    async (type) => {
+      try {
+        const nextStatus = await consumeAiTokens(type);
+        if (nextStatus) {
+          queryClient.setQueryData(['aiTokens'], nextStatus);
+        }
+      } catch {
+        // 토큰 차감 동기화 실패는 작성 흐름을 막지 않는다.
+      } finally {
+        queryClient.invalidateQueries({ queryKey: ['aiTokens'] });
+      }
+    },
+    [queryClient],
+  );
+
+  // Ghost Text(AI 이어쓰기)를 Tab으로 실제 수락했을 때만 PARAGRAPH 토큰 차감
+  useEffect(() => {
+    if (!editor?.storage?.aiSuggestion) return;
+    editor.storage.aiSuggestion.onAccept = () => {
+      consumeAndRefreshTokens('PARAGRAPH');
+    };
+    return () => {
+      if (editor?.storage?.aiSuggestion) {
+        editor.storage.aiSuggestion.onAccept = null;
+      }
+    };
+  }, [editor, consumeAndRefreshTokens]);
 
   const titleAbortControllerRef = useRef(null);
   const paragraphAbortControllerRef = useRef(null);
@@ -57,7 +92,6 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
             controller.signal,
           );
           setTitleSuggestion(res?.suggestion || '');
-          queryClient.invalidateQueries({ queryKey: ['aiTokens'] });
         } catch (error) {
           if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
             setTitleSuggestion('');
@@ -75,7 +109,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
     [category, tags],
   );
 
-  // 2. 제목 제안 수락 (Tab 키 처리)
+  // 2. 제목 제안 수락 (Tab 키 처리 — 실제 적용 시에만 TITLE 토큰 차감)
   const acceptTitleSuggestion = useCallback(
     (overrideTitle) => {
       if (!titleSuggestion) return '';
@@ -83,9 +117,10 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
       const needsSpace = baseTitle && !baseTitle.endsWith(' ') && !titleSuggestion.startsWith(' ');
       const completedTitle = `${baseTitle}${needsSpace ? ' ' : ''}${titleSuggestion}`;
       setTitleSuggestion('');
+      consumeAndRefreshTokens('TITLE');
       return completedTitle;
     },
-    [title, titleSuggestion],
+    [consumeAndRefreshTokens, title, titleSuggestion],
   );
 
   // 3. 제목 제안 취소
@@ -160,6 +195,8 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
               }
               editor.chain().focus().clearAiSuggestion().insertContent(suggestionText).run();
             }
+            // 직접 삽입 버튼(코드·다이어그램·표·수식)은 즉시 본문에 적용되므로 차감
+            consumeAndRefreshTokens('PARAGRAPH');
           } else {
             if (
               lastChar &&
@@ -171,7 +208,6 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
             }
             editor.commands.setAiSuggestion(suggestionText);
           }
-          queryClient.invalidateQueries({ queryKey: ['aiTokens'] });
         } else {
           editor.commands.clearAiSuggestion();
         }
@@ -224,8 +260,11 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
           },
           controller.signal,
         );
-        queryClient.invalidateQueries({ queryKey: ['aiTokens'] });
-        return res?.suggestion || '';
+        if (res?.suggestion) {
+          consumeAndRefreshTokens('DESCRIPTION');
+          return res.suggestion;
+        }
+        return '';
       } catch (error) {
         if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
           if (error.response?.status === 429) {

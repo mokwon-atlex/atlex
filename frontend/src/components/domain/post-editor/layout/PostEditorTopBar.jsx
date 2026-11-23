@@ -1,54 +1,76 @@
-// [Section] 에디터 상단 바 — 로고, 임시 저장 목록 열기, 게시 버튼
+// [Section] 에디터 상단 바 — 나가기, 로고, 남은 AI 토큰, 임시 저장 목록
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/common/ui/button';
 
 export default function PostEditorTopBar({
   draftButtonLabel = '임시 저장 목록',
   saveDraftButtonLabel = '임시 저장',
   logoLabel = '로고',
-  onOpenDraftModal, // 임시 저장 목록 모달 열기 핸들러
-  onSaveDraft, // 임시 저장 실행 핸들러
-  onPublish, // 게시 버튼 핸들러
-  publishButtonLabel = '게시 버튼',
-  publishDisabled = false, // 게시 진행 중 등 버튼 비활성화 여부
+  onOpenDraftModal,
+  onSaveDraft,
+  onPublish,
+  publishButtonLabel = '게시',
+  publishDisabled = false,
   remainingTokens = null,
   maxTokens = null,
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-7">
-      <Link href="/" aria-label={logoLabel} className="inline-flex h-10 w-20 items-center">
-        <img src="/logo/atlex-light.svg" alt={logoLabel} className="max-h-full max-w-full object-contain dark:hidden" />
-        <img
-          src="/logo/atlex-dark.svg"
-          alt={logoLabel}
-          className="hidden max-h-full max-w-full object-contain dark:block"
-        />
-      </Link>
+    <header className="sticky top-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            aria-label="나가기"
+            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="size-3.5" />
+            <span>나가기</span>
+          </Link>
+          <span className="h-4 w-px bg-border/60" aria-hidden="true" />
+          <Link href="/" aria-label={logoLabel} className="inline-flex h-7 w-14 items-center">
+            <img
+              src="/logo/atlex-light.svg"
+              alt={logoLabel}
+              className="max-h-full max-w-full object-contain dark:hidden"
+            />
+            <img
+              src="/logo/atlex-dark.svg"
+              alt={logoLabel}
+              className="hidden max-h-full max-w-full object-contain dark:block"
+            />
+          </Link>
+        </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        {remainingTokens !== null && maxTokens !== null && (
-          <div className="text-sm text-muted-foreground mr-2 font-medium">
-            남은 AI 토큰:{' '}
-            {remainingTokens === 0 ? (
-              <span className="text-destructive font-bold">0</span>
-            ) : (
-              remainingTokens.toLocaleString()
-            )}{' '}
-            / {maxTokens.toLocaleString()}
-          </div>
-        )}
-        {onSaveDraft && (
-          <Button variant="outline" size="default" onClick={onSaveDraft}>
-            {saveDraftButtonLabel}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {remainingTokens !== null && maxTokens !== null && (
+            <div className="rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
+              AI 토큰{' '}
+              {remainingTokens === 0 ? (
+                <span className="font-bold text-destructive">0</span>
+              ) : (
+                <span className="font-semibold text-foreground">{remainingTokens.toLocaleString()}</span>
+              )}{' '}
+              / {maxTokens.toLocaleString()}
+            </div>
+          )}
+          <Button type="button" variant="ghost" size="sm" onClick={onOpenDraftModal}>
+            {draftButtonLabel}
           </Button>
-        )}
-        <Button variant="outline" size="default" onClick={onOpenDraftModal}>
-          {draftButtonLabel}
-        </Button>
-        <Button variant="default" size="default" onClick={onPublish} disabled={publishDisabled}>
-          {publishButtonLabel}
-        </Button>
+          {onPublish && (
+            <>
+              {onSaveDraft && (
+                <Button type="button" variant="outline" size="sm" onClick={onSaveDraft}>
+                  {saveDraftButtonLabel}
+                </Button>
+              )}
+              <Button type="button" variant="default" size="sm" onClick={onPublish} disabled={publishDisabled}>
+                {publishButtonLabel}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </header>
   );
 }

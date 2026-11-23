@@ -1,7 +1,7 @@
 // [Section] 게시 메타 입력 — 설명(description) · 카테고리 · 공개 여부(isPublic).
 // 모든 값/핸들러를 props 로 받는 controlled 컴포넌트. 상태는 상위(page.jsx)에서 관리한다.
 import { useState } from 'react';
-import { Check, ImageOff, Loader2, Plus, Sparkles, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, ImageOff, Loader2, Plus, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/common/ui/button';
 import { Field, FieldLabel } from '@/components/common/ui/field';
 import { Input } from '@/components/common/ui/input';
@@ -27,10 +27,14 @@ export default function PostEditorMetaSection({
   onSelectThumbnail,
 }) {
   const categoryOptions = [postEditorCategories[0], ...categories];
+  const [isOpen, setIsOpen] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [categoryError, setCategoryError] = useState('');
+
+  const selectedCategoryName =
+    categoryOptions.find((item) => String(item.id ?? '') === String(categoryId ?? ''))?.name ?? '미분류';
 
   async function handleSubmitNewCategory() {
     const trimmed = newCategoryName.trim();
@@ -53,197 +57,229 @@ export default function PostEditorMetaSection({
   }
 
   return (
-    <section className="border-b border-border">
-      <div className="grid gap-6 px-5 py-6 sm:px-7">
-        {/* 설명 (optional) */}
-        <Field>
-          <div className="flex items-center justify-between">
-            <FieldLabel htmlFor="post-editor-description" className={LABEL_CLASS}>
-              설명 (선택)
-            </FieldLabel>
-            {onRequestGenerateDescription ? (
-              <button
-                type="button"
-                onClick={onRequestGenerateDescription}
-                disabled={isGeneratingDescription}
-                className="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50 disabled:no-underline cursor-pointer transition-colors"
-                title="본문 내용을 분석하여 1~2문장의 메타 설명을 자동 생성합니다"
-              >
-                {isGeneratingDescription ? (
-                  <Loader2 className="size-3 animate-spin" />
-                ) : (
-                  <Sparkles className="size-3" />
-                )}
-                <span>{isGeneratingDescription ? 'AI 요약 중...' : 'AI 요약 생성'}</span>
-              </button>
-            ) : null}
+    <section className="mx-auto w-full max-w-4xl px-5 pb-10 sm:px-8">
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/15">
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          aria-expanded={isOpen}
+          className="flex w-full items-center justify-between gap-4 px-5 py-3.5 text-left transition-colors hover:bg-muted/30"
+        >
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="font-semibold text-foreground">발행 설정</span>
+            <span className="text-xs text-muted-foreground">
+              · {selectedCategoryName} · {isPublic ? '전체 공개' : '비공개'}
+              {description?.trim() ? ' · 설명 입력됨' : ''}
+            </span>
           </div>
-          <Textarea
-            id="post-editor-description"
-            variant="filled"
-            value={description}
-            placeholder="목록·카드에 노출될 짧은 설명을 입력하세요."
-            onChange={(event) => onDescriptionChange(event.target.value)}
-          />
-        </Field>
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+            {isOpen ? (
+              <>
+                <span>접기</span>
+                <ChevronUp className="size-4" />
+              </>
+            ) : (
+              <>
+                <span>설정 열기</span>
+                <ChevronDown className="size-4" />
+              </>
+            )}
+          </span>
+        </button>
 
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          {/* 카테고리 */}
-          <Field className="max-w-md flex-1">
-            <FieldLabel htmlFor="post-editor-category" className={LABEL_CLASS}>
-              카테고리
-            </FieldLabel>
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                id="post-editor-category"
-                value={categoryId ?? ''}
-                onChange={(event) => {
-                  const { value } = event.target;
-                  const nextCategoryId = Number(value);
-                  onCategoryChange(value === '' || !Number.isFinite(nextCategoryId) ? null : nextCategoryId);
-                }}
-                className="h-10 min-w-44 flex-1 rounded-lg border border-border bg-muted px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                {categoryOptions.map((category) => (
-                  <option key={category.id ?? 'none'} value={category.id ?? ''}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-
-              {onCreateCategory && !isAddingCategory ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="default"
-                  onClick={() => {
-                    setCategoryError('');
-                    setIsAddingCategory(true);
-                  }}
-                  className="h-10 shrink-0 gap-1"
-                >
-                  <Plus className="size-4" />
-                  추가
-                </Button>
-              ) : null}
-            </div>
-
-            {onCreateCategory && isAddingCategory ? (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Input
-                  type="text"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleSubmitNewCategory();
-                    } else if (e.key === 'Escape') {
-                      setIsAddingCategory(false);
-                      setCategoryError('');
-                    }
-                  }}
-                  placeholder="새 카테고리 이름"
-                  disabled={isCreatingCategory}
-                  aria-label="새 카테고리 이름"
-                  className="h-9 min-w-40 flex-1"
-                  autoFocus
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={isCreatingCategory || !newCategoryName.trim()}
-                  onClick={handleSubmitNewCategory}
-                >
-                  {isCreatingCategory ? <Loader2 className="size-3.5 animate-spin" /> : '저장'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={isCreatingCategory}
-                  onClick={() => {
-                    setIsAddingCategory(false);
-                    setNewCategoryName('');
-                    setCategoryError('');
-                  }}
-                  aria-label="카테고리 추가 취소"
-                >
-                  <X className="size-4" />
-                </Button>
-              </div>
-            ) : null}
-
-            {categoryError ? (
-              <p role="alert" className="mt-1.5 text-xs text-destructive">
-                {categoryError}
-              </p>
-            ) : null}
-          </Field>
-
-          {/* 공개 여부 */}
-          <Field orientation="horizontal" className="w-auto items-center gap-3">
-            <FieldLabel htmlFor="post-editor-public" className={LABEL_CLASS}>
-              {isPublic ? '공개' : '비공개'}
-            </FieldLabel>
-            <Switch id="post-editor-public" checked={isPublic} onCheckedChange={onIsPublicChange} />
-          </Field>
-        </div>
-
-        {/* 본문에 이미지가 1개 이상 있으면 대표 이미지 선택 UI를 노출한다. */}
-        {images.length > 0 && onSelectThumbnail ? (
-          <Field>
-            <div className="flex items-center justify-between gap-2">
-              <FieldLabel className={LABEL_CLASS}>대표 이미지</FieldLabel>
-              <span className="text-xs text-muted-foreground">
-                {images.length > 1
-                  ? '목록 카드에 표시할 기본 이미지를 선택하세요.'
-                  : '목록 카드에 표시되는 기본 이미지입니다.'}
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              {images.map((src, index) => {
-                const isSelected = selectedThumbnailUrl === src;
-                return (
+        {isOpen && (
+          <div className="grid gap-6 border-t border-border/60 px-5 py-6 sm:px-7">
+            {/* 설명 (optional) */}
+            <Field>
+              <div className="flex items-center justify-between">
+                <FieldLabel htmlFor="post-editor-description" className={LABEL_CLASS}>
+                  설명 (선택)
+                </FieldLabel>
+                {onRequestGenerateDescription ? (
                   <button
-                    key={src}
                     type="button"
-                    onClick={() => onSelectThumbnail(src)}
-                    aria-label={`대표 이미지 ${index + 1} 선택`}
-                    aria-pressed={isSelected}
-                    className={`relative h-16 w-24 overflow-hidden rounded-lg border transition-all cursor-pointer ${
-                      isSelected
-                        ? 'border-primary ring-2 ring-primary/40'
-                        : 'border-border opacity-80 hover:opacity-100'
+                    onClick={onRequestGenerateDescription}
+                    disabled={isGeneratingDescription}
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50 disabled:no-underline cursor-pointer transition-colors"
+                    title="본문 내용을 분석하여 1~2문장의 메타 설명을 자동 생성합니다"
+                  >
+                    {isGeneratingDescription ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="size-3" />
+                    )}
+                    <span>{isGeneratingDescription ? 'AI 요약 중...' : 'AI 요약 생성'}</span>
+                  </button>
+                ) : null}
+              </div>
+              <Textarea
+                id="post-editor-description"
+                variant="filled"
+                value={description}
+                placeholder="목록·카드에 노출될 짧은 설명을 입력하세요."
+                onChange={(event) => onDescriptionChange(event.target.value)}
+              />
+            </Field>
+
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              {/* 카테고리 */}
+              <Field className="max-w-md flex-1">
+                <FieldLabel htmlFor="post-editor-category" className={LABEL_CLASS}>
+                  카테고리
+                </FieldLabel>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    id="post-editor-category"
+                    value={categoryId ?? ''}
+                    onChange={(event) => {
+                      const { value } = event.target;
+                      const nextCategoryId = Number(value);
+                      onCategoryChange(value === '' || !Number.isFinite(nextCategoryId) ? null : nextCategoryId);
+                    }}
+                    className="h-10 min-w-44 flex-1 rounded-lg border border-border bg-muted px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    {categoryOptions.map((category) => (
+                      <option key={category.id ?? 'none'} value={category.id ?? ''}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {onCreateCategory && !isAddingCategory ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="default"
+                      onClick={() => {
+                        setCategoryError('');
+                        setIsAddingCategory(true);
+                      }}
+                      className="h-10 shrink-0 gap-1"
+                    >
+                      <Plus className="size-4" />
+                      추가
+                    </Button>
+                  ) : null}
+                </div>
+
+                {onCreateCategory && isAddingCategory ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Input
+                      type="text"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSubmitNewCategory();
+                        } else if (e.key === 'Escape') {
+                          setIsAddingCategory(false);
+                          setCategoryError('');
+                        }
+                      }}
+                      placeholder="새 카테고리 이름"
+                      disabled={isCreatingCategory}
+                      aria-label="새 카테고리 이름"
+                      className="h-9 min-w-40 flex-1"
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={isCreatingCategory || !newCategoryName.trim()}
+                      onClick={handleSubmitNewCategory}
+                    >
+                      {isCreatingCategory ? <Loader2 className="size-3.5 animate-spin" /> : '저장'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      disabled={isCreatingCategory}
+                      onClick={() => {
+                        setIsAddingCategory(false);
+                        setNewCategoryName('');
+                        setCategoryError('');
+                      }}
+                      aria-label="카테고리 추가 취소"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                ) : null}
+
+                {categoryError ? (
+                  <p role="alert" className="mt-1.5 text-xs text-destructive">
+                    {categoryError}
+                  </p>
+                ) : null}
+              </Field>
+
+              {/* 공개 여부 */}
+              <Field orientation="horizontal" className="w-auto items-center gap-3">
+                <FieldLabel htmlFor="post-editor-public" className={LABEL_CLASS}>
+                  {isPublic ? '공개' : '비공개'}
+                </FieldLabel>
+                <Switch id="post-editor-public" checked={isPublic} onCheckedChange={onIsPublicChange} />
+              </Field>
+            </div>
+
+            {/* 본문에 이미지가 1개 이상 있으면 대표 이미지 선택 UI를 노출한다. */}
+            {images.length > 0 && onSelectThumbnail ? (
+              <Field>
+                <div className="flex items-center justify-between gap-2">
+                  <FieldLabel className={LABEL_CLASS}>대표 이미지</FieldLabel>
+                  <span className="text-xs text-muted-foreground">
+                    {images.length > 1
+                      ? '목록 카드에 표시할 기본 이미지를 선택하세요.'
+                      : '목록 카드에 표시되는 기본 이미지입니다.'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {images.map((src, index) => {
+                    const isSelected = selectedThumbnailUrl === src;
+                    return (
+                      <button
+                        key={src}
+                        type="button"
+                        onClick={() => onSelectThumbnail(src)}
+                        aria-label={`대표 이미지 ${index + 1} 선택`}
+                        aria-pressed={isSelected}
+                        className={`relative h-16 w-24 overflow-hidden rounded-lg border transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-primary ring-2 ring-primary/40'
+                            : 'border-border opacity-80 hover:opacity-100'
+                        }`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt={`대표 이미지 후보 ${index + 1}`} className="h-full w-full object-cover" />
+                        {isSelected ? (
+                          <span className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+                            <Check className="size-3" />
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={() => onSelectThumbnail(null)}
+                    aria-pressed={selectedThumbnailUrl === null}
+                    className={`inline-flex h-16 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-all cursor-pointer ${
+                      selectedThumbnailUrl === null
+                        ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/30'
+                        : 'border-border bg-muted/50 text-muted-foreground hover:bg-muted'
                     }`}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt={`대표 이미지 후보 ${index + 1}`} className="h-full w-full object-cover" />
-                    {isSelected ? (
-                      <span className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
-                        <Check className="size-3" />
-                      </span>
-                    ) : null}
+                    <ImageOff className="size-3.5" />
+                    <span>선택 안 함</span>
                   </button>
-                );
-              })}
-
-              <button
-                type="button"
-                onClick={() => onSelectThumbnail(null)}
-                aria-pressed={selectedThumbnailUrl === null}
-                className={`inline-flex h-16 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-all cursor-pointer ${
-                  selectedThumbnailUrl === null
-                    ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/30'
-                    : 'border-border bg-muted/50 text-muted-foreground hover:bg-muted'
-                }`}
-              >
-                <ImageOff className="size-3.5" />
-                <span>선택 안 함</span>
-              </button>
-            </div>
-          </Field>
-        ) : null}
+                </div>
+              </Field>
+            ) : null}
+          </div>
+        )}
       </div>
     </section>
   );

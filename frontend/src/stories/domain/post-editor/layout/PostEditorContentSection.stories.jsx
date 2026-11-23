@@ -1,5 +1,6 @@
 'use client';
 
+import { expect, userEvent, waitFor } from 'storybook/test';
 import PostEditorContentSection from '@/components/domain/post-editor/layout/PostEditorContentSection';
 import { postEditorCopy } from '@/data/post-editor/post-editor-copy';
 import usePostEditorRichText from '@/hooks/post-editor/post-editor-rich-text';
@@ -33,9 +34,18 @@ const meta = {
 
 export default meta;
 
-// 에디터가 비어 있을 때 placeholder가 보이는 상태
+// 에디터가 비어 있을 때 placeholder가 보이고, 캔버스 빈 영역 클릭 시 에디터로 포커스가 이동하는 상태
 export const Empty = {
   render: () => <ContentSectionDemo />,
+  play: async ({ canvasElement }) => {
+    const canvasArea = canvasElement.querySelector('[data-editor-canvas]');
+    const tiptap = canvasElement.querySelector('.tiptap');
+    await expect(canvasArea).not.toBeNull();
+    await expect(tiptap).not.toBeNull();
+
+    await userEvent.click(canvasArea);
+    await waitFor(() => expect(document.activeElement).toBe(tiptap));
+  },
 };
 
 // 에디터에 초기 본문이 있고 글자 수 카운터가 갱신되는 상태

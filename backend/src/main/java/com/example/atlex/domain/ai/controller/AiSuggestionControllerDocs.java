@@ -23,4 +23,8 @@ public interface AiSuggestionControllerDocs {
 
     @Operation(summary = "남은 AI 글쓰기 토큰 조회", description = "현재 유저의 남은 일일 AI 글쓰기 토큰을 조회합니다.")
     ResponseEntity<ApiResponse<com.example.atlex.domain.ai.dto.response.AiTokenResponse>> getTokenStatus();
+
+    @Operation(summary = "AI 토큰 실제 사용 차감", description = "제안된 AI 콘텐츠를 실제로 본문·제목·설명에 적용했을 때 토큰을 차감합니다.")
+    ResponseEntity<ApiResponse<com.example.atlex.domain.ai.dto.response.AiTokenResponse>> consumeTokens(
+        com.example.atlex.domain.ai.dto.request.AiConsumeRequest request);
 }

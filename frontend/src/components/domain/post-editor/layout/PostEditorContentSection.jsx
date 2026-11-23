@@ -1,18 +1,16 @@
 'use client';
 
-// [Section] tiptap 리치 텍스트 에디터를 Card(dashed) 안에 렌더하는 본문 섹션.
-// 에디터가 비어 있을 때만 placeholder를 absolute로 겹쳐서 표시한다.
+// [Section] tiptap 리치 텍스트 에디터 본문 섹션.
+// 본문 영역 어디를 클릭해도 즉시 에디터 포커스가 잡혀 글쓰기를 시작할 수 있다.
 import { EditorContent } from '@tiptap/react';
 import { Code2, GitFork, Loader2, Sigma, Sparkles, Table2, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/common/ui/button';
-import { Card, CardContent, CardTitle } from '@/components/common/ui/card';
 import { Textfield } from '@/components/common/ui/textfield';
 import PostLinkPopover from '@/components/domain/post-editor/ui/PostLinkPopover';
 
 export default function PostEditorContentSection({
   bodyPlaceholder,
-  bodyText, // 글자 수 카운터에 사용
   editor, // usePostEditorRichText가 반환한 tiptap Editor 인스턴스
   isEditorEmpty,
   isSuggestingParagraph = false,
@@ -37,172 +35,182 @@ export default function PostEditorContentSection({
     }
   };
 
+  // 본문 영역의 여백이나 빈 공간을 클릭해도 즉시 에디터 끝으로 포커스한다.
+  const handleCanvasClick = (e) => {
+    if (!editor) return;
+    const target = e.target;
+    if (target instanceof Element) {
+      if (target.closest('.tiptap') || target.closest('button, a, input, textarea, select, [role="dialog"]')) {
+        return;
+      }
+    }
+    editor.chain().focus('end').run();
+  };
+
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 p-5 sm:p-7">
-        <Card size="sm" className="flex h-full min-h-0 flex-col gap-4 bg-background p-5 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle className="text-lg">본문</CardTitle>
-            {onRequestParagraphAi ? (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => onRequestParagraphAi('CODE')}
-                  disabled={isSuggestingParagraph}
-                  className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-                  title="문맥에 맞는 예제 코드 블록을 AI로 생성해 삽입합니다"
-                >
-                  <Code2 className="size-3 text-primary" />
-                  <span>코드</span>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => onRequestParagraphAi('DIAGRAM')}
-                  disabled={isSuggestingParagraph}
-                  className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-                  title="문맥에 맞는 Mermaid 다이어그램을 AI로 생성해 삽입합니다"
-                >
-                  <GitFork className="size-3 text-primary" />
-                  <span>다이어그램</span>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => onRequestParagraphAi('TABLE')}
-                  disabled={isSuggestingParagraph}
-                  className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-                  title="문맥을 비교·정리하는 마크다운 표를 AI로 생성해 삽입합니다"
-                >
-                  <Table2 className="size-3 text-primary" />
-                  <span>표</span>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => onRequestParagraphAi('MATH')}
-                  disabled={isSuggestingParagraph}
-                  className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-                  title="문맥과 관련된 수식 블록을 AI로 생성해 삽입합니다"
-                >
-                  <Sigma className="size-3 text-primary" />
-                  <span>수식</span>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => onRequestParagraphAi('AUTO')}
-                  disabled={isSuggestingParagraph}
-                  className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  title="현재 커서 위치에 AI가 다음 문장을 이어서 추천합니다 (단축키: Ctrl + J, 적용: Tab, 취소: Esc)"
-                >
-                  {isSuggestingParagraph ? (
-                    <Loader2 className="size-3 animate-spin text-primary" />
-                  ) : (
-                    <Sparkles className="size-3 text-primary" />
-                  )}
-                  <span>{isSuggestingParagraph ? '작성 중...' : 'AI 이어쓰기'}</span>
-                  <span className="rounded border border-border/60 bg-muted/40 px-1 text-[10px] text-muted-foreground">
-                    Ctrl+J
-                  </span>
-                </Button>
-              </div>
-            ) : null}
-          </div>
+    <div className="flex flex-1 flex-col">
+      {(onRequestParagraphAi || isTableActive) && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 px-5 py-2.5 sm:px-8">
+          {onRequestParagraphAi ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-[11px] font-medium text-muted-foreground">AI 도우미</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onRequestParagraphAi('CODE')}
+                disabled={isSuggestingParagraph}
+                className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+                title="문맥에 맞는 예제 코드 블록을 AI로 생성해 삽입합니다"
+              >
+                <Code2 className="size-3 text-primary" />
+                <span>코드</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onRequestParagraphAi('DIAGRAM')}
+                disabled={isSuggestingParagraph}
+                className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+                title="문맥에 맞는 Mermaid 다이어그램을 AI로 생성해 삽입합니다"
+              >
+                <GitFork className="size-3 text-primary" />
+                <span>다이어그램</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onRequestParagraphAi('TABLE')}
+                disabled={isSuggestingParagraph}
+                className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+                title="문맥을 비교·정리하는 마크다운 표를 AI로 생성해 삽입합니다"
+              >
+                <Table2 className="size-3 text-primary" />
+                <span>표</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onRequestParagraphAi('MATH')}
+                disabled={isSuggestingParagraph}
+                className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+                title="문맥과 관련된 수식 블록을 AI로 생성해 삽입합니다"
+              >
+                <Sigma className="size-3 text-primary" />
+                <span>수식</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onRequestParagraphAi('AUTO')}
+                disabled={isSuggestingParagraph}
+                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                title="현재 커서 위치에 AI가 다음 문장을 이어서 추천합니다 (단축키: Ctrl + J, 적용: Tab, 취소: Esc)"
+              >
+                {isSuggestingParagraph ? (
+                  <Loader2 className="size-3 animate-spin text-primary" />
+                ) : (
+                  <Sparkles className="size-3 text-primary" />
+                )}
+                <span>{isSuggestingParagraph ? '작성 중...' : 'AI 이어쓰기'}</span>
+                <span className="rounded border border-border/60 bg-muted/40 px-1 text-[10px] text-muted-foreground">
+                  Ctrl+J
+                </span>
+              </Button>
+            </div>
+          ) : (
+            <div />
+          )}
 
           {isTableActive ? (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs">
-              <span className="font-semibold text-foreground">표 편집</span>
-              <div className="flex flex-wrap items-center gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => editor.chain().focus().addRowAfter().run()}
-                >
-                  행 추가
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => editor.chain().focus().deleteRow().run()}
-                >
-                  행 삭제
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => editor.chain().focus().addColumnAfter().run()}
-                >
-                  열 추가
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => editor.chain().focus().deleteColumn().run()}
-                >
-                  열 삭제
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="xs"
-                  className="gap-1"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => editor.chain().focus().deleteTable().run()}
-                >
-                  <Trash2 className="size-3" />표 삭제
-                </Button>
-              </div>
+            <div className="flex flex-wrap items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-1 text-xs">
+              <span className="mr-1 font-semibold text-foreground">표 편집</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => editor.chain().focus().addRowAfter().run()}
+              >
+                행 추가
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => editor.chain().focus().deleteRow().run()}
+              >
+                행 삭제
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => editor.chain().focus().addColumnAfter().run()}
+              >
+                열 추가
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => editor.chain().focus().deleteColumn().run()}
+              >
+                열 삭제
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="xs"
+                className="gap-1"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => editor.chain().focus().deleteTable().run()}
+              >
+                <Trash2 className="size-3" />표 삭제
+              </Button>
             </div>
           ) : null}
+        </div>
+      )}
 
-          <CardContent className="relative min-h-0 flex-1 px-0">
-            {isEditorEmpty && bodyPlaceholder ? (
-              <Textfield
-                variant="muted"
-                size="default"
-                whitespace="preline"
-                className="pointer-events-none absolute inset-x-0 top-0 leading-8"
-              >
-                {bodyPlaceholder}
-              </Textfield>
-            ) : null}
+      <div
+        data-editor-canvas
+        onClick={handleCanvasClick}
+        className="relative flex min-h-[480px] flex-1 cursor-text flex-col px-5 py-7 sm:px-8"
+      >
+        {isEditorEmpty && bodyPlaceholder ? (
+          <Textfield
+            variant="muted"
+            size="default"
+            whitespace="preline"
+            className="pointer-events-none absolute inset-x-5 top-7 leading-8 sm:inset-x-8"
+          >
+            {bodyPlaceholder}
+          </Textfield>
+        ) : null}
 
-            <div
-              onKeyDown={handleKeyDown}
-              onKeyDownCapture={handleKeyDownCapture}
-              className="post-editor-prose h-full min-h-0 overflow-y-auto overflow-x-hidden break-words"
-            >
-              <EditorContent editor={editor} />
-            </div>
+        <div
+          onKeyDown={handleKeyDown}
+          onKeyDownCapture={handleKeyDownCapture}
+          className="post-editor-prose flex-1 break-words"
+        >
+          <EditorContent editor={editor} className="h-full min-h-[460px]" />
+        </div>
 
-            <PostLinkPopover editor={editor} userId={userId} />
-          </CardContent>
-        </Card>
+        <PostLinkPopover editor={editor} userId={userId} />
       </div>
-
-      <Textfield variant="muted" size="sm" className="px-5 pb-5 text-right sm:px-7 sm:pb-6">
-        총 {bodyText.length}자
-      </Textfield>
     </div>
   );
 }
