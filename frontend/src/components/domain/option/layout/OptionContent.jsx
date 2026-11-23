@@ -4,11 +4,11 @@ import { NotificationSettingForm } from '@/components/domain/option/feature/Noti
 import { PolicySettingForm } from '@/components/domain/option/feature/PolicySettingForm';
 import { DeleteAccountForm } from '@/components/domain/option/feature/DeleteAccountForm';
 
-function OptionContent({ activeMenu }) {
+function OptionContent({ activeMenu, hasPassword = true }) {
   return (
     <div className="h-fit">
       {activeMenu === 'profile' && <ProfileSettingForm />}
-      {activeMenu === 'password' && <PasswordSettingForm />}
+      {activeMenu === 'password' && <PasswordSettingForm hasPassword={hasPassword} />}
       {activeMenu === 'notification' && <NotificationSettingForm />}
       {activeMenu === 'policy' && <PolicySettingForm />}
       {activeMenu === 'delete' && <DeleteAccountForm />}

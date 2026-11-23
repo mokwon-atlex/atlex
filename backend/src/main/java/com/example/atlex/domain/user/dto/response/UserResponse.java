@@ -37,6 +37,8 @@ public class UserResponse {
     private String role;
     @Schema(description = "멤버십 등급", example = "FREE")
     private String membershipTier;
+    @Schema(description = "비밀번호 보유 여부 (소셜 전용 계정은 false)", example = "true")
+    private Boolean hasPassword;
 
     //Entity를 Response DTO로 변환하는 정적 팩토리 메서드
     public static UserResponse from(User user) {
@@ -48,6 +50,7 @@ public class UserResponse {
             .active(user.getActive())
             .role(user.getRole() != null ? user.getRole().name() : null)
             .membershipTier(user.getMembershipTier() != null ? user.getMembershipTier().name() : null)
+            .hasPassword(user.getPassword() != null && !user.getPassword().isBlank())
             .marketingAgreed(user.getMarketingAgreed())
             .createdAt(user.getCreatedAt())
             .updatedAt(user.getUpdatedAt()) // 수정 전엔 null 또는 생성시간과 동일

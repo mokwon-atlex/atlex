@@ -120,7 +120,7 @@ public class UserService {
         User user = userRepository.findByUserIdAndActiveTrue(userId)
             .orElseThrow(UserNotFoundException::new);
 
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+        if (user.getPassword() == null || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new InvalidCurrentPasswordException();
         }
 
