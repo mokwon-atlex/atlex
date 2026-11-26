@@ -1,7 +1,9 @@
+import { memo } from 'react';
+
 import { getGraphTheme } from '@/lib/graph-view/graph-view-utils';
 
 /** 간선 두께 의미와 노드 조작 방법을 안내하는 범례 패널이다. */
-export function GraphLegend({ canvasTheme = 'dark' }) {
+export const GraphLegend = memo(function GraphLegend({ canvasTheme = 'dark', offsetLeftClass = 'left-4' }) {
   const theme = getGraphTheme(canvasTheme);
   const items = [
     { label: '약한 연관', width: 1.4 },
@@ -9,7 +11,9 @@ export function GraphLegend({ canvasTheme = 'dark' }) {
   ];
 
   return (
-    <div className="absolute bottom-20 left-4 hidden flex-col gap-1.5 rounded-lg border border-border/80 bg-card/90 px-4 py-2.5 shadow-sm backdrop-blur-md md:flex">
+    <div
+      className={`absolute bottom-20 ${offsetLeftClass} z-20 hidden flex-col gap-1.5 rounded-lg border border-border/80 bg-card/90 px-4 py-2.5 shadow-sm backdrop-blur-md transition-[left] duration-200 md:flex`}
+    >
       {items.map((item) => (
         <div key={item.label} className="flex items-center gap-3">
           <svg height="16" width="52">
@@ -30,4 +34,4 @@ export function GraphLegend({ canvasTheme = 'dark' }) {
       <p className="text-[11px] font-bold text-muted-foreground">드래그: 노드 재배치 / 클릭: 게시글 열기</p>
     </div>
   );
-}
+});

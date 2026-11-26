@@ -1,12 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Lock, Search } from 'lucide-react';
 
 import { AuthorBadge, TagPill } from '@/components/domain/graph-view/ui/GraphViewBadges';
 import { cn } from '@/lib/utils';
 
-export function PostListPanel({ onSelect, posts, selectedId }) {
+export const PostListPanel = memo(function PostListPanel({ onSelect, posts, selectedId }) {
   const [query, setQuery] = useState('');
   const filteredPosts = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
@@ -24,7 +24,7 @@ export function PostListPanel({ onSelect, posts, selectedId }) {
   }, [posts, query]);
 
   return (
-    <aside className="flex w-[22rem] shrink-0 flex-col border-l border-border bg-card shadow-sm">
+    <aside className="absolute inset-y-0 right-0 z-30 flex w-[22rem] max-w-[calc(100vw-2rem)] shrink-0 flex-col border-l border-border bg-card/95 shadow-xl backdrop-blur-md">
       <div className="border-b border-border p-4">
         <label className="flex items-center gap-2 rounded-lg bg-muted/45 px-3 py-2.5">
           <Search className="size-4 text-muted-foreground" />
@@ -72,4 +72,4 @@ export function PostListPanel({ onSelect, posts, selectedId }) {
       </div>
     </aside>
   );
-}
+});

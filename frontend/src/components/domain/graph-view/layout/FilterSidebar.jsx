@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { ChevronDown, ChevronUp, Search } from 'lucide-react';
 
 import { tagMeta } from '@/lib/graph-view/graph-view-utils';
@@ -9,7 +9,7 @@ import { FilterIcon, MiniConnectionIcon } from '@/components/domain/graph-view/u
 import { PRIMARY } from '@/lib/graph-view/graph-view-utils';
 
 /** 작성자·태그·관계 조건으로 그래프 표시 범위를 좁히는 사이드바다. */
-export function FilterSidebar({
+export const FilterSidebar = memo(function FilterSidebar({
   activeAuthors,
   activeTags,
   authors,
@@ -60,7 +60,7 @@ export function FilterSidebar({
   }
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-border bg-card text-sm shadow-sm">
+    <aside className="absolute inset-y-0 left-0 z-30 flex w-72 shrink-0 flex-col overflow-y-auto border-r border-border bg-card/95 text-sm shadow-xl backdrop-blur-md">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <span className="flex items-center gap-2 text-lg font-black text-foreground">
           <FilterIcon />
@@ -220,7 +220,7 @@ export function FilterSidebar({
       </div>
     </aside>
   );
-}
+});
 
 /** 접고 펼칠 수 있는 필터 영역을 렌더링한다. */
 function SidebarSection({ children, isOpen, onToggle, title }) {

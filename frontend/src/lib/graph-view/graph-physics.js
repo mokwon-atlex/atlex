@@ -1,15 +1,15 @@
 import { createCategoryAnchors } from '@/lib/graph-view/graph-api-data';
 import { SVG_H, SVG_W, clamp, graphNodeRadius } from '@/lib/graph-view/graph-view-utils';
 
-const BOUNDS_MARGIN_X = SVG_W * 0.45;
-const BOUNDS_MARGIN_Y = SVG_H * 0.45;
-const MIN_X = -BOUNDS_MARGIN_X;
-const MAX_X = SVG_W + BOUNDS_MARGIN_X;
-const MIN_Y = -BOUNDS_MARGIN_Y;
-const MAX_Y = SVG_H + BOUNDS_MARGIN_Y;
+/** 무한 캔버스 드래그를 허용하면서 NaN·Infinity 폭주만 막는 안전 좌표 상한이다. */
+const COORDINATE_LIMIT = 50000;
+/** 반발력이 미미한 원거리 노드 쌍 연산을 생략하는 컷오프 거리다. */
+const MAX_REPULSION_DISTANCE = 360;
+const MAX_REPULSION_DISTANCE_SQ = MAX_REPULSION_DISTANCE * MAX_REPULSION_DISTANCE;
+/** 노드 수가 이 임계치를 넘으면 초기 전개 애니메이션을 생략해 대량 그래프 로딩 렉을 방지한다. */
+export const MAX_BLOOM_ANIMATION_NODES = 35;
 const MAX_SPEED = 18;
 const DAMPING = 0.78;
-const ALPHA_DECAY = 0.93;
 const SLEEP_ALPHA = 0.015;
 const SLEEP_MOVEMENT = 0.12;
 
@@ -51,13 +51,14 @@ export function createPhysicsSimulation(posts, edges, { animateEntry = false, gr
     return [{ score: normalizedScore, sourceIndex, targetIndex }];
   });
 
+  const shouldAnimateEntry = animateEntry && posts.length > 1 && posts.length <= MAX_BLOOM_ANIMATION_NODES;
+
   const nodes = posts.map((post, index) => {
     const categoryKey = post.categoryName || '미분류';
     const anchor = categoryAnchors.get(categoryKey) ?? { x: SVG_W / 2, y: SVG_H / 2 };
-    const shouldBloom = animateEntry && posts.length > 1;
-    // 초기 진입·탭 전환 시 중심/클러스터 앵커 쪽에서 부드럽게 펼쳐지도록 시작 좌표를 살짝 당긴다.
-    const startX = shouldBloom ? post.x * 0.8 + anchor.x * 0.2 : post.x;
-    const startY = shouldBloom ? post.y * 0.8 + anchor.y * 0.2 : post.y;
+    // 소규모 그래프에서만 초기 진입·탭 전환 시 중심/클러스터 앵커 쪽에서 부드럽게 펼쳐지도록 시작 좌표를 당긴다.
+    const startX = shouldAnimateEntry ? post.x * 0.8 + anchor.x * 0.2 : post.x;
+    const startY = shouldAnimateEntry ? post.y * 0.8 + anchor.y * 0.2 : post.y;
 
     return {
       anchor,
@@ -76,7 +77,8 @@ export function createPhysicsSimulation(posts, edges, { animateEntry = false, gr
   const nodeCount = Math.max(posts.length, 1);
 
   return {
-    alpha: animateEntry && posts.length > 1 ? 0.55 : 0,
+    alpha: shouldAnimateEntry ? 0.55 : 0,
+    alphaDecay: posts.length > 40 ? 0.89 : 0.93,
     indexById,
     isResetting: false,
     linkDistance: Math.max(130, Math.min(210, 270 - Math.sqrt(nodeCount) * 17)),
@@ -100,6 +102,7 @@ export function isSimulationActive(simulation) {
 
 /**
  * 드래그 중인 노드를 포인터 좌표에 임시 고정하고 주변 물리 연산을 깨운다.
+ * 무한 캔버스 탐색을 위해 좁은 경계벽 없이 자유 좌표를 허용한다.
  *
  * @param {ReturnType<typeof createPhysicsSimulation>} simulation 시뮬레이션 상태
  * @param {string} nodeId 드래그 대상 노드 ID
@@ -117,8 +120,8 @@ export function pinSimulationNode(simulation, nodeId, x, y) {
 
   simulation.isResetting = false;
   simulation.pinnedIndex = index;
-  node.x = clamp(x, MIN_X, MAX_X);
-  node.y = clamp(y, MIN_Y, MAX_Y);
+  node.x = clamp(x, -COORDINATE_LIMIT, COORDINATE_LIMIT);
+  node.y = clamp(y, -COORDINATE_LIMIT, COORDINATE_LIMIT);
   node.vx = 0;
   node.vy = 0;
   simulation.alpha = Math.max(simulation.alpha, 0.55);
@@ -167,10 +170,11 @@ export function resetSimulationLayout(simulation, { animate = true } = {}) {
  * 물리 시뮬레이션을 1프레임 진행하고, 좌표가 변했으면 true를 반환한다.
  *
  * @param {ReturnType<typeof createPhysicsSimulation>} simulation 시뮬레이션 상태
+ * @param {{ minX: number, maxX: number, minY: number, maxY: number } | null} [viewportBounds] 보이는 캔버스 경계(그래프 좌표계)
  * @returns {boolean} 좌표 갱신 여부
  */
-export function stepSimulation(simulation) {
-  const { links, nodeGap, nodes, pinnedIndex, repulsionStrength, useCategoryClustering } = simulation;
+export function stepSimulation(simulation, viewportBounds = null) {
+  const { alphaDecay, links, nodeGap, nodes, pinnedIndex, repulsionStrength, useCategoryClustering } = simulation;
 
   if (nodes.length <= 1 || !isSimulationActive(simulation)) {
     return false;
@@ -180,17 +184,27 @@ export function stepSimulation(simulation) {
     return stepResetLayout(simulation);
   }
 
+  const minX = viewportBounds ? viewportBounds.minX : -COORDINATE_LIMIT;
+  const maxX = viewportBounds ? viewportBounds.maxX : COORDINATE_LIMIT;
+  const minY = viewportBounds ? viewportBounds.minY : -COORDINATE_LIMIT;
+  const maxY = viewportBounds ? viewportBounds.maxY : COORDINATE_LIMIT;
+
   const forceX = Array.from({ length: nodes.length }, () => 0);
   const forceY = Array.from({ length: nodes.length }, () => 0);
 
-  // 1. 모든 노드 쌍 사이의 반발력과 겹침 방지 충돌력을 계산한다.
+  // 1. 컷오프 반경 안의 노드 쌍에 대해서만 반발력과 충돌력을 계산해 다수 노드 성능을 확보한다.
   for (let sourceIndex = 0; sourceIndex < nodes.length; sourceIndex += 1) {
+    const source = nodes[sourceIndex];
+
     for (let targetIndex = sourceIndex + 1; targetIndex < nodes.length; targetIndex += 1) {
-      const source = nodes[sourceIndex];
       const target = nodes[targetIndex];
       let dx = source.x - target.x;
       let dy = source.y - target.y;
       let distanceSquared = dx * dx + dy * dy;
+
+      if (distanceSquared > MAX_REPULSION_DISTANCE_SQ) {
+        continue;
+      }
 
       if (distanceSquared < 1) {
         const angle = (sourceIndex + 1) * (targetIndex + 1);
@@ -225,7 +239,6 @@ export function stepSimulation(simulation) {
     const distance = Math.max(Math.hypot(dx, dy), 1);
     const targetDistance = simulation.linkDistance * (1.12 - score * 0.24);
     const baseStrength = (0.045 + score * 0.03) / Math.max(1, Math.sqrt(source.degree * target.degree));
-    // 드래그 중인 노드와 직접 연결된 이웃은 반응성을 높여 탄성감 있게 따라오게 한다.
     const dragBoost = sourceIndex === pinnedIndex || targetIndex === pinnedIndex ? 1.85 : 1;
     const attraction = (distance - targetDistance) * baseStrength * dragBoost;
     const unitX = dx / distance;
@@ -237,8 +250,8 @@ export function stepSimulation(simulation) {
     forceY[targetIndex] -= unitY * attraction;
   });
 
-  // 3. 카테고리 클러스터 앵커 또는 중앙 중력을 적용해 그래프가 화면 밖으로 흩어지지 않게 유지한다.
-  const anchorStrength = useCategoryClustering ? 0.016 : 0.0032;
+  // 3. 카테고리 클러스터 인력 또는 약한 중앙 복원력을 적용한다.
+  const anchorStrength = useCategoryClustering ? 0.016 : 0.0022;
   const effectiveAlpha = pinnedIndex != null ? Math.max(simulation.alpha, 0.48) : simulation.alpha;
   let maxMovement = 0;
 
@@ -255,8 +268,8 @@ export function stepSimulation(simulation) {
     node.vx = clamp((node.vx + forceX[index] * effectiveAlpha) * DAMPING, -MAX_SPEED, MAX_SPEED);
     node.vy = clamp((node.vy + forceY[index] * effectiveAlpha) * DAMPING, -MAX_SPEED, MAX_SPEED);
 
-    const nextX = clamp(node.x + node.vx, MIN_X, MAX_X);
-    const nextY = clamp(node.y + node.vy, MIN_Y, MAX_Y);
+    const nextX = clamp(node.x + node.vx, minX, maxX);
+    const nextY = clamp(node.y + node.vy, minY, maxY);
     const movement = Math.hypot(nextX - node.x, nextY - node.y);
 
     if (movement > maxMovement) {
@@ -267,10 +280,10 @@ export function stepSimulation(simulation) {
     node.y = nextY;
   });
 
-  resolveActiveCollisions(nodes, nodeGap, pinnedIndex);
+  resolveActiveCollisions(nodes, nodeGap, pinnedIndex, minX, maxX, minY, maxY);
 
   if (pinnedIndex == null) {
-    simulation.alpha *= ALPHA_DECAY;
+    simulation.alpha *= alphaDecay;
 
     if (simulation.alpha < SLEEP_ALPHA && maxMovement < SLEEP_MOVEMENT) {
       simulation.alpha = 0;
@@ -316,15 +329,21 @@ function stepResetLayout(simulation) {
 }
 
 /** 드래그 중 고정된 노드를 유지하면서 겹친 노드를 부드럽게 밀어낸다. */
-function resolveActiveCollisions(nodes, gap, pinnedIndex) {
+function resolveActiveCollisions(nodes, gap, pinnedIndex, minX, maxX, minY, maxY) {
   for (let sourceIndex = 0; sourceIndex < nodes.length; sourceIndex += 1) {
+    const source = nodes[sourceIndex];
+
     for (let targetIndex = sourceIndex + 1; targetIndex < nodes.length; targetIndex += 1) {
-      const source = nodes[sourceIndex];
       const target = nodes[targetIndex];
+      const minimumDistance = source.radius + target.radius + gap;
       let dx = source.x - target.x;
       let dy = source.y - target.y;
+
+      if (Math.abs(dx) >= minimumDistance || Math.abs(dy) >= minimumDistance) {
+        continue;
+      }
+
       let distance = Math.hypot(dx, dy);
-      const minimumDistance = source.radius + target.radius + gap;
 
       if (distance >= minimumDistance) {
         continue;
@@ -343,18 +362,18 @@ function resolveActiveCollisions(nodes, gap, pinnedIndex) {
       const unitY = dy / distance;
 
       if (sourceIndex === pinnedIndex) {
-        target.x = clamp(target.x - unitX * overlap, MIN_X, MAX_X);
-        target.y = clamp(target.y - unitY * overlap, MIN_Y, MAX_Y);
+        target.x = clamp(target.x - unitX * overlap, minX, maxX);
+        target.y = clamp(target.y - unitY * overlap, minY, maxY);
       } else if (targetIndex === pinnedIndex) {
-        source.x = clamp(source.x + unitX * overlap, MIN_X, MAX_X);
-        source.y = clamp(source.y + unitY * overlap, MIN_Y, MAX_Y);
+        source.x = clamp(source.x + unitX * overlap, minX, maxX);
+        source.y = clamp(source.y + unitY * overlap, minY, maxY);
       } else {
         const half = overlap / 2;
 
-        source.x = clamp(source.x + unitX * half, MIN_X, MAX_X);
-        source.y = clamp(source.y + unitY * half, MIN_Y, MAX_Y);
-        target.x = clamp(target.x - unitX * half, MIN_X, MAX_X);
-        target.y = clamp(target.y - unitY * half, MIN_Y, MAX_Y);
+        source.x = clamp(source.x + unitX * half, minX, maxX);
+        source.y = clamp(source.y + unitY * half, minY, maxY);
+        target.x = clamp(target.x - unitX * half, minX, maxX);
+        target.y = clamp(target.y - unitY * half, minY, maxY);
       }
     }
   }

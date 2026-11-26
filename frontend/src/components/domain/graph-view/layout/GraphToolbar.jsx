@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { BookOpen, LayoutGrid, Moon, PanelLeft, Sun } from 'lucide-react';
+import { memo } from 'react';
 
 import { cn } from '@/lib/utils';
 
 /** 그래프 범위 선택, 캔버스 테마 전환과 보조 패널 열기를 제공하는 상단 도구 모음이다. */
-export function GraphToolbar({
+export const GraphToolbar = memo(function GraphToolbar({
   activeTab,
   canvasTheme = 'dark',
   isLoggedIn,
@@ -115,4 +116,4 @@ export function GraphToolbar({
       </button>
     </nav>
   );
-}
+});

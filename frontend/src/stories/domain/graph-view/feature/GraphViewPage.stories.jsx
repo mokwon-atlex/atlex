@@ -5,7 +5,9 @@ import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 import GraphViewPage from '@/components/domain/graph-view/feature/GraphViewPage';
 import { toGraphViewData } from '@/lib/graph-view/graph-api-data';
 import {
+  MAX_BLOOM_ANIMATION_NODES,
   createPhysicsSimulation,
+  isSimulationActive,
   pinSimulationNode,
   releaseSimulationNode,
   resetSimulationLayout,
@@ -129,6 +131,17 @@ export const Default = {
     releaseSimulationNode(simulation);
     resetSimulationLayout(simulation, { animate: false });
     await expect(simulation.nodes[0].x).toBe(graphData.posts[0].x);
+
+    // 대량 노드에서는 초기 전개 애니메이션을 생략해 프레임 드롭을 방지하는지 확인한다.
+    const densePosts = Array.from({ length: MAX_BLOOM_ANIMATION_NODES + 5 }, (_, index) => ({
+      id: `dense-${index}`,
+      categoryName: '개발',
+      x: (index % 8) * 90,
+      y: Math.floor(index / 8) * 90,
+    }));
+    const denseSimulation = createPhysicsSimulation(densePosts, [], { animateEntry: true });
+
+    await expect(isSimulationActive(denseSimulation)).toBe(false);
 
     const nodeDistances = graphData.posts.flatMap((post, index) =>
       graphData.posts.slice(index + 1).map((otherPost) => Math.hypot(post.x - otherPost.x, post.y - otherPost.y)),
