@@ -223,7 +223,9 @@ export const Default = {
     const transformBeforeFocus = graphLayer.getAttribute('transform');
 
     await userEvent.click(canvas.getByRole('button', { name: '포스트 목록' }));
-    await userEvent.click(canvas.getByRole('button', { name: /독립 노드/ }));
+    const listPanel = within(canvasElement.querySelector('aside'));
+
+    await userEvent.click(listPanel.getByRole('button', { name: /독립 노드/ }));
     await waitFor(() => expect(graphLayer.getAttribute('transform')).not.toBe(transformBeforeFocus));
   },
 };
