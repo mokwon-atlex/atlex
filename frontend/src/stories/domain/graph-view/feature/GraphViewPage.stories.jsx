@@ -11,12 +11,7 @@ import {
   resetSimulationLayout,
   stepSimulation,
 } from '@/lib/graph-view/graph-physics';
-import {
-  GRAPH_THEME_STORAGE_KEY,
-  edgeWidth,
-  graphNodeRadius,
-  splitNodeTitle,
-} from '@/lib/graph-view/graph-view-utils';
+import { GRAPH_THEME_STORAGE_KEY, edgeWidth, graphNodeRadius, splitNodeTitle } from '@/lib/graph-view/graph-view-utils';
 
 const graphFixture = {
   nodes: [

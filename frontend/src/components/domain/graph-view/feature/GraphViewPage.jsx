@@ -286,9 +286,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
       const scaleFactor = Math.hypot(ctm.a, ctm.b) || 1;
       const targetScreenRadius = nodeRadius * zoom * scaleFactor;
 
-      setPopupPos(
-        findNearbyPopupPosition(containerRect, targetScreenPoint, targetScreenRadius, otherNodePositions),
-      );
+      setPopupPos(findNearbyPopupPosition(containerRect, targetScreenPoint, targetScreenRadius, otherNodePositions));
     };
 
     updatePopupPosition();
@@ -301,16 +299,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
 
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
-  }, [
-    displayedConnectionCountById,
-    isCanvasInteracting,
-    pan,
-    popupPost,
-    showPanel,
-    showSidebar,
-    visiblePosts,
-    zoom,
-  ]);
+  }, [displayedConnectionCountById, isCanvasInteracting, pan, popupPost, showPanel, showSidebar, visiblePosts, zoom]);
 
   /** 그래프 전용 라이트·다크 캔버스 테마를 전환하고 브라우저에 저장한다. */
   function handleToggleCanvasTheme() {
@@ -508,10 +497,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
       />
 
       {graphState ? (
-        <div
-          className="flex min-h-0 flex-1 overflow-hidden"
-          style={{ background: activeCanvasTheme.canvasBackground }}
-        >
+        <div className="flex min-h-0 flex-1 overflow-hidden" style={{ background: activeCanvasTheme.canvasBackground }}>
           <GraphStatus {...graphState} canvasTheme={canvasTheme} />
         </div>
       ) : (

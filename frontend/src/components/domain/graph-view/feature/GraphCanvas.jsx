@@ -131,10 +131,7 @@ export function GraphCanvas({
   const focusedEdges = useMemo(
     () =>
       renderedEdges.filter(
-        (edge) =>
-          edge.id === hoveredEdgeId ||
-          focusedNodeIds.has(edge.from) ||
-          focusedNodeIds.has(edge.to),
+        (edge) => edge.id === hoveredEdgeId || focusedNodeIds.has(edge.from) || focusedNodeIds.has(edge.to),
       ),
     [focusedNodeIds, hoveredEdgeId, renderedEdges],
   );
@@ -511,10 +508,7 @@ export function GraphCanvas({
           const y1 = from.y + uy * (fromRadius + startGap);
           const x2 = to.x - ux * (toRadius + endGap);
           const y2 = to.y - uy * (toRadius + endGap);
-          const isLit =
-            hoveredEdgeId === edge.id ||
-            focusedNodeIds.has(edge.from) ||
-            focusedNodeIds.has(edge.to);
+          const isLit = hoveredEdgeId === edge.id || focusedNodeIds.has(edge.from) || focusedNodeIds.has(edge.to);
           const hasFocus = focusedNodeIds.size > 0 || hoveredEdgeId != null;
           const edgeOpacity = hasFocus ? (isLit ? 0.94 : 0.08) : edgeBaseOpacity(edge, canvasTheme);
           const lineWidth = edgeWidth(edge);
@@ -522,11 +516,7 @@ export function GraphCanvas({
           const lineEndX = edge.isExplicit ? x2 - ux * ARROW_LENGTH : x2;
           const lineEndY = edge.isExplicit ? y2 - uy * ARROW_LENGTH : y2;
           const arrowPoints = edge.isExplicit ? createArrowPoints(x2, y2, lineEndX, lineEndY, ux, uy) : null;
-          const edgeColor = isLit
-            ? theme.edgeLitColor
-            : edge.isExplicit
-              ? theme.edgeExplicitColor
-              : theme.edgeColor;
+          const edgeColor = isLit ? theme.edgeLitColor : edge.isExplicit ? theme.edgeExplicitColor : theme.edgeColor;
 
           return (
             <g
@@ -576,9 +566,7 @@ export function GraphCanvas({
           const isRelated = relatedNodeIds.has(post.id);
           const hasFocus = focusedNodeIds.size > 0;
           const isDimmed = hasFocus && !isFocused && !isRelated;
-          const baseBrightness = isLight
-            ? Math.min(1, 0.78 + degree * 0.06)
-            : Math.min(1, 0.52 + degree * 0.14);
+          const baseBrightness = isLight ? Math.min(1, 0.78 + degree * 0.06) : Math.min(1, 0.52 + degree * 0.14);
           const nodeOpacity = isDimmed
             ? isLight
               ? 0.22
@@ -598,9 +586,7 @@ export function GraphCanvas({
             : degree >= 4 && activeTab !== 'category'
               ? theme.nodeHubFill
               : baseNodeColor;
-          const haloOpacity = isLight
-            ? Math.min(0.26, 0.08 + degree * 0.04)
-            : Math.min(0.32, 0.06 + degree * 0.055);
+          const haloOpacity = isLight ? Math.min(0.26, 0.08 + degree * 0.04) : Math.min(0.32, 0.06 + degree * 0.055);
           const haloRadius = radius + Math.min(10, 3 + degree * 1.6);
 
           return (
