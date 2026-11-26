@@ -43,8 +43,9 @@ export default function PostEditorToolRail({ getItemState, onExecuteItem, toolCa
           </div>
         </Fragment>
       ))}
-      <span className="ml-auto hidden pl-2 text-[11px] font-medium text-muted-foreground lg:inline">
-        본문에서 <kbd className="rounded border border-border/80 bg-muted px-1 py-0.5 font-mono text-[10px]">/</kbd>로 단축 삽입
+      <span className="ml-auto hidden items-center gap-1 pl-2 text-[11px] font-medium text-muted-foreground lg:inline-flex">
+        <kbd className="rounded border border-border/80 bg-muted px-1 py-0.5 font-mono text-[10px]">/</kbd>
+        <span>단축 명령어</span>
       </span>
     </div>
   );

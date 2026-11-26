@@ -177,7 +177,9 @@ export default function SlashCommandPopover({ editor }) {
       </div>
 
       {filteredCommands.length === 0 ? (
-        <div className="py-5 text-center text-xs text-muted-foreground">&apos;/{query}&apos;에 일치하는 명령어가 없습니다.</div>
+        <div className="py-5 text-center text-xs text-muted-foreground">
+          &apos;/{query}&apos;에 일치하는 명령어가 없습니다.
+        </div>
       ) : (
         <div ref={listContainerRef} className="max-h-60 space-y-0.5 overflow-y-auto p-0.5">
           {filteredCommands.map((item, index) => {
