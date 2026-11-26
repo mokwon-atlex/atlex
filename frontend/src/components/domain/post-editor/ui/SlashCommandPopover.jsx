@@ -7,8 +7,8 @@ import { executeSlashCommand, filterSlashCommands } from '@/lib/post-editor/rich
 import { TOOLBAR_ITEM_ICON_MAP } from '@/lib/post-editor/rich-text-toolbar-icons';
 import { cn } from '@/lib/utils';
 
-const POPOVER_WIDTH = 312;
-const POPOVER_ESTIMATED_HEIGHT = 310;
+const POPOVER_WIDTH = 316;
+const POPOVER_ESTIMATED_HEIGHT = 312;
 
 const EXTRA_COMMAND_ICONS = {
   'bullet-list': List,
@@ -54,12 +54,16 @@ export default function SlashCommandPopover({ editor }) {
     }
   }, [selectedIndex]);
 
-  const handleClose = () => {
+  const resetLocalState = () => {
     setIsOpen(false);
     setQuery('');
     setRange(null);
     setCoords(null);
-    editor?.commands.closeSlashCommand?.();
+  };
+
+  const handleDismiss = () => {
+    resetLocalState();
+    editor?.commands.dismissSlashCommand?.();
   };
 
   const handleSelectCommand = (commandItem) => {
@@ -69,7 +73,8 @@ export default function SlashCommandPopover({ editor }) {
 
     const activeRange = range;
 
-    handleClose();
+    resetLocalState();
+    editor.commands.closeSlashCommand?.();
     executeSlashCommand(editor, commandItem, activeRange);
   };
 
@@ -86,10 +91,7 @@ export default function SlashCommandPopover({ editor }) {
     };
 
     const onClose = () => {
-      setIsOpen(false);
-      setQuery('');
-      setRange(null);
-      setCoords(null);
+      resetLocalState();
     };
 
     const onKeyDown = ({ key, preventDefault }) => {
@@ -112,7 +114,7 @@ export default function SlashCommandPopover({ editor }) {
         }
       } else if (key === 'Escape') {
         preventDefault();
-        handleClose();
+        handleDismiss();
       }
     };
 
@@ -127,6 +129,7 @@ export default function SlashCommandPopover({ editor }) {
     };
   }, [editor, filteredCommands, isOpen, range, selectedIndex]);
 
+  // 에디터 외부에 포커스가 있더라도 Esc 키나 바깥 클릭으로 항상 팝오버를 닫을 수 있게 한다.
   useEffect(() => {
     if (!isOpen) {
       return undefined;
@@ -134,13 +137,24 @@ export default function SlashCommandPopover({ editor }) {
 
     const handleClickOutside = (event) => {
       if (popoverRef.current && !popoverRef.current.contains(event.target)) {
-        handleClose();
+        handleDismiss();
+      }
+    };
+
+    const handleWindowKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        handleDismiss();
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+    window.addEventListener('keydown', handleWindowKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleWindowKeyDown);
+    };
+  }, [isOpen, editor]);
 
   if (!isOpen) {
     return null;
@@ -162,13 +176,13 @@ export default function SlashCommandPopover({ editor }) {
       role="listbox"
       aria-label="블록 및 서식 단축 명령어"
       data-slash-command-popover
-      className="fixed z-50 w-[312px] max-w-[calc(100vw-1.5rem)] space-y-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-xl"
+      className="fixed z-50 w-[316px] max-w-[calc(100vw-1.5rem)] space-y-1.5 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-xl dark:border-zinc-700"
       style={{
         left: `${leftPos}px`,
         top: `${topPos}px`,
       }}
     >
-      <div className="flex items-center justify-between border-b border-border/40 px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+      <div className="flex items-center justify-between border-b border-border/70 px-2 py-1 text-[11px] font-semibold text-muted-foreground dark:border-zinc-700 dark:text-zinc-300">
         <span className="flex items-center gap-1.5">
           <Terminal className="size-3 text-primary" />
           블록 · 서식 명령어
@@ -177,7 +191,7 @@ export default function SlashCommandPopover({ editor }) {
       </div>
 
       {filteredCommands.length === 0 ? (
-        <div className="py-5 text-center text-xs text-muted-foreground">
+        <div className="py-5 text-center text-xs text-muted-foreground dark:text-zinc-300">
           &apos;/{query}&apos;에 일치하는 명령어가 없습니다.
         </div>
       ) : (
@@ -199,19 +213,21 @@ export default function SlashCommandPopover({ editor }) {
                 onClick={() => handleSelectCommand(item)}
                 className={cn(
                   'flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors',
-                  isSelected ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-muted/60',
+                  isSelected ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-muted/70',
                 )}
               >
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border/60 bg-background text-muted-foreground">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground/80 dark:border-zinc-700 dark:text-zinc-200">
                     <Icon className="size-3.5" />
                   </span>
                   <div className="min-w-0">
                     <p className="truncate text-xs font-semibold leading-tight">{item.label}</p>
-                    <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{item.description}</p>
+                    <p className="mt-0.5 truncate text-[10px] text-muted-foreground dark:text-zinc-300">
+                      {item.description}
+                    </p>
                   </div>
                 </div>
-                <kbd className="shrink-0 rounded border border-border/60 bg-muted/70 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                <kbd className="shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-foreground/80 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200">
                   {item.command}
                 </kbd>
               </button>
@@ -220,7 +236,7 @@ export default function SlashCommandPopover({ editor }) {
         </div>
       )}
 
-      <div className="flex justify-between border-t border-border/40 px-2 pt-1 text-[10px] text-muted-foreground">
+      <div className="flex justify-between border-t border-border/70 px-2 pt-1 text-[10px] text-muted-foreground dark:border-zinc-700 dark:text-zinc-300">
         <span>↑↓ 이동 · Enter / Tab 삽입</span>
         <span>Esc 닫기</span>
       </div>

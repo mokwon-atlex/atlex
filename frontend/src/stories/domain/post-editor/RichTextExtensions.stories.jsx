@@ -2,8 +2,8 @@ import { generateJSON, resolveExtensions } from '@tiptap/core';
 import { expect } from 'storybook/test';
 
 import { editorExtensions } from '@/lib/post-editor/rich-text-extensions';
-import { matchSlashCommandTrigger } from '@/lib/post-editor/rich-text-slash-command-extension';
-import { filterSlashCommands } from '@/lib/post-editor/rich-text-slash-commands';
+import { matchSlashCommandTrigger, shouldShowSlashCommand } from '@/lib/post-editor/rich-text-slash-command-extension';
+import { TOOLBAR_SHORTCUT_HINT_MAP, filterSlashCommands } from '@/lib/post-editor/rich-text-slash-commands';
 
 /** 에디터 확장 구성을 검증하기 위한 빈 화면을 렌더링한다. */
 function RichTextExtensionsTestView() {
@@ -29,13 +29,17 @@ async function verifySingleExtensionRegistration() {
     openOnClick: true,
   });
 
-  // 슬래시 커맨드 트리거 감지 및 필터링 동작을 검증한다.
+  // 슬래시 커맨드 트리거 감지, ESC 재오픈 방지 규칙 및 필터링 동작을 검증한다.
   await expect(matchSlashCommandTrigger('/code')).toEqual({ matchLength: 5, query: 'code' });
   await expect(matchSlashCommandTrigger('본문 /table')).toEqual({ matchLength: 6, query: 'table' });
   await expect(matchSlashCommandTrigger('https://example.com/code')).toBeNull();
   await expect(matchSlashCommandTrigger('a/b')).toBeNull();
+  await expect(shouldShowSlashCommand({ dismissedPos: 5, docChanged: true, from: 5, isOpen: false })).toBe(false);
+  await expect(shouldShowSlashCommand({ dismissedPos: null, docChanged: false, from: 5, isOpen: false })).toBe(false);
+  await expect(shouldShowSlashCommand({ dismissedPos: 5, docChanged: true, from: 12, isOpen: false })).toBe(true);
   await expect(filterSlashCommands('code')[0]?.id).toBe('code-block');
   await expect(filterSlashCommands('표')[0]?.id).toBe('table');
+  await expect(TOOLBAR_SHORTCUT_HINT_MAP['볼드']).toEqual({ mac: '⌘+B', win: 'Ctrl+B' });
 }
 
 /** @type { import('@storybook/nextjs-vite').Meta } */

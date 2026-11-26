@@ -16,17 +16,17 @@ export default function PostEditorTopBar({
   maxTokens = null,
 }) {
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-border/80 bg-background/95 px-5 py-3 backdrop-blur-sm sm:px-7">
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-4 rounded-t-[26px] border-b border-border bg-background/95 px-5 py-3 backdrop-blur-md sm:px-7 dark:border-zinc-700/90">
       <div className="flex items-center gap-3">
         <Link
           href="/"
           aria-label="나가기"
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:text-zinc-300 dark:hover:text-white"
         >
           <ArrowLeft className="size-3.5" />
           <span>나가기</span>
         </Link>
-        <span className="h-4 w-px bg-border/70" aria-hidden="true" />
+        <span className="h-4 w-px bg-border dark:bg-zinc-700" aria-hidden="true" />
         <Link href="/" aria-label={logoLabel} className="inline-flex h-8 w-16 items-center">
           <img
             src="/logo/atlex-light.svg"
@@ -43,7 +43,7 @@ export default function PostEditorTopBar({
 
       <div className="flex flex-wrap items-center gap-2.5">
         {remainingTokens !== null && maxTokens !== null && (
-          <div className="rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
+          <div className="rounded-full border border-border bg-muted/45 px-3 py-1 text-xs font-medium text-muted-foreground dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-200">
             AI 토큰{' '}
             {remainingTokens === 0 ? (
               <span className="font-bold text-destructive">0</span>
@@ -53,13 +53,13 @@ export default function PostEditorTopBar({
             / {maxTokens.toLocaleString()}
           </div>
         )}
-        <Button type="button" variant="outline" size="sm" onClick={onOpenDraftModal}>
+        <Button type="button" variant="outline" size="sm" onClick={onOpenDraftModal} className="dark:border-zinc-600">
           {draftButtonLabel}
         </Button>
         {onPublish && (
           <>
             {onSaveDraft && (
-              <Button type="button" variant="outline" size="sm" onClick={onSaveDraft}>
+              <Button type="button" variant="outline" size="sm" onClick={onSaveDraft} className="dark:border-zinc-600">
                 {saveDraftButtonLabel}
               </Button>
             )}

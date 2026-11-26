@@ -350,10 +350,10 @@ export default function PostEditorPage({ postId }) {
         />
 
         <PostEditorTitleSection
+          categoryName={selectedCategoryName}
+          isPublic={isPublic}
           title={title}
           titlePlaceholder={postEditorCopy.titlePlaceholder}
-          tagField={tagField}
-          tagPlaceholder={postEditorCopy.tagPlaceholder}
           onTitleChange={setTitle}
           titleSuggestion={aiSuggestion.titleSuggestion}
           isSuggestingTitle={aiSuggestion.isSuggestingTitle}
@@ -405,6 +405,14 @@ export default function PostEditorPage({ postId }) {
               toolCategories={postEditorToolCategories}
               getItemState={richText.getToolbarItemState}
               onExecuteItem={richText.executeToolbarItem}
+              isSuggestingParagraph={aiSuggestion.isSuggestingParagraph}
+              onRequestParagraphAi={(mode = 'AUTO') => {
+                richText.editor?.commands.focus();
+                aiSuggestion.requestParagraphSuggestion({
+                  insertDirectly: mode !== 'AUTO',
+                  mode,
+                });
+              }}
             />
           }
         />
@@ -451,6 +459,8 @@ export default function PostEditorPage({ postId }) {
             : undefined,
           isPublic,
           onIsPublicChange: setIsPublic,
+          tagField,
+          tagPlaceholder: postEditorCopy.tagPlaceholder,
           isGeneratingDescription: aiSuggestion.isSuggestingDescription,
           images: richText.bodyImages,
           selectedThumbnailUrl,

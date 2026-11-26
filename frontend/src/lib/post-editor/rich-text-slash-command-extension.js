@@ -26,18 +26,39 @@ export function matchSlashCommandTrigger(textBefore) {
 }
 
 /**
+ * 현재 편집 상태에서 슬래시 커맨드 팝오버를 열거나 유지해야 하는지 판정한다.
+ * 사용자가 Esc·바깥 클릭으로 닫은 위치(`dismissedPos`)에서는 다시 열리지 않으며,
+ * 닫혀 있을 때는 실제 문서 입력(`docChanged`)이 발생했을 때만 새로 연다.
+ *
+ * @param {{ dismissedPos: number | null, docChanged: boolean, from: number, isOpen: boolean }} params 판정 입력
+ * @returns {boolean} 팝오버 표시 여부
+ */
+export function shouldShowSlashCommand({ dismissedPos, docChanged, from, isOpen }) {
+  if (dismissedPos != null && dismissedPos === from) {
+    return false;
+  }
+
+  if (isOpen) {
+    return true;
+  }
+
+  return docChanged;
+}
+
+/**
  * Tiptap 에디터 본문에서 `/` 입력 시 슬래시 커맨드 팝오버를 트리거하고
- * 방향키·Enter·Tab·Escape 입력을 팝오버로 위임하는 확장이다.
+ * 방향키·Enter·Tab·Escape 입력을 처리하는 확장이다.
  */
 export const SlashCommandExtension = Extension.create({
   name: 'slashCommand',
 
   addStorage() {
     return {
+      coords: null,
+      dismissedPos: null,
       isOpen: false,
       query: '',
       range: null,
-      coords: null,
     };
   },
 
@@ -50,6 +71,22 @@ export const SlashCommandExtension = Extension.create({
           editor.storage.slashCommand.query = '';
           editor.storage.slashCommand.range = null;
           editor.storage.slashCommand.coords = null;
+          editor.storage.slashCommand.dismissedPos = null;
+
+          editor.emit('slashCommandClose');
+          return true;
+        },
+
+      dismissSlashCommand:
+        () =>
+        ({ editor }) => {
+          const currentFrom = editor.storage.slashCommand.range?.from ?? null;
+
+          editor.storage.slashCommand.isOpen = false;
+          editor.storage.slashCommand.query = '';
+          editor.storage.slashCommand.range = null;
+          editor.storage.slashCommand.coords = null;
+          editor.storage.slashCommand.dismissedPos = currentFrom;
 
           editor.emit('slashCommandClose');
           return true;
@@ -67,7 +104,19 @@ export const SlashCommandExtension = Extension.create({
           handleKeyDown(_view, event) {
             const storage = editor.storage?.slashCommand;
 
-            if (storage?.isOpen && ['ArrowUp', 'ArrowDown', 'Enter', 'Tab', 'Escape'].includes(event.key)) {
+            if (!storage?.isOpen) {
+              return false;
+            }
+
+            // Esc 입력 시 ProseMirror 단계에서 즉시 닫고 해당 위치의 재오픈을 막는다.
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              event.stopPropagation();
+              editor.commands.dismissSlashCommand();
+              return true;
+            }
+
+            if (['ArrowUp', 'ArrowDown', 'Enter', 'Tab'].includes(event.key)) {
               let isHandled = false;
 
               editor.emit('slashCommandKeyDown', {
@@ -85,12 +134,13 @@ export const SlashCommandExtension = Extension.create({
         },
         view() {
           return {
-            update(view) {
+            update(view, prevState) {
               const storage = editor.storage?.slashCommand;
               const { state } = view;
               const { selection } = state;
+              const docChanged = !prevState || !prevState.doc.eq(state.doc);
 
-              // 범위 선택 중이거나 내 글 링크([[) 팝업이 열려 있으면 슬래시 메뉴를 닫는다.
+              // 범위 선택 중이거나 내 글 링크 팝업이 열려 있으면 슬래시 메뉴를 닫는다.
               if (!selection.empty || editor.storage?.postLink?.isOpen) {
                 if (storage?.isOpen) {
                   editor.commands.closeSlashCommand();
@@ -115,31 +165,51 @@ export const SlashCommandExtension = Extension.create({
               const textBefore = $from.parent.textBetween(0, $from.parentOffset, null, '\ufffc');
               const matched = matchSlashCommandTrigger(textBefore);
 
-              if (matched) {
-                const from = $from.pos - matched.matchLength;
-                const to = $from.pos;
-                let coords = null;
-
-                try {
-                  coords = view.coordsAtPos($from.pos);
-                } catch {
-                  // 가상 DOM 테스트 환경 등 좌표 계산이 불가능한 경우 기본 위치를 사용한다.
+              if (!matched) {
+                if (docChanged && storage?.dismissedPos != null) {
+                  // 닫았던 `/`가 삭제되었거나 다른 문장 입력으로 넘어가면 억제 상태를 해제한다.
+                  storage.dismissedPos = null;
                 }
-
-                storage.isOpen = true;
-                storage.query = matched.query;
-                storage.range = { from, to };
-                storage.coords = coords;
-
-                editor.emit('slashCommandTrigger', {
-                  isOpen: true,
-                  query: matched.query,
-                  range: { from, to },
-                  coords,
-                });
-              } else if (storage?.isOpen) {
-                editor.commands.closeSlashCommand();
+                if (storage?.isOpen) {
+                  editor.commands.closeSlashCommand();
+                }
+                return;
               }
+
+              const from = $from.pos - matched.matchLength;
+              const to = $from.pos;
+
+              if (
+                !shouldShowSlashCommand({
+                  dismissedPos: storage?.dismissedPos ?? null,
+                  docChanged,
+                  from,
+                  isOpen: Boolean(storage?.isOpen),
+                })
+              ) {
+                return;
+              }
+
+              let coords = null;
+
+              try {
+                coords = view.coordsAtPos($from.pos);
+              } catch {
+                // 가상 DOM 테스트 환경 등 좌표 계산이 불가능한 경우 기본 위치를 사용한다.
+              }
+
+              storage.isOpen = true;
+              storage.dismissedPos = null;
+              storage.query = matched.query;
+              storage.range = { from, to };
+              storage.coords = coords;
+
+              editor.emit('slashCommandTrigger', {
+                coords,
+                isOpen: true,
+                query: matched.query,
+                range: { from, to },
+              });
             },
           };
         },
