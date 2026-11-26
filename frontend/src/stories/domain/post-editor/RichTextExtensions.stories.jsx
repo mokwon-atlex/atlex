@@ -3,7 +3,12 @@ import { expect } from 'storybook/test';
 
 import { editorExtensions } from '@/lib/post-editor/rich-text-extensions';
 import { matchSlashCommandTrigger, shouldShowSlashCommand } from '@/lib/post-editor/rich-text-slash-command-extension';
-import { TOOLBAR_SHORTCUT_HINT_MAP, filterSlashCommands } from '@/lib/post-editor/rich-text-slash-commands';
+import {
+  TOOLBAR_SHORTCUT_HINT_MAP,
+  filterSlashCommands,
+  getToolbarShortcutLabel,
+  isApplePlatform,
+} from '@/lib/post-editor/rich-text-slash-commands';
 
 /** 에디터 확장 구성을 검증하기 위한 빈 화면을 렌더링한다. */
 function RichTextExtensionsTestView() {
@@ -40,6 +45,10 @@ async function verifySingleExtensionRegistration() {
   await expect(filterSlashCommands('code')[0]?.id).toBe('code-block');
   await expect(filterSlashCommands('표')[0]?.id).toBe('table');
   await expect(TOOLBAR_SHORTCUT_HINT_MAP['볼드']).toEqual({ mac: '⌘+B', win: 'Ctrl+B' });
+  await expect(isApplePlatform('MacIntel')).toBe(true);
+  await expect(isApplePlatform('Win32')).toBe(false);
+  await expect(getToolbarShortcutLabel('볼드', true)).toBe('⌘+B');
+  await expect(getToolbarShortcutLabel('볼드', false)).toBe('Ctrl+B');
 }
 
 /** @type { import('@storybook/nextjs-vite').Meta } */

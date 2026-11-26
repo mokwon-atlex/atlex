@@ -51,8 +51,8 @@ export default function PostEditorContentSection({
   return (
     <div className="flex flex-1 flex-col">
       {isTableActive ? (
-        <div className="border-b border-border bg-muted/25 px-5 py-2 sm:px-7 dark:border-zinc-700/90 dark:bg-zinc-900/70">
-          <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-end gap-1 text-xs">
+        <div className="border-b border-border bg-muted/25 py-2 dark:border-zinc-700/90 dark:bg-zinc-900/70">
+          <div className="mx-auto flex w-full max-w-[820px] flex-wrap items-center justify-end gap-1 px-5 text-xs sm:px-8">
             <div className="flex flex-wrap items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-2 py-1">
               <span className="mr-1 font-semibold text-foreground">표 편집</span>
               <Button
@@ -109,15 +109,15 @@ export default function PostEditorContentSection({
       <div
         data-editor-canvas
         onClick={handleCanvasClick}
-        className="relative flex min-h-[500px] flex-1 cursor-text flex-col px-5 py-7 sm:px-8"
+        className="relative flex min-h-[500px] flex-1 cursor-text flex-col py-7"
       >
-        <div className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col">
+        <div className="relative mx-auto flex w-full max-w-[820px] flex-1 flex-col px-5 sm:px-8">
           {isEditorEmpty && bodyPlaceholder ? (
             <Textfield
               variant="muted"
               size="default"
               whitespace="preline"
-              className="pointer-events-none absolute inset-x-0 top-0 leading-9 text-muted-foreground/80 dark:text-zinc-400"
+              className="pointer-events-none absolute inset-x-5 top-0 leading-9 text-muted-foreground/80 sm:inset-x-8 dark:text-zinc-400"
             >
               {bodyPlaceholder}
             </Textfield>
