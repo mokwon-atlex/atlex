@@ -764,9 +764,7 @@ function GraphStatus({ canvasTheme = 'dark', description, isLoading = false, onR
         <HelpCircle className={isLight ? 'size-7 text-slate-500' : 'size-7 text-slate-400'} />
       )}
       <div>
-        <h2 className={isLight ? 'text-lg font-black text-slate-900' : 'text-lg font-black text-slate-100'}>
-          {title}
-        </h2>
+        <h2 className={isLight ? 'text-lg font-black text-slate-900' : 'text-lg font-black text-slate-100'}>{title}</h2>
         <p className={isLight ? 'mt-1 text-sm font-bold text-slate-600' : 'mt-1 text-sm font-bold text-slate-400'}>
           {description}
         </p>
