@@ -3,10 +3,10 @@
 // 수동 태그에만 onRemove를 붙여서 자동 태그(본문 #해시)와 구분한다.
 import PostEditorTagField from '@/components/domain/post-editor/ui/PostEditorTagField';
 
-const DETECTED_TAGS_LABEL_PREFIX = '\uBCF8\uBB38\uC5D0\uC11C \uAC10\uC9C0\uB41C \uD0DC\uADF8: ';
-const TAG_INPUT_PLACEHOLDER = '\uD0DC\uADF8\uB97C \uC785\uB825\uD558\uC138\uC694';
+const DETECTED_TAGS_LABEL_PREFIX = '본문에서 감지된 태그: ';
+const TAG_INPUT_PLACEHOLDER = '태그를 입력하세요';
 
-export default function PostEditorTagFieldSection({ tagField, tagPlaceholder }) {
+export default function PostEditorTagFieldSection({ embedded = false, tagField, tagPlaceholder }) {
   const { bodyTags, combinedTags, manualTags, onRemoveTag, onTagInputChange, onTagInputKeyDown, tagInput } = tagField;
 
   const manualTagSet = new Set(manualTags);
@@ -23,10 +23,11 @@ export default function PostEditorTagFieldSection({ tagField, tagPlaceholder }) 
 
   return (
     <PostEditorTagField
-      countLabel={'\uCD1D ' + combinedTags.length + '\uAC1C'}
+      countLabel={`총 ${combinedTags.length}개`}
       detectedTagsLabel={
-        bodyTags.length > 0 ? DETECTED_TAGS_LABEL_PREFIX + bodyTags.map((tag) => '#' + tag).join(', ') : ''
+        bodyTags.length > 0 ? DETECTED_TAGS_LABEL_PREFIX + bodyTags.map((tag) => `#${tag}`).join(', ') : ''
       }
+      embedded={embedded}
       inputPlaceholder={combinedTags.length === 0 ? tagPlaceholder : TAG_INPUT_PLACEHOLDER}
       onTagInputChange={onTagInputChange}
       onTagInputKeyDown={onTagInputKeyDown}

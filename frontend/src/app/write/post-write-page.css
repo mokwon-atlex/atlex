@@ -12,63 +12,68 @@
 .post-editor-prose .tiptap {
   min-height: 460px;
   height: 100%;
-  padding-bottom: 4rem;
-  color: #334155;
+  padding-bottom: 5rem;
+  color: var(--foreground);
   font-size: 1rem;
-  line-height: 2rem;
+  line-height: 2.15rem;
   outline: none;
   white-space: pre-wrap;
   cursor: text;
 }
 
+@media (min-width: 640px) {
+  .post-editor-prose .tiptap {
+    font-size: 1.05rem;
+    line-height: 2.25rem;
+  }
+}
+
 .post-editor-prose .tiptap > * + * {
-  margin-top: 1rem;
+  margin-top: 1.25rem;
 }
 
 .post-editor-prose .tiptap h1,
 .post-editor-prose .tiptap h2,
 .post-editor-prose .tiptap h3 {
-  color: #0f172a;
+  color: var(--foreground);
   font-weight: 700;
   letter-spacing: -0.02em;
+  line-height: 1.3;
 }
 
 .post-editor-prose .tiptap h1 {
   font-size: 1.875rem;
-  line-height: 2.5rem;
 }
 
 .post-editor-prose .tiptap h2 {
   font-size: 1.5rem;
-  line-height: 2.25rem;
 }
 
 .post-editor-prose .tiptap h3 {
   font-size: 1.25rem;
-  line-height: 2rem;
 }
 
 .post-editor-prose .tiptap p[data-type='lead-paragraph'] {
-  color: #0f172a;
+  color: var(--foreground);
   font-size: 1.125rem;
   font-weight: 600;
 }
 
 .post-editor-prose .tiptap p[data-type='caption-paragraph'] {
-  color: #64748b;
+  color: var(--muted-foreground);
   font-size: 0.875rem;
   line-height: 1.6;
 }
 
 .post-editor-prose .tiptap blockquote {
-  border-left: 4px solid #94a3b8;
-  color: #475569;
+  border-left: 4px solid var(--border);
+  color: var(--muted-foreground);
   margin: 1.25rem 0;
   padding-left: 1rem;
 }
 
 .post-editor-prose .tiptap a {
-  color: #0f172a;
+  color: var(--primary);
   text-decoration: underline;
   text-decoration-thickness: 1.5px;
   text-underline-offset: 0.18em;
@@ -86,11 +91,23 @@
   padding-left: 1.5rem;
 }
 
+.post-editor-prose .tiptap ul {
+  list-style: disc;
+}
+
+.post-editor-prose .tiptap ol {
+  list-style: decimal;
+}
+
+.post-editor-prose .tiptap li + li {
+  margin-top: 0.4rem;
+}
+
 .post-editor-prose .tiptap pre {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background: #0f172a;
+  border: 1px solid #334155;
   border-radius: 0.75rem;
-  color: #0f172a;
+  color: #e2e8f0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.875rem;
   line-height: 1.65;
@@ -100,10 +117,10 @@
 }
 
 .post-editor-prose .tiptap code {
-  background: rgba(148, 163, 184, 0.18);
+  background: color-mix(in oklab, var(--muted) 85%, transparent);
   border-radius: 0.4rem;
-  color: #0f172a;
-  font-size: 0.95em;
+  color: var(--foreground);
+  font-size: 0.92em;
   padding: 0.15rem 0.35rem;
 }
 
@@ -115,7 +132,7 @@
 
 .post-editor-prose .tiptap hr {
   border: 0;
-  border-top: 1px dashed #94a3b8;
+  border-top: 1px dashed var(--border);
   margin: 1.75rem 0;
 }
 
@@ -128,37 +145,40 @@
 
 .post-editor-prose .tiptap th,
 .post-editor-prose .tiptap td {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
+  color: var(--foreground);
   min-width: 6rem;
   padding: 0.75rem;
   vertical-align: top;
 }
 
 .post-editor-prose .tiptap th {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--muted);
+  color: var(--foreground);
   font-weight: 700;
 }
 
 .post-editor-prose .tiptap [data-type='details-block'] {
-  background: #fff;
-  border: 1px solid #cbd5e1;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 0.875rem;
+  color: var(--foreground);
   margin: 1rem 0;
   padding: 0.875rem 1rem;
 }
 
 .post-editor-prose .tiptap [data-type='math-block'] {
-  background: #fff;
-  border: 1px solid #cbd5e1;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 0.75rem;
+  color: var(--foreground);
   margin: 0.875rem 0;
   padding: 0.625rem 0.875rem;
 }
 
 .post-editor-block__label,
 .post-editor-block__summary {
-  color: #0f172a;
+  color: var(--foreground);
   display: block;
   font-size: 0.8rem;
   font-weight: 700;
@@ -180,10 +200,10 @@
 }
 
 .post-editor-math-block__preview {
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
+  background: var(--muted);
+  border: 1px dashed var(--border);
   border-radius: 0.75rem;
-  color: #0f172a;
+  color: var(--foreground);
   margin-top: 0.75rem;
   overflow-x: auto;
   padding: 0.75rem 1rem;
@@ -191,16 +211,16 @@
 }
 
 .post-editor-math-block__empty {
-  color: #64748b;
+  color: var(--muted-foreground);
   font-size: 0.875rem;
 }
 
 .post-editor-prose .tiptap a[data-file-attachment='true'] {
   align-items: center;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
+  background: var(--muted);
+  border: 1px solid var(--border);
   border-radius: 0.65rem;
-  color: #0f172a;
+  color: var(--foreground);
   display: inline-flex;
   font-size: 0.875rem;
   font-weight: 600;
@@ -210,7 +230,35 @@
 }
 
 .post-editor-prose .tiptap a[data-file-attachment='true']:hover {
-  background: #e2e8f0;
+  background: var(--accent);
+}
+
+.dark .post-editor-prose .tiptap p[data-type='caption-paragraph'],
+.dark .post-editor-prose .tiptap blockquote,
+.dark .post-editor-math-block__empty {
+  color: #d4d4d8;
+}
+
+.dark .post-editor-prose .tiptap blockquote {
+  border-left-color: #71717a;
+}
+
+.dark .post-editor-prose .tiptap hr {
+  border-top-color: #52525b;
+}
+
+.dark .post-editor-prose .tiptap th,
+.dark .post-editor-prose .tiptap td,
+.dark .post-editor-prose .tiptap [data-type='details-block'],
+.dark .post-editor-prose .tiptap [data-type='math-block'],
+.dark .post-editor-math-block__preview,
+.dark .post-editor-prose .tiptap a[data-file-attachment='true'] {
+  border-color: #52525b;
+}
+
+.dark .post-editor-prose .tiptap code {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fafafa;
 }
 
 .post-editor-prose .tiptap pre .hljs-comment,
@@ -251,6 +299,6 @@
 }
 
 .post-editor-prose .tiptap .ProseMirror-selectednode {
-  outline: 2px solid #0f172a;
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
