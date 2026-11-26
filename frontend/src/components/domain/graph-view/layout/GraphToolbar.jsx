@@ -1,13 +1,15 @@
 import Link from 'next/link';
-import { BookOpen, LayoutGrid, PanelLeft } from 'lucide-react';
+import { BookOpen, LayoutGrid, Moon, PanelLeft, Sun } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
-/** 그래프 범위 선택과 보조 패널 열기를 제공하는 상단 도구 모음이다. */
+/** 그래프 범위 선택, 캔버스 테마 전환과 보조 패널 열기를 제공하는 상단 도구 모음이다. */
 export function GraphToolbar({
   activeTab,
+  canvasTheme = 'dark',
   isLoggedIn,
   isOwnerScope = false,
+  onToggleCanvasTheme,
   scopedUserId = null,
   setActiveTab,
   setShowPanel,
@@ -20,6 +22,7 @@ export function GraphToolbar({
     { id: 'mine', label: '내 포스트' },
     { id: 'category', label: '카테고리별' },
   ];
+  const isLightCanvas = canvasTheme === 'light';
 
   return (
     <nav className="z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-5 shadow-sm">
@@ -81,6 +84,21 @@ export function GraphToolbar({
       </div>
 
       <div className="flex-1" />
+
+      {onToggleCanvasTheme ? (
+        <button
+          type="button"
+          aria-label={isLightCanvas ? '다크 캔버스로 전환' : '라이트 캔버스로 전환'}
+          aria-pressed={isLightCanvas}
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border/80 bg-muted/45 px-3 text-xs font-bold text-foreground transition-colors hover:border-foreground/20 hover:bg-muted"
+          data-canvas-theme-toggle
+          onClick={onToggleCanvasTheme}
+          title={isLightCanvas ? '밤하늘 다크 캔버스로 전환' : '밝은 라이트 캔버스로 전환'}
+        >
+          {isLightCanvas ? <Moon className="size-4 text-primary" /> : <Sun className="size-4 text-amber-400" />}
+          <span className="hidden sm:inline">{isLightCanvas ? '라이트' : '다크'}</span>
+        </button>
+      ) : null}
 
       <button
         type="button"
