@@ -79,11 +79,15 @@ export const EditModeUpdatesExistingPost = {
     await userEvent.clear(titleInput);
     await userEvent.type(titleInput, '수정된 게시글 제목');
 
+    // 제목 섹션에는 태그 입력창이 노출되지 않고, 발행 설정 모달 안에서만 노출되어야 한다.
+    await expect(canvas.queryByLabelText('태그')).toBeNull();
+
     const publishButton = canvas.getByRole('button', { name: '수정 완료' });
     await userEvent.click(publishButton);
 
-    // 발행 설정 모달이 열리면 '수정 저장'을 눌러 최종 수정 요청을 보낸다.
+    // 발행 설정 모달이 열리면 태그 입력창을 확인한 뒤 '수정 저장'을 눌러 최종 수정 요청을 보낸다.
     const body = within(document.body);
+    await expect(await body.findByLabelText('태그')).toBeVisible();
     const confirmButton = await body.findByRole('button', { name: '수정 저장' });
     await userEvent.click(confirmButton);
 
