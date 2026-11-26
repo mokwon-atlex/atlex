@@ -2,10 +2,12 @@
 
 // [Section] tiptap 리치 텍스트 에디터 본문 섹션.
 // 본문 영역 어디를 클릭해도 즉시 에디터 포커스가 잡혀 글쓰기를 시작할 수 있다.
+import { useState } from 'react';
 import { EditorContent } from '@tiptap/react';
-import { Code2, GitFork, Loader2, Sigma, Sparkles, Table2, Trash2 } from 'lucide-react';
+import { ChevronDown, Code2, GitFork, Loader2, Sigma, Sparkles, Table2, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/common/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/common/ui/popover';
 import { Textfield } from '@/components/common/ui/textfield';
 import PostLinkPopover from '@/components/domain/post-editor/ui/PostLinkPopover';
 
@@ -18,6 +20,7 @@ export default function PostEditorContentSection({
   onCancelParagraphAi,
   userId,
 }) {
+  const [aiMenuOpen, setAiMenuOpen] = useState(false);
   const isTableActive = Boolean(editor?.isActive('table'));
 
   const handleKeyDown = (e) => {
@@ -53,59 +56,75 @@ export default function PostEditorContentSection({
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/20 px-5 py-2 sm:px-7">
           {onRequestParagraphAi ? (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="mr-1 text-[11px] font-medium text-muted-foreground">AI 도우미</span>
-              <Button
-                type="button"
-                variant="outline"
-                size="xs"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => onRequestParagraphAi('CODE')}
-                disabled={isSuggestingParagraph}
-                className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-                title="문맥에 맞는 예제 코드 블록을 AI로 생성해 삽입합니다"
-              >
-                <Code2 className="size-3 text-primary" />
-                <span>코드</span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="xs"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => onRequestParagraphAi('DIAGRAM')}
-                disabled={isSuggestingParagraph}
-                className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-                title="문맥에 맞는 Mermaid 다이어그램을 AI로 생성해 삽입합니다"
-              >
-                <GitFork className="size-3 text-primary" />
-                <span>다이어그램</span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="xs"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => onRequestParagraphAi('TABLE')}
-                disabled={isSuggestingParagraph}
-                className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-                title="문맥을 비교·정리하는 마크다운 표를 AI로 생성해 삽입합니다"
-              >
-                <Table2 className="size-3 text-primary" />
-                <span>표</span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="xs"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => onRequestParagraphAi('MATH')}
-                disabled={isSuggestingParagraph}
-                className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-                title="문맥과 관련된 수식 블록을 AI로 생성해 삽입합니다"
-              >
-                <Sigma className="size-3 text-primary" />
-                <span>수식</span>
-              </Button>
+              <Popover open={aiMenuOpen} onOpenChange={setAiMenuOpen}>
+                <PopoverTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      disabled={isSuggestingParagraph}
+                      className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    />
+                  }
+                >
+                  <Sparkles className="size-3 text-primary" />
+                  <span>AI 블록 삽입</span>
+                  <ChevronDown className="size-3 opacity-60" />
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-52 space-y-1 p-1.5">
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setAiMenuOpen(false);
+                      onRequestParagraphAi('CODE');
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs hover:bg-muted"
+                  >
+                    <Code2 className="size-3.5 text-primary" />
+                    <span>예제 코드 블록</span>
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setAiMenuOpen(false);
+                      onRequestParagraphAi('DIAGRAM');
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs hover:bg-muted"
+                  >
+                    <GitFork className="size-3.5 text-primary" />
+                    <span>Mermaid 다이어그램</span>
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setAiMenuOpen(false);
+                      onRequestParagraphAi('TABLE');
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs hover:bg-muted"
+                  >
+                    <Table2 className="size-3.5 text-primary" />
+                    <span>마크다운 비교 표</span>
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setAiMenuOpen(false);
+                      onRequestParagraphAi('MATH');
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs hover:bg-muted"
+                  >
+                    <Sigma className="size-3.5 text-primary" />
+                    <span>LaTeX 수식 블록</span>
+                  </button>
+                </PopoverContent>
+              </Popover>
+
               <Button
                 type="button"
                 variant="outline"

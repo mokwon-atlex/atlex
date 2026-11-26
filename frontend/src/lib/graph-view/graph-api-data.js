@@ -102,7 +102,7 @@ function compareNodes(left, right) {
 }
 
 /** 카테고리별 클러스터 중심 좌표를 계산한다. */
-function createCategoryAnchors(posts) {
+export function createCategoryAnchors(posts) {
   const categories = [...new Set(posts.map((post) => post.categoryName || '미분류'))].sort((a, b) =>
     a.localeCompare(b, 'ko'),
   );

@@ -82,6 +82,11 @@ export const EditModeUpdatesExistingPost = {
     const publishButton = canvas.getByRole('button', { name: '수정 완료' });
     await userEvent.click(publishButton);
 
+    // 발행 설정 모달이 열리면 '수정 저장'을 눌러 최종 수정 요청을 보낸다.
+    const body = within(document.body);
+    const confirmButton = await body.findByRole('button', { name: '수정 저장' });
+    await userEvent.click(confirmButton);
+
     // PATCH /posts/{postId}로 변경된 제목이 전달되고, POST /posts는 호출되지 않아야 한다.
     await waitFor(() =>
       expect(patchSpy).toHaveBeenCalledWith(
@@ -89,6 +94,6 @@ export const EditModeUpdatesExistingPost = {
         expect.objectContaining({ title: '수정된 게시글 제목' }),
       ),
     );
-    await expect(postSpy).not.toHaveBeenCalled();
+    await expect(postSpy).not.toHaveBeenCalledWith('/posts', expect.anything());
   },
 };

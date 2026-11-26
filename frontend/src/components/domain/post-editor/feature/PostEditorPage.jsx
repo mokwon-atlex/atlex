@@ -12,7 +12,7 @@ import PostEditorContentSection from '@/components/domain/post-editor/layout/Pos
 import PostEditorDraftModal from '@/components/domain/post-editor/layout/PostEditorDraftModal';
 import PostEditorLinkModal from '@/components/domain/post-editor/layout/PostEditorLinkModal';
 import PostEditorMathModal from '@/components/domain/post-editor/layout/PostEditorMathModal';
-import PostEditorMetaSection from '@/components/domain/post-editor/layout/PostEditorMetaSection';
+import PostEditorPublishModal from '@/components/domain/post-editor/layout/PostEditorPublishModal';
 import PostEditorTableModal from '@/components/domain/post-editor/layout/PostEditorTableModal';
 import PostEditorTitleSection from '@/components/domain/post-editor/layout/PostEditorTitleSection';
 import PostEditorToolRail from '@/components/domain/post-editor/layout/PostEditorToolRail';
@@ -70,6 +70,7 @@ export default function PostEditorPage({ postId }) {
   const userId = useAuthStore((state) => state.user?.userId);
 
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [drafts, setDrafts] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -262,6 +263,19 @@ export default function PostEditorPage({ postId }) {
    * 게시/수정 버튼 핸들러. 제목·본문을 검증한 뒤 작성 모드면 createPost, 수정 모드면 updatePost 를 호출하고
    * 성공 시 게시글 상세로 이동한다.
    */
+  function handleOpenPublishModal() {
+    setValidationError('');
+    if (!title.trim()) {
+      setValidationError('제목을 입력해 주세요.');
+      return;
+    }
+    if (richText.isEditorEmpty) {
+      setValidationError('본문을 입력해 주세요.');
+      return;
+    }
+    setIsPublishModalOpen(true);
+  }
+
   function handlePublish() {
     // 중복 클릭 방지 — 같은 글이 여러 번 생성/수정되는 것을 막는다.
     if (activeMutation.isPending) return;
@@ -395,34 +409,53 @@ export default function PostEditorPage({ postId }) {
           }
         />
 
-        <PostEditorMetaSection
-          description={description}
-          onDescriptionChange={setDescription}
-          categoryId={categoryId}
-          categories={categories}
-          onCategoryChange={setCategoryId}
-          onCreateCategory={
-            userId
-              ? async (name) => {
-                  const created = await createUserBlogCategory(userId, name);
-                  const nextCategories = await loadUserBlogCategories(userId);
-                  setCategories(nextCategories);
-                  const matched =
-                    nextCategories.find((item) => item.id === created?.id) ??
-                    nextCategories.find((item) => item.name === name);
-                  if (matched?.id != null) {
-                    setCategoryId(matched.id);
-                  }
-                }
-              : undefined
-          }
+        <PostEditorBottomBar
+          charCount={richText.bodyText.length}
           isPublic={isPublic}
-          onIsPublicChange={setIsPublic}
-          isGeneratingDescription={aiSuggestion.isSuggestingDescription}
-          images={richText.bodyImages}
-          selectedThumbnailUrl={selectedThumbnailUrl}
-          onSelectThumbnail={handleSelectThumbnail}
-          onRequestGenerateDescription={async () => {
+          onSaveDraft={handleSaveDraft}
+          onPublish={handleOpenPublishModal}
+          publishDisabled={activeMutation.isPending}
+          publishButtonLabel={
+            activeMutation.isPending ? (isEditMode ? '수정 중…' : '게시 중…') : isEditMode ? '수정 완료' : '게시'
+          }
+        />
+      </PostEditorShell>
+      {/* 모달들은 Dialog portal로 body에 마운트되므로 Shell 바깥에 위치해야 한다 */}
+      <PostEditorPublishModal
+        isOpen={isPublishModalOpen}
+        isEditMode={isEditMode}
+        isPending={activeMutation.isPending}
+        onClose={() => setIsPublishModalOpen(false)}
+        onConfirm={() => {
+          setIsPublishModalOpen(false);
+          handlePublish();
+        }}
+        metaProps={{
+          description,
+          onDescriptionChange: setDescription,
+          categoryId,
+          categories,
+          onCategoryChange: setCategoryId,
+          onCreateCategory: userId
+            ? async (name) => {
+                const created = await createUserBlogCategory(userId, name);
+                const nextCategories = await loadUserBlogCategories(userId);
+                setCategories(nextCategories);
+                const matched =
+                  nextCategories.find((item) => item.id === created?.id) ??
+                  nextCategories.find((item) => item.name === name);
+                if (matched?.id != null) {
+                  setCategoryId(matched.id);
+                }
+              }
+            : undefined,
+          isPublic,
+          onIsPublicChange: setIsPublic,
+          isGeneratingDescription: aiSuggestion.isSuggestingDescription,
+          images: richText.bodyImages,
+          selectedThumbnailUrl,
+          onSelectThumbnail: handleSelectThumbnail,
+          onRequestGenerateDescription: async () => {
             const descriptionBeforeRequest = description;
             const summary = await aiSuggestion.requestDescriptionSuggestion({
               title,
@@ -431,21 +464,9 @@ export default function PostEditorPage({ postId }) {
             if (summary) {
               setDescription((current) => (current === descriptionBeforeRequest ? summary : current));
             }
-          }}
-        />
-
-        <PostEditorBottomBar
-          charCount={richText.bodyText.length}
-          isPublic={isPublic}
-          onSaveDraft={handleSaveDraft}
-          onPublish={handlePublish}
-          publishDisabled={activeMutation.isPending}
-          publishButtonLabel={
-            activeMutation.isPending ? (isEditMode ? '수정 중…' : '게시 중…') : isEditMode ? '수정 완료' : '게시'
-          }
-        />
-      </PostEditorShell>
-      {/* DraftModal은 Dialog portal로 body에 마운트되므로 Shell 바깥에 위치해야 한다 */}
+          },
+        }}
+      />
       <PostEditorDraftModal
         drafts={drafts}
         isOpen={isDraftModalOpen}

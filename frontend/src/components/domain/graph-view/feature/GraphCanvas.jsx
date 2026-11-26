@@ -2,21 +2,26 @@
 
 import { useMemo, useRef, useState } from 'react';
 
+import { EdgeKeywordTooltip } from '@/components/domain/graph-view/ui/EdgeKeywordTooltip';
+import { LockBadge } from '@/components/domain/graph-view/ui/GraphViewIcons';
 import {
   ARROW_LENGTH,
-  PRIMARY,
   PRIMARY_SOFT,
   SVG_H,
   SVG_W,
   clamp,
   createArrowPoints,
+  edgeBaseOpacity,
   edgeWidth,
+  getClusterColor,
+  getGraphTheme,
   graphNodeRadius,
   splitNodeTitle,
 } from '@/lib/graph-view/graph-view-utils';
-import { LockBadge } from '@/components/domain/graph-view/ui/GraphViewIcons';
 
-const STAR_PALETTE = ['#E0F2FE', '#93C5FD', '#A7F3D0', '#FDE68A', '#BAE6FD'];
+const NODE_DRAG_THRESHOLD = 4;
+const MAX_EDGE_TOOLTIPS = 4;
+const MIN_TOOLTIP_DISTANCE = 72;
 
 /** 결정론적 시드로 밤하늘 배경 별 좌표를 생성한다. */
 const BACKGROUND_STARS = Array.from({ length: 90 }, (_, index) => {
@@ -26,6 +31,7 @@ const BACKGROUND_STARS = Array.from({ length: 90 }, (_, index) => {
   const rx = seedA - Math.floor(seedA);
   const ry = seedB - Math.floor(seedB);
   const rz = seedC - Math.floor(seedC);
+
   return {
     x: Math.round(-420 + rx * (SVG_W + 840)),
     y: Math.round(-160 + ry * (SVG_H + 320)),
@@ -34,23 +40,20 @@ const BACKGROUND_STARS = Array.from({ length: 90 }, (_, index) => {
   };
 });
 
-function getStarColor(postId) {
-  const str = String(postId ?? '');
-  let hash = 0;
-  for (let i = 0; i < str.length; i += 1) {
-    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
-  }
-  return STAR_PALETTE[hash % STAR_PALETTE.length];
-}
-
-/** 노드·간선 SVG와 확대, 이동, 선택 상호작용을 렌더링한다. */
+/** 노드·간선 SVG와 확대, 이동, 노드 드래그, 키워드 툴팁 상호작용을 렌더링한다. */
 export function GraphCanvas({
   activeTab,
+  canvasTheme = 'dark',
   currentUserId,
   edges,
   hoveredId,
   minSharedTags,
   onHover,
+  onInteractionChange,
+  onManualViewportChange,
+  onNodeDragEnd,
+  onNodeDragMove,
+  onNodeDragStart,
   onOpenPost,
   pan,
   posts,
@@ -64,6 +67,11 @@ export function GraphCanvas({
 }) {
   const dragRef = useRef(null);
   const [isPanning, setIsPanning] = useState(false);
+  const [draggingNodeId, setDraggingNodeId] = useState(null);
+  const [hoveredEdgeId, setHoveredEdgeId] = useState(null);
+  const theme = getGraphTheme(canvasTheme);
+  const isLight = canvasTheme === 'light';
+
   const postMap = useMemo(() => new Map(posts.map((post) => [post.id, post])), [posts]);
   const visibleEdges = useMemo(
     () =>
@@ -106,13 +114,26 @@ export function GraphCanvas({
 
     return counts;
   }, [filteredPosts, renderedEdges]);
-  const focusedNodeIds = useMemo(
-    () => new Set([hoveredId, selectedId].filter((id) => id && filteredPostIds.has(id))),
-    [filteredPostIds, hoveredId, selectedId],
-  );
+  const focusedNodeIds = useMemo(() => {
+    const ids = new Set([hoveredId, selectedId, draggingNodeId].filter((id) => id && filteredPostIds.has(id)));
+
+    if (hoveredEdgeId) {
+      const hoveredEdge = renderedEdges.find((edge) => edge.id === hoveredEdgeId);
+
+      if (hoveredEdge) {
+        ids.add(hoveredEdge.from);
+        ids.add(hoveredEdge.to);
+      }
+    }
+
+    return ids;
+  }, [draggingNodeId, filteredPostIds, hoveredEdgeId, hoveredId, renderedEdges, selectedId]);
   const focusedEdges = useMemo(
-    () => renderedEdges.filter((edge) => focusedNodeIds.has(edge.from) || focusedNodeIds.has(edge.to)),
-    [focusedNodeIds, renderedEdges],
+    () =>
+      renderedEdges.filter(
+        (edge) => edge.id === hoveredEdgeId || focusedNodeIds.has(edge.from) || focusedNodeIds.has(edge.to),
+      ),
+    [focusedNodeIds, hoveredEdgeId, renderedEdges],
   );
   const relatedNodeIds = useMemo(() => {
     const relatedIds = new Set(focusedNodeIds);
@@ -125,33 +146,93 @@ export function GraphCanvas({
     return relatedIds;
   }, [focusedEdges, focusedNodeIds]);
   const categoryClusters = useMemo(() => {
-    if (activeTab !== 'category') return [];
+    if (activeTab !== 'category') {
+      return [];
+    }
+
     const groups = new Map();
+
     filteredPosts.forEach((post) => {
       const key = post.categoryName || '미분류';
-      if (!groups.has(key)) groups.set(key, []);
+
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+
       groups.get(key).push(post);
     });
-    if (groups.size === 0) return [];
+
+    if (groups.size === 0) {
+      return [];
+    }
 
     return [...groups.entries()].map(([name, groupPosts]) => {
-      const cx = groupPosts.reduce((sum, p) => sum + p.x, 0) / groupPosts.length;
-      const cy = groupPosts.reduce((sum, p) => sum + p.y, 0) / groupPosts.length;
-      const maxDist = groupPosts.reduce((max, p) => Math.max(max, Math.hypot(p.x - cx, p.y - cy)), 0);
+      const cx = groupPosts.reduce((sum, post) => sum + post.x, 0) / groupPosts.length;
+      const cy = groupPosts.reduce((sum, post) => sum + post.y, 0) / groupPosts.length;
+      const maxDist = groupPosts.reduce((max, post) => Math.max(max, Math.hypot(post.x - cx, post.y - cy)), 0);
+
       return {
-        color: getStarColor(name),
-        name,
+        color: getClusterColor(name, canvasTheme),
         cx,
         cy,
+        name,
         radius: Math.max(72, maxDist + 48),
       };
     });
-  }, [activeTab, filteredPosts]);
+  }, [activeTab, canvasTheme, filteredPosts]);
+
+  // 포커스된 간선 중 점수가 높고 서로 겹치지 않는 최대 4개에 공유 키워드 배지를 표시한다.
+  const tooltipEdges = useMemo(() => {
+    if (isPanning || draggingNodeId || focusedEdges.length === 0) {
+      return [];
+    }
+
+    const candidates = focusedEdges
+      .filter((edge) => edge.isExplicit || edge.sharedTags.length > 0)
+      .map((edge) => {
+        const from = postMap.get(edge.from);
+        const to = postMap.get(edge.to);
+
+        if (!from || !to) {
+          return null;
+        }
+
+        return {
+          edge,
+          isDirectHover: edge.id === hoveredEdgeId,
+          x: (from.x + to.x) / 2,
+          y: (from.y + to.y) / 2,
+        };
+      })
+      .filter(Boolean)
+      .sort(
+        (left, right) =>
+          Number(right.isDirectHover) - Number(left.isDirectHover) || (right.edge.score ?? 0) - (left.edge.score ?? 0),
+      );
+
+    const placed = [];
+
+    for (const candidate of candidates) {
+      if (placed.length >= MAX_EDGE_TOOLTIPS) {
+        break;
+      }
+
+      const tooClose = placed.some(
+        (item) => Math.hypot(item.x - candidate.x, item.y - candidate.y) < MIN_TOOLTIP_DISTANCE,
+      );
+
+      if (!tooClose) {
+        placed.push(candidate);
+      }
+    }
+
+    return placed;
+  }, [draggingNodeId, focusedEdges, hoveredEdgeId, isPanning, postMap]);
 
   const defaultLabelOpacity =
     posts.length > 12
-      ? Math.min(0.72, Math.max(0, (zoom - 1) * 1.2))
-      : Math.min(0.82, Math.max(0.56, 0.72 + (zoom - 1) * 0.4));
+      ? Math.min(0.76, Math.max(0, (zoom - 1) * 1.2))
+      : Math.min(0.88, Math.max(0.62, 0.76 + (zoom - 1) * 0.4));
 
   const getSvgPoint = (event) => {
     if (!svgRef.current) {
@@ -170,8 +251,14 @@ export function GraphCanvas({
     return point.matrixTransform(ctm.inverse());
   };
 
+  const toGraphPoint = (svgPoint) => ({
+    x: (svgPoint.x - pan.x) / zoom,
+    y: (svgPoint.y - pan.y) / zoom,
+  });
+
   const handleWheel = (event) => {
     event.preventDefault();
+    onManualViewportChange?.();
 
     const point = getSvgPoint(event);
 
@@ -202,23 +289,41 @@ export function GraphCanvas({
       return;
     }
 
+    onManualViewportChange?.();
     const nodeElement = event.target.closest?.('[data-node-id]');
+    const targetNodeId = nodeElement?.dataset.nodeId ?? null;
+
     event.preventDefault();
     event.currentTarget.setPointerCapture?.(event.pointerId);
+
+    if (targetNodeId) {
+      dragRef.current = {
+        dragStarted: false,
+        element: event.currentTarget,
+        mode: 'node',
+        moved: false,
+        pointerId: event.pointerId,
+        startX: point.x,
+        startY: point.y,
+        targetNodeId,
+      };
+      onHover(targetNodeId);
+      return;
+    }
+
     dragRef.current = {
       element: event.currentTarget,
+      mode: 'pan',
       moved: false,
       pointerId: event.pointerId,
       startPanX: pan.x,
       startPanY: pan.y,
       startX: point.x,
       startY: point.y,
-      targetNodeId: nodeElement?.dataset.nodeId ?? null,
+      targetNodeId: null,
     };
     setIsPanning(true);
-    if (nodeElement?.dataset.nodeId) {
-      onHover(nodeElement.dataset.nodeId);
-    }
+    onInteractionChange?.(true);
   };
 
   const handlePointerMove = (event) => {
@@ -235,6 +340,26 @@ export function GraphCanvas({
     }
 
     const movement = Math.hypot(rawPoint.x - drag.startX, rawPoint.y - drag.startY);
+
+    if (drag.mode === 'node') {
+      const graphPoint = toGraphPoint(rawPoint);
+
+      if (!drag.dragStarted) {
+        if (movement <= NODE_DRAG_THRESHOLD) {
+          return;
+        }
+
+        drag.moved = true;
+        drag.dragStarted = true;
+        setDraggingNodeId(drag.targetNodeId);
+        onInteractionChange?.(true);
+        onNodeDragStart?.(drag.targetNodeId, graphPoint.x, graphPoint.y);
+        return;
+      }
+
+      onNodeDragMove?.(drag.targetNodeId, graphPoint.x, graphPoint.y);
+      return;
+    }
 
     if (movement > 2) {
       drag.moved = true;
@@ -255,48 +380,79 @@ export function GraphCanvas({
 
     drag.element?.releasePointerCapture?.(drag.pointerId);
 
-    if (drag.targetNodeId && !drag.moved) {
-      onOpenPost(drag.targetNodeId);
+    if (drag.mode === 'node') {
+      if (drag.dragStarted) {
+        onNodeDragEnd?.(drag.targetNodeId);
+        setDraggingNodeId(null);
+        onInteractionChange?.(false);
+      } else if (!drag.moved) {
+        onOpenPost(drag.targetNodeId);
+      }
+    } else {
+      setIsPanning(false);
+      onInteractionChange?.(false);
     }
 
     dragRef.current = null;
-    setIsPanning(false);
   };
+
+  const svgCursor = isPanning || draggingNodeId ? 'grabbing' : 'grab';
 
   return (
     <svg
       ref={svgRef}
-      viewBox={`0 0 ${SVG_W} ${SVG_H}`}
       className="h-full w-full overflow-visible"
+      data-canvas-theme={canvasTheme}
       onPointerCancel={finishDrag}
       onPointerDown={handleCanvasPointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={finishDrag}
       onWheel={handleWheel}
-      style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
+      style={{ cursor: svgCursor, touchAction: 'none' }}
+      viewBox={`0 0 ${SVG_W} ${SVG_H}`}
     >
       <defs>
-        <filter id="star-glow" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="2.8" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
+        {theme.useGlow ? (
+          <filter id="star-glow" height="220%" width="220%" x="-60%" y="-60%">
+            <feGaussianBlur result="blur" stdDeviation="2.8" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        ) : null}
+        {theme.showDotGrid ? (
+          <pattern height="24" id="graph-light-dot-grid" patternUnits="userSpaceOnUse" width="24">
+            <circle cx="12" cy="12" fill={theme.dotColor} r="1.15" />
+          </pattern>
+        ) : null}
       </defs>
 
-      <g pointerEvents="none">
-        {BACKGROUND_STARS.map((star, index) => (
-          <circle
-            key={index}
-            cx={star.x}
-            cy={star.y}
-            r={star.r}
-            fill={index % 3 === 0 ? '#FDE047' : '#FEF08A'}
-            opacity={star.opacity}
-          />
-        ))}
-      </g>
+      {theme.showDotGrid ? (
+        <rect
+          fill="url(#graph-light-dot-grid)"
+          height={SVG_H + 640}
+          pointerEvents="none"
+          width={SVG_W + 1280}
+          x={-640}
+          y={-320}
+        />
+      ) : null}
+
+      {theme.showStars ? (
+        <g pointerEvents="none">
+          {BACKGROUND_STARS.map((star, index) => (
+            <circle
+              key={index}
+              cx={star.x}
+              cy={star.y}
+              fill={index % 3 === 0 ? '#FDE047' : '#FEF08A'}
+              opacity={star.opacity}
+              r={star.r}
+            />
+          ))}
+        </g>
+      ) : null}
 
       <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
         {categoryClusters.map((cluster) => (
@@ -304,22 +460,22 @@ export function GraphCanvas({
             <circle
               cx={cluster.cx}
               cy={cluster.cy}
-              r={cluster.radius}
               fill={cluster.color}
-              fillOpacity={0.05}
+              fillOpacity={theme.clusterFillOpacity}
+              r={cluster.radius}
               stroke={cluster.color}
-              strokeOpacity={0.28}
               strokeDasharray="5 6"
+              strokeOpacity={theme.clusterStrokeOpacity}
               strokeWidth={1.25}
             />
             <text
-              x={cluster.cx}
-              y={cluster.cy - cluster.radius - 10}
-              textAnchor="middle"
               fill={cluster.color}
               fontSize="12"
               fontWeight="700"
               letterSpacing="-0.02em"
+              textAnchor="middle"
+              x={cluster.cx}
+              y={cluster.cy - cluster.radius - 10}
             >
               {cluster.name}
             </text>
@@ -352,19 +508,29 @@ export function GraphCanvas({
           const y1 = from.y + uy * (fromRadius + startGap);
           const x2 = to.x - ux * (toRadius + endGap);
           const y2 = to.y - uy * (toRadius + endGap);
-          const isLit =
-            hoveredId === edge.from || hoveredId === edge.to || selectedId === edge.from || selectedId === edge.to;
-          const hasFocus = focusedNodeIds.size > 0;
-          const edgeOpacity = hasFocus ? (isLit ? 0.94 : 0.08) : edge.isExplicit ? 0.72 : 0.28;
+          const isLit = hoveredEdgeId === edge.id || focusedNodeIds.has(edge.from) || focusedNodeIds.has(edge.to);
+          const hasFocus = focusedNodeIds.size > 0 || hoveredEdgeId != null;
+          const edgeOpacity = hasFocus ? (isLit ? 0.94 : 0.08) : edgeBaseOpacity(edge, canvasTheme);
           const lineWidth = edgeWidth(edge);
           const dashArray = edge.isExplicit ? '4,4' : undefined;
           const lineEndX = edge.isExplicit ? x2 - ux * ARROW_LENGTH : x2;
           const lineEndY = edge.isExplicit ? y2 - uy * ARROW_LENGTH : y2;
           const arrowPoints = edge.isExplicit ? createArrowPoints(x2, y2, lineEndX, lineEndY, ux, uy) : null;
-          const edgeColor = isLit ? '#FEF08A' : edge.isExplicit ? '#FDE047' : '#FBBF24';
+          const edgeColor = isLit ? theme.edgeLitColor : edge.isExplicit ? theme.edgeExplicitColor : theme.edgeColor;
 
           return (
-            <g data-graph-edge={edge.id} key={edge.id} opacity={edgeOpacity} style={{ transition: 'opacity 0.18s' }}>
+            <g
+              key={edge.id}
+              data-graph-edge={edge.id}
+              onMouseEnter={() => {
+                if (!draggingNodeId && !isPanning) {
+                  setHoveredEdgeId(edge.id);
+                }
+              }}
+              onMouseLeave={() => setHoveredEdgeId((previous) => (previous === edge.id ? null : previous))}
+              opacity={edgeOpacity}
+              style={{ transition: 'opacity 0.18s' }}
+            >
               <line
                 stroke={edgeColor}
                 strokeDasharray={dashArray}
@@ -380,7 +546,7 @@ export function GraphCanvas({
                   fill={edgeColor}
                   opacity="0.96"
                   points={arrowPoints}
-                  stroke={PRIMARY_SOFT}
+                  stroke={isLight ? '#FFFFFF' : PRIMARY_SOFT}
                   strokeLinejoin="round"
                   strokeWidth="1.5"
                 />
@@ -395,27 +561,38 @@ export function GraphCanvas({
           const titleLines = splitNodeTitle(post.title);
           const isHovered = hoveredId === post.id;
           const isSelected = selectedId === post.id;
-          const isFocused = isHovered || isSelected;
+          const isDragged = draggingNodeId === post.id;
+          const isFocused = isHovered || isSelected || isDragged;
           const isRelated = relatedNodeIds.has(post.id);
           const hasFocus = focusedNodeIds.size > 0;
           const isDimmed = hasFocus && !isFocused && !isRelated;
-          const baseBrightness = Math.min(1, 0.52 + degree * 0.14);
+          const baseBrightness = isLight ? Math.min(1, 0.78 + degree * 0.06) : Math.min(1, 0.52 + degree * 0.14);
           const nodeOpacity = isDimmed
-            ? 0.18
+            ? isLight
+              ? 0.22
+              : 0.18
             : hasFocus && isRelated && !isFocused
-              ? 0.9
+              ? 0.92
               : isFocused
                 ? 1
                 : baseBrightness;
-          const labelOpacity = isDimmed ? 0 : isFocused ? 1 : hasFocus && isRelated ? 0.88 : defaultLabelOpacity;
-          const baseStarColor = activeTab === 'category' ? getStarColor(post.categoryName || '미분류') : '#FDE047';
-          const haloOpacity = Math.min(0.32, 0.06 + degree * 0.055);
+          const labelOpacity = isDimmed ? 0 : isFocused ? 1 : hasFocus && isRelated ? 0.9 : defaultLabelOpacity;
+          const baseNodeColor =
+            activeTab === 'category' ? getClusterColor(post.categoryName || '미분류', canvasTheme) : theme.nodeFill;
+          const nodeFill = isFocused
+            ? activeTab === 'category' && isLight
+              ? baseNodeColor
+              : theme.nodeFocusedFill
+            : degree >= 4 && activeTab !== 'category'
+              ? theme.nodeHubFill
+              : baseNodeColor;
+          const haloOpacity = isLight ? Math.min(0.26, 0.08 + degree * 0.04) : Math.min(0.32, 0.06 + degree * 0.055);
           const haloRadius = radius + Math.min(10, 3 + degree * 1.6);
 
           return (
             <g
-              aria-label={`${post.title} 게시글 열기`}
               key={post.id}
+              aria-label={`${post.title} 게시글 열기`}
               data-graph-node={post.id}
               data-graph-node-state={isFocused ? 'focused' : isRelated ? 'related' : isDimmed ? 'dimmed' : 'default'}
               data-node-id={post.id}
@@ -427,11 +604,19 @@ export function GraphCanvas({
                   onOpenPost(post.id);
                 }
               }}
-              onMouseEnter={() => onHover(post.id)}
-              onMouseLeave={() => onHover(null)}
+              onMouseEnter={() => {
+                if (!draggingNodeId && !isPanning) {
+                  onHover(post.id);
+                }
+              }}
+              onMouseLeave={() => {
+                if (!draggingNodeId) {
+                  onHover(null);
+                }
+              }}
               role="button"
               style={{
-                cursor: 'pointer',
+                cursor: isDragged ? 'grabbing' : 'grab',
                 opacity: nodeOpacity,
                 transition: 'opacity 0.18s',
                 touchAction: 'none',
@@ -439,12 +624,18 @@ export function GraphCanvas({
               tabIndex={0}
             >
               {isFocused ? (
-                <circle cx={post.x} cy={post.y} fill="#FACC15" opacity="0.34" r={radius + 11} />
+                <circle
+                  cx={post.x}
+                  cy={post.y}
+                  fill={theme.focusedHaloFill}
+                  opacity={isLight ? '0.26' : '0.34'}
+                  r={radius + 11}
+                />
               ) : (
                 <circle
                   cx={post.x}
                   cy={post.y}
-                  fill={activeTab === 'category' ? baseStarColor : '#F59E0B'}
+                  fill={activeTab === 'category' ? baseNodeColor : theme.haloFill}
                   opacity={haloOpacity}
                   r={haloRadius}
                 />
@@ -452,24 +643,24 @@ export function GraphCanvas({
               <circle
                 cx={post.x}
                 cy={post.y}
-                fill={isFocused ? '#FEF08A' : degree >= 4 && activeTab !== 'category' ? '#FEF08A' : baseStarColor}
-                filter={isFocused || degree >= 1 ? 'url(#star-glow)' : undefined}
+                fill={nodeFill}
+                filter={theme.useGlow && (isFocused || degree >= 1) ? 'url(#star-glow)' : undefined}
                 opacity={isFocused ? 1 : baseBrightness}
                 r={radius}
-                stroke={isFocused ? '#FACC15' : '#FEF08A'}
+                stroke={isFocused ? theme.nodeFocusedStroke : theme.nodeStroke}
                 strokeDasharray={post.isPrivate ? '5,3' : undefined}
-                strokeOpacity={isFocused ? 1 : Math.min(0.92, 0.45 + degree * 0.14)}
-                strokeWidth={isFocused ? 2.5 : post.isPrivate ? 2 : 1.2}
+                strokeOpacity={isFocused ? 1 : isLight ? 0.95 : Math.min(0.92, 0.45 + degree * 0.14)}
+                strokeWidth={isFocused ? 2.5 : post.isPrivate ? 2 : isLight ? 1.8 : 1.2}
               />
               {post.isPrivate ? <LockBadge x={post.x + radius * 0.52} y={post.y + radius * 0.52} /> : null}
               <text
-                fill={isFocused ? '#F8FAFC' : '#CBD5E1'}
+                fill={isFocused ? theme.labelFocusedFill : theme.labelFill}
                 fontFamily="var(--font-nanum-gothic-coding), system-ui, sans-serif"
                 fontSize="12"
                 fontWeight={isFocused ? '800' : '600'}
                 opacity={labelOpacity}
                 paintOrder="stroke"
-                stroke="rgba(6, 9, 19, 0.92)"
+                stroke={theme.labelStroke}
                 strokeLinejoin="round"
                 strokeWidth="4"
                 textAnchor="middle"
@@ -485,6 +676,10 @@ export function GraphCanvas({
             </g>
           );
         })}
+
+        {tooltipEdges.map(({ edge, x, y }) => (
+          <EdgeKeywordTooltip key={`tooltip-${edge.id}`} canvasTheme={canvasTheme} edge={edge} x={x} y={y} />
+        ))}
       </g>
     </svg>
   );
