@@ -342,62 +342,13 @@ export default function PostEditorPage({ postId }) {
     <>
       {/* PostEditorShell: 둥근 모서리·테두리·그림자로 에디터 전체를 감싸는 외곽 카드 */}
       <PostEditorShell>
-        <PostEditorTopBar
-          logoLabel={postEditorCopy.logoLabel}
-          onOpenDraftModal={() => setIsDraftModalOpen(true)}
-          remainingTokens={tokenStatus?.remainingTokens}
-          maxTokens={tokenStatus?.maxTokens}
-        />
-
-        <PostEditorTitleSection
-          categoryName={selectedCategoryName}
-          isPublic={isPublic}
-          title={title}
-          titlePlaceholder={postEditorCopy.titlePlaceholder}
-          onTitleChange={setTitle}
-          titleSuggestion={aiSuggestion.titleSuggestion}
-          isSuggestingTitle={aiSuggestion.isSuggestingTitle}
-          onAcceptTitleSuggestion={(currentTitle) => {
-            const next = aiSuggestion.acceptTitleSuggestion(currentTitle);
-            if (next) setTitle(next);
-          }}
-          onDismissTitleSuggestion={aiSuggestion.dismissTitleSuggestion}
-          onRequestTitleSuggestion={aiSuggestion.requestTitleSuggestion}
-        />
-
-        {(validationError || activeMutation.isError || aiSuggestion.aiError) && (
-          <div className="px-5 pt-4 sm:px-7">
-            <Alert
-              variant={aiSuggestion.aiError && !validationError && !activeMutation.isError ? 'default' : 'destructive'}
-            >
-              <AlertDescription>
-                {validationError ||
-                  activeMutation.error?.message ||
-                  aiSuggestion.aiError ||
-                  (isEditMode
-                    ? '수정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
-                    : '게시에 실패했습니다. 잠시 후 다시 시도해 주세요.')}
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
-
         <PostEditorCanvasLayout
-          content={
-            <PostEditorContentSection
-              bodyPlaceholder={postEditorCopy.bodyPlaceholder}
-              editor={richText.editor}
-              isEditorEmpty={richText.isEditorEmpty}
-              isSuggestingParagraph={aiSuggestion.isSuggestingParagraph}
-              onRequestParagraphAi={(mode = 'AUTO') => {
-                richText.editor?.commands.focus();
-                aiSuggestion.requestParagraphSuggestion({
-                  insertDirectly: mode !== 'AUTO',
-                  mode,
-                });
-              }}
-              onCancelParagraphAi={abortParagraphSuggestion}
-              userId={userId}
+          topBar={
+            <PostEditorTopBar
+              logoLabel={postEditorCopy.logoLabel}
+              onOpenDraftModal={() => setIsDraftModalOpen(true)}
+              remainingTokens={tokenStatus?.remainingTokens}
+              maxTokens={tokenStatus?.maxTokens}
             />
           }
           toolRail={
@@ -414,6 +365,60 @@ export default function PostEditorPage({ postId }) {
                 });
               }}
             />
+          }
+          content={
+            <>
+              <PostEditorTitleSection
+                categoryName={selectedCategoryName}
+                isPublic={isPublic}
+                title={title}
+                titlePlaceholder={postEditorCopy.titlePlaceholder}
+                onTitleChange={setTitle}
+                titleSuggestion={aiSuggestion.titleSuggestion}
+                isSuggestingTitle={aiSuggestion.isSuggestingTitle}
+                onAcceptTitleSuggestion={(currentTitle) => {
+                  const next = aiSuggestion.acceptTitleSuggestion(currentTitle);
+                  if (next) setTitle(next);
+                }}
+                onDismissTitleSuggestion={aiSuggestion.dismissTitleSuggestion}
+                onRequestTitleSuggestion={aiSuggestion.requestTitleSuggestion}
+              />
+
+              {(validationError || activeMutation.isError || aiSuggestion.aiError) && (
+                <div className="mx-auto w-full max-w-[820px] px-5 pt-4 sm:px-8">
+                  <Alert
+                    variant={
+                      aiSuggestion.aiError && !validationError && !activeMutation.isError ? 'default' : 'destructive'
+                    }
+                  >
+                    <AlertDescription>
+                      {validationError ||
+                        activeMutation.error?.message ||
+                        aiSuggestion.aiError ||
+                        (isEditMode
+                          ? '수정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                          : '게시에 실패했습니다. 잠시 후 다시 시도해 주세요.')}
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
+
+              <PostEditorContentSection
+                bodyPlaceholder={postEditorCopy.bodyPlaceholder}
+                editor={richText.editor}
+                isEditorEmpty={richText.isEditorEmpty}
+                isSuggestingParagraph={aiSuggestion.isSuggestingParagraph}
+                onRequestParagraphAi={(mode = 'AUTO') => {
+                  richText.editor?.commands.focus();
+                  aiSuggestion.requestParagraphSuggestion({
+                    insertDirectly: mode !== 'AUTO',
+                    mode,
+                  });
+                }}
+                onCancelParagraphAi={abortParagraphSuggestion}
+                userId={userId}
+              />
+            </>
           }
         />
 

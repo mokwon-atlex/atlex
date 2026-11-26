@@ -16,7 +16,7 @@ export default function PostEditorTopBar({
   maxTokens = null,
 }) {
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between gap-4 rounded-t-[26px] border-b border-border bg-background/95 px-5 py-3 backdrop-blur-md sm:px-7 dark:border-zinc-700/90">
+    <header className="flex items-center justify-between gap-4 rounded-t-[26px] border-b border-border bg-background/95 px-5 py-3 backdrop-blur-md sm:px-7 dark:border-zinc-700/90">
       <div className="flex items-center gap-3">
         <Link
           href="/"

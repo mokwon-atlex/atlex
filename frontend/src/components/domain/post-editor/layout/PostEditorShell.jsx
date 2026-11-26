@@ -5,7 +5,7 @@ export default function PostEditorShell({ children }) {
     <div className="relative">
       <div
         data-post-editor-shell
-        className="flex min-h-[calc(100vh-2rem)] flex-col overflow-x-clip rounded-[26px] border border-border bg-background shadow-[0_24px_48px_-24px_rgba(15,23,42,0.28)] dark:border-zinc-700/90"
+        className="flex min-h-screen flex-col overflow-x-clip rounded-[26px] border border-border bg-background shadow-[0_24px_48px_-24px_rgba(15,23,42,0.28)] dark:border-zinc-700/90"
       >
         {children}
       </div>

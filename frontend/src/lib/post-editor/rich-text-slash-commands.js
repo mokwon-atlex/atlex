@@ -165,6 +165,46 @@ export const TOOLBAR_SHORTCUT_HINT_MAP = {
 };
 
 /**
+ * 플랫폼·User-Agent 문자열을 기준으로 Apple(macOS/iOS) 환경 여부를 판별한다.
+ *
+ * @param {string} [platformText] 플랫폼 또는 User-Agent 문자열
+ * @returns {boolean} Apple 환경 여부
+ */
+export function isApplePlatform(platformText = '') {
+  return /(mac|iphone|ipad|ipod)/i.test(String(platformText ?? ''));
+}
+
+/**
+ * 현재 브라우저 환경이 Apple(macOS/iOS)인지 판별한다. SSR 환경에서는 false를 반환한다.
+ *
+ * @returns {boolean} Apple 환경 여부
+ */
+export function detectApplePlatform() {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  const platformText = navigator.userAgentData?.platform || navigator.platform || navigator.userAgent || '';
+  return isApplePlatform(platformText);
+}
+
+/**
+ * 툴바 항목 라벨과 OS 환경에 맞는 단일 키보드 단축키 문자열을 반환한다.
+ *
+ * @param {string} itemLabel 툴바 항목 라벨
+ * @param {boolean} [isApple] Apple(macOS/iOS) 환경 여부
+ * @returns {string | null} 표시할 단축키 문자열
+ */
+export function getToolbarShortcutLabel(itemLabel, isApple = false) {
+  const hint = TOOLBAR_SHORTCUT_HINT_MAP[itemLabel];
+  if (!hint) {
+    return null;
+  }
+
+  return isApple ? hint.mac : hint.win;
+}
+
+/**
  * 입력한 검색어에 맞는 슬래시 커맨드를 필터링하고 접두사 일치 항목을 우선 정렬한다.
  *
  * @param {string} query `/` 뒤에 입력한 검색어
