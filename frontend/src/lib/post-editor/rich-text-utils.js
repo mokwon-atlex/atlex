@@ -69,3 +69,18 @@ export function createBlockContent(text) {
     },
   ];
 }
+
+/**
+ * 문서가 아무 블록도 없는 단일 빈 기본 문단(`<p></p>`) 상태인지 판별한다.
+ * 코드 블록·표·제목·인용문·토글·구분선 등이 하나라도 있으면 placeholder를 숨기기 위해 false를 반환한다.
+ *
+ * @param {import('@tiptap/pm/model').Node | null | undefined} doc ProseMirror 문서 노드
+ * @returns {boolean} 초기 빈 문단 상태 여부
+ */
+export function isPlainEmptyDocument(doc) {
+  if (!doc) {
+    return true;
+  }
+
+  return doc.childCount === 1 && doc.firstChild?.type?.name === 'paragraph' && doc.firstChild.content.size === 0;
+}
