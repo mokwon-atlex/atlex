@@ -2,28 +2,40 @@ import { generateJSON, resolveExtensions } from '@tiptap/core';
 import { expect } from 'storybook/test';
 
 import { editorExtensions } from '@/lib/post-editor/rich-text-extensions';
+import { matchSlashCommandTrigger } from '@/lib/post-editor/rich-text-slash-command-extension';
+import { filterSlashCommands } from '@/lib/post-editor/rich-text-slash-commands';
 
 /** 에디터 확장 구성을 검증하기 위한 빈 화면을 렌더링한다. */
 function RichTextExtensionsTestView() {
   return <div>에디터 확장 구성 검증</div>;
 }
 
-/** 링크와 밑줄 확장이 기존 링크 옵션을 유지하며 한 번씩 등록되는지 검증한다. */
+/** 링크, 밑줄, 내 글 링크, 슬래시 커맨드 확장이 단일 구성으로 등록되는지 검증한다. */
 async function verifySingleExtensionRegistration() {
   const resolvedExtensions = resolveExtensions(editorExtensions);
   const linkExtensions = resolvedExtensions.filter(({ name }) => name === 'link');
   const underlineExtensions = resolvedExtensions.filter(({ name }) => name === 'underline');
   const postLinkExtensions = resolvedExtensions.filter(({ name }) => name === 'postLink');
+  const slashCommandExtensions = resolvedExtensions.filter(({ name }) => name === 'slashCommand');
 
   await expect(linkExtensions).toHaveLength(1);
   await expect(underlineExtensions).toHaveLength(1);
   await expect(postLinkExtensions).toHaveLength(1);
+  await expect(slashCommandExtensions).toHaveLength(1);
   await expect(linkExtensions[0].options).toMatchObject({
     autolink: true,
     defaultProtocol: 'https',
     linkOnPaste: true,
     openOnClick: true,
   });
+
+  // 슬래시 커맨드 트리거 감지 및 필터링 동작을 검증한다.
+  await expect(matchSlashCommandTrigger('/code')).toEqual({ matchLength: 5, query: 'code' });
+  await expect(matchSlashCommandTrigger('본문 /table')).toEqual({ matchLength: 6, query: 'table' });
+  await expect(matchSlashCommandTrigger('https://example.com/code')).toBeNull();
+  await expect(matchSlashCommandTrigger('a/b')).toBeNull();
+  await expect(filterSlashCommands('code')[0]?.id).toBe('code-block');
+  await expect(filterSlashCommands('표')[0]?.id).toBe('table');
 }
 
 /** @type { import('@storybook/nextjs-vite').Meta } */
