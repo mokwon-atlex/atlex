@@ -1,13 +1,11 @@
 'use client';
 
 // [Section] tiptap 리치 텍스트 에디터 본문 섹션.
-// 본문 영역 어디를 클릭해도 즉시 에디터 포커스가 잡혀 글쓰기를 시작할 수 있다.
-import { useState } from 'react';
+// 게시 후 상세 본문(BlogDetailArticle)과 동일한 읽기 폭·타이포그래피 리듬을 유지한다.
 import { EditorContent } from '@tiptap/react';
-import { ChevronDown, Code2, GitFork, Loader2, Sigma, Sparkles, Table2, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/common/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/common/ui/popover';
 import { Textfield } from '@/components/common/ui/textfield';
 import PostLinkPopover from '@/components/domain/post-editor/ui/PostLinkPopover';
 import SlashCommandPopover from '@/components/domain/post-editor/ui/SlashCommandPopover';
@@ -21,7 +19,6 @@ export default function PostEditorContentSection({
   onCancelParagraphAi,
   userId,
 }) {
-  const [aiMenuOpen, setAiMenuOpen] = useState(false);
   const isTableActive = Boolean(editor?.isActive('table'));
 
   const handleKeyDown = (e) => {
@@ -34,7 +31,7 @@ export default function PostEditorContentSection({
   };
 
   const handleKeyDownCapture = (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' && isSuggestingParagraph) {
       onCancelParagraphAi?.();
     }
   };
@@ -53,106 +50,10 @@ export default function PostEditorContentSection({
 
   return (
     <div className="flex flex-1 flex-col">
-      {(onRequestParagraphAi || isTableActive) && (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/20 px-5 py-2 sm:px-7">
-          {onRequestParagraphAi ? (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Popover open={aiMenuOpen} onOpenChange={setAiMenuOpen}>
-                <PopoverTrigger
-                  render={
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="xs"
-                      onMouseDown={(e) => e.preventDefault()}
-                      disabled={isSuggestingParagraph}
-                      className="gap-1 text-xs text-muted-foreground hover:text-foreground"
-                    />
-                  }
-                >
-                  <Sparkles className="size-3 text-primary" />
-                  <span>AI 블록 삽입</span>
-                  <ChevronDown className="size-3 opacity-60" />
-                </PopoverTrigger>
-                <PopoverContent align="start" className="w-52 space-y-1 p-1.5">
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      setAiMenuOpen(false);
-                      onRequestParagraphAi('CODE');
-                    }}
-                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs hover:bg-muted"
-                  >
-                    <Code2 className="size-3.5 text-primary" />
-                    <span>예제 코드 블록</span>
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      setAiMenuOpen(false);
-                      onRequestParagraphAi('DIAGRAM');
-                    }}
-                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs hover:bg-muted"
-                  >
-                    <GitFork className="size-3.5 text-primary" />
-                    <span>Mermaid 다이어그램</span>
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      setAiMenuOpen(false);
-                      onRequestParagraphAi('TABLE');
-                    }}
-                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs hover:bg-muted"
-                  >
-                    <Table2 className="size-3.5 text-primary" />
-                    <span>마크다운 비교 표</span>
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      setAiMenuOpen(false);
-                      onRequestParagraphAi('MATH');
-                    }}
-                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs hover:bg-muted"
-                  >
-                    <Sigma className="size-3.5 text-primary" />
-                    <span>LaTeX 수식 블록</span>
-                  </button>
-                </PopoverContent>
-              </Popover>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="xs"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => onRequestParagraphAi('AUTO')}
-                disabled={isSuggestingParagraph}
-                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                title="현재 커서 위치에 AI가 다음 문장을 이어서 추천합니다 (단축키: Ctrl + J, 적용: Tab, 취소: Esc)"
-              >
-                {isSuggestingParagraph ? (
-                  <Loader2 className="size-3 animate-spin text-primary" />
-                ) : (
-                  <Sparkles className="size-3 text-primary" />
-                )}
-                <span>{isSuggestingParagraph ? '작성 중...' : 'AI 이어쓰기'}</span>
-                <span className="rounded border border-border/60 bg-muted/40 px-1 text-[10px] text-muted-foreground">
-                  Ctrl+J
-                </span>
-              </Button>
-            </div>
-          ) : (
-            <div />
-          )}
-
-          {isTableActive ? (
-            <div className="flex flex-wrap items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-1 text-xs">
+      {isTableActive ? (
+        <div className="border-b border-border bg-muted/25 px-5 py-2 sm:px-7 dark:border-zinc-700/90 dark:bg-zinc-900/70">
+          <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-end gap-1 text-xs">
+            <div className="flex flex-wrap items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-2 py-1">
               <span className="mr-1 font-semibold text-foreground">표 편집</span>
               <Button
                 type="button"
@@ -201,32 +102,34 @@ export default function PostEditorContentSection({
                 <Trash2 className="size-3" />표 삭제
               </Button>
             </div>
-          ) : null}
+          </div>
         </div>
-      )}
+      ) : null}
 
       <div
         data-editor-canvas
         onClick={handleCanvasClick}
-        className="relative flex min-h-[480px] flex-1 cursor-text flex-col px-5 py-6 sm:px-7"
+        className="relative flex min-h-[500px] flex-1 cursor-text flex-col px-5 py-7 sm:px-8"
       >
-        {isEditorEmpty && bodyPlaceholder ? (
-          <Textfield
-            variant="muted"
-            size="default"
-            whitespace="preline"
-            className="pointer-events-none absolute inset-x-5 top-6 leading-8 sm:inset-x-7"
-          >
-            {bodyPlaceholder}
-          </Textfield>
-        ) : null}
+        <div className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col">
+          {isEditorEmpty && bodyPlaceholder ? (
+            <Textfield
+              variant="muted"
+              size="default"
+              whitespace="preline"
+              className="pointer-events-none absolute inset-x-0 top-0 leading-9 text-muted-foreground/80 dark:text-zinc-400"
+            >
+              {bodyPlaceholder}
+            </Textfield>
+          ) : null}
 
-        <div
-          onKeyDown={handleKeyDown}
-          onKeyDownCapture={handleKeyDownCapture}
-          className="post-editor-prose flex-1 break-words"
-        >
-          <EditorContent editor={editor} className="h-full min-h-[460px]" />
+          <div
+            onKeyDown={handleKeyDown}
+            onKeyDownCapture={handleKeyDownCapture}
+            className="post-editor-prose flex-1 break-words"
+          >
+            <EditorContent editor={editor} className="h-full min-h-[460px]" />
+          </div>
         </div>
 
         <PostLinkPopover editor={editor} userId={userId} />

@@ -1,6 +1,6 @@
 'use client';
 
-// [Section] 게시/수정 최종 확인 모달 — 설명·카테고리·공개 여부·썸네일을 설정한 뒤 발행한다.
+// [Section] 게시/수정 최종 확인 모달 — 설명·태그·카테고리·공개 여부·썸네일을 설정한 뒤 발행한다.
 import { Button } from '@/components/common/ui/button';
 import {
   Dialog,
@@ -26,12 +26,14 @@ export default function PostEditorPublishModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent size="xl" className="max-h-[85vh] overflow-y-auto">
+      <DialogContent size="xl" className="max-h-[85vh] overflow-y-auto dark:border-zinc-700">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold tracking-tight">
             {isEditMode ? '게시글 수정 설정' : '게시글 발행 설정'}
           </DialogTitle>
-          <DialogDescription>요약 설명, 카테고리, 공개 여부 및 대표 썸네일을 확인한 뒤 발행하세요.</DialogDescription>
+          <DialogDescription className="dark:text-zinc-300">
+            요약 설명, 태그, 카테고리, 공개 여부 및 대표 썸네일을 확인한 뒤 발행하세요.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="mt-2">
@@ -39,7 +41,13 @@ export default function PostEditorPublishModal({
         </div>
 
         <DialogFooter className="mt-4">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isPending}
+            className="dark:border-zinc-600"
+          >
             취소
           </Button>
           <Button type="button" variant="default" onClick={onConfirm} disabled={isPending}>

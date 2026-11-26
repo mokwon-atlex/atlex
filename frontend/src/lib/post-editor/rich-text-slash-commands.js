@@ -149,6 +149,21 @@ export const TOOLBAR_SLASH_HINT_MAP = Object.fromEntries(
   SLASH_COMMANDS.filter((item) => item.toolbarAction).map((item) => [item.toolbarAction, item.command]),
 );
 
+/** 슬래시 명령어 대신 키보드 단축키로 조작하는 툴바 버튼의 OS별 단축키 매핑이다. */
+export const TOOLBAR_SHORTCUT_HINT_MAP = {
+  볼드: { mac: '⌘+B', win: 'Ctrl+B' },
+  이탤릭: { mac: '⌘+I', win: 'Ctrl+I' },
+  밑줄: { mac: '⌘+U', win: 'Ctrl+U' },
+  취소선: { mac: '⌘+Shift+S', win: 'Ctrl+Shift+S' },
+  '왼쪽 정렬': { mac: '⌘+Shift+L', win: 'Ctrl+Shift+L' },
+  '가운데 정렬': { mac: '⌘+Shift+E', win: 'Ctrl+Shift+E' },
+  '오른쪽 정렬': { mac: '⌘+Shift+R', win: 'Ctrl+Shift+R' },
+  '양쪽 정렬': { mac: '⌘+Shift+J', win: 'Ctrl+Shift+J' },
+  본문: { mac: '⌘+⌥+0', win: 'Ctrl+Alt+0' },
+  '실행 취소': { mac: '⌘+Z', win: 'Ctrl+Z' },
+  '다시 실행': { mac: '⌘+Shift+Z', win: 'Ctrl+Y' },
+};
+
 /**
  * 입력한 검색어에 맞는 슬래시 커맨드를 필터링하고 접두사 일치 항목을 우선 정렬한다.
  *

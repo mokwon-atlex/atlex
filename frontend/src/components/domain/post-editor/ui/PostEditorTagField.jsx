@@ -15,6 +15,7 @@ const TAG_TOKEN = '#태그';
 export default function PostEditorTagField({
   countLabel,
   detectedTagsLabel,
+  embedded = false,
   inputPlaceholder,
   onTagInputChange,
   onTagInputKeyDown,
@@ -22,10 +23,13 @@ export default function PostEditorTagField({
   tags,
 }) {
   return (
-    <div className="border-t border-border px-5 py-5 sm:px-7">
+    <div className={embedded ? '' : 'border-t border-border px-5 py-5 sm:px-7 dark:border-zinc-700/90'}>
       <Field>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <FieldLabel htmlFor="post-editor-tag-input" className="text-sm font-semibold text-muted-foreground">
+          <FieldLabel
+            htmlFor="post-editor-tag-input"
+            className="text-sm font-semibold text-foreground/85 dark:text-zinc-200"
+          >
             {TAG_LABEL}
           </FieldLabel>
           <Capsule variant="secondary" size="sm">
@@ -33,7 +37,10 @@ export default function PostEditorTagField({
           </Capsule>
         </div>
 
-        <InputGroup variant="filled" className="h-auto rounded-[22px] px-4 py-3">
+        <InputGroup
+          variant="filled"
+          className="h-auto rounded-xl border border-border px-3.5 py-2 dark:border-zinc-600 dark:bg-zinc-900/70"
+        >
           <div className="flex flex-1 flex-wrap items-center gap-2">
             {tags.map((tag) => (
               <PostEditorTagChip key={tag.id} label={tag.label} onRemove={tag.onRemove} variant={tag.variant} />
@@ -46,25 +53,23 @@ export default function PostEditorTagField({
               placeholder={inputPlaceholder}
               onChange={(event) => onTagInputChange(event.target.value)}
               onKeyDown={onTagInputKeyDown}
-              className="min-w-[180px] flex-1 py-2 text-base"
+              className="min-w-[180px] flex-1 py-1.5 text-sm text-foreground placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
             />
           </div>
         </InputGroup>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Textfield variant="muted" size="sm">
+          <Textfield variant="muted" size="sm" className="dark:text-zinc-300">
             {REGISTER_TAG_HELPER}
           </Textfield>
-          {/* Textfield는 <p>이므로 Capsule(div)를 자식으로 넣을 수 없다.
-              textfieldVariants cva를 div에 직접 적용해서 block 요소 중첩을 피한다. */}
           <div
             className={cn(
               textfieldVariants({ variant: 'muted', size: 'sm' }),
-              'inline-flex flex-wrap items-center gap-1',
+              'inline-flex flex-wrap items-center gap-1 dark:text-zinc-300',
             )}
           >
             <span>{BODY_TAG_HELPER_PREFIX}</span>
-            <Capsule variant="outline" size="sm" className="font-mono">
+            <Capsule variant="outline" size="sm" className="font-mono dark:border-zinc-600 dark:text-zinc-200">
               {TAG_TOKEN}
             </Capsule>
             <span>{BODY_TAG_HELPER_SUFFIX}</span>
@@ -72,7 +77,7 @@ export default function PostEditorTagField({
         </div>
 
         {detectedTagsLabel ? (
-          <Textfield variant="muted" size="sm">
+          <Textfield variant="muted" size="sm" className="dark:text-zinc-300">
             {detectedTagsLabel}
           </Textfield>
         ) : null}

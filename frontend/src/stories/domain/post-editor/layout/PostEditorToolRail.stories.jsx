@@ -16,6 +16,7 @@ function ToolRailDemo() {
       <PostEditorToolRail
         getItemState={mockGetItemState}
         onExecuteItem={() => {}}
+        onRequestParagraphAi={() => {}}
         toolCategories={postEditorToolCategories}
       />
     </div>
@@ -34,11 +35,13 @@ export default meta;
 
 export const Default = {
   render: () => <ToolRailDemo />,
-  /** 더보기 팝오버 없이 모든 서식·삽입·편집 도구가 툴바에 직접 노출되는지 검증한다. */
+  /** 더보기 없이 모든 서식·삽입·편집 도구와 상단 AI 작성 도구가 노출되는지 검증한다. */
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
     await expect(canvas.queryByRole('button', { name: '서식 도구 더보기' })).toBeNull();
+    await expect(canvas.getByRole('button', { name: /AI 블록 삽입/ })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: /AI 이어쓰기/ })).toBeVisible();
     await expect(canvas.getByRole('button', { name: '밑줄' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: '왼쪽 정렬' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: '표' })).toBeVisible();
