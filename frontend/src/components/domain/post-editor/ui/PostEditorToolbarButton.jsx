@@ -1,10 +1,14 @@
-import { Button } from '@/components/common/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/ui/tooltip';
-import { TOOLBAR_ITEM_ICON_MAP } from '@/lib/post-editor/rich-text-toolbar-icons';
 import { Type } from 'lucide-react';
 
+import { Button } from '@/components/common/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/common/ui/tooltip';
+import { TOOLBAR_SLASH_HINT_MAP } from '@/lib/post-editor/rich-text-slash-commands';
+import { TOOLBAR_ITEM_ICON_MAP } from '@/lib/post-editor/rich-text-toolbar-icons';
+
+/** 에디터 상단 서식 툴바의 개별 아이콘 버튼이다. 툴팁에 슬래시 단축어 힌트를 함께 표시한다. */
 export default function PostEditorToolbarButton({ groupId, isActive, isDisabled, item, onExecuteItem }) {
   const Icon = TOOLBAR_ITEM_ICON_MAP[item] ?? Type;
+  const slashHint = TOOLBAR_SLASH_HINT_MAP[item];
 
   return (
     <Tooltip>
@@ -17,6 +21,7 @@ export default function PostEditorToolbarButton({ groupId, isActive, isDisabled,
             disabled={isDisabled}
             aria-label={item}
             aria-pressed={isActive}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => onExecuteItem(groupId, item)}
           />
         }
@@ -24,7 +29,12 @@ export default function PostEditorToolbarButton({ groupId, isActive, isDisabled,
         {/* 항목 라벨에 매칭되는 아이콘을 표시한다. */}
         <Icon className="h-4 w-4" />
       </TooltipTrigger>
-      <TooltipContent side="bottom">{item}</TooltipContent>
+      <TooltipContent side="bottom" className="flex items-center gap-1.5">
+        <span>{item}</span>
+        {slashHint ? (
+          <kbd className="rounded bg-background/20 px-1 py-0.5 font-mono text-[10px]">{slashHint}</kbd>
+        ) : null}
+      </TooltipContent>
     </Tooltip>
   );
 }

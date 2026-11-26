@@ -10,6 +10,7 @@ import { Button } from '@/components/common/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/common/ui/popover';
 import { Textfield } from '@/components/common/ui/textfield';
 import PostLinkPopover from '@/components/domain/post-editor/ui/PostLinkPopover';
+import SlashCommandPopover from '@/components/domain/post-editor/ui/SlashCommandPopover';
 
 export default function PostEditorContentSection({
   bodyPlaceholder,
@@ -229,6 +230,7 @@ export default function PostEditorContentSection({
         </div>
 
         <PostLinkPopover editor={editor} userId={userId} />
+        <SlashCommandPopover editor={editor} />
       </div>
     </div>
   );
