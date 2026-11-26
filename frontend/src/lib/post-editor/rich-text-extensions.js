@@ -12,6 +12,7 @@ import MathBlockNodeView from '@/components/domain/post-editor/ui/MathBlockNodeV
 import { AiSuggestionExtension } from '@/lib/post-editor/rich-text-ai-extension';
 import { editorLowlight } from '@/lib/post-editor/rich-text-code';
 import { PostLinkExtension } from '@/lib/post-editor/rich-text-post-link-extension';
+import { SlashCommandExtension } from '@/lib/post-editor/rich-text-slash-command-extension';
 import { createBlockContent } from '@/lib/post-editor/rich-text-utils';
 
 function createParagraphVariant(name, dataType) {
@@ -227,6 +228,7 @@ export const editorExtensions = [
   CaptionParagraph,
   DetailsBlock,
   MathBlock,
+  SlashCommandExtension,
   AiSuggestionExtension,
   PostLinkExtension,
 ];
