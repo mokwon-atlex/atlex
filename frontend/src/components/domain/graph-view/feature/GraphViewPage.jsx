@@ -36,10 +36,46 @@ import { postDetailHref } from '@/lib/url/handle';
 import { useAuthStore } from '@/store/authStore';
 
 const CAMERA_ANIMATION_MS = 320;
+const VIEWPORT_NODE_PADDING = 28;
+const LEFT_SIDEBAR_WIDTH = 288;
+const RIGHT_PANEL_WIDTH = 352;
 
 /** 사용자가 움직임 최소화 설정을 켰는지 확인한다. */
 function prefersReducedMotion() {
   return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
+}
+
+/** 캔버스 테마와 현재 확대·이동 상태에 맞는 무한 타일링 CSS 배경 스타일을 만든다. */
+function createCanvasBackdropStyle(canvasTheme, pan, zoom) {
+  const theme = getGraphTheme(canvasTheme);
+
+  if (canvasTheme === 'light') {
+    const gridSpacing = Math.max(14, Math.round(24 * zoom));
+    const offsetX = Math.round(pan.x % gridSpacing);
+    const offsetY = Math.round(pan.y % gridSpacing);
+
+    return {
+      backgroundImage: `radial-gradient(circle, ${theme.dotColor} 1.2px, transparent 1.2px), ${theme.canvasBackground}`,
+      backgroundPosition: `${offsetX}px ${offsetY}px, 0 0`,
+      backgroundSize: `${gridSpacing}px ${gridSpacing}px, 100% 100%`,
+    };
+  }
+
+  const nearX = Math.round((pan.x * 0.25) % 180);
+  const nearY = Math.round((pan.y * 0.25) % 180);
+  const farX = Math.round((pan.x * 0.12) % 260);
+  const farY = Math.round((pan.y * 0.12) % 260);
+
+  return {
+    backgroundImage: [
+      'radial-gradient(1.1px 1.1px at 24px 36px, rgba(254, 240, 138, 0.42), transparent)',
+      'radial-gradient(1px 1px at 112px 92px, rgba(253, 224, 71, 0.34), transparent)',
+      'radial-gradient(1.2px 1.2px at 190px 148px, rgba(224, 242, 254, 0.32), transparent)',
+      theme.canvasBackground,
+    ].join(', '),
+    backgroundPosition: `${nearX}px ${nearY}px, ${farX}px ${farY}px, ${nearX + 60}px ${farY + 40}px, 0 0`,
+    backgroundSize: '180px 180px, 260px 260px, 220px 220px, 100% 100%',
+  };
 }
 
 /**
@@ -74,11 +110,15 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
   const physicsRafRef = useRef(null);
   const cameraRafRef = useRef(null);
   const panRef = useRef(pan);
+  const zoomRef = useRef(zoom);
+  const panelVisibilityRef = useRef({ showPanel: false, showSidebar: false });
   const resolvedCurrentUserId = currentUserId == null ? null : String(currentUserId);
   const requestedUserId = activeTab === 'mine' ? resolvedCurrentUserId : userId;
   const activeCanvasTheme = getGraphTheme(canvasTheme);
 
   panRef.current = pan;
+  zoomRef.current = zoom;
+  panelVisibilityRef.current = { showPanel, showSidebar };
 
   // 마운트 시 브라우저에 저장된 그래프 전용 캔버스 테마를 복원한다. (기본값: dark)
   useEffect(() => {
@@ -120,6 +160,55 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
   const { authors, edges, posts, tagCounts } = graphData;
   const hasExplicitEdges = edges.some((edge) => edge.isExplicit);
 
+  /** 현재 화면에 보이는 캔버스 영역을 그래프 좌표계 경계로 변환해 노드가 화면 밖으로 사라지지 않게 제한한다. */
+  const getVisibleGraphBounds = useCallback(() => {
+    const svg = svgRef.current;
+
+    if (!svg) {
+      return null;
+    }
+
+    const ctm = svg.getScreenCTM();
+
+    if (!ctm) {
+      return null;
+    }
+
+    const rect = svg.getBoundingClientRect();
+
+    if (rect.width <= 0 || rect.height <= 0) {
+      return null;
+    }
+
+    const { showPanel: isPanelOpen, showSidebar: isSidebarOpen } = panelVisibilityRef.current;
+    const leftInset = (isSidebarOpen ? LEFT_SIDEBAR_WIDTH : 0) + VIEWPORT_NODE_PADDING;
+    const rightInset = (isPanelOpen ? RIGHT_PANEL_WIDTH : 0) + VIEWPORT_NODE_PADDING;
+    const minClientX = Math.min(rect.left + leftInset, rect.right - VIEWPORT_NODE_PADDING);
+    const maxClientX = Math.max(minClientX, rect.right - rightInset);
+    const minClientY = rect.top + VIEWPORT_NODE_PADDING;
+    const maxClientY = Math.max(minClientY, rect.bottom - VIEWPORT_NODE_PADDING);
+    const inverseCtm = ctm.inverse();
+    const topLeft = svg.createSVGPoint();
+    const bottomRight = svg.createSVGPoint();
+
+    topLeft.x = minClientX;
+    topLeft.y = minClientY;
+    bottomRight.x = maxClientX;
+    bottomRight.y = maxClientY;
+
+    const svgTopLeft = topLeft.matrixTransform(inverseCtm);
+    const svgBottomRight = bottomRight.matrixTransform(inverseCtm);
+    const currentPan = panRef.current;
+    const currentZoom = zoomRef.current || 1;
+
+    return {
+      minX: (svgTopLeft.x - currentPan.x) / currentZoom,
+      maxX: (svgBottomRight.x - currentPan.x) / currentZoom,
+      minY: (svgTopLeft.y - currentPan.y) / currentZoom,
+      maxY: (svgBottomRight.y - currentPan.y) / currentZoom,
+    };
+  }, []);
+
   /** 진행 중인 물리 시뮬레이션 루프를 중지한다. */
   const stopPhysicsLoop = useCallback(() => {
     if (physicsRafRef.current != null) {
@@ -142,7 +231,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
         return;
       }
 
-      const changed = stepSimulation(simulation);
+      const changed = stepSimulation(simulation, getVisibleGraphBounds());
 
       if (changed) {
         setNodePositions(snapshotSimulationPositions(simulation));
@@ -156,7 +245,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
     };
 
     physicsRafRef.current = requestAnimationFrame(tick);
-  }, []);
+  }, [getVisibleGraphBounds]);
 
   /** 진행 중인 카메라 포커스 이동 애니메이션을 중단한다. */
   const cancelCameraAnimation = useCallback(() => {
@@ -166,7 +255,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
     }
   }, []);
 
-  // 데이터나 탭이 바뀔 때마다 물리 시뮬레이션을 초기화하고 초기 전개 애니메이션을 실행한다.
+  // 데이터나 탭이 바뀔 때마다 물리 시뮬레이션을 초기화하고 소규모 그래프에서만 초기 전개 애니메이션을 실행한다.
   useEffect(() => {
     stopPhysicsLoop();
 
@@ -208,6 +297,9 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
       }),
     [nodePositions, posts],
   );
+  const positionedPostsRef = useRef(positionedPosts);
+
+  positionedPostsRef.current = positionedPosts;
 
   const visiblePosts = useMemo(
     () =>
@@ -248,6 +340,25 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
   );
   const popupConnectionCount = popupPost ? (displayedConnectionCountById.get(popupPost.id) ?? 0) : 0;
 
+  // 목록 패널은 좌표 프레임 변경과 무관하므로 필터 기준 목록만 별도로 메모이제이션해 드래그 중 리렌더를 막는다.
+  const panelPosts = useMemo(
+    () =>
+      posts.filter(
+        (post) =>
+          activeAuthors.has(post.author.id) && (post.tags.length === 0 || post.tags.some((tag) => activeTags.has(tag))),
+      ),
+    [activeAuthors, activeTags, posts],
+  );
+  const filterStats = useMemo(
+    () => ({
+      posts: panelPosts.length,
+      edges: displayedEdgeCount,
+      activeTags: activeTags.size,
+      authors: activeAuthors.size,
+    }),
+    [activeAuthors.size, activeTags.size, displayedEdgeCount, panelPosts.length],
+  );
+
   // 호버·선택된 노드 근처에서 다른 노드를 가장 적게 가리는 팝업 좌표를 계산한다.
   useEffect(() => {
     const svg = svgRef.current;
@@ -285,8 +396,14 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
       const nodeRadius = graphNodeRadius(displayedConnectionCountById.get(popupPost.id) ?? 0);
       const scaleFactor = Math.hypot(ctm.a, ctm.b) || 1;
       const targetScreenRadius = nodeRadius * zoom * scaleFactor;
+      const insets = {
+        left: showSidebar ? LEFT_SIDEBAR_WIDTH : 0,
+        right: showPanel ? RIGHT_PANEL_WIDTH : 0,
+      };
 
-      setPopupPos(findNearbyPopupPosition(containerRect, targetScreenPoint, targetScreenRadius, otherNodePositions));
+      setPopupPos(
+        findNearbyPopupPosition(containerRect, targetScreenPoint, targetScreenRadius, otherNodePositions, insets),
+      );
     };
 
     updatePopupPosition();
@@ -302,7 +419,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
   }, [displayedConnectionCountById, isCanvasInteracting, pan, popupPost, showPanel, showSidebar, visiblePosts, zoom]);
 
   /** 그래프 전용 라이트·다크 캔버스 테마를 전환하고 브라우저에 저장한다. */
-  function handleToggleCanvasTheme() {
+  const handleToggleCanvasTheme = useCallback(() => {
     setCanvasTheme((previous) => {
       const nextTheme = previous === 'dark' ? 'light' : 'dark';
 
@@ -314,7 +431,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
 
       return nextTheme;
     });
-  }
+  }, []);
 
   /** 노드를 드래그하기 시작할 때 해당 노드를 포인터에 고정하고 물리 연산을 시작한다. */
   const handleNodeDragStart = useCallback(
@@ -361,7 +478,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
   }, [startPhysicsLoop]);
 
   /** 모든 노드를 초기 균형 배치로 되돌린다. */
-  function handleResetLayout() {
+  const handleResetLayout = useCallback(() => {
     const simulation = simulationRef.current;
 
     if (!simulation) {
@@ -376,112 +493,128 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
     if (shouldAnimate) {
       startPhysicsLoop();
     }
-  }
+  }, [startPhysicsLoop]);
 
   /** 선택한 노드가 화면 중앙에 오도록 캔버스 카메라를 부드럽게 이동한다. */
-  function focusNodeInViewport(nodeId) {
-    const targetPost = positionedPosts.find((post) => post.id === nodeId);
+  const focusNodeInViewport = useCallback(
+    (nodeId) => {
+      const targetPost = positionedPostsRef.current.find((post) => post.id === nodeId);
 
-    if (!targetPost) {
-      return;
-    }
-
-    cancelCameraAnimation();
-    const targetPan = {
-      x: SVG_W / 2 - targetPost.x * zoom,
-      y: SVG_H / 2 - targetPost.y * zoom,
-    };
-
-    if (prefersReducedMotion()) {
-      setPan(targetPan);
-      return;
-    }
-
-    const startPan = { ...panRef.current };
-    const startTime = performance.now();
-
-    const animateCamera = (now) => {
-      const elapsed = now - startTime;
-      const progress = clamp(elapsed / CAMERA_ANIMATION_MS, 0, 1);
-      const eased = 1 - (1 - progress) ** 3;
-
-      setPan({
-        x: startPan.x + (targetPan.x - startPan.x) * eased,
-        y: startPan.y + (targetPan.y - startPan.y) * eased,
-      });
-
-      if (progress < 1) {
-        cameraRafRef.current = requestAnimationFrame(animateCamera);
-      } else {
-        cameraRafRef.current = null;
+      if (!targetPost) {
+        return;
       }
-    };
 
-    cameraRafRef.current = requestAnimationFrame(animateCamera);
-  }
+      cancelCameraAnimation();
+      const currentZoom = zoomRef.current;
+      const targetPan = {
+        x: SVG_W / 2 - targetPost.x * currentZoom,
+        y: SVG_H / 2 - targetPost.y * currentZoom,
+      };
+
+      if (prefersReducedMotion()) {
+        setPan(targetPan);
+        return;
+      }
+
+      const startPan = { ...panRef.current };
+      const startTime = performance.now();
+
+      const animateCamera = (now) => {
+        const elapsed = now - startTime;
+        const progress = clamp(elapsed / CAMERA_ANIMATION_MS, 0, 1);
+        const eased = 1 - (1 - progress) ** 3;
+
+        setPan({
+          x: startPan.x + (targetPan.x - startPan.x) * eased,
+          y: startPan.y + (targetPan.y - startPan.y) * eased,
+        });
+
+        if (progress < 1) {
+          cameraRafRef.current = requestAnimationFrame(animateCamera);
+        } else {
+          cameraRafRef.current = null;
+        }
+      };
+
+      cameraRafRef.current = requestAnimationFrame(animateCamera);
+    },
+    [cancelCameraAnimation],
+  );
 
   /** 작성자 필터를 반전한다. */
-  function toggleAuthor(id) {
+  const toggleAuthor = useCallback((id) => {
     setActiveAuthors((previous) => toggleSetValue(previous, id));
-  }
+  }, []);
 
   /** 모든 작성자를 선택한다. */
-  function selectAllAuthors() {
+  const selectAllAuthors = useCallback(() => {
     setActiveAuthors(new Set(authors.map((author) => author.id)));
-  }
+  }, [authors]);
 
   /** 모든 작성자 선택을 해제한다. */
-  function clearAllAuthors() {
+  const clearAllAuthors = useCallback(() => {
     setActiveAuthors(new Set());
-  }
+  }, []);
 
   /** 키워드 필터를 반전한다. */
-  function toggleTag(tag) {
+  const toggleTag = useCallback((tag) => {
     setActiveTags((previous) => toggleSetValue(previous, tag));
-  }
+  }, []);
 
   /** 모든 태그를 선택한다. */
-  function selectAllTags() {
+  const selectAllTags = useCallback(() => {
     setActiveTags(new Set(tagCounts.map(([tag]) => tag)));
-  }
+  }, [tagCounts]);
 
   /** 모든 태그 선택을 해제한다. */
-  function clearAllTags() {
+  const clearAllTags = useCallback(() => {
     setActiveTags(new Set());
-  }
+  }, []);
 
   /** API 응답 기준의 모든 필터를 기본값으로 되돌린다. */
-  function resetFilters() {
+  const resetFilters = useCallback(() => {
     setShowTagEdges(true);
     setShowExplicitEdges(false);
     setMinSharedTags(1);
     setActiveAuthors(new Set(authors.map((author) => author.id)));
     setActiveTags(new Set(tagCounts.map(([tag]) => tag)));
-  }
+  }, [authors, tagCounts]);
 
   /** 노드를 선택하고 해당 노드 위치로 카메라를 포커스한다. */
-  function handleSelect(id) {
-    setSelectedId(id);
+  const handleSelect = useCallback(
+    (id) => {
+      setSelectedId(id);
 
-    if (id) {
-      setShowPanel(true);
-      focusNodeInViewport(id);
-    }
-  }
+      if (id) {
+        setShowPanel(true);
+        focusNodeInViewport(id);
+      }
+    },
+    [focusNodeInViewport],
+  );
 
   /** 클릭한 노드의 게시글 상세 화면으로 이동한다. */
-  function handleOpenPost(id) {
-    const post = posts.find((item) => item.id === id);
+  const handleOpenPost = useCallback(
+    (id) => {
+      const post = posts.find((item) => item.id === id);
 
-    if (post) {
-      router.push(postDetailHref(post.author.id, post.id));
-    }
-  }
+      if (post) {
+        router.push(postDetailHref(post.author.id, post.id));
+      }
+    },
+    [posts, router],
+  );
 
   const graphState = getGraphState({ activeTab, graphQuery, isLoggedIn, posts });
+  const canvasBackdropStyle = useMemo(
+    () => createCanvasBackdropStyle(canvasTheme, pan, zoom),
+    [canvasTheme, pan, zoom],
+  );
+  const leftControlsOffset = showSidebar ? 'left-[19rem]' : 'left-4';
+  const rightControlsOffset = showPanel ? 'right-[23rem]' : 'right-4';
 
   return (
-    <div className="flex h-[calc(100vh-105px)] min-h-[680px] flex-col overflow-hidden border-t border-border bg-background text-foreground">
+    <div className="flex h-[calc(100vh-73px)] min-h-[640px] flex-col overflow-hidden border-t border-border bg-background text-foreground">
       <GraphToolbar
         activeTab={activeTab}
         canvasTheme={canvasTheme}
@@ -501,42 +634,12 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
           <GraphStatus {...graphState} canvasTheme={canvasTheme} />
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          {showSidebar ? (
-            <FilterSidebar
-              activeAuthors={activeAuthors}
-              activeTags={activeTags}
-              authors={authors}
-              clearAllAuthors={clearAllAuthors}
-              clearAllTags={clearAllTags}
-              hasExplicitEdges={hasExplicitEdges}
-              minSharedTags={minSharedTags}
-              resetFilters={resetFilters}
-              selectAllAuthors={selectAllAuthors}
-              selectAllTags={selectAllTags}
-              setMinSharedTags={setMinSharedTags}
-              setShowExplicitEdges={setShowExplicitEdges}
-              setShowTagEdges={setShowTagEdges}
-              showAuthorFilter={!userId && activeTab !== 'mine'}
-              showExplicitEdges={showExplicitEdges}
-              showTagEdges={showTagEdges}
-              stats={{
-                posts: visiblePosts.length,
-                edges: displayedEdgeCount,
-                activeTags: activeTags.size,
-                authors: activeAuthors.size,
-              }}
-              tagCounts={tagCounts}
-              toggleAuthor={toggleAuthor}
-              toggleTag={toggleTag}
-            />
-          ) : null}
-
+        <div className="relative flex min-h-0 flex-1 overflow-hidden">
           <main
             ref={containerRef}
-            className="relative min-w-0 flex-1 overflow-hidden transition-colors duration-200"
+            className="relative min-w-0 flex-1 overflow-hidden"
             data-graph-canvas-container
-            style={{ background: activeCanvasTheme.canvasBackground }}
+            style={canvasBackdropStyle}
           >
             <GraphCanvas
               activeTab={activeTab}
@@ -558,14 +661,18 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
               setPan={setPan}
               setZoom={setZoom}
               showExplicitEdges={showExplicitEdges}
+              showPanel={showPanel}
+              showSidebar={showSidebar}
               showTagEdges={showTagEdges}
               svgRef={svgRef}
               zoom={zoom}
             />
 
-            {showLegend ? <GraphLegend canvasTheme={canvasTheme} /> : null}
+            {showLegend ? <GraphLegend canvasTheme={canvasTheme} offsetLeftClass={leftControlsOffset} /> : null}
 
-            <div className="absolute right-4 bottom-6 flex flex-col gap-1.5">
+            <div
+              className={`absolute ${rightControlsOffset} bottom-6 z-20 flex flex-col gap-1.5 transition-[right] duration-200`}
+            >
               <CanvasButton
                 label="확대"
                 onClick={() => {
@@ -579,7 +686,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
                 label="축소"
                 onClick={() => {
                   cancelCameraAnimation();
-                  setZoom((value) => Math.max(value - 0.15, 0.45));
+                  setZoom((value) => Math.max(value - 0.15, 0.3));
                 }}
               >
                 <Minus className="size-4" />
@@ -609,7 +716,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
               type="button"
               aria-label="범례"
               aria-pressed={showLegend}
-              className="absolute bottom-6 left-4 flex h-9 w-9 items-center justify-center rounded-lg border border-border/80 bg-card/90 text-muted-foreground shadow-2xs backdrop-blur-xs transition-colors hover:border-foreground/25 hover:bg-accent hover:text-foreground aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+              className={`absolute bottom-6 ${leftControlsOffset} z-20 flex h-9 w-9 items-center justify-center rounded-lg border border-border/80 bg-card/90 text-muted-foreground shadow-2xs backdrop-blur-xs transition-[left,color,background-color,border-color] duration-200 hover:border-foreground/25 hover:bg-accent hover:text-foreground aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground`}
               onClick={() => setShowLegend((value) => !value)}
             >
               <HelpCircle className="size-4" />
@@ -620,7 +727,32 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
             ) : null}
           </main>
 
-          {showPanel ? <PostListPanel onSelect={handleSelect} posts={visiblePosts} selectedId={selectedId} /> : null}
+          {showSidebar ? (
+            <FilterSidebar
+              activeAuthors={activeAuthors}
+              activeTags={activeTags}
+              authors={authors}
+              clearAllAuthors={clearAllAuthors}
+              clearAllTags={clearAllTags}
+              hasExplicitEdges={hasExplicitEdges}
+              minSharedTags={minSharedTags}
+              resetFilters={resetFilters}
+              selectAllAuthors={selectAllAuthors}
+              selectAllTags={selectAllTags}
+              setMinSharedTags={setMinSharedTags}
+              setShowExplicitEdges={setShowExplicitEdges}
+              setShowTagEdges={setShowTagEdges}
+              showAuthorFilter={!userId && activeTab !== 'mine'}
+              showExplicitEdges={showExplicitEdges}
+              showTagEdges={showTagEdges}
+              stats={filterStats}
+              tagCounts={tagCounts}
+              toggleAuthor={toggleAuthor}
+              toggleTag={toggleTag}
+            />
+          ) : null}
+
+          {showPanel ? <PostListPanel onSelect={handleSelect} posts={panelPosts} selectedId={selectedId} /> : null}
         </div>
       )}
     </div>
@@ -630,11 +762,20 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
 /**
  * 대상 노드 주변(우·좌·하·상 및 대각선) 후보 중 화면 경계 안에서 다른 노드를 가장 적게 가리는 위치를 찾는다.
  */
-function findNearbyPopupPosition(containerRect, targetPoint, targetRadius, otherNodePositions) {
+function findNearbyPopupPosition(
+  containerRect,
+  targetPoint,
+  targetRadius,
+  otherNodePositions,
+  insets = { left: 0, right: 0 },
+) {
   const margin = 12;
-  const popupWidth = Math.min(256, Math.max(0, containerRect.width - margin * 2));
+  const leftBound = insets.left + margin;
+  const rightBound = Math.max(leftBound, containerRect.width - insets.right - margin);
+  const availableWidth = Math.max(0, rightBound - leftBound);
+  const popupWidth = Math.min(256, availableWidth);
   const popupHeight = Math.min(188, Math.max(0, containerRect.height - margin * 2));
-  const maxX = Math.max(margin, containerRect.width - popupWidth - margin);
+  const maxX = Math.max(leftBound, rightBound - popupWidth);
   const maxY = Math.max(margin, containerRect.height - popupHeight - margin);
   const gap = Math.max(22, targetRadius + 16);
   const diagonalGap = gap * 0.8;
@@ -653,7 +794,7 @@ function findNearbyPopupPosition(containerRect, targetPoint, targetRadius, other
   const bestPosition = rawCandidates.reduce(
     (best, rawCandidate, index) => {
       const clamped = {
-        x: clamp(rawCandidate.x, margin, maxX),
+        x: clamp(rawCandidate.x, leftBound, maxX),
         y: clamp(rawCandidate.y, margin, maxY),
       };
       const score = calculateNearbyPopupScore(
@@ -668,7 +809,7 @@ function findNearbyPopupPosition(containerRect, targetPoint, targetRadius, other
 
       return score < best.score ? { ...clamped, score } : best;
     },
-    { score: Number.POSITIVE_INFINITY, x: margin, y: margin },
+    { score: Number.POSITIVE_INFINITY, x: leftBound, y: margin },
   );
 
   return { maxHeight: popupHeight, width: popupWidth, x: bestPosition.x, y: bestPosition.y };
