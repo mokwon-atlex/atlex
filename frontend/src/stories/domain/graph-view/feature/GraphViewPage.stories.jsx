@@ -3,17 +3,15 @@ import { useState } from 'react';
 import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 
 import GraphViewPage from '@/components/domain/graph-view/feature/GraphViewPage';
-import { toGraphViewData } from '@/lib/graph-view/graph-api-data';
+import { computeGraphLayout, toGraphViewData } from '@/lib/graph-view/graph-api-data';
 import {
-  MAX_BLOOM_ANIMATION_NODES,
-  createPhysicsSimulation,
-  isSimulationActive,
-  pinSimulationNode,
-  releaseSimulationNode,
-  resetSimulationLayout,
-  stepSimulation,
-} from '@/lib/graph-view/graph-physics';
-import { GRAPH_THEME_STORAGE_KEY, edgeWidth, graphNodeRadius, splitNodeTitle } from '@/lib/graph-view/graph-view-utils';
+  GRAPH_THEME_STORAGE_KEY,
+  SVG_H,
+  SVG_W,
+  edgeWidth,
+  graphNodeRadius,
+  splitNodeTitle,
+} from '@/lib/graph-view/graph-view-utils';
 
 const graphFixture = {
   nodes: [
@@ -99,55 +97,35 @@ export const Default = {
   args: {
     loadGraph: async () => graphFixture,
   },
-  /** 그래프 데이터 변환, 캔버스 테마 전환, 근처 팝업, 간선 툴팁, 물리 드래그와 카메라 포커스를 검증한다. */
+  /** 중앙 연결 코어·외곽 고립 링 배치, 천체도 라이트 테마, 단순화 필터, 간선 회피 팝업을 검증한다. */
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const graphData = toGraphViewData(graphFixture);
+    const centerX = SVG_W / 2;
+    const centerY = SVG_H / 2;
 
     await expect(graphData.posts).toHaveLength(3);
     await expect(graphData.edges[0]).toMatchObject({ from: '101', sharedTags: ['UX'], to: '102' });
-    await expect(graphData.posts.every((post) => post.radius === 24)).toBe(true);
     await expect(splitNodeTitle('123456789012345678901')).toEqual(['1234567', '890123…']);
     await expect(graphNodeRadius(6)).toBeGreaterThan(graphNodeRadius(1));
     await expect(edgeWidth({ score: 0.9 })).toBeGreaterThan(edgeWidth({ score: 0.2 }));
-    await expect(graphData.posts.every((post) => Number.isFinite(post.x) && Number.isFinite(post.y))).toBe(true);
 
-    // 물리 시뮬레이션에서 드래그 고정 시 연결된 이웃 노드가 반응하고 리셋으로 복구되는지 확인한다.
-    const simulation = createPhysicsSimulation(graphData.posts, graphData.edges, { animateEntry: false });
-    const neighborBefore = { x: simulation.nodes[1].x, y: simulation.nodes[1].y };
-
-    pinSimulationNode(simulation, '101', simulation.nodes[0].x + 140, simulation.nodes[0].y + 80);
-    for (let step = 0; step < 12; step += 1) {
-      stepSimulation(simulation);
-    }
-    const neighborAfterDrag = { x: simulation.nodes[1].x, y: simulation.nodes[1].y };
-
-    const neighborDisplacement = Math.hypot(
-      neighborAfterDrag.x - neighborBefore.x,
-      neighborAfterDrag.y - neighborBefore.y,
+    // 연결된 노드(101, 102)는 가운데 코어에, 고립된 노드(103)는 그 바깥 링에 배치되는지 검증한다.
+    const connectedA = graphData.posts.find((post) => post.id === '101');
+    const connectedB = graphData.posts.find((post) => post.id === '102');
+    const isolated = graphData.posts.find((post) => post.id === '103');
+    const connectedMaxDist = Math.max(
+      Math.hypot(connectedA.x - centerX, connectedA.y - centerY),
+      Math.hypot(connectedB.x - centerX, connectedB.y - centerY),
     );
+    const isolatedDist = Math.hypot(isolated.x - centerX, isolated.y - centerY);
 
-    await expect(neighborDisplacement).toBeGreaterThan(1);
-    releaseSimulationNode(simulation);
-    resetSimulationLayout(simulation, { animate: false });
-    await expect(simulation.nodes[0].x).toBe(graphData.posts[0].x);
+    await expect(isolatedDist).toBeGreaterThan(connectedMaxDist + 40);
 
-    // 대량 노드에서는 초기 전개 애니메이션을 생략해 프레임 드롭을 방지하는지 확인한다.
-    const densePosts = Array.from({ length: MAX_BLOOM_ANIMATION_NODES + 5 }, (_, index) => ({
-      id: `dense-${index}`,
-      categoryName: '개발',
-      x: (index % 8) * 90,
-      y: Math.floor(index / 8) * 90,
-    }));
-    const denseSimulation = createPhysicsSimulation(densePosts, [], { animateEntry: true });
+    // 필터로 간선이 사라지면 모든 노드가 외곽 링 기준으로 재계산되는지 확인한다.
+    const noEdgeLayout = computeGraphLayout(graphData.posts, []);
+    await expect(noEdgeLayout.layoutMeta.outerRingRadii.length).toBeGreaterThan(0);
 
-    await expect(isSimulationActive(denseSimulation)).toBe(false);
-
-    const nodeDistances = graphData.posts.flatMap((post, index) =>
-      graphData.posts.slice(index + 1).map((otherPost) => Math.hypot(post.x - otherPost.x, post.y - otherPost.y)),
-    );
-
-    await expect(Math.min(...nodeDistances)).toBeGreaterThan(100);
     await waitFor(() => expect(canvas.getByText('정보 구조')).toBeVisible());
     await expect(canvas.getByText('디자인 시스템')).toBeVisible();
 
@@ -158,32 +136,39 @@ export const Default = {
 
     await expect(firstNode).toHaveAttribute('tabindex', '0');
     await expect(graphEdge).not.toBeNull();
-    await expect(graphSvg).not.toBeNull();
     await expect(graphSvg).toHaveAttribute('data-canvas-theme', 'dark');
-    await expect(graphLayer).toHaveAttribute('transform', 'translate(0 0) scale(1)');
+    await expect(canvas.queryByRole('button', { name: '배치 재정렬' })).toBeNull();
 
-    // 툴바의 캔버스 테마 토글이 다크 <-> 라이트 전환과 localStorage 저장을 수행하는지 확인한다.
-    const themeToggle = canvas.getByRole('button', { name: '라이트 캔버스로 전환' });
-
-    await userEvent.click(themeToggle);
+    // 라이트 캔버스 전환 시 고전 천체도(아틀라스 성도) 가이드 레이어가 렌더링되는지 확인한다.
+    await userEvent.click(canvas.getByRole('button', { name: '라이트 캔버스로 전환' }));
     await expect(graphSvg).toHaveAttribute('data-canvas-theme', 'light');
+    await expect(canvasElement.querySelector('[data-celestial-guides="true"]')).not.toBeNull();
     await expect(window.localStorage.getItem(GRAPH_THEME_STORAGE_KEY)).toBe('light');
 
-    const backToDarkToggle = canvas.getByRole('button', { name: '다크 캔버스로 전환' });
-
-    await userEvent.click(backToDarkToggle);
+    await userEvent.click(canvas.getByRole('button', { name: '다크 캔버스로 전환' }));
     await expect(graphSvg).toHaveAttribute('data-canvas-theme', 'dark');
-    await expect(window.localStorage.getItem(GRAPH_THEME_STORAGE_KEY)).toBe('dark');
+    await expect(canvasElement.querySelector('[data-celestial-guides="true"]')).toBeNull();
+
+    // 필터 사이드바에서 작성자·태그 검색과 섹션이 제거되고 연결 기준·통계만 노출되는지 확인한다.
+    await userEvent.click(canvas.getByRole('button', { name: '필터 패널' }));
+    await expect(canvas.getByText('연결 기준')).toBeVisible();
+    await expect(canvas.getByText('연결 노드')).toBeVisible();
+    await expect(canvas.getByText('고립 노드')).toBeVisible();
+    await expect(canvas.queryByLabelText('작성자 검색')).toBeNull();
+    await expect(canvas.queryByLabelText('태그 검색')).toBeNull();
+    await userEvent.click(canvas.getByRole('button', { name: '필터 패널' }));
 
     // 휠 확대 시 변환 행렬이 갱신되는지 확인한다.
     await fireEvent.wheel(graphSvg, { clientX: 420, clientY: 320, deltaY: -120 });
     await waitFor(() => expect(graphLayer).not.toHaveAttribute('transform', 'translate(0 0) scale(1)'));
 
-    // 노드 호버 시 노드 근처 컴팩트 팝업, 간선 키워드 툴팁과 연결 강조가 표시되는지 확인한다.
+    // 노드 호버 시 안내 문구와 간선 태그 배지 없이 깔끔한 미리보기 팝업이 표시되는지 확인한다.
     await userEvent.hover(firstNode);
     await waitFor(() => expect(canvas.getByText('디자인 카테고리')).toBeVisible());
     await expect(canvas.getByText('연결 1')).toBeVisible();
-    await expect(canvasElement.querySelector('[data-edge-keyword-tooltip]')).not.toBeNull();
+    await expect(canvas.queryByText('드래그로 재배치')).toBeNull();
+    await expect(canvas.queryByText(/클릭해 읽기/)).toBeNull();
+    await expect(canvasElement.querySelector('[data-edge-keyword-tooltip]')).toBeNull();
 
     const popupRect = canvasElement.querySelector('[data-node-popup]').getBoundingClientRect();
     const popupCoversNode = [...canvasElement.querySelectorAll('[data-graph-node]')].some((node) => {
@@ -205,10 +190,8 @@ export const Default = {
       'data-graph-node-state',
       'dimmed',
     );
-    await expect(canvasElement.querySelectorAll('linearGradient')).toHaveLength(0);
-    await expect(graphEdge.querySelectorAll('line')).toHaveLength(1);
 
-    // 노드 드래그로 좌표가 이동하고 배치 재정렬 버튼이 동작하는지 확인한다.
+    // 노드 위에서 드래그해도 노드의 그래프 좌표(cx)가 고정되어 움직이지 않는지 확인한다.
     const firstCircle = firstNode.querySelector('circle');
     const beforeCx = Number(firstCircle.getAttribute('cx'));
     const nodeRect = firstCircle.getBoundingClientRect();
@@ -223,14 +206,12 @@ export const Default = {
     });
     await fireEvent.pointerMove(graphSvg, {
       bubbles: true,
-      clientX: startClientX + 90,
-      clientY: startClientY + 45,
+      clientX: startClientX + 80,
+      clientY: startClientY + 40,
       pointerId: 1,
     });
-    await waitFor(() => expect(Math.abs(Number(firstCircle.getAttribute('cx')) - beforeCx)).toBeGreaterThan(20));
     await fireEvent.pointerUp(graphSvg, { bubbles: true, pointerId: 1 });
-
-    await userEvent.click(canvas.getByRole('button', { name: '배치 재정렬' }));
+    await expect(Number(firstCircle.getAttribute('cx'))).toBe(beforeCx);
 
     // 포스트 목록 패널에서 항목을 선택하면 카메라가 해당 노드로 이동하는지 확인한다.
     const transformBeforeFocus = graphLayer.getAttribute('transform');
