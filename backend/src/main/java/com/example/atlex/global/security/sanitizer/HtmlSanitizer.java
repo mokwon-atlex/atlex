@@ -36,7 +36,7 @@ public final class HtmlSanitizer {
             .addAttributes("h1", "style")
             .addAttributes("h2", "style")
             .addAttributes("h3", "style")
-            .addAttributes("img", "src", "alt", "title", "width", "height")
+            .addAttributes("img", "src", "alt", "title", "width", "height", "style", "data-alignment")
             .addAttributes("input", "type", "checked", "disabled")
             .addAttributes("li", "data-type", "data-checked", "style")
             .addAttributes("ol", "start", "style")

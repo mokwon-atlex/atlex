@@ -96,6 +96,21 @@
   max-width: 100%;
 }
 
+.post-editor-prose .tiptap img[data-alignment='left'] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.post-editor-prose .tiptap img[data-alignment='right'] {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.post-editor-prose .tiptap img[data-alignment='center'] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .post-editor-prose .tiptap ul,
 .post-editor-prose .tiptap ol {
   padding-left: 1.5rem;

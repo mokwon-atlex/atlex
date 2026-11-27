@@ -9,6 +9,7 @@ import StarterKit from '@tiptap/starter-kit';
 import CodeBlockNodeView from '@/components/domain/post-editor/ui/CodeBlockNodeView';
 import DetailsBlockNodeView from '@/components/domain/post-editor/ui/DetailsBlockNodeView';
 import MathBlockNodeView from '@/components/domain/post-editor/ui/MathBlockNodeView';
+import ResizableImageNodeView from '@/components/domain/post-editor/ui/ResizableImageNodeView';
 import { AiSuggestionExtension } from '@/lib/post-editor/rich-text-ai-extension';
 import { editorLowlight } from '@/lib/post-editor/rich-text-code';
 import { FormatResetExtension } from '@/lib/post-editor/rich-text-format-reset-extension';
@@ -213,7 +214,37 @@ export const editorExtensions = [
     lowlight: editorLowlight,
     defaultLanguage: 'plaintext',
   }),
-  Image.configure({
+  Image.extend({
+    addAttributes() {
+      return {
+        ...this.parent?.(),
+        width: {
+          default: '100%',
+          parseHTML: (element) => element.getAttribute('width') || element.style.width || '100%',
+          renderHTML: (attributes) => {
+            if (!attributes.width) return {};
+            return {
+              width: attributes.width,
+              style: `width: ${attributes.width}; max-width: 100%;`,
+            };
+          },
+        },
+        alignment: {
+          default: 'center',
+          parseHTML: (element) => element.getAttribute('data-alignment') || 'center',
+          renderHTML: (attributes) => {
+            if (!attributes.alignment) return {};
+            return {
+              'data-alignment': attributes.alignment,
+            };
+          },
+        },
+      };
+    },
+    addNodeView() {
+      return ReactNodeViewRenderer(ResizableImageNodeView);
+    },
+  }).configure({
     allowBase64: true,
   }),
   TextAlign.configure({

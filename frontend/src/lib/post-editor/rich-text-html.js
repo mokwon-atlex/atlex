@@ -58,7 +58,7 @@ const RICH_TEXT_SANITIZE_OPTIONS = {
     h1: ['style'],
     h2: ['style'],
     h3: ['style'],
-    img: ['src', 'alt', 'title', 'width', 'height'],
+    img: ['src', 'alt', 'title', 'width', 'height', 'style', 'data-alignment'],
     input: [{ name: 'type', values: ['checkbox'] }, 'checked', 'disabled'],
     li: ['data-type', 'data-checked', 'style'],
     ol: ['start', 'style'],
@@ -86,6 +86,10 @@ const RICH_TEXT_SANITIZE_OPTIONS = {
   allowedStyles: {
     '*': {
       'text-align': [/^(left|right|center|justify)$/],
+    },
+    img: {
+      width: [/^(\d+(%|px)|auto)$/],
+      'max-width': [/^(\d+(%|px)|100%)$/],
     },
   },
   transformTags: {
