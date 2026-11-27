@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import {
   consumeAiTokens,
   fetchDescriptionAiSuggestion,
@@ -12,10 +13,54 @@ import { markdownToTiptapContent } from '@/lib/post-editor/markdown-to-html';
 
 const DEBOUNCE_DELAY_MS = 600;
 
+/** 백엔드 AiSuggestionType과 동일한 기능별 AI 토큰 소모량이다. */
+export const AI_TOKEN_COSTS = {
+  TITLE: 50,
+  PARAGRAPH: 300,
+  DESCRIPTION: 150,
+};
+
+/**
+ * API 에러가 AI 토큰·쿼터 소진(HTTP 429 또는 TOO_MANY_AI_REQUESTS)인지 판별한다.
+ * apiClient의 envelope 에러(`error.status`)와 일반 Axios 에러(`error.response.status`)를 모두 처리한다.
+ *
+ * @param {unknown} error API 호출 예외 객체
+ * @returns {boolean} 토큰 소진 예외 여부
+ */
+export function isAiTokenExhaustedError(error) {
+  const status = error?.status ?? error?.response?.status;
+  return status === 429 || error?.code === 'TOO_MANY_AI_REQUESTS';
+}
+
+/**
+ * 잔여 토큰 상태에 맞는 사용자 안내 문구를 반환한다.
+ *
+ * @param {number | null | undefined} remainingTokens 현재 잔여 토큰 수
+ * @param {number} [requiredTokens] 요청 기능의 필요 토큰 수
+ * @returns {string} 안내 문구
+ */
+export function getAiTokenExhaustedMessage(remainingTokens, requiredTokens) {
+  if (typeof remainingTokens === 'number' && remainingTokens <= 0) {
+    return '사용 가능한 AI 토큰이 없습니다. 토큰이 충전된 뒤 다시 이용해 주세요.';
+  }
+
+  if (typeof remainingTokens === 'number' && typeof requiredTokens === 'number' && remainingTokens < requiredTokens) {
+    return `남은 AI 토큰이 부족합니다. (필요: ${requiredTokens.toLocaleString()} / 남음: ${remainingTokens.toLocaleString()})`;
+  }
+
+  return '사용 가능한 AI 토큰이 모두 소진되었습니다. 잠시 후 다시 이용해 주세요.';
+}
+
 /**
  * 게시글 에디터 내 AI 자동완성 및 단락 추천을 총괄하는 커스텀 훅입니다.
  */
-export default function usePostEditorAiSuggestion({ category, editor, tags = [], title = '' } = {}) {
+export default function usePostEditorAiSuggestion({
+  category,
+  editor,
+  remainingTokens = null,
+  tags = [],
+  title = '',
+} = {}) {
   const queryClient = useQueryClient();
   const [titleSuggestion, setTitleSuggestion] = useState('');
   const [isSuggestingTitle, setIsSuggestingTitle] = useState(false);
@@ -76,6 +121,11 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         return;
       }
 
+      // 잔여 토큰이 부족하면 제목 입력 중 불필요한 API 호출을 막는다.
+      if (typeof remainingTokens === 'number' && remainingTokens < AI_TOKEN_COSTS.TITLE) {
+        return;
+      }
+
       debounceTimerRef.current = setTimeout(async () => {
         const controller = new AbortController();
         titleAbortControllerRef.current = controller;
@@ -95,8 +145,10 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         } catch (error) {
           if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
             setTitleSuggestion('');
-            if (error.response?.status === 429) {
-              setAiError('일일 AI 사용 토큰이 모두 소진되었습니다.');
+            if (isAiTokenExhaustedError(error)) {
+              const message = getAiTokenExhaustedMessage(0);
+              setAiError(message);
+              queryClient.invalidateQueries({ queryKey: ['aiTokens'] });
             } else {
               setAiError('AI 제목 추천을 가져오지 못했습니다.');
             }
@@ -106,7 +158,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         }
       }, DEBOUNCE_DELAY_MS);
     },
-    [category, tags],
+    [category, queryClient, remainingTokens, tags],
   );
 
   // 2. 제목 제안 수락 (Tab 키 처리 — 실제 적용 시에만 TITLE 토큰 차감)
@@ -136,6 +188,13 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
       }
 
       if (!editor) return;
+
+      if (typeof remainingTokens === 'number' && remainingTokens < AI_TOKEN_COSTS.PARAGRAPH) {
+        const message = getAiTokenExhaustedMessage(remainingTokens, AI_TOKEN_COSTS.PARAGRAPH);
+        setAiError(message);
+        toast.error(message);
+        return;
+      }
 
       let currentWritingOverride;
       let insertDirectly = false;
@@ -214,8 +273,11 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
       } catch (error) {
         if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
           editor.commands.clearAiSuggestion();
-          if (error.response?.status === 429) {
-            setAiError('일일 AI 사용 토큰이 모두 소진되었습니다.');
+          if (isAiTokenExhaustedError(error)) {
+            const message = getAiTokenExhaustedMessage(0);
+            setAiError(message);
+            toast.error(message);
+            queryClient.invalidateQueries({ queryKey: ['aiTokens'] });
           } else {
             setAiError('AI 문장 제안을 불러오지 못했습니다.');
           }
@@ -224,7 +286,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         setIsSuggestingParagraph(false);
       }
     },
-    [category, editor, tags, title],
+    [category, consumeAndRefreshTokens, editor, queryClient, remainingTokens, tags, title],
   );
 
   // 4-1. 본문 단락 추천 진행 중단 (Escape 등)
@@ -240,6 +302,13 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
     async ({ title: overrideTitle, content } = {}) => {
       if (descriptionAbortControllerRef.current) {
         descriptionAbortControllerRef.current.abort();
+      }
+
+      if (typeof remainingTokens === 'number' && remainingTokens < AI_TOKEN_COSTS.DESCRIPTION) {
+        const message = getAiTokenExhaustedMessage(remainingTokens, AI_TOKEN_COSTS.DESCRIPTION);
+        setAiError(message);
+        toast.error(message);
+        return '';
       }
 
       if (!content || !content.trim()) {
@@ -267,8 +336,11 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         return '';
       } catch (error) {
         if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
-          if (error.response?.status === 429) {
-            setAiError('일일 AI 사용 토큰이 모두 소진되었습니다.');
+          if (isAiTokenExhaustedError(error)) {
+            const message = getAiTokenExhaustedMessage(0);
+            setAiError(message);
+            toast.error(message);
+            queryClient.invalidateQueries({ queryKey: ['aiTokens'] });
           } else {
             setAiError('AI 요약 생성에 실패했습니다.');
           }
@@ -278,7 +350,7 @@ export default function usePostEditorAiSuggestion({ category, editor, tags = [],
         setIsSuggestingDescription(false);
       }
     },
-    [title],
+    [consumeAndRefreshTokens, queryClient, remainingTokens, title],
   );
 
   // 언마운트 시 미완료 타이머 및 요청 정리

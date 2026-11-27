@@ -9,6 +9,7 @@ import { Button } from '@/components/common/ui/button';
 import { Textfield } from '@/components/common/ui/textfield';
 import PostLinkPopover from '@/components/domain/post-editor/ui/PostLinkPopover';
 import SlashCommandPopover from '@/components/domain/post-editor/ui/SlashCommandPopover';
+import { isPlainEmptyDocument } from '@/lib/post-editor/rich-text-utils';
 
 export default function PostEditorContentSection({
   bodyPlaceholder,
@@ -20,6 +21,8 @@ export default function PostEditorContentSection({
   userId,
 }) {
   const isTableActive = Boolean(editor?.isActive('table'));
+  // 코드 블록·표·제목·인용문 등 빈 블록이 삽입된 경우에도 placeholder가 뒤에 비치지 않도록 문서 구조를 함께 확인한다.
+  const isPlaceholderVisible = editor ? isPlainEmptyDocument(editor.state.doc) : isEditorEmpty;
 
   const handleKeyDown = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
@@ -112,12 +115,12 @@ export default function PostEditorContentSection({
         className="relative flex min-h-[500px] flex-1 cursor-text flex-col py-7"
       >
         <div className="relative mx-auto flex w-full max-w-[820px] flex-1 flex-col px-5 sm:px-8">
-          {isEditorEmpty && bodyPlaceholder ? (
+          {isPlaceholderVisible && bodyPlaceholder ? (
             <Textfield
               variant="muted"
               size="default"
               whitespace="preline"
-              className="pointer-events-none absolute inset-x-5 top-0 leading-9 text-muted-foreground/80 sm:inset-x-8 dark:text-zinc-400"
+              className="pointer-events-none absolute inset-x-5 top-0 leading-7 text-muted-foreground/80 sm:inset-x-8 dark:text-zinc-400"
             >
               {bodyPlaceholder}
             </Textfield>
