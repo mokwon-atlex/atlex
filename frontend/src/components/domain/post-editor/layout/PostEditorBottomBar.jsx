@@ -14,7 +14,7 @@ export default function PostEditorBottomBar({
   publishDisabled = false,
 }) {
   return (
-    <footer className="sticky bottom-0 z-30 mt-auto flex flex-wrap items-center justify-between gap-3 rounded-b-[26px] border-t border-border bg-background/95 px-5 py-3.5 shadow-[0_-8px_24px_-16px_rgba(15,23,42,0.22)] backdrop-blur-md sm:px-7 dark:border-zinc-700/90 dark:shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.65)]">
+    <footer className="sticky bottom-0 z-30 mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-border bg-background/95 px-5 py-3.5 shadow-[0_-8px_24px_-16px_rgba(15,23,42,0.22)] backdrop-blur-md sm:px-7 dark:border-zinc-700/90 dark:shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.65)]">
       <div className="flex items-center gap-3 text-xs text-muted-foreground dark:text-zinc-300">
         <span>
           총 <strong className="font-semibold text-foreground">{charCount.toLocaleString()}</strong>자

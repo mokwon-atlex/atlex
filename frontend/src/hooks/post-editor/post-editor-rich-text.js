@@ -120,14 +120,13 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
       syncEditorState(nextEditor);
       setToolbarStateTick((currentValue) => currentValue + 1);
     },
-    onSelectionUpdate() {
-      // 내용이 안 바뀌어도 커서 위치가 바뀌면 버튼 활성 상태는 달라질 수 있다.
+    onTransaction() {
+      // storedMarks 변경(빈 줄에서 볼드·취소선 토글 등)과 커서 이동에도 툴바 활성 상태를 즉시 반영한다.
       setToolbarStateTick((currentValue) => currentValue + 1);
     },
     onUpdate({ editor: nextEditor }) {
       // 사용자가 입력할 때마다 화면에서 보여 주는 본문 상태도 같이 갱신한다.
       syncEditorState(nextEditor);
-      setToolbarStateTick((currentValue) => currentValue + 1);
     },
   });
 

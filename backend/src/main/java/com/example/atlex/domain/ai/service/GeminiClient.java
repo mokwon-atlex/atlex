@@ -1,12 +1,12 @@
 package com.example.atlex.domain.ai.service;
 
+import com.example.atlex.domain.ai.exception.TooManyAiRequestsException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
@@ -99,6 +100,7 @@ public class GeminiClient {
             }
             return getLocalFallback(systemPrompt, userPrompt);
         } catch (Exception e) {
+            boolean primaryQuotaExhausted = isQuotaExhaustedException(e);
             log.warn("기본 모델({}) 호출 실패, 보조 모델(gemini-3.6-flash)로 재시도합니다: {}", model, e.getMessage());
             try {
                 String fallbackText = callGemini("gemini-3.6-flash", systemPrompt, userPrompt, maxTokens);
@@ -106,14 +108,39 @@ public class GeminiClient {
                     return fallbackText;
                 }
             } catch (Exception ex) {
-                if (ex instanceof org.springframework.web.client.HttpStatusCodeException hse) {
+                boolean fallbackQuotaExhausted = isQuotaExhaustedException(ex);
+                if (ex instanceof HttpStatusCodeException hse) {
                     log.error("Gemini API HTTP 오류 [{}]: {}", hse.getStatusCode(), hse.getResponseBodyAsString());
                 } else {
                     log.error("Gemini API 호출 중 오류 발생: {}", ex.getMessage(), ex);
                 }
+                // API 키가 설정된 상태에서 토큰/쿼터 소진(429)이 발생하면 모의 데이터 대신 예외를 반환한다.
+                if (primaryQuotaExhausted || fallbackQuotaExhausted) {
+                    throw new TooManyAiRequestsException();
+                }
+            }
+            if (primaryQuotaExhausted) {
+                throw new TooManyAiRequestsException();
             }
             return getLocalFallback(systemPrompt, userPrompt);
         }
+    }
+
+    /**
+     * Gemini API 응답이 토큰/호출 한도 초과(429 또는 RESOURCE_EXHAUSTED)인지 판별한다.
+     */
+    boolean isQuotaExhaustedException(Throwable throwable) {
+        if (throwable instanceof HttpStatusCodeException hse) {
+            if (hse.getStatusCode().value() == 429) {
+                return true;
+            }
+            String body = hse.getResponseBodyAsString();
+            if (body != null) {
+                String upperBody = body.toUpperCase();
+                return upperBody.contains("RESOURCE_EXHAUSTED") || upperBody.contains("QUOTA");
+            }
+        }
+        return false;
     }
 
     private String callGemini(String targetModel, String systemPrompt, String userPrompt, int maxTokens) {

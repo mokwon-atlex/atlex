@@ -1,6 +1,5 @@
-// [Section] 에디터 상단 바 — 로고, 남은 AI 토큰, 임시 저장 목록
+// [Section] 에디터 상단 바 — 로고(홈 이동/이탈 확인), 남은 AI 토큰, 임시 저장 목록
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/common/ui/button';
 
 export default function PostEditorTopBar({
@@ -8,6 +7,7 @@ export default function PostEditorTopBar({
   saveDraftButtonLabel = '임시 저장',
   logoLabel = '로고',
   onOpenDraftModal, // 임시 저장 목록 모달 열기 핸들러
+  onRequestExit, // 로고 클릭 시 이탈/임시 저장 확인 핸들러
   onSaveDraft, // 임시 저장 실행 핸들러
   onPublish, // (선택) 상단 바 단독 사용 시 게시 버튼 핸들러
   publishButtonLabel = '게시',
@@ -15,30 +15,40 @@ export default function PostEditorTopBar({
   remainingTokens = null,
   maxTokens = null,
 }) {
+  const logoImages = (
+    <>
+      <img src="/logo/atlex-light.svg" alt={logoLabel} className="max-h-full max-w-full object-contain dark:hidden" />
+      <img
+        src="/logo/atlex-dark.svg"
+        alt={logoLabel}
+        className="hidden max-h-full max-w-full object-contain dark:block"
+      />
+    </>
+  );
+
   return (
-    <header className="flex items-center justify-between gap-4 rounded-t-[26px] border-b border-border bg-background/95 px-5 py-3 backdrop-blur-md sm:px-7 dark:border-zinc-700/90">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/"
-          aria-label="나가기"
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground dark:text-zinc-300 dark:hover:text-white"
-        >
-          <ArrowLeft className="size-3.5" />
-          <span>나가기</span>
-        </Link>
-        <span className="h-4 w-px bg-border dark:bg-zinc-700" aria-hidden="true" />
-        <Link href="/" aria-label={logoLabel} className="inline-flex h-8 w-16 items-center">
-          <img
-            src="/logo/atlex-light.svg"
-            alt={logoLabel}
-            className="max-h-full max-w-full object-contain dark:hidden"
-          />
-          <img
-            src="/logo/atlex-dark.svg"
-            alt={logoLabel}
-            className="hidden max-h-full max-w-full object-contain dark:block"
-          />
-        </Link>
+    <header className="flex items-center justify-between gap-4 border-b border-border bg-background/95 px-5 py-3 backdrop-blur-md sm:px-7 dark:border-zinc-700/90">
+      <div className="flex items-center">
+        {onRequestExit ? (
+          <button
+            type="button"
+            onClick={onRequestExit}
+            aria-label={logoLabel}
+            title="홈으로 이동"
+            className="inline-flex h-8 w-16 cursor-pointer items-center rounded-md transition-opacity hover:opacity-80"
+          >
+            {logoImages}
+          </button>
+        ) : (
+          <Link
+            href="/"
+            aria-label={logoLabel}
+            title="홈으로 이동"
+            className="inline-flex h-8 w-16 items-center transition-opacity hover:opacity-80"
+          >
+            {logoImages}
+          </Link>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5">

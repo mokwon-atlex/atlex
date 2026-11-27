@@ -11,6 +11,7 @@ import DetailsBlockNodeView from '@/components/domain/post-editor/ui/DetailsBloc
 import MathBlockNodeView from '@/components/domain/post-editor/ui/MathBlockNodeView';
 import { AiSuggestionExtension } from '@/lib/post-editor/rich-text-ai-extension';
 import { editorLowlight } from '@/lib/post-editor/rich-text-code';
+import { FormatResetExtension } from '@/lib/post-editor/rich-text-format-reset-extension';
 import { PostLinkExtension } from '@/lib/post-editor/rich-text-post-link-extension';
 import { SlashCommandExtension } from '@/lib/post-editor/rich-text-slash-command-extension';
 import { createBlockContent } from '@/lib/post-editor/rich-text-utils';
@@ -231,4 +232,5 @@ export const editorExtensions = [
   SlashCommandExtension,
   AiSuggestionExtension,
   PostLinkExtension,
+  FormatResetExtension,
 ];

@@ -7,9 +7,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { Alert, AlertDescription } from '@/components/common/ui/alert';
 import PostEditorContentSection from '@/components/domain/post-editor/layout/PostEditorContentSection';
 import PostEditorDraftModal from '@/components/domain/post-editor/layout/PostEditorDraftModal';
+import PostEditorLeaveModal from '@/components/domain/post-editor/layout/PostEditorLeaveModal';
 import PostEditorLinkModal from '@/components/domain/post-editor/layout/PostEditorLinkModal';
 import PostEditorMathModal from '@/components/domain/post-editor/layout/PostEditorMathModal';
 import PostEditorPublishModal from '@/components/domain/post-editor/layout/PostEditorPublishModal';
@@ -56,6 +58,7 @@ import { useAiTokens } from '@/hooks/queries/ai/useAiTokens';
 import { createUserBlogCategory } from '@/lib/api/users';
 import { loadUserBlogCategories } from '@/lib/category/blog-categories';
 import { getRichTextPreviewText } from '@/lib/post-editor/rich-text-html';
+import { isPlainEmptyDocument } from '@/lib/post-editor/rich-text-utils';
 import { useAuthStore } from '@/store/authStore';
 
 /**
@@ -70,6 +73,7 @@ export default function PostEditorPage({ postId }) {
   const userId = useAuthStore((state) => state.user?.userId);
 
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [drafts, setDrafts] = useState([]);
   const [title, setTitle] = useState('');
@@ -83,6 +87,8 @@ export default function PostEditorPage({ postId }) {
   const [validationError, setValidationError] = useState('');
   // 수정 모드에서 기존 데이터를 폼에 이미 반영했는지 여부(중복 반영 방지용)
   const [isInitialized, setIsInitialized] = useState(!isEditMode);
+  // 마지막 저장(또는 초기 로드) 기준 스냅샷 — 홈 이탈 시 임시 저장 확인 모달 노출 판단에 사용한다.
+  const [savedSnapshot, setSavedSnapshot] = useState({ title: '', html: '<p></p>' });
 
   useEffect(() => {
     setDrafts(loadStoredDrafts());
@@ -94,11 +100,15 @@ export default function PostEditorPage({ postId }) {
   // 수동 태그 입력 + 본문 #해시태그 자동 감지를 통합 관리하는 훅
   const tagField = usePostEditorTags(richText.bodyText);
 
+  const { data: tokenStatusData } = useAiTokens();
+  const tokenStatus = tokenStatusData;
+
   // AI 제목 자동완성 및 본문 단락 추천 훅
   const selectedCategoryName = categories.find((c) => c.id === categoryId)?.name;
   const aiSuggestion = usePostEditorAiSuggestion({
     category: selectedCategoryName,
     editor: richText.editor,
+    remainingTokens: tokenStatus?.remainingTokens,
     tags: tagField.combinedTags,
     title,
   });
@@ -112,9 +122,6 @@ export default function PostEditorPage({ postId }) {
     isLoading: isPostLoading,
     isError: isPostError,
   } = usePost(isEditMode ? postId : undefined);
-
-  const { data: tokenStatusData } = useAiTokens();
-  const tokenStatus = tokenStatusData;
 
   useEffect(() => {
     let cancelled = false;
@@ -173,6 +180,10 @@ export default function PostEditorPage({ postId }) {
     // 기존 태그를 수동 태그 목록에 반영한다.
     tagField.setManualTags(existingPost.tags ?? []);
 
+    setSavedSnapshot({
+      title: existingPost.title ?? '',
+      html: richText.editor.getHTML(),
+    });
     setIsInitialized(true);
   }, [isEditMode, existingPost, isInitialized, richText.editor]);
 
@@ -206,17 +217,40 @@ export default function PostEditorPage({ postId }) {
     setThumbnailUrl(nextUrl);
   }
 
-  function handleSaveDraft() {
-    if (!title.trim() && richText.isEditorEmpty) {
+  const currentHtml = richText.getHTML();
+  const hasRichBlock = richText.editor ? !isPlainEmptyDocument(richText.editor.state.doc) : false;
+  const hasWrittenContent = Boolean(title.trim() || !richText.isEditorEmpty || hasRichBlock);
+  const hasUnsavedChanges = isEditMode
+    ? isInitialized && (title !== savedSnapshot.title || currentHtml !== savedSnapshot.html)
+    : hasWrittenContent && (title !== savedSnapshot.title || currentHtml !== savedSnapshot.html);
+
+  // 미저장 변경사항이 있을 때 브라우저 탭 닫기·새로고침으로 인한 실수 이탈을 방지한다.
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  function handleSaveDraft({ silent = false } = {}) {
+    if (!hasWrittenContent) {
       setValidationError('임시 저장할 제목이나 본문을 입력해 주세요.');
-      return;
+      return false;
     }
 
+    const htmlSnapshot = richText.getHTML();
     const newDraft = {
       id: `draft-${Date.now()}`,
       title: title.trim() || '제목 없는 초안',
-      body: (getRichTextPreviewText(richText.getHTML()) || richText.bodyText || '').slice(0, 100),
-      content: richText.getHTML(),
+      body: (getRichTextPreviewText(htmlSnapshot) || richText.bodyText || '').slice(0, 100),
+      content: htmlSnapshot,
       description,
       categoryId,
       tags: tagField.combinedTags,
@@ -232,14 +266,42 @@ export default function PostEditorPage({ postId }) {
     const success = saveStoredDrafts(nextDrafts);
     if (success) {
       setDrafts(nextDrafts);
-      alert('임시 저장이 완료되었습니다.');
-    } else {
-      setValidationError('임시 저장에 실패했습니다. 브라우저 저장소 용량을 확인해 주세요.');
+      setSavedSnapshot({ title, html: htmlSnapshot });
+      if (silent) {
+        toast.success('임시 저장되었습니다.');
+      } else {
+        alert('임시 저장이 완료되었습니다.');
+      }
+      return true;
+    }
+    setValidationError('임시 저장에 실패했습니다. 브라우저 저장소 용량을 확인해 주세요.');
+    return false;
+  }
+
+  function handleRequestExit() {
+    if (hasUnsavedChanges) {
+      setIsLeaveModalOpen(true);
+      return;
+    }
+    router.push('/');
+  }
+
+  function handleLeaveWithoutSaving() {
+    setIsLeaveModalOpen(false);
+    router.push('/');
+  }
+
+  function handleSaveDraftAndLeave() {
+    const saved = handleSaveDraft({ silent: true });
+    if (saved) {
+      setIsLeaveModalOpen(false);
+      router.push('/');
     }
   }
 
   function handleLoadDraft(draft) {
     if (!draft) return;
+    const nextTitle = draft.title ?? '';
     if (draft.title) setTitle(draft.title);
     if (draft.description) setDescription(draft.description);
     if (draft.categoryId) setCategoryId(draft.categoryId);
@@ -249,6 +311,11 @@ export default function PostEditorPage({ postId }) {
     if (draft.tags && tagField.setManualTags) {
       tagField.setManualTags(draft.tags);
     }
+    const fallbackHtml = draft.content ?? '<p></p>';
+    setSavedSnapshot({
+      title: nextTitle,
+      html: richText.editor ? richText.editor.getHTML() : fallbackHtml,
+    });
     setIsDraftModalOpen(false);
   }
 
@@ -347,6 +414,7 @@ export default function PostEditorPage({ postId }) {
             <PostEditorTopBar
               logoLabel={postEditorCopy.logoLabel}
               onOpenDraftModal={() => setIsDraftModalOpen(true)}
+              onRequestExit={handleRequestExit}
               remainingTokens={tokenStatus?.remainingTokens}
               maxTokens={tokenStatus?.maxTokens}
             />
@@ -425,7 +493,7 @@ export default function PostEditorPage({ postId }) {
         <PostEditorBottomBar
           charCount={richText.bodyText.length}
           isPublic={isPublic}
-          onSaveDraft={handleSaveDraft}
+          onSaveDraft={() => handleSaveDraft()}
           onPublish={handleOpenPublishModal}
           publishDisabled={activeMutation.isPending}
           publishButtonLabel={
@@ -488,6 +556,12 @@ export default function PostEditorPage({ postId }) {
         onClose={() => setIsDraftModalOpen(false)}
         onLoadDraft={handleLoadDraft}
         onDeleteDraft={handleDeleteDraft}
+      />
+      <PostEditorLeaveModal
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+        onLeaveWithoutSaving={handleLeaveWithoutSaving}
+        onSaveDraftAndLeave={handleSaveDraftAndLeave}
       />
       <PostEditorMathModal
         isOpen={richText.mathModalState.isOpen}
