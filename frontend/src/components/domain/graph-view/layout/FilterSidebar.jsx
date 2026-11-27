@@ -1,63 +1,24 @@
 'use client';
 
 import { memo, useState } from 'react';
-import { ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
-import { tagMeta } from '@/lib/graph-view/graph-view-utils';
-import { Avatar } from '@/components/domain/graph-view/ui/GraphViewBadges';
 import { FilterIcon, MiniConnectionIcon } from '@/components/domain/graph-view/ui/GraphViewIcons';
 import { PRIMARY } from '@/lib/graph-view/graph-view-utils';
 
-/** 작성자·태그·관계 조건으로 그래프 표시 범위를 좁히는 사이드바다. */
+/** 연결 기준 필터와 현재 그래프 통계를 제공하는 사이드바다. */
 export const FilterSidebar = memo(function FilterSidebar({
-  activeAuthors,
-  activeTags,
-  authors,
-  clearAllAuthors,
-  clearAllTags,
   hasExplicitEdges,
   minSharedTags,
   resetFilters,
-  selectAllAuthors,
-  selectAllTags,
   setMinSharedTags,
   setShowExplicitEdges,
   setShowTagEdges,
-  showAuthorFilter = true,
   showExplicitEdges,
   showTagEdges,
   stats,
-  tagCounts,
-  toggleAuthor,
-  toggleTag,
 }) {
   const [openConnection, setOpenConnection] = useState(true);
-  const [openAuthors, setOpenAuthors] = useState(true);
-  const [openTags, setOpenTags] = useState(true);
-  const [authorQuery, setAuthorQuery] = useState('');
-  const [tagQuery, setTagQuery] = useState('');
-
-  const normalizedAuthorQuery = authorQuery.trim().toLowerCase();
-  const filteredAuthors = normalizedAuthorQuery
-    ? authors.filter(
-        (author) =>
-          author.name?.toLowerCase().includes(normalizedAuthorQuery) ||
-          String(author.id ?? '')
-            .toLowerCase()
-            .includes(normalizedAuthorQuery),
-      )
-    : authors;
-
-  const normalizedTagQuery = tagQuery.trim().toLowerCase();
-  const filteredTagCounts = normalizedTagQuery
-    ? tagCounts.filter(([tag]) => tag.toLowerCase().includes(normalizedTagQuery))
-    : tagCounts;
-
-  function handleResetFilters() {
-    setAuthorQuery('');
-    setTagQuery('');
-    resetFilters();
-  }
 
   return (
     <aside className="absolute inset-y-0 left-0 z-30 flex w-72 shrink-0 flex-col overflow-y-auto border-r border-border bg-card/95 text-sm shadow-xl backdrop-blur-md">
@@ -66,7 +27,7 @@ export const FilterSidebar = memo(function FilterSidebar({
           <FilterIcon />
           필터
         </span>
-        <button type="button" className="text-xs font-bold text-primary hover:underline" onClick={handleResetFilters}>
+        <button type="button" className="text-xs font-bold text-primary hover:underline" onClick={resetFilters}>
           초기화
         </button>
       </div>
@@ -92,124 +53,14 @@ export const FilterSidebar = memo(function FilterSidebar({
         </div>
       </SidebarSection>
 
-      {showAuthorFilter ? (
-        <SidebarSection isOpen={openAuthors} onToggle={() => setOpenAuthors((value) => !value)} title="작성자">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="search"
-              value={authorQuery}
-              onChange={(event) => setAuthorQuery(event.target.value)}
-              placeholder="작성자 검색..."
-              aria-label="작성자 검색"
-              className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-2.5 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
-            />
-          </div>
-          {authors.length > 0 ? (
-            <div className="flex items-center justify-end gap-2 text-[11px] font-bold">
-              <button type="button" onClick={selectAllAuthors} className="cursor-pointer text-primary hover:underline">
-                전체 선택
-              </button>
-              <span className="text-border">|</span>
-              <button
-                type="button"
-                onClick={clearAllAuthors}
-                className="cursor-pointer text-muted-foreground hover:text-foreground"
-              >
-                전체 해제
-              </button>
-            </div>
-          ) : null}
-          {filteredAuthors.length === 0 ? (
-            <p className="text-xs text-muted-foreground">일치하는 작성자가 없습니다.</p>
-          ) : (
-            filteredAuthors.map((author) => {
-              const active = activeAuthors.has(author.id);
-
-              return (
-                <label key={author.id} className="flex cursor-pointer items-center justify-between gap-3">
-                  <span className="flex items-center gap-2">
-                    <Avatar author={author} size="md" />
-                    <span className="font-bold text-foreground">{author.name}</span>
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-muted-foreground">{author.count}</span>
-                    <input
-                      checked={active}
-                      className="h-4 w-4 rounded accent-primary"
-                      onChange={() => toggleAuthor(author.id)}
-                      type="checkbox"
-                    />
-                  </span>
-                </label>
-              );
-            })
-          )}
-        </SidebarSection>
-      ) : null}
-
-      <SidebarSection isOpen={openTags} onToggle={() => setOpenTags((value) => !value)} title="태그">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="search"
-            value={tagQuery}
-            onChange={(event) => setTagQuery(event.target.value)}
-            placeholder="태그 검색..."
-            aria-label="태그 검색"
-            className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-2.5 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:border-primary"
-          />
-        </div>
-        {tagCounts.length > 0 ? (
-          <div className="flex items-center justify-end gap-2 text-[11px] font-bold">
-            <button type="button" onClick={selectAllTags} className="cursor-pointer text-primary hover:underline">
-              전체 선택
-            </button>
-            <span className="text-border">|</span>
-            <button
-              type="button"
-              onClick={clearAllTags}
-              className="cursor-pointer text-muted-foreground hover:text-foreground"
-            >
-              전체 해제
-            </button>
-          </div>
-        ) : null}
-        {filteredTagCounts.length === 0 ? (
-          <p className="text-xs text-muted-foreground">일치하는 태그가 없습니다.</p>
-        ) : (
-          filteredTagCounts.map(([tag, count]) => {
-            const active = activeTags.has(tag);
-
-            return (
-              <label key={tag} className="flex cursor-pointer items-center justify-between gap-3">
-                <span className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: tagMeta(tag).color }} />
-                  <span className="font-bold text-foreground">{tag}</span>
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-muted-foreground">{count}</span>
-                  <input
-                    checked={active}
-                    className="h-4 w-4 rounded accent-primary"
-                    onChange={() => toggleTag(tag)}
-                    type="checkbox"
-                  />
-                </span>
-              </label>
-            );
-          })
-        )}
-      </SidebarSection>
-
       <div className="mt-auto px-4 py-4">
         <p className="mb-2 text-xs font-black uppercase tracking-wide text-muted-foreground">통계</p>
         <div className="grid grid-cols-2 gap-2">
           {[
             { label: '포스트', value: stats.posts },
             { label: '엣지', value: stats.edges },
-            { label: '활성 태그', value: stats.activeTags },
-            { label: '작성자', value: stats.authors },
+            { label: '연결 노드', value: stats.connectedNodes },
+            { label: '고립 노드', value: stats.isolatedNodes },
           ].map((stat) => (
             <div key={stat.label} className="rounded-lg bg-muted/45 px-3 py-2">
               <p className="text-xl font-black text-foreground">{stat.value}</p>

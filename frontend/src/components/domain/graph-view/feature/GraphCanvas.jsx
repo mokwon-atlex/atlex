@@ -2,7 +2,6 @@
 
 import { memo, useMemo, useRef, useState } from 'react';
 
-import { EdgeKeywordTooltip } from '@/components/domain/graph-view/ui/EdgeKeywordTooltip';
 import { LockBadge } from '@/components/domain/graph-view/ui/GraphViewIcons';
 import {
   ARROW_LENGTH,
@@ -19,82 +18,41 @@ import {
   splitNodeTitle,
 } from '@/lib/graph-view/graph-view-utils';
 
-const NODE_DRAG_THRESHOLD = 4;
-const MAX_EDGE_TOOLTIPS = 4;
-const MIN_TOOLTIP_DISTANCE = 72;
-const VIEWPORT_DRAG_PADDING = 28;
-const LEFT_SIDEBAR_WIDTH = 288;
-const RIGHT_PANEL_WIDTH = 352;
+const PAN_DRAG_THRESHOLD = 4;
+const COMPASS_TICK_COUNT = 12;
 
-/** 노드·간선 SVG와 무한 캔버스 확대·이동, 노드 드래그, 키워드 툴팁 상호작용을 렌더링한다. */
+/** 노드·간선 SVG와 캔버스 확대·이동, 고전 천체도 가이드 레이어를 렌더링한다. */
 export const GraphCanvas = memo(function GraphCanvas({
   activeTab,
   canvasTheme = 'dark',
-  currentUserId,
   edges,
   hoveredId,
-  minSharedTags,
+  layoutMeta = null,
   onHover,
   onInteractionChange,
   onManualViewportChange,
-  onNodeDragEnd,
-  onNodeDragMove,
-  onNodeDragStart,
   onOpenPost,
   pan,
   posts,
   selectedId,
   setPan,
   setZoom,
-  showExplicitEdges,
-  showPanel = false,
-  showSidebar = false,
-  showTagEdges,
   svgRef,
   zoom,
 }) {
   const dragRef = useRef(null);
   const [isPanning, setIsPanning] = useState(false);
-  const [draggingNodeId, setDraggingNodeId] = useState(null);
   const [hoveredEdgeId, setHoveredEdgeId] = useState(null);
   const theme = getGraphTheme(canvasTheme);
   const isLight = canvasTheme === 'light';
-  const isInteracting = isPanning || draggingNodeId != null;
 
   const postMap = useMemo(() => new Map(posts.map((post) => [post.id, post])), [posts]);
-  const visibleEdges = useMemo(
-    () =>
-      edges.filter((edge) => {
-        if (edge.isExplicit) {
-          return showExplicitEdges;
-        }
-
-        if (!showTagEdges) {
-          return false;
-        }
-
-        return edge.strength >= minSharedTags;
-      }),
-    [edges, minSharedTags, showExplicitEdges, showTagEdges],
-  );
-  const filteredPosts = useMemo(
-    () => (activeTab === 'mine' ? posts.filter((post) => post.author.id === currentUserId) : posts),
-    [activeTab, currentUserId, posts],
-  );
-  const filteredPostIds = useMemo(() => new Set(filteredPosts.map((post) => post.id)), [filteredPosts]);
   const renderedEdges = useMemo(
-    () =>
-      visibleEdges.filter(
-        (edge) =>
-          postMap.has(edge.from) &&
-          postMap.has(edge.to) &&
-          filteredPostIds.has(edge.from) &&
-          filteredPostIds.has(edge.to),
-      ),
-    [filteredPostIds, postMap, visibleEdges],
+    () => edges.filter((edge) => postMap.has(edge.from) && postMap.has(edge.to)),
+    [edges, postMap],
   );
   const connectionCountById = useMemo(() => {
-    const counts = new Map(filteredPosts.map((post) => [post.id, 0]));
+    const counts = new Map(posts.map((post) => [post.id, 0]));
 
     renderedEdges.forEach((edge) => {
       counts.set(edge.from, (counts.get(edge.from) ?? 0) + 1);
@@ -102,9 +60,9 @@ export const GraphCanvas = memo(function GraphCanvas({
     });
 
     return counts;
-  }, [filteredPosts, renderedEdges]);
+  }, [posts, renderedEdges]);
   const focusedNodeIds = useMemo(() => {
-    const ids = new Set([hoveredId, selectedId, draggingNodeId].filter((id) => id && filteredPostIds.has(id)));
+    const ids = new Set([hoveredId, selectedId].filter((id) => id && postMap.has(id)));
 
     if (hoveredEdgeId) {
       const hoveredEdge = renderedEdges.find((edge) => edge.id === hoveredEdgeId);
@@ -116,7 +74,7 @@ export const GraphCanvas = memo(function GraphCanvas({
     }
 
     return ids;
-  }, [draggingNodeId, filteredPostIds, hoveredEdgeId, hoveredId, renderedEdges, selectedId]);
+  }, [hoveredEdgeId, hoveredId, postMap, renderedEdges, selectedId]);
   const focusedEdges = useMemo(
     () =>
       renderedEdges.filter(
@@ -141,7 +99,7 @@ export const GraphCanvas = memo(function GraphCanvas({
 
     const groups = new Map();
 
-    filteredPosts.forEach((post) => {
+    posts.forEach((post) => {
       const key = post.categoryName || '미분류';
 
       if (!groups.has(key)) {
@@ -165,65 +123,17 @@ export const GraphCanvas = memo(function GraphCanvas({
         cx,
         cy,
         name,
-        radius: Math.max(72, maxDist + 48),
+        radius: Math.max(70, maxDist + 42),
       };
     });
-  }, [activeTab, canvasTheme, filteredPosts]);
-
-  // 포커스된 간선 중 점수가 높고 서로 겹치지 않는 최대 4개에 공유 키워드 배지를 표시한다.
-  const tooltipEdges = useMemo(() => {
-    if (isInteracting || focusedEdges.length === 0) {
-      return [];
-    }
-
-    const candidates = focusedEdges
-      .filter((edge) => edge.isExplicit || edge.sharedTags.length > 0)
-      .map((edge) => {
-        const from = postMap.get(edge.from);
-        const to = postMap.get(edge.to);
-
-        if (!from || !to) {
-          return null;
-        }
-
-        return {
-          edge,
-          isDirectHover: edge.id === hoveredEdgeId,
-          x: (from.x + to.x) / 2,
-          y: (from.y + to.y) / 2,
-        };
-      })
-      .filter(Boolean)
-      .sort(
-        (left, right) =>
-          Number(right.isDirectHover) - Number(left.isDirectHover) || (right.edge.score ?? 0) - (left.edge.score ?? 0),
-      );
-
-    const placed = [];
-
-    for (const candidate of candidates) {
-      if (placed.length >= MAX_EDGE_TOOLTIPS) {
-        break;
-      }
-
-      const tooClose = placed.some(
-        (item) => Math.hypot(item.x - candidate.x, item.y - candidate.y) < MIN_TOOLTIP_DISTANCE,
-      );
-
-      if (!tooClose) {
-        placed.push(candidate);
-      }
-    }
-
-    return placed;
-  }, [focusedEdges, hoveredEdgeId, isInteracting, postMap]);
+  }, [activeTab, canvasTheme, posts]);
 
   const defaultLabelOpacity =
     posts.length > 12
       ? Math.min(0.76, Math.max(0, (zoom - 1) * 1.2))
-      : Math.min(0.88, Math.max(0.62, 0.76 + (zoom - 1) * 0.4));
+      : Math.min(0.9, Math.max(0.64, 0.78 + (zoom - 1) * 0.4));
 
-  const getSvgPoint = (event, { clampToViewport = false } = {}) => {
+  const getSvgPoint = (event) => {
     if (!svgRef.current) {
       return null;
     }
@@ -234,36 +144,12 @@ export const GraphCanvas = memo(function GraphCanvas({
       return null;
     }
 
-    let clientX = event.clientX;
-    let clientY = event.clientY;
-
-    // 노드를 드래그할 때 캔버스 바깥이나 플로팅 패널 아래로 끌려나가 사라지지 않도록 보이는 뷰포트 안으로 제한한다.
-    if (clampToViewport) {
-      const rect = svgRef.current.getBoundingClientRect();
-
-      if (rect.width > 0 && rect.height > 0) {
-        const leftInset = (showSidebar ? LEFT_SIDEBAR_WIDTH : 0) + VIEWPORT_DRAG_PADDING;
-        const rightInset = (showPanel ? RIGHT_PANEL_WIDTH : 0) + VIEWPORT_DRAG_PADDING;
-        const minClientX = Math.min(rect.left + leftInset, rect.right - VIEWPORT_DRAG_PADDING);
-        const maxClientX = Math.max(minClientX, rect.right - rightInset);
-        const minClientY = rect.top + VIEWPORT_DRAG_PADDING;
-        const maxClientY = Math.max(minClientY, rect.bottom - VIEWPORT_DRAG_PADDING);
-
-        clientX = clamp(clientX, minClientX, maxClientX);
-        clientY = clamp(clientY, minClientY, maxClientY);
-      }
-    }
-
     const point = svgRef.current.createSVGPoint();
-    point.x = clientX;
-    point.y = clientY;
+
+    point.x = event.clientX;
+    point.y = event.clientY;
     return point.matrixTransform(ctm.inverse());
   };
-
-  const toGraphPoint = (svgPoint) => ({
-    x: (svgPoint.x - pan.x) / zoom,
-    y: (svgPoint.y - pan.y) / zoom,
-  });
 
   const handleWheel = (event) => {
     event.preventDefault();
@@ -305,34 +191,21 @@ export const GraphCanvas = memo(function GraphCanvas({
     event.preventDefault();
     event.currentTarget.setPointerCapture?.(event.pointerId);
 
-    if (targetNodeId) {
-      dragRef.current = {
-        dragStarted: false,
-        element: event.currentTarget,
-        mode: 'node',
-        moved: false,
-        pointerId: event.pointerId,
-        startX: point.x,
-        startY: point.y,
-        targetNodeId,
-      };
-      onHover(targetNodeId);
-      return;
-    }
-
     dragRef.current = {
       element: event.currentTarget,
-      mode: 'pan',
       moved: false,
       pointerId: event.pointerId,
       startPanX: pan.x,
       startPanY: pan.y,
       startX: point.x,
       startY: point.y,
-      targetNodeId: null,
+      targetNodeId,
     };
-    setIsPanning(true);
-    onInteractionChange?.(true);
+
+    if (!targetNodeId) {
+      setIsPanning(true);
+      onInteractionChange?.(true);
+    }
   };
 
   const handlePointerMove = (event) => {
@@ -350,29 +223,14 @@ export const GraphCanvas = memo(function GraphCanvas({
 
     const movement = Math.hypot(rawPoint.x - drag.startX, rawPoint.y - drag.startY);
 
-    if (drag.mode === 'node') {
-      const clampedSvgPoint = getSvgPoint(event, { clampToViewport: true }) ?? rawPoint;
-      const graphPoint = toGraphPoint(clampedSvgPoint);
-
-      if (!drag.dragStarted) {
-        if (movement <= NODE_DRAG_THRESHOLD) {
-          return;
-        }
-
-        drag.moved = true;
-        drag.dragStarted = true;
-        setDraggingNodeId(drag.targetNodeId);
-        onInteractionChange?.(true);
-        onNodeDragStart?.(drag.targetNodeId, graphPoint.x, graphPoint.y);
+    if (!drag.moved) {
+      if (movement <= PAN_DRAG_THRESHOLD) {
         return;
       }
 
-      onNodeDragMove?.(drag.targetNodeId, graphPoint.x, graphPoint.y);
-      return;
-    }
-
-    if (movement > 2) {
       drag.moved = true;
+      setIsPanning(true);
+      onInteractionChange?.(true);
     }
 
     setPan({
@@ -390,15 +248,11 @@ export const GraphCanvas = memo(function GraphCanvas({
 
     drag.element?.releasePointerCapture?.(drag.pointerId);
 
-    if (drag.mode === 'node') {
-      if (drag.dragStarted) {
-        onNodeDragEnd?.(drag.targetNodeId);
-        setDraggingNodeId(null);
-        onInteractionChange?.(false);
-      } else if (!drag.moved) {
-        onOpenPost(drag.targetNodeId);
-      }
-    } else {
+    if (drag.targetNodeId && !drag.moved) {
+      onOpenPost(drag.targetNodeId);
+    }
+
+    if (isPanning || drag.moved || !drag.targetNodeId) {
       setIsPanning(false);
       onInteractionChange?.(false);
     }
@@ -406,8 +260,8 @@ export const GraphCanvas = memo(function GraphCanvas({
     dragRef.current = null;
   };
 
-  const svgCursor = isInteracting ? 'grabbing' : 'grab';
-  const opacityTransition = isInteracting ? undefined : 'opacity 0.18s';
+  const svgCursor = isPanning ? 'grabbing' : 'grab';
+  const opacityTransition = isPanning ? undefined : 'opacity 0.18s';
 
   return (
     <svg
@@ -435,6 +289,10 @@ export const GraphCanvas = memo(function GraphCanvas({
       </defs>
 
       <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
+        {theme.showCelestialGuides && layoutMeta ? (
+          <CelestialAtlasGuides activeTab={activeTab} layoutMeta={layoutMeta} theme={theme} />
+        ) : null}
+
         {categoryClusters.map((cluster) => (
           <g key={cluster.name} pointerEvents="none">
             <circle
@@ -490,7 +348,7 @@ export const GraphCanvas = memo(function GraphCanvas({
           const y2 = to.y - uy * (toRadius + endGap);
           const isLit = hoveredEdgeId === edge.id || focusedNodeIds.has(edge.from) || focusedNodeIds.has(edge.to);
           const hasFocus = focusedNodeIds.size > 0 || hoveredEdgeId != null;
-          const edgeOpacity = hasFocus ? (isLit ? 0.94 : 0.08) : edgeBaseOpacity(edge, canvasTheme);
+          const edgeOpacity = hasFocus ? (isLit ? 0.94 : 0.1) : edgeBaseOpacity(edge, canvasTheme);
           const lineWidth = edgeWidth(edge);
           const dashArray = edge.isExplicit ? '4,4' : undefined;
           const lineEndX = edge.isExplicit ? x2 - ux * ARROW_LENGTH : x2;
@@ -503,7 +361,7 @@ export const GraphCanvas = memo(function GraphCanvas({
               key={edge.id}
               data-graph-edge={edge.id}
               onMouseEnter={() => {
-                if (!isInteracting) {
+                if (!isPanning) {
                   setHoveredEdgeId(edge.id);
                 }
               }}
@@ -526,7 +384,7 @@ export const GraphCanvas = memo(function GraphCanvas({
                   fill={edgeColor}
                   opacity="0.96"
                   points={arrowPoints}
-                  stroke={isLight ? '#FFFFFF' : PRIMARY_SOFT}
+                  stroke={isLight ? '#FCF9F2' : PRIMARY_SOFT}
                   strokeLinejoin="round"
                   strokeWidth="1.5"
                 />
@@ -535,20 +393,19 @@ export const GraphCanvas = memo(function GraphCanvas({
           );
         })}
 
-        {filteredPosts.map((post) => {
+        {posts.map((post) => {
           const degree = connectionCountById.get(post.id) ?? 0;
           const radius = graphNodeRadius(degree);
           const isHovered = hoveredId === post.id;
           const isSelected = selectedId === post.id;
-          const isDragged = draggingNodeId === post.id;
-          const isFocused = isHovered || isSelected || isDragged;
+          const isFocused = isHovered || isSelected;
           const isRelated = relatedNodeIds.has(post.id);
           const hasFocus = focusedNodeIds.size > 0;
           const isDimmed = hasFocus && !isFocused && !isRelated;
-          const baseBrightness = isLight ? Math.min(1, 0.78 + degree * 0.06) : Math.min(1, 0.52 + degree * 0.14);
+          const baseBrightness = isLight ? Math.min(1, 0.82 + degree * 0.05) : Math.min(1, 0.52 + degree * 0.14);
           const nodeOpacity = isDimmed
             ? isLight
-              ? 0.22
+              ? 0.24
               : 0.18
             : hasFocus && isRelated && !isFocused
               ? 0.92
@@ -565,7 +422,7 @@ export const GraphCanvas = memo(function GraphCanvas({
             : degree >= 4 && activeTab !== 'category'
               ? theme.nodeHubFill
               : baseNodeColor;
-          const haloOpacity = isLight ? Math.min(0.26, 0.08 + degree * 0.04) : Math.min(0.34, 0.08 + degree * 0.06);
+          const haloOpacity = isLight ? Math.min(0.28, 0.09 + degree * 0.04) : Math.min(0.34, 0.08 + degree * 0.06);
           const haloRadius = radius + Math.min(11, 4 + degree * 1.6);
           const titleLines = labelOpacity > 0 ? splitNodeTitle(post.title) : null;
 
@@ -585,18 +442,14 @@ export const GraphCanvas = memo(function GraphCanvas({
                 }
               }}
               onMouseEnter={() => {
-                if (!isInteracting) {
+                if (!isPanning) {
                   onHover(post.id);
                 }
               }}
-              onMouseLeave={() => {
-                if (!draggingNodeId) {
-                  onHover(null);
-                }
-              }}
+              onMouseLeave={() => onHover(null)}
               role="button"
               style={{
-                cursor: isDragged ? 'grabbing' : 'grab',
+                cursor: 'pointer',
                 opacity: nodeOpacity,
                 touchAction: 'none',
                 ...(opacityTransition ? { transition: opacityTransition } : null),
@@ -608,7 +461,7 @@ export const GraphCanvas = memo(function GraphCanvas({
                   cx={post.x}
                   cy={post.y}
                   fill={theme.focusedHaloFill}
-                  opacity={isLight ? '0.26' : '0.34'}
+                  opacity={isLight ? '0.24' : '0.34'}
                   r={radius + 11}
                 />
               ) : (
@@ -629,8 +482,8 @@ export const GraphCanvas = memo(function GraphCanvas({
                 r={radius}
                 stroke={isFocused ? theme.nodeFocusedStroke : theme.nodeStroke}
                 strokeDasharray={post.isPrivate ? '5,3' : undefined}
-                strokeOpacity={isFocused ? 1 : isLight ? 0.95 : Math.min(0.92, 0.45 + degree * 0.14)}
-                strokeWidth={isFocused ? 2.5 : post.isPrivate ? 2 : isLight ? 1.8 : 1.2}
+                strokeOpacity={isFocused ? 1 : isLight ? 0.96 : Math.min(0.92, 0.45 + degree * 0.14)}
+                strokeWidth={isFocused ? 2.4 : post.isPrivate ? 2 : isLight ? 1.8 : 1.2}
               />
               {post.isPrivate ? <LockBadge x={post.x + radius * 0.52} y={post.y + radius * 0.52} /> : null}
               {titleLines ? (
@@ -658,11 +511,119 @@ export const GraphCanvas = memo(function GraphCanvas({
             </g>
           );
         })}
-
-        {tooltipEdges.map(({ edge, x, y }) => (
-          <EdgeKeywordTooltip key={`tooltip-${edge.id}`} canvasTheme={canvasTheme} edge={edge} x={x} y={y} />
-        ))}
       </g>
     </svg>
   );
 });
+
+/** 라이트 모드 '고전 천체도·아틀라스 성도' 컨셉의 천구 동심 궤도선과 방위 눈금 레이어다. */
+function CelestialAtlasGuides({ activeTab, layoutMeta, theme }) {
+  const { centerX, centerY, coreRadius, outerRingRadii = [] } = layoutMeta;
+  const maxRing = outerRingRadii.length > 0 ? Math.max(...outerRingRadii) : Math.max(coreRadius, 150);
+  const compassRadius = maxRing + 34;
+  const axisExtent = compassRadius + 28;
+  const ticks = Array.from({ length: COMPASS_TICK_COUNT }, (_, index) => {
+    const angle = (Math.PI * 2 * index) / COMPASS_TICK_COUNT - Math.PI / 2;
+    const isCardinal = index % 3 === 0;
+    const innerR = compassRadius - (isCardinal ? 9 : 5);
+    const outerR = compassRadius + (isCardinal ? 4 : 2);
+
+    return {
+      isCardinal,
+      x1: centerX + Math.cos(angle) * innerR,
+      x2: centerX + Math.cos(angle) * outerR,
+      y1: centerY + Math.sin(angle) * innerR,
+      y2: centerY + Math.sin(angle) * outerR,
+    };
+  });
+
+  return (
+    <g data-celestial-guides="true" pointerEvents="none">
+      {/* 천구 자오선·적도 십자 보조선 */}
+      <line
+        stroke={theme.celestialAxisColor}
+        strokeDasharray="3 6"
+        strokeOpacity="0.22"
+        strokeWidth="1"
+        x1={centerX - axisExtent}
+        x2={centerX + axisExtent}
+        y1={centerY}
+        y2={centerY}
+      />
+      <line
+        stroke={theme.celestialAxisColor}
+        strokeDasharray="3 6"
+        strokeOpacity="0.22"
+        strokeWidth="1"
+        x1={centerX}
+        x2={centerX}
+        y1={centerY - axisExtent}
+        y2={centerY + axisExtent}
+      />
+
+      {/* 연결된 노드들이 모이는 중앙 천구 코어 원 */}
+      {activeTab !== 'category' && coreRadius > 0 ? (
+        <circle
+          cx={centerX}
+          cy={centerY}
+          fill={theme.celestialCoreFill}
+          fillOpacity="0.26"
+          r={coreRadius}
+          stroke={theme.celestialRingColor}
+          strokeDasharray="6 5"
+          strokeOpacity="0.34"
+          strokeWidth="1.15"
+        />
+      ) : null}
+
+      {/* 고립된 노드들이 둘러싸는 외곽 천구 궤도선 */}
+      {activeTab !== 'category'
+        ? outerRingRadii.map((radius, index) => (
+            <circle
+              key={`orbit-${radius}-${index}`}
+              cx={centerX}
+              cy={centerY}
+              fill="none"
+              r={radius}
+              stroke={theme.celestialRingColor}
+              strokeOpacity="0.24"
+              strokeWidth="1"
+            />
+          ))
+        : null}
+
+      {/* 외곽 천구 테두리 및 12방위 성도 눈금 */}
+      <circle
+        cx={centerX}
+        cy={centerY}
+        fill="none"
+        r={compassRadius}
+        stroke={theme.celestialRingColor}
+        strokeOpacity="0.3"
+        strokeWidth="1"
+      />
+      <circle
+        cx={centerX}
+        cy={centerY}
+        fill="none"
+        r={compassRadius + 6}
+        stroke={theme.celestialRingColor}
+        strokeDasharray="2 5"
+        strokeOpacity="0.2"
+        strokeWidth="0.85"
+      />
+      {ticks.map((tick, index) => (
+        <line
+          key={`tick-${index}`}
+          stroke={theme.celestialRingColor}
+          strokeOpacity={tick.isCardinal ? '0.52' : '0.32'}
+          strokeWidth={tick.isCardinal ? '1.4' : '1'}
+          x1={tick.x1}
+          x2={tick.x2}
+          y1={tick.y1}
+          y2={tick.y2}
+        />
+      ))}
+    </g>
+  );
+}
