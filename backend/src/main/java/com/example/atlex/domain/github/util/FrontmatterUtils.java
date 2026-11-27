@@ -4,6 +4,8 @@ import com.example.atlex.domain.post.entity.Post;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 게시글 메타데이터를 YAML Frontmatter 규격의 마크다운 파일로 생성하고 파싱하는 유틸리티입니다.
@@ -11,6 +13,12 @@ import java.util.List;
 public final class FrontmatterUtils {
 
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private static final Pattern IMG_TAG_PATTERN =
+        Pattern.compile("<img\\b[^>]*>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SRC_ATTR_PATTERN =
+        Pattern.compile("src=[\"']([^\"']*)[\"']", Pattern.CASE_INSENSITIVE);
+    private static final Pattern ALT_ATTR_PATTERN =
+        Pattern.compile("alt=[\"']([^\"']*)[\"']", Pattern.CASE_INSENSITIVE);
 
     private FrontmatterUtils() {}
 
@@ -60,10 +68,46 @@ public final class FrontmatterUtils {
         String content = post.getContent() != null ? post.getContent() : "";
         // CRLF를 LF로 정규화
         content = content.replace("\r\n", "\n");
+        // HTML img 태그를 마크다운 이미지 문법(![alt](src))으로 변환하여 GitHub에서 렌더링되도록 처리
+        content = convertHtmlImagesToMarkdown(content);
         sb.append(content);
         if (!content.endsWith("\n")) {
             sb.append("\n");
         }
+
+        return sb.toString();
+    }
+
+    /**
+     * 본문 내의 HTML img 태그를 GitHub 호환 마크다운 이미지 문법(![alt](src))으로 변환합니다.
+     *
+     * @param content 원본 본문
+     * @return 마크다운 이미지 문법으로 변환된 본문
+     */
+    public static String convertHtmlImagesToMarkdown(String content) {
+        if (content == null || content.isBlank() || !content.contains("<img")) {
+            return content;
+        }
+
+        Matcher matcher = IMG_TAG_PATTERN.matcher(content);
+        StringBuilder sb = new StringBuilder();
+
+        while (matcher.find()) {
+            String tag = matcher.group();
+            Matcher srcMatcher = SRC_ATTR_PATTERN.matcher(tag);
+            Matcher altMatcher = ALT_ATTR_PATTERN.matcher(tag);
+
+            String src = srcMatcher.find() ? srcMatcher.group(1).trim() : "";
+            String alt = altMatcher.find() ? altMatcher.group(1).trim() : "";
+
+            if (!src.isEmpty()) {
+                String replacement = "![" + alt.replace("]", "\\]") + "](" + src + ")";
+                matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+            } else {
+                matcher.appendReplacement(sb, Matcher.quoteReplacement(tag));
+            }
+        }
+        matcher.appendTail(sb);
 
         return sb.toString();
     }
