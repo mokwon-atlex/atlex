@@ -118,6 +118,53 @@ class GraphServiceTest {
         assertEquals(2L, response.getNodes().get(1).getId());
     }
 
+    @Test
+    @DisplayName("전체 그래프 조회 시 양방향 관계(A→B, B→A)를 하나의 간선으로 병합한다")
+    void getGraphMergesBidirectionalEdges() {
+        GraphService service = newService();
+        User user = User.builder().id(1L).userId("author").name("작성자").build();
+        Post first = Post.builder().id(10L).user(user).title("first").content("first").isPublic(true).build();
+        Post second = Post.builder().id(11L).user(user).title("second").content("second").isPublic(true).build();
+        PostRelation forward = PostRelation.of(first, second, 0.82, "spring,jpa");
+        PostRelation reverse = PostRelation.of(second, first, 0.64, "jpa,graph");
+
+        when(postReader.findGraphVisiblePosts(null, null, null)).thenReturn(List.of(first, second));
+        when(postTagService.findTagNamesByPostIds(List.of(10L, 11L))).thenReturn(Map.of());
+        when(postRelationRepository.findVisibleEdges(eq(List.of(10L, 11L)), eq(0.15)))
+            .thenReturn(List.of(forward, reverse));
+
+        PostGraphResponse response = service.getGraph(null, null, null, null);
+
+        assertEquals(1, response.getEdges().size());
+        assertEquals(10L, response.getEdges().get(0).getSourcePostId());
+        assertEquals(11L, response.getEdges().get(0).getTargetPostId());
+        assertEquals(0.82, response.getEdges().get(0).getScore());
+        assertEquals(List.of("spring", "jpa", "graph"), response.getEdges().get(0).getSharedKeywords());
+    }
+
+    @Test
+    @DisplayName("게시글 중심 그래프 조회 시 양방향 관계를 하나의 간선으로 병합한다")
+    void getPostGraphMergesBidirectionalEdges() {
+        GraphService service = newService();
+        User user = User.builder().id(1L).userId("author").name("작성자").build();
+        Post center = Post.builder().id(10L).user(user).title("center").content("center").isPublic(true).build();
+        Post target = Post.builder().id(11L).user(user).title("target").content("target").isPublic(true).build();
+        PostRelation forward = PostRelation.of(center, target, 0.75, "spring");
+        PostRelation reverse = PostRelation.of(target, center, 0.50, "spring,graph");
+
+        when(postReader.findWithUserById(10L)).thenReturn(Optional.of(center));
+        when(postRelationRepository.findVisibleCenteredEdges(eq(10L), eq(0.15), any(Pageable.class)))
+            .thenReturn(List.of(forward, reverse));
+        when(postTagService.findTagNamesByPostIds(List.of(10L, 11L))).thenReturn(Map.of());
+
+        PostGraphResponse response = service.getPostGraph(10L, null, null, null);
+
+        assertEquals(2, response.getNodes().size());
+        assertEquals(1, response.getEdges().size());
+        assertEquals(0.75, response.getEdges().get(0).getScore());
+        assertEquals(List.of("spring", "graph"), response.getEdges().get(0).getSharedKeywords());
+    }
+
     private GraphService newService() {
         return new GraphService(
             postReader,
