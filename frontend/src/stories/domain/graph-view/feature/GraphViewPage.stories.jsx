@@ -138,6 +138,7 @@ export const Default = {
     await expect(graphEdge).not.toBeNull();
     await expect(graphSvg).toHaveAttribute('data-canvas-theme', 'dark');
     await expect(canvas.queryByRole('button', { name: '배치 재정렬' })).toBeNull();
+    await expect(canvas.queryByRole('button', { name: '포스트 목록' })).toBeNull();
 
     // 라이트 캔버스 전환 시 고전 천체도(아틀라스 성도) 가이드 레이어가 렌더링되는지 확인한다.
     await userEvent.click(canvas.getByRole('button', { name: '라이트 캔버스로 전환' }));
@@ -149,13 +150,23 @@ export const Default = {
     await expect(graphSvg).toHaveAttribute('data-canvas-theme', 'dark');
     await expect(canvasElement.querySelector('[data-celestial-guides="true"]')).toBeNull();
 
-    // 필터 사이드바에서 작성자·태그 검색과 섹션이 제거되고 연결 기준·통계만 노출되는지 확인한다.
+    // 좌측 탐색·필터 패널에 검색, 표시 옵션(고립 노드 토글), 연결 기준, 핵심 허브 글과 통계가 구성되는지 확인한다.
     await userEvent.click(canvas.getByRole('button', { name: '필터 패널' }));
-    await expect(canvas.getByText('연결 기준')).toBeVisible();
-    await expect(canvas.getByText('연결 노드')).toBeVisible();
-    await expect(canvas.getByText('고립 노드')).toBeVisible();
-    await expect(canvas.queryByLabelText('작성자 검색')).toBeNull();
-    await expect(canvas.queryByLabelText('태그 검색')).toBeNull();
+    const sidebar = within(canvasElement.querySelector('aside'));
+
+    await expect(sidebar.getByText('표시 옵션')).toBeVisible();
+    await expect(sidebar.getByText('연결 기준')).toBeVisible();
+    await expect(sidebar.getByText('핵심 허브 글')).toBeVisible();
+    await expect(sidebar.getByText('연결 노드')).toBeVisible();
+    await expect(sidebar.getByText('고립 노드')).toBeVisible();
+    await expect(sidebar.queryByLabelText('작성자 검색')).toBeNull();
+    await expect(sidebar.queryByLabelText('태그 검색')).toBeNull();
+
+    // 고립 노드 표시 토글을 끄면 독립 노드가 숨겨지고, 다시 켜면 복원되는지 확인한다.
+    await userEvent.click(sidebar.getByRole('button', { name: '고립 노드 표시' }));
+    await waitFor(() => expect(canvas.queryByRole('button', { name: '독립 노드 게시글 열기' })).toBeNull());
+    await userEvent.click(sidebar.getByRole('button', { name: '고립 노드 표시' }));
+    await waitFor(() => expect(canvas.getByRole('button', { name: '독립 노드 게시글 열기' })).toBeVisible());
     await userEvent.click(canvas.getByRole('button', { name: '필터 패널' }));
 
     // 휠 확대 시 변환 행렬이 갱신되는지 확인한다.
@@ -213,13 +224,14 @@ export const Default = {
     await fireEvent.pointerUp(graphSvg, { bubbles: true, pointerId: 1 });
     await expect(Number(firstCircle.getAttribute('cx'))).toBe(beforeCx);
 
-    // 포스트 목록 패널에서 항목을 선택하면 카메라가 해당 노드로 이동하는지 확인한다.
+    // 좌측 탐색·필터 패널의 노드 빠른 검색에서 항목을 선택하면 카메라가 해당 노드로 이동하는지 확인한다.
     const transformBeforeFocus = graphLayer.getAttribute('transform');
 
-    await userEvent.click(canvas.getByRole('button', { name: '포스트 목록' }));
-    const listPanel = within(canvasElement.querySelector('aside'));
+    await userEvent.click(canvas.getByRole('button', { name: '필터 패널' }));
+    const searchSidebar = within(canvasElement.querySelector('aside'));
 
-    await userEvent.click(listPanel.getByRole('button', { name: /독립 노드/ }));
+    await userEvent.type(searchSidebar.getByLabelText('글 제목 검색'), '독립');
+    await userEvent.click(searchSidebar.getByRole('button', { name: /독립 노드/ }));
     await waitFor(() => expect(graphLayer.getAttribute('transform')).not.toBe(transformBeforeFocus));
   },
 };
