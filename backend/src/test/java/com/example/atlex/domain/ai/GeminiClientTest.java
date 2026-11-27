@@ -61,7 +61,7 @@ class GeminiClientTest {
         ReflectionTestUtils.setField(geminiClient, "apiKey", "test-api-key");
         ReflectionTestUtils.setField(geminiClient, "model", "gemini-3.5-flash-lite");
 
-        assertThatThrownBy(() => geminiClient.generateContent("본문 작성 코파일럿", "테스트 문맥", 200))
+        assertThatThrownBy(() -> geminiClient.generateContent("본문 작성 코파일럿", "테스트 문맥", 200))
             .isInstanceOf(TooManyAiRequestsException.class);
     }
 }

@@ -218,11 +218,8 @@ export default function PostEditorPage({ postId }) {
   }
 
   const currentHtml = richText.getHTML();
-  const hasWrittenContent = Boolean(
-    title.trim() ||
-      !richText.isEditorEmpty ||
-      (richText.editor ? !isPlainEmptyDocument(richText.editor.state.doc) : false),
-  );
+  const hasRichBlock = richText.editor ? !isPlainEmptyDocument(richText.editor.state.doc) : false;
+  const hasWrittenContent = Boolean(title.trim() || !richText.isEditorEmpty || hasRichBlock);
   const hasUnsavedChanges = isEditMode
     ? isInitialized && (title !== savedSnapshot.title || currentHtml !== savedSnapshot.html)
     : hasWrittenContent && (title !== savedSnapshot.title || currentHtml !== savedSnapshot.html);
@@ -314,9 +311,10 @@ export default function PostEditorPage({ postId }) {
     if (draft.tags && tagField.setManualTags) {
       tagField.setManualTags(draft.tags);
     }
+    const fallbackHtml = draft.content ?? '<p></p>';
     setSavedSnapshot({
       title: nextTitle,
-      html: richText.editor ? richText.editor.getHTML() : (draft.content ?? '<p></p>'),
+      html: richText.editor ? richText.editor.getHTML() : fallbackHtml,
     });
     setIsDraftModalOpen(false);
   }
