@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { BookOpen, LayoutGrid, Moon, PanelLeft, Sun } from 'lucide-react';
+import { BookOpen, Moon, PanelLeft, Sun } from 'lucide-react';
 import { memo } from 'react';
 
 import { cn } from '@/lib/utils';
 
-/** 그래프 범위 선택, 캔버스 테마 전환과 보조 패널 열기를 제공하는 상단 도구 모음이다. */
+/** 그래프 범위 선택, 캔버스 테마 전환과 좌측 탐색·필터 패널 열기를 제공하는 상단 도구 모음이다. */
 export const GraphToolbar = memo(function GraphToolbar({
   activeTab,
   canvasTheme = 'dark',
@@ -13,9 +13,7 @@ export const GraphToolbar = memo(function GraphToolbar({
   onToggleCanvasTheme,
   scopedUserId = null,
   setActiveTab,
-  setShowPanel,
   setShowSidebar,
-  showPanel,
   showSidebar,
 }) {
   const tabs = [
@@ -100,20 +98,6 @@ export const GraphToolbar = memo(function GraphToolbar({
           <span className="hidden sm:inline">{isLightCanvas ? '천체도' : '밤하늘'}</span>
         </button>
       ) : null}
-
-      <button
-        type="button"
-        aria-expanded={showPanel}
-        aria-label="포스트 목록"
-        aria-pressed={showPanel}
-        className={cn(
-          'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
-          showPanel ? 'bg-primary/12 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-        )}
-        onClick={() => setShowPanel((value) => !value)}
-      >
-        <LayoutGrid className="size-5" />
-      </button>
     </nav>
   );
 });

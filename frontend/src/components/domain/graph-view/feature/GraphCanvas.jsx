@@ -24,6 +24,7 @@ const COMPASS_TICK_COUNT = 12;
 /** 노드·간선 SVG와 캔버스 확대·이동, 고전 천체도 가이드 레이어를 렌더링한다. */
 export const GraphCanvas = memo(function GraphCanvas({
   activeTab,
+  alwaysShowLabels = false,
   canvasTheme = 'dark',
   edges,
   hoveredId,
@@ -128,8 +129,9 @@ export const GraphCanvas = memo(function GraphCanvas({
     });
   }, [activeTab, canvasTheme, posts]);
 
-  const defaultLabelOpacity =
-    posts.length > 12
+  const defaultLabelOpacity = alwaysShowLabels
+    ? 0.92
+    : posts.length > 12
       ? Math.min(0.76, Math.max(0, (zoom - 1) * 1.2))
       : Math.min(0.9, Math.max(0.64, 0.78 + (zoom - 1) * 0.4));
 
