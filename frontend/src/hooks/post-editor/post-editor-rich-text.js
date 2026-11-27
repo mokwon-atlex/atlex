@@ -102,7 +102,17 @@ export default function usePostEditorRichText({ initialContent = '' } = {}) {
       },
       handlePaste(_view, event) {
         const files = Array.from(event.clipboardData?.files ?? []);
-        const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+        let imageFiles = files.filter((file) => file.type.startsWith('image/'));
+
+        // 일부 OS/브라우저 클립보드 항목(items)에서 getAsFile()로 추출 지원
+        if (imageFiles.length === 0 && event.clipboardData?.items) {
+          const items = Array.from(event.clipboardData.items);
+          imageFiles = items
+            .filter((item) => item.kind === 'file' && item.type.startsWith('image/'))
+            .map((item) => item.getAsFile())
+            .filter(Boolean);
+        }
+
         if (imageFiles.length === 0) {
           return false;
         }

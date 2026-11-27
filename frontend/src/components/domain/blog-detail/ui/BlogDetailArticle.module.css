@@ -112,6 +112,21 @@
   max-width: 100%;
 }
 
+.richText img[data-alignment='left'] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.richText img[data-alignment='right'] {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.richText img[data-alignment='center'] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .richText pre {
   background: #0f172a;
   border-radius: 0.75rem;
