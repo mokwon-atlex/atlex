@@ -102,6 +102,13 @@ function FormatResetTestView() {
         <button
           type="button"
           onMouseDown={(e) => e.preventDefault()}
+          onClick={() => richText.executeToolbarItem('block-type', '인용문')}
+        >
+          인용문 토글
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => richText.executeToolbarItem('font-style', '취소선')}
         >
           취소선 토글
@@ -135,7 +142,13 @@ export const PlaceholderAndFormatReset = {
     await userEvent.keyboard('{Backspace}');
     await waitFor(() => expect(canvas.getByText(postEditorCopy.bodyPlaceholder)).toBeVisible());
 
-    // 2) 취소선을 켜고 입력한 텍스트를 모두 지우면 빈 문단에 취소선이 남지 않아야 한다.
+    // 2) 인용문(블록 서식) 적용 시에도 글자를 입력하기 전 빈 인용문 상태에서 placeholder가 즉시 숨겨져야 한다.
+    await userEvent.click(canvas.getByRole('button', { name: '인용문 토글' }));
+    await waitFor(() => expect(canvas.queryByText(postEditorCopy.bodyPlaceholder)).toBeNull());
+    await userEvent.click(canvas.getByRole('button', { name: '인용문 토글' }));
+    await waitFor(() => expect(canvas.getByText(postEditorCopy.bodyPlaceholder)).toBeVisible());
+
+    // 3) 취소선을 켜고 입력한 텍스트를 모두 지우면 빈 문단에 취소선이 남지 않아야 한다.
     await userEvent.click(canvas.getByRole('button', { name: '취소선 토글' }));
     await waitFor(() => expect(canvas.getByTestId('strike-state')).toHaveTextContent('active'));
     await userEvent.keyboard('ab');
