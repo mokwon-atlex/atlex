@@ -15,7 +15,7 @@
   padding-bottom: 5rem;
   color: var(--foreground);
   font-size: 1rem;
-  line-height: 2.15rem;
+  line-height: 1.75;
   outline: none;
   white-space: pre-wrap;
   cursor: text;
@@ -24,12 +24,22 @@
 @media (min-width: 640px) {
   .post-editor-prose .tiptap {
     font-size: 1.05rem;
-    line-height: 2.25rem;
+    line-height: 1.75;
   }
 }
 
 .post-editor-prose .tiptap > * + * {
-  margin-top: 1.25rem;
+  margin-top: 1rem;
+}
+
+.post-editor-prose .tiptap > p + p {
+  margin-top: 0.5rem;
+}
+
+.post-editor-prose .tiptap > * + h1,
+.post-editor-prose .tiptap > * + h2,
+.post-editor-prose .tiptap > * + h3 {
+  margin-top: 1.5rem;
 }
 
 .post-editor-prose .tiptap h1,

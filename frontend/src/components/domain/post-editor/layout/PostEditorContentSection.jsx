@@ -120,7 +120,7 @@ export default function PostEditorContentSection({
               variant="muted"
               size="default"
               whitespace="preline"
-              className="pointer-events-none absolute inset-x-5 top-0 leading-9 text-muted-foreground/80 sm:inset-x-8 dark:text-zinc-400"
+              className="pointer-events-none absolute inset-x-5 top-0 leading-7 text-muted-foreground/80 sm:inset-x-8 dark:text-zinc-400"
             >
               {bodyPlaceholder}
             </Textfield>

@@ -1,11 +1,21 @@
 .richText {
   color: var(--foreground);
   font-size: 1rem;
-  line-height: 2.25rem;
+  line-height: 1.75;
   overflow-wrap: break-word;
 }
 
 .richText > * + * {
+  margin-top: 1rem;
+}
+
+.richText > p + p {
+  margin-top: 0.5rem;
+}
+
+.richText > * + h1,
+.richText > * + h2,
+.richText > * + h3 {
   margin-top: 1.5rem;
 }
 
