@@ -18,8 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -54,8 +54,9 @@ public class GraphService {
             .toList();
         List<GraphEdgeResponse> edges = visiblePostIds.isEmpty()
             ? List.of()
-            : postRelationRepository.findVisibleEdges(visiblePostIds, effectiveMinScore).stream()
-                .map(GraphEdgeResponse::from)
+            : mergeUndirectedRelations(postRelationRepository.findVisibleEdges(visiblePostIds, effectiveMinScore))
+                .stream()
+                .map(MergedRelation::toResponse)
                 .toList();
 
         return PostGraphResponse.builder()
@@ -157,18 +158,23 @@ public class GraphService {
             throw new PostNotFoundException();
         }
 
+        int effectiveLimit = normalizeLimit(limit);
+        int queryLimit = Math.min(effectiveLimit * 2, MAX_CENTER_LIMIT * 2);
         List<PostRelation> relations = Boolean.TRUE.equals(centerPost.getIsPublic())
             ? postRelationRepository.findVisibleCenteredEdges(
                 postId,
                 minScore == null ? graphProperties.getMinScore() : minScore,
-                PageRequest.of(0, normalizeLimit(limit)))
+                PageRequest.of(0, queryLimit))
             : List.of();
+        List<MergedRelation> mergedRelations = mergeUndirectedRelations(relations).stream()
+            .limit(effectiveLimit)
+            .toList();
 
         Map<Long, Post> postsById = new LinkedHashMap<>();
         postsById.put(centerPost.getId(), centerPost);
-        for (PostRelation relation : relations) {
-            postsById.putIfAbsent(relation.getSourcePost().getId(), relation.getSourcePost());
-            postsById.putIfAbsent(relation.getTargetPost().getId(), relation.getTargetPost());
+        for (MergedRelation relation : mergedRelations) {
+            postsById.putIfAbsent(relation.sourcePost.getId(), relation.sourcePost);
+            postsById.putIfAbsent(relation.targetPost.getId(), relation.targetPost);
         }
 
         List<Long> postIds = postsById.keySet().stream().toList();
@@ -177,8 +183,8 @@ public class GraphService {
         List<GraphNodeResponse> nodes = postsById.values().stream()
             .map(post -> GraphNodeResponse.from(post, tagNamesByPostId.getOrDefault(post.getId(), List.of())))
             .toList();
-        List<GraphEdgeResponse> edges = relations.stream()
-            .map(GraphEdgeResponse::from)
+        List<GraphEdgeResponse> edges = mergedRelations.stream()
+            .map(MergedRelation::toResponse)
             .toList();
 
         return PostGraphResponse.builder()
@@ -201,5 +207,80 @@ public class GraphService {
     private boolean isVisibleTo(Post post, Long viewerId) {
         return Boolean.TRUE.equals(post.getIsPublic())
             || (viewerId != null && Objects.equals(post.getUser().getId(), viewerId));
+    }
+
+    /** 양방향(A→B, B→A)으로 저장된 관계 행을 하나의 무방향 간선으로 병합한다. */
+    private List<MergedRelation> mergeUndirectedRelations(List<PostRelation> relations) {
+        Map<EdgePair, MergedRelation> mergedByPair = new LinkedHashMap<>();
+        for (PostRelation relation : relations) {
+            Long sourceId = relation.getSourcePost().getId();
+            Long targetId = relation.getTargetPost().getId();
+            if (Objects.equals(sourceId, targetId)) {
+                continue;
+            }
+            EdgePair pair = toEdgePair(sourceId, targetId);
+            MergedRelation existing = mergedByPair.get(pair);
+            if (existing == null) {
+                mergedByPair.put(pair, MergedRelation.from(relation));
+            } else {
+                existing.merge(relation);
+            }
+        }
+        return new ArrayList<>(mergedByPair.values());
+    }
+
+    private EdgePair toEdgePair(Long firstId, Long secondId) {
+        return firstId <= secondId ? new EdgePair(firstId, secondId) : new EdgePair(secondId, firstId);
+    }
+
+    private record EdgePair(
+        long lowPostId,
+        long highPostId) {
+    }
+
+    private static final class MergedRelation {
+        private Post sourcePost;
+        private Post targetPost;
+        private double score;
+        private final LinkedHashSet<String> sharedKeywords = new LinkedHashSet<>();
+
+        private static MergedRelation from(PostRelation relation) {
+            MergedRelation merged = new MergedRelation();
+            merged.sourcePost = relation.getSourcePost();
+            merged.targetPost = relation.getTargetPost();
+            merged.score = relation.getScore();
+            merged.addKeywords(relation.getSharedKeywords());
+            return merged;
+        }
+
+        private void merge(PostRelation relation) {
+            if (relation.getScore() > this.score) {
+                this.sourcePost = relation.getSourcePost();
+                this.targetPost = relation.getTargetPost();
+                this.score = relation.getScore();
+            }
+            addKeywords(relation.getSharedKeywords());
+        }
+
+        private void addKeywords(String rawKeywords) {
+            if (rawKeywords == null || rawKeywords.isBlank()) {
+                return;
+            }
+            for (String keyword : rawKeywords.split(",")) {
+                String trimmed = keyword.trim();
+                if (!trimmed.isEmpty()) {
+                    sharedKeywords.add(trimmed);
+                }
+            }
+        }
+
+        private GraphEdgeResponse toResponse() {
+            return GraphEdgeResponse.builder()
+                .sourcePostId(sourcePost.getId())
+                .targetPostId(targetPost.getId())
+                .score(score)
+                .sharedKeywords(new ArrayList<>(sharedKeywords))
+                .build();
+        }
     }
 }
