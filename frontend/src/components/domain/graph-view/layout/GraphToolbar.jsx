@@ -94,10 +94,10 @@ export const GraphToolbar = memo(function GraphToolbar({
           className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border/80 bg-muted/45 px-3 text-xs font-bold text-foreground transition-colors hover:border-foreground/20 hover:bg-muted"
           data-canvas-theme-toggle
           onClick={onToggleCanvasTheme}
-          title={isLightCanvas ? '밤하늘 다크 캔버스로 전환' : '밝은 라이트 캔버스로 전환'}
+          title={isLightCanvas ? '밤하늘 다크 캔버스로 전환' : '고전 천체도 라이트 캔버스로 전환'}
         >
           {isLightCanvas ? <Moon className="size-4 text-primary" /> : <Sun className="size-4 text-amber-400" />}
-          <span className="hidden sm:inline">{isLightCanvas ? '라이트' : '다크'}</span>
+          <span className="hidden sm:inline">{isLightCanvas ? '천체도' : '밤하늘'}</span>
         </button>
       ) : null}
 

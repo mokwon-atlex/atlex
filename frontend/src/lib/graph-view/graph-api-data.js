@@ -1,6 +1,7 @@
-import { SVG_H, SVG_W, graphNodeRadius } from '@/lib/graph-view/graph-view-utils';
+import { SVG_H, SVG_W, clamp, graphNodeRadius } from '@/lib/graph-view/graph-view-utils';
 
 const AVATAR_COLORS = ['#6252D9', '#159D91', '#2F7ED8', '#E25555', '#7B5CE1', '#D97706'];
+const GOLDEN_ANGLE = 2.399963229728653;
 
 /**
  * @typedef {object} GraphNodeResponse
@@ -24,12 +25,11 @@ const AVATAR_COLORS = ['#6252D9', '#159D91', '#2F7ED8', '#E25555', '#7B5CE1', '#
  */
 
 /**
- * 그래프 API 응답을 그래프 화면에서 사용하는 노드, 간선, 필터 데이터로 변환한다.
- * API에 좌표가 없으므로 같은 응답은 항상 같은 위치를 사용하도록 노드 순서에서 좌표를 계산한다.
+ * 그래프 API 응답을 그래프 화면에서 사용하는 노드, 간선, 초기 고정 좌표 데이터로 변환한다.
  *
  * @param {{ nodes?: GraphNodeResponse[], edges?: GraphEdgeResponse[] } | undefined} graph API 응답
  * @param {{ groupByCategory?: boolean }} [options] 배치 옵션
- * @returns {{ authors: object[], edges: object[], posts: object[], tagCounts: [string, number][] }} 화면 데이터
+ * @returns {{ authors: object[], edges: object[], layoutMeta: object, posts: object[], tagCounts: [string, number][] }} 화면 데이터
  */
 export function toGraphViewData(graph, { groupByCategory = false } = {}) {
   const nodes = Array.isArray(graph?.nodes) ? [...graph.nodes].sort(compareNodes) : [];
@@ -78,7 +78,8 @@ export function toGraphViewData(graph, { groupByCategory = false } = {}) {
       },
     ];
   });
-  const positions = createForceDirectedPositions(postDrafts, mappedEdges, groupByCategory);
+
+  const { layoutMeta, positions } = computeGraphLayout(postDrafts, mappedEdges, { groupByCategory });
   const posts = postDrafts.map((post, index) => ({
     ...post,
     radius: 24,
@@ -89,6 +90,7 @@ export function toGraphViewData(graph, { groupByCategory = false } = {}) {
   return {
     authors: [...authorsById.values()].sort((left, right) => left.name.localeCompare(right.name, 'ko')),
     edges: mappedEdges,
+    layoutMeta,
     posts,
     tagCounts: [...tagCounts.entries()].sort(
       (left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'ko'),
@@ -96,9 +98,395 @@ export function toGraphViewData(graph, { groupByCategory = false } = {}) {
   };
 }
 
-/** 노드 ID를 자연수 순서로 정렬해 좌표 배치 결과를 안정화한다. */
-function compareNodes(left, right) {
-  return String(left.id).localeCompare(String(right.id), 'en', { numeric: true });
+/**
+ * 표시 중인 간선 기준으로 '가운데 연결 코어 + 바깥 고립 노드 링' 고정 좌표를 결정론적으로 계산한다.
+ * `groupByCategory`가 켜지면 카테고리별 원형 클러스터를 만들고, 각 클러스터 내부에서도 동일한 규칙을 적용한다.
+ *
+ * @param {object[]} posts 배치할 게시글 목록
+ * @param {object[]} edges 현재 표시되는 간선 목록
+ * @param {{ groupByCategory?: boolean }} [options] 배치 옵션
+ * @returns {{ positions: Array<{ x: number, y: number }>, layoutMeta: { centerX: number, centerY: number, coreRadius: number, outerRingRadii: number[] } }}
+ */
+export function computeGraphLayout(posts, edges, { groupByCategory = false } = {}) {
+  const centerX = SVG_W / 2;
+  const centerY = SVG_H / 2;
+
+  if (posts.length === 0) {
+    return {
+      layoutMeta: { centerX, centerY, coreRadius: 0, outerRingRadii: [] },
+      positions: [],
+    };
+  }
+
+  if (posts.length === 1) {
+    return {
+      layoutMeta: { centerX, centerY, coreRadius: 72, outerRingRadii: [] },
+      positions: [{ x: Math.round(centerX), y: Math.round(centerY) }],
+    };
+  }
+
+  if (groupByCategory) {
+    const categoryGroups = new Map();
+
+    posts.forEach((post, index) => {
+      const key = post.categoryName || '미분류';
+
+      if (!categoryGroups.has(key)) {
+        categoryGroups.set(key, []);
+      }
+
+      categoryGroups.get(key).push({ index, post });
+    });
+
+    if (categoryGroups.size > 1) {
+      return computeCategoryClusterLayout(posts, edges, categoryGroups, centerX, centerY);
+    }
+  }
+
+  const localLayout = computeCoreAndOuterRingLayout(posts, edges, { compact: false });
+
+  return {
+    layoutMeta: {
+      centerX,
+      centerY,
+      coreRadius: localLayout.coreRadius,
+      outerRingRadii: localLayout.outerRingRadii,
+    },
+    positions: localLayout.positions.map((pos) => ({
+      x: Math.round(centerX + pos.x),
+      y: Math.round(centerY + pos.y),
+    })),
+  };
+}
+
+/** 카테고리별 원형 클러스터를 만들고, 각 클러스터 안에서 연결 노드(중심)·고립 노드(외곽)를 배치한다. */
+function computeCategoryClusterLayout(posts, edges, categoryGroups, centerX, centerY) {
+  const sortedCategories = [...categoryGroups.keys()].sort((left, right) => left.localeCompare(right, 'ko'));
+  const clusterLayouts = sortedCategories.map((categoryName) => {
+    const entries = categoryGroups.get(categoryName);
+    const localPosts = entries.map((entry) => entry.post);
+    const localIds = new Set(localPosts.map((post) => post.id));
+    const localEdges = edges.filter((edge) => localIds.has(edge.from) && localIds.has(edge.to));
+    const localResult = computeCoreAndOuterRingLayout(localPosts, localEdges, { compact: true });
+    const clusterRadius = Math.max(66, localResult.boundingRadius + 30);
+
+    return {
+      categoryName,
+      clusterRadius,
+      entries,
+      positions: localResult.positions,
+    };
+  });
+
+  const maxClusterRadius = Math.max(...clusterLayouts.map((cluster) => cluster.clusterRadius));
+  const count = clusterLayouts.length;
+  const minCenterSpacing = maxClusterRadius * 2 + 64;
+  const ringRadius =
+    count === 2
+      ? Math.max(160, minCenterSpacing / 2)
+      : Math.max(175, minCenterSpacing / (2 * Math.sin(Math.PI / count)));
+  const positions = Array.from({ length: posts.length }, () => ({ x: Math.round(centerX), y: Math.round(centerY) }));
+
+  clusterLayouts.forEach((cluster, clusterIndex) => {
+    const angle = (Math.PI * 2 * clusterIndex) / count - Math.PI / 2;
+    const anchorX = centerX + Math.cos(angle) * ringRadius;
+    const anchorY = centerY + Math.sin(angle) * ringRadius;
+
+    cluster.entries.forEach((entry, localIndex) => {
+      positions[entry.index] = {
+        x: Math.round(anchorX + cluster.positions[localIndex].x),
+        y: Math.round(anchorY + cluster.positions[localIndex].y),
+      };
+    });
+  });
+
+  return {
+    layoutMeta: {
+      centerX,
+      centerY,
+      coreRadius: Math.round(ringRadius),
+      outerRingRadii: [Math.round(ringRadius + maxClusterRadius)],
+    },
+    positions,
+  };
+}
+
+/**
+ * 원점(0, 0)을 중심으로 연결된 노드들을 가운데 코어에 배치하고,
+ * 고립된 노드들을 코어 바깥의 동심 링으로 둘러싸는 좌표를 계산한다.
+ */
+function computeCoreAndOuterRingLayout(posts, edges, { compact = false } = {}) {
+  const indexById = new Map(posts.map((post, index) => [post.id, index]));
+  const degrees = Array.from({ length: posts.length }, () => 0);
+  const linkedPairs = new Set();
+  const links = [];
+
+  edges.forEach((edge) => {
+    const sourceIndex = indexById.get(edge.from);
+    const targetIndex = indexById.get(edge.to);
+
+    if (sourceIndex == null || targetIndex == null || sourceIndex === targetIndex) {
+      return;
+    }
+
+    const pairKey = [sourceIndex, targetIndex].sort((left, right) => left - right).join(':');
+
+    if (linkedPairs.has(pairKey)) {
+      return;
+    }
+
+    linkedPairs.add(pairKey);
+    degrees[sourceIndex] += 1;
+    degrees[targetIndex] += 1;
+
+    const score = Number(edge.score);
+    const normalizedScore = Number.isFinite(score) && score > 0 ? clamp(score, 0.1, 1) : 0.35;
+
+    links.push({ score: normalizedScore, sourceIndex, targetIndex });
+  });
+
+  const connectedIndices = [];
+  const isolatedIndices = [];
+
+  posts.forEach((_, index) => {
+    if (degrees[index] > 0) {
+      connectedIndices.push(index);
+    } else {
+      isolatedIndices.push(index);
+    }
+  });
+
+  const positions = Array.from({ length: posts.length }, () => ({ x: 0, y: 0 }));
+  const nodeGap = compact ? 36 : 52;
+  const minArcSpacing = compact ? 68 : 92;
+  const ringStep = compact ? 66 : 84;
+  let coreRadius = 0;
+  let maxExtent = 0;
+
+  // 1. 연결된 노드들은 연결 수가 많은 허브가 중심에 오도록 정적 force-directed로 수렴시킨다.
+  if (connectedIndices.length === 1) {
+    const onlyIndex = connectedIndices[0];
+
+    positions[onlyIndex] = { x: 0, y: 0 };
+    coreRadius = compact ? 42 : 68;
+    maxExtent = graphNodeRadius(degrees[onlyIndex]);
+  } else if (connectedIndices.length > 1) {
+    const sortedConnected = [...connectedIndices].sort(
+      (left, right) => degrees[right] - degrees[left] || left - right,
+    );
+    const localIndexByGlobal = new Map(sortedConnected.map((globalIndex, localIndex) => [globalIndex, localIndex]));
+    const coreNodes = sortedConnected.map((globalIndex, localIndex) => {
+      const angle = localIndex * GOLDEN_ANGLE;
+      const radius = localIndex === 0 ? 0 : (compact ? 24 : 34) * Math.sqrt(localIndex);
+
+      return {
+        degree: degrees[globalIndex],
+        globalIndex,
+        radius: graphNodeRadius(degrees[globalIndex]),
+        vx: 0,
+        vy: 0,
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
+      };
+    });
+    const coreLinks = links
+      .map((link) => ({
+        score: link.score,
+        source: localIndexByGlobal.get(link.sourceIndex),
+        target: localIndexByGlobal.get(link.targetIndex),
+      }))
+      .filter((link) => link.source != null && link.target != null);
+
+    convergeConnectedCore(coreNodes, coreLinks, { compact, nodeGap });
+
+    // 수렴된 연결 코어의 무게 중심을 원점(0, 0)으로 정렬한다.
+    const meanX = coreNodes.reduce((sum, node) => sum + node.x, 0) / coreNodes.length;
+    const meanY = coreNodes.reduce((sum, node) => sum + node.y, 0) / coreNodes.length;
+
+    coreNodes.forEach((node) => {
+      const centeredX = node.x - meanX;
+      const centeredY = node.y - meanY;
+
+      positions[node.globalIndex] = { x: centeredX, y: centeredY };
+      maxExtent = Math.max(maxExtent, Math.hypot(centeredX, centeredY) + node.radius);
+    });
+
+    coreRadius = Math.max(compact ? 52 : 80, Math.round(maxExtent + (compact ? 22 : 30)));
+  }
+
+  // 2. 고립된 노드들은 연결 코어 바깥을 동심 원형 링으로 둘러싸도록 배치한다.
+  const outerRingRadii = [];
+
+  if (isolatedIndices.length > 0) {
+    const rawIsolatedRadius = (isolatedIndices.length * minArcSpacing) / (Math.PI * 2);
+    const allIsolatedRadius = clamp(rawIsolatedRadius, compact ? 56 : 112, compact ? 120 : 210);
+    let currentRadius =
+      connectedIndices.length > 0
+        ? Math.max(coreRadius + (compact ? 48 : 74), compact ? 88 : 178)
+        : isolatedIndices.length === 1
+          ? 0
+          : allIsolatedRadius;
+    let cursor = 0;
+    let ringIndex = 0;
+
+    while (cursor < isolatedIndices.length) {
+      const remaining = isolatedIndices.length - cursor;
+      const ringCapacity = Math.max(6, Math.floor((2 * Math.PI * currentRadius) / minArcSpacing));
+      const capacity = currentRadius <= 0 ? 1 : ringCapacity;
+      const countInRing = Math.min(remaining, capacity);
+      const angleOffset = -Math.PI / 2 + (ringIndex * Math.PI) / Math.max(countInRing, 1);
+
+      if (currentRadius > 0) {
+        outerRingRadii.push(Math.round(currentRadius));
+      }
+
+      for (let slot = 0; slot < countInRing; slot += 1) {
+        const globalIndex = isolatedIndices[cursor + slot];
+        const angle = angleOffset + (slot / countInRing) * Math.PI * 2;
+        const x = Math.cos(angle) * currentRadius;
+        const y = Math.sin(angle) * currentRadius;
+
+        positions[globalIndex] = { x, y };
+        maxExtent = Math.max(maxExtent, Math.hypot(x, y) + graphNodeRadius(0));
+      }
+
+      cursor += countInRing;
+      ringIndex += 1;
+      currentRadius = currentRadius <= 0 ? ringStep : currentRadius + ringStep;
+    }
+  }
+
+  return {
+    boundingRadius: Math.round(maxExtent),
+    coreRadius,
+    outerRingRadii,
+    positions,
+  };
+}
+
+/** 연결된 노드 그룹에 반발력·간선 인력·허브 중심력을 적용해 겹침 없이 수렴시킨다. */
+function convergeConnectedCore(nodes, links, { compact, nodeGap }) {
+  const count = nodes.length;
+  const steps = count > 40 ? 70 : 120;
+  const linkDistance = compact
+    ? Math.max(76, Math.min(115, 130 - Math.sqrt(count) * 8))
+    : Math.max(108, Math.min(168, 195 - Math.sqrt(count) * 10));
+  const repulsionStrength = (compact ? 11000 : 19000) / Math.sqrt(count);
+  const cutoffDistSq = 360 * 360;
+
+  for (let step = 0; step < steps; step += 1) {
+    const forceX = Array.from({ length: count }, () => 0);
+    const forceY = Array.from({ length: count }, () => 0);
+
+    for (let i = 0; i < count; i += 1) {
+      const source = nodes[i];
+
+      for (let j = i + 1; j < count; j += 1) {
+        const target = nodes[j];
+        let dx = source.x - target.x;
+        let dy = source.y - target.y;
+        let distSq = dx * dx + dy * dy;
+
+        if (distSq > cutoffDistSq) {
+          continue;
+        }
+
+        if (distSq < 1) {
+          const angle = (i + 1) * (j + 1);
+
+          dx = Math.cos(angle);
+          dy = Math.sin(angle);
+          distSq = 1;
+        }
+
+        const dist = Math.sqrt(distSq);
+        const unitX = dx / dist;
+        const unitY = dy / dist;
+        const repulsion = repulsionStrength / distSq;
+        const minDist = source.radius + target.radius + nodeGap;
+        const overlap = Math.max(0, minDist - dist);
+        const collisionForce = (overlap / minDist) * 7.5;
+        const total = repulsion + collisionForce;
+
+        forceX[i] += unitX * total;
+        forceY[i] += unitY * total;
+        forceX[j] -= unitX * total;
+        forceY[j] -= unitY * total;
+      }
+    }
+
+    links.forEach(({ score, source: i, target: j }) => {
+      const source = nodes[i];
+      const target = nodes[j];
+      const dx = target.x - source.x;
+      const dy = target.y - source.y;
+      const dist = Math.max(Math.hypot(dx, dy), 1);
+      const targetDist = linkDistance * (1.12 - score * 0.24);
+      const strength = (0.048 + score * 0.025) / Math.max(1, Math.sqrt(source.degree * target.degree));
+      const attraction = (dist - targetDist) * strength;
+      const unitX = dx / dist;
+      const unitY = dy / dist;
+
+      forceX[i] += unitX * attraction;
+      forceY[i] += unitY * attraction;
+      forceX[j] -= unitX * attraction;
+      forceY[j] -= unitY * attraction;
+    });
+
+    nodes.forEach((node, index) => {
+      // 연결 수가 많은 허브일수록 코어 중앙에 자연스럽게 자리 잡도록 중심 인력을 부여한다.
+      const centerGravity = 0.012 + Math.min(node.degree, 6) * 0.003;
+
+      forceX[index] -= node.x * centerGravity;
+      forceY[index] -= node.y * centerGravity;
+      node.vx = clamp((node.vx + forceX[index]) * 0.76, -14, 14);
+      node.vy = clamp((node.vy + forceY[index]) * 0.76, -14, 14);
+      node.x += node.vx;
+      node.y += node.vy;
+    });
+
+    resolveCoreCollisions(nodes, nodeGap);
+  }
+}
+
+/** 코어 내부의 겹친 노드 쌍을 최소 간격 이상으로 밀어낸다. */
+function resolveCoreCollisions(nodes, gap) {
+  for (let i = 0; i < nodes.length; i += 1) {
+    for (let j = i + 1; j < nodes.length; j += 1) {
+      const source = nodes[i];
+      const target = nodes[j];
+      const minDist = source.radius + target.radius + gap;
+      let dx = source.x - target.x;
+      let dy = source.y - target.y;
+
+      if (Math.abs(dx) >= minDist || Math.abs(dy) >= minDist) {
+        continue;
+      }
+
+      let dist = Math.hypot(dx, dy);
+
+      if (dist >= minDist) {
+        continue;
+      }
+
+      if (dist < 1) {
+        const angle = (i + 1) * (j + 1);
+
+        dx = Math.cos(angle);
+        dy = Math.sin(angle);
+        dist = 1;
+      }
+
+      const shift = (minDist - dist) / 2;
+      const unitX = dx / dist;
+      const unitY = dy / dist;
+
+      source.x += unitX * shift;
+      source.y += unitY * shift;
+      target.x -= unitX * shift;
+      target.y -= unitY * shift;
+    }
+  }
 }
 
 /** 카테고리별 클러스터 중심 좌표를 계산한다. */
@@ -120,6 +508,7 @@ export function createCategoryAnchors(posts) {
 
   categories.forEach((category, index) => {
     const angle = (Math.PI * 2 * index) / categories.length - Math.PI / 2;
+
     anchors.set(category, {
       x: SVG_W / 2 + Math.cos(angle) * rx,
       y: SVG_H / 2 + Math.sin(angle) * ry,
@@ -129,225 +518,12 @@ export function createCategoryAnchors(posts) {
   return anchors;
 }
 
-/** 관계 간선의 인력, 카테고리 클러스터 인력과 노드 간 반발력을 계산해 고정된 그래프 배치를 만든다. */
-function createForceDirectedPositions(posts, edges, groupByCategory = false) {
-  const seedPositions = createNodePositions(posts.length);
-
-  if (posts.length <= 1) {
-    return seedPositions;
-  }
-
-  const categoryAnchors = groupByCategory ? createCategoryAnchors(posts) : new Map();
-  const useCategoryClustering = groupByCategory && categoryAnchors.size > 1;
-  const indexById = new Map(posts.map((post, index) => [post.id, index]));
-  const layoutNodes = posts.map((post, index) => {
-    const categoryKey = post.categoryName || '미분류';
-    const anchor = categoryAnchors.get(categoryKey) ?? { x: SVG_W / 2, y: SVG_H / 2 };
-    const localAngle = (index * 2.39996) % (Math.PI * 2);
-    const localRadius = useCategoryClustering ? 40 + (index % 4) * 22 : 0;
-
-    return {
-      id: post.id,
-      anchor,
-      velocityX: 0,
-      velocityY: 0,
-      x: useCategoryClustering ? anchor.x + Math.cos(localAngle) * localRadius : seedPositions[index].x,
-      y: useCategoryClustering ? anchor.y + Math.sin(localAngle) * localRadius : seedPositions[index].y,
-    };
-  });
-  const degrees = Array.from({ length: posts.length }, () => 0);
-  const linkedPairs = new Set();
-  const links = edges.flatMap((edge) => {
-    const sourceIndex = indexById.get(edge.from);
-    const targetIndex = indexById.get(edge.to);
-
-    if (sourceIndex == null || targetIndex == null || sourceIndex === targetIndex) {
-      return [];
-    }
-
-    const pairKey = [sourceIndex, targetIndex].sort((left, right) => left - right).join(':');
-
-    if (linkedPairs.has(pairKey)) {
-      return [];
-    }
-
-    linkedPairs.add(pairKey);
-    degrees[sourceIndex] += 1;
-    degrees[targetIndex] += 1;
-    return [{ sourceIndex, targetIndex }];
-  });
-  const minX = 54;
-  const maxX = SVG_W - minX;
-  const minY = 54;
-  const maxY = SVG_H - minY;
-  const nodeRadii = degrees.map((degree) => graphNodeRadius(degree));
-  const nodeGap = Math.max(32, 64 - Math.sqrt(posts.length) * 2);
-  const linkDistance = Math.max(130, Math.min(210, 270 - Math.sqrt(posts.length) * 17));
-  const simulationSteps = Math.max(90, Math.min(220, 250 - posts.length));
-  const repulsionStrength = 25000 / Math.sqrt(posts.length);
-
-  for (let step = 0; step < simulationSteps; step += 1) {
-    const forceX = Array.from({ length: posts.length }, () => 0);
-    const forceY = Array.from({ length: posts.length }, () => 0);
-
-    for (let sourceIndex = 0; sourceIndex < layoutNodes.length; sourceIndex += 1) {
-      for (let targetIndex = sourceIndex + 1; targetIndex < layoutNodes.length; targetIndex += 1) {
-        const source = layoutNodes[sourceIndex];
-        const target = layoutNodes[targetIndex];
-        let dx = source.x - target.x;
-        let dy = source.y - target.y;
-        let distanceSquared = dx * dx + dy * dy;
-
-        if (distanceSquared < 1) {
-          const angle = (sourceIndex + 1) * (targetIndex + 1);
-
-          dx = Math.cos(angle);
-          dy = Math.sin(angle);
-          distanceSquared = 1;
-        }
-
-        const distance = Math.sqrt(distanceSquared);
-        const repulsion = repulsionStrength / distanceSquared;
-        const unitX = dx / distance;
-        const unitY = dy / distance;
-        const minimumDistance = nodeRadii[sourceIndex] + nodeRadii[targetIndex] + nodeGap;
-        const collision = Math.max(0, minimumDistance - distance);
-        const collisionForce = (collision / minimumDistance) * 7;
-
-        forceX[sourceIndex] += unitX * (repulsion + collisionForce);
-        forceY[sourceIndex] += unitY * (repulsion + collisionForce);
-        forceX[targetIndex] -= unitX * (repulsion + collisionForce);
-        forceY[targetIndex] -= unitY * (repulsion + collisionForce);
-      }
-    }
-
-    links.forEach(({ sourceIndex, targetIndex }) => {
-      const source = layoutNodes[sourceIndex];
-      const target = layoutNodes[targetIndex];
-      const dx = target.x - source.x;
-      const dy = target.y - source.y;
-      const distance = Math.max(Math.hypot(dx, dy), 1);
-      const linkStrength = 0.04 / Math.max(1, Math.sqrt(degrees[sourceIndex] * degrees[targetIndex]));
-      const attraction = (distance - linkDistance) * linkStrength;
-      const unitX = dx / distance;
-      const unitY = dy / distance;
-
-      forceX[sourceIndex] += unitX * attraction;
-      forceY[sourceIndex] += unitY * attraction;
-      forceX[targetIndex] -= unitX * attraction;
-      forceY[targetIndex] -= unitY * attraction;
-    });
-
-    const clusterStrength = useCategoryClustering ? 0.014 : 0.002;
-    layoutNodes.forEach((node, index) => {
-      forceX[index] += (node.anchor.x - node.x) * clusterStrength;
-      forceY[index] += (node.anchor.y - node.y) * clusterStrength;
-      node.velocityX = Math.max(-14, Math.min(14, (node.velocityX + forceX[index]) * 0.78));
-      node.velocityY = Math.max(-14, Math.min(14, (node.velocityY + forceY[index]) * 0.78));
-      node.x = Math.max(minX, Math.min(maxX, node.x + node.velocityX));
-      node.y = Math.max(minY, Math.min(maxY, node.y + node.velocityY));
-    });
-    resolveNodeCollisions(layoutNodes, nodeRadii, nodeGap, minX, maxX, minY, maxY);
-  }
-
-  return layoutNodes.map((node) => ({ x: Math.round(node.x), y: Math.round(node.y) }));
+/** 노드 ID를 자연수 순서로 정렬해 좌표 배치 결과를 안정화한다. */
+function compareNodes(left, right) {
+  return String(left.id).localeCompare(String(right.id), 'en', { numeric: true });
 }
 
-/** 노드 크기와 여백을 기준으로 겹친 노드를 다시 밀어내 제목과 클릭 영역의 간섭을 줄인다. */
-function resolveNodeCollisions(nodes, radii, gap, minX, maxX, minY, maxY) {
-  for (let sourceIndex = 0; sourceIndex < nodes.length; sourceIndex += 1) {
-    for (let targetIndex = sourceIndex + 1; targetIndex < nodes.length; targetIndex += 1) {
-      const source = nodes[sourceIndex];
-      const target = nodes[targetIndex];
-      let dx = source.x - target.x;
-      let dy = source.y - target.y;
-      let distance = Math.hypot(dx, dy);
-      const minimumDistance = radii[sourceIndex] + radii[targetIndex] + gap;
-
-      if (distance >= minimumDistance) {
-        continue;
-      }
-
-      if (distance < 1) {
-        const angle = (sourceIndex + 1) * (targetIndex + 1);
-
-        dx = Math.cos(angle);
-        dy = Math.sin(angle);
-        distance = 1;
-      }
-
-      const shift = (minimumDistance - distance) / 2;
-      const unitX = dx / distance;
-      const unitY = dy / distance;
-
-      source.x = Math.max(minX, Math.min(maxX, source.x + unitX * shift));
-      source.y = Math.max(minY, Math.min(maxY, source.y + unitY * shift));
-      target.x = Math.max(minX, Math.min(maxX, target.x - unitX * shift));
-      target.y = Math.max(minY, Math.min(maxY, target.y - unitY * shift));
-    }
-  }
-}
-
-/** 제목 영역까지 고려해 노드 간 간격을 확보하는 동심원 좌표를 만든다. */
-function createNodePositions(count) {
-  if (count === 0) {
-    return [];
-  }
-
-  if (count === 1) {
-    return [{ x: SVG_W / 2, y: SVG_H / 2 }];
-  }
-
-  const ringCounts = createRingCounts(count);
-  const radii = createRingRadii(ringCounts.length);
-
-  return ringCounts.flatMap((nodesInRing, ringIndex) => {
-    const angleOffset = -Math.PI / 2 + (ringIndex * Math.PI) / nodesInRing;
-
-    return Array.from({ length: nodesInRing }, (_, positionInRing) => {
-      const angle = angleOffset + (positionInRing / nodesInRing) * Math.PI * 2;
-      const radius = radii[ringIndex];
-
-      return {
-        x: SVG_W / 2 + Math.cos(angle) * radius,
-        y: SVG_H / 2 + Math.sin(angle) * radius,
-      };
-    });
-  });
-}
-
-/** 전체 노드 수에 맞춰 원별 노드 수를 균형 있게 나눈다. */
-function createRingCounts(count) {
-  if (count <= 9) {
-    return [count];
-  }
-
-  if (count <= 18) {
-    const innerCount = Math.round(count * 0.4);
-
-    return [innerCount, count - innerCount];
-  }
-
-  const innerCount = 5;
-  const middleCount = Math.round((count - innerCount) * 0.4);
-
-  return [innerCount, middleCount, count - innerCount - middleCount];
-}
-
-/** 제목이 화면 밖으로 나가지 않는 범위에서 원마다 충분한 반지름을 배정한다. */
-function createRingRadii(ringCount) {
-  if (ringCount === 1) {
-    return [210];
-  }
-
-  if (ringCount === 2) {
-    return [115, 225];
-  }
-
-  return [95, 160, 225];
-}
-
-/** 같은 작성자는 하나의 필터 항목을 공유하도록 작성자 정보를 재사용한다. */
+/** 같은 작성자는 하나의 메타 정보를 공유하도록 작성자 객체를 재사용한다. */
 function getOrCreateAuthor(node, authorsById) {
   const id = String(node.authorUserId ?? node.authorId ?? 'unknown');
   const existing = authorsById.get(id);

@@ -2,7 +2,7 @@ import { memo } from 'react';
 
 import { getGraphTheme } from '@/lib/graph-view/graph-view-utils';
 
-/** 간선 두께 의미와 노드 조작 방법을 안내하는 범례 패널이다. */
+/** 간선 두께 의미와 그래프 탐색 방법을 안내하는 범례 패널이다. */
 export const GraphLegend = memo(function GraphLegend({ canvasTheme = 'dark', offsetLeftClass = 'left-4' }) {
   const theme = getGraphTheme(canvasTheme);
   const items = [
@@ -30,8 +30,8 @@ export const GraphLegend = memo(function GraphLegend({ canvasTheme = 'dark', off
           <span className="text-xs font-bold text-foreground">{item.label}</span>
         </div>
       ))}
-      <p className="pt-1 text-[11px] font-bold text-muted-foreground">호버: 연결·키워드·미리보기</p>
-      <p className="text-[11px] font-bold text-muted-foreground">드래그: 노드 재배치 / 클릭: 게시글 열기</p>
+      <p className="pt-1 text-[11px] font-bold text-muted-foreground">호버: 연결·미리보기 / 클릭: 게시글 열기</p>
+      <p className="text-[11px] font-bold text-muted-foreground">배경 드래그: 이동 / 휠: 확대·축소</p>
     </div>
   );
 });
