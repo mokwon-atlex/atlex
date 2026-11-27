@@ -8,7 +8,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GraphCanvas } from '@/components/domain/graph-view/feature/GraphCanvas';
 import { FilterSidebar } from '@/components/domain/graph-view/layout/FilterSidebar';
 import { GraphToolbar } from '@/components/domain/graph-view/layout/GraphToolbar';
-import { PostListPanel } from '@/components/domain/graph-view/layout/PostListPanel';
 import { CanvasButton } from '@/components/domain/graph-view/ui/CanvasButton';
 import { GraphLegend } from '@/components/domain/graph-view/ui/GraphLegend';
 import { NodePopup } from '@/components/domain/graph-view/ui/NodePopup';
@@ -27,7 +26,7 @@ import { useAuthStore } from '@/store/authStore';
 
 const CAMERA_ANIMATION_MS = 320;
 const LEFT_SIDEBAR_WIDTH = 288;
-const RIGHT_PANEL_WIDTH = 352;
+const MAX_HUB_POSTS = 5;
 
 /** 사용자가 움직임 최소화 설정을 켰는지 확인한다. */
 function prefersReducedMotion() {
@@ -80,13 +79,14 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
   const [activeTab, setActiveTab] = useState('all');
   const [canvasTheme, setCanvasTheme] = useState('dark');
   const [showSidebar, setShowSidebar] = useState(false);
-  const [showPanel, setShowPanel] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
   const [hoveredId, setHoveredId] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [isCanvasInteracting, setIsCanvasInteracting] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [showIsolatedNodes, setShowIsolatedNodes] = useState(true);
+  const [alwaysShowLabels, setAlwaysShowLabels] = useState(false);
   const [showTagEdges, setShowTagEdges] = useState(true);
   const [showExplicitEdges, setShowExplicitEdges] = useState(false);
   const [minSharedTags, setMinSharedTags] = useState(1);
@@ -157,25 +157,6 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
     [edges, minSharedTags, scopedPostIds, showExplicitEdges, showTagEdges],
   );
 
-  // 현재 표시 중인 간선과 탭 기준에 맞춰 연결 노드(가운데) + 고립 노드(바깥 링) 좌표를 결정론적으로 계산한다.
-  const { layoutMeta, positionedPosts } = useMemo(() => {
-    const computed = computeGraphLayout(scopedPosts, displayedEdges, {
-      groupByCategory: activeTab === 'category',
-    });
-
-    return {
-      layoutMeta: computed.layoutMeta,
-      positionedPosts: scopedPosts.map((post, index) => ({
-        ...post,
-        x: computed.positions[index].x,
-        y: computed.positions[index].y,
-      })),
-    };
-  }, [activeTab, displayedEdges, scopedPosts]);
-
-  const positionedPostsRef = useRef(positionedPosts);
-  positionedPostsRef.current = positionedPosts;
-
   const displayedConnectionCountById = useMemo(() => {
     const counts = new Map();
 
@@ -186,6 +167,43 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
 
     return counts;
   }, [displayedEdges]);
+
+  const visiblePosts = useMemo(
+    () =>
+      showIsolatedNodes
+        ? scopedPosts
+        : scopedPosts.filter((post) => (displayedConnectionCountById.get(post.id) ?? 0) > 0),
+    [displayedConnectionCountById, scopedPosts, showIsolatedNodes],
+  );
+
+  // 현재 표시 중인 노드·간선과 탭 기준에 맞춰 연결 노드(가운데) + 고립 노드(바깥 링) 좌표를 결정론적으로 계산한다.
+  const { layoutMeta, positionedPosts } = useMemo(() => {
+    const computed = computeGraphLayout(visiblePosts, displayedEdges, {
+      groupByCategory: activeTab === 'category',
+    });
+
+    return {
+      layoutMeta: computed.layoutMeta,
+      positionedPosts: visiblePosts.map((post, index) => ({
+        ...post,
+        x: computed.positions[index].x,
+        y: computed.positions[index].y,
+      })),
+    };
+  }, [activeTab, displayedEdges, visiblePosts]);
+
+  const positionedPostsRef = useRef(positionedPosts);
+  positionedPostsRef.current = positionedPosts;
+
+  const topHubPosts = useMemo(
+    () =>
+      scopedPosts
+        .map((post) => ({ degree: displayedConnectionCountById.get(post.id) ?? 0, post }))
+        .filter((item) => item.degree > 0)
+        .sort((left, right) => right.degree - left.degree || left.post.title.localeCompare(right.post.title, 'ko'))
+        .slice(0, MAX_HUB_POSTS),
+    [displayedConnectionCountById, scopedPosts],
+  );
 
   const filterStats = useMemo(() => {
     let connectedNodes = 0;
@@ -200,9 +218,9 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
       connectedNodes,
       edges: displayedEdges.length,
       isolatedNodes: Math.max(0, scopedPosts.length - connectedNodes),
-      posts: scopedPosts.length,
+      posts: visiblePosts.length,
     };
-  }, [displayedConnectionCountById, displayedEdges.length, scopedPosts]);
+  }, [displayedConnectionCountById, displayedEdges.length, scopedPosts, visiblePosts.length]);
 
   const popupPost = useMemo(
     () => positionedPosts.find((post) => post.id === (hoveredId ?? selectedId)) ?? null,
@@ -289,7 +307,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
       const targetScreenRadius = nodeRadius * zoom * scaleFactor;
       const insets = {
         left: showSidebar ? LEFT_SIDEBAR_WIDTH : 0,
-        right: showPanel ? RIGHT_PANEL_WIDTH : 0,
+        right: 0,
       };
 
       setPopupPos(
@@ -321,7 +339,6 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
     pan,
     popupPost,
     positionedPosts,
-    showPanel,
     showSidebar,
     zoom,
   ]);
@@ -387,24 +404,35 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
     [cancelCameraAnimation],
   );
 
-  /** 연결 기준 필터를 기본값으로 되돌린다. */
+  /** 표시 옵션과 연결 기준 필터를 기본값으로 되돌린다. */
   const resetFilters = useCallback(() => {
+    setShowIsolatedNodes(true);
+    setAlwaysShowLabels(false);
     setShowTagEdges(true);
     setShowExplicitEdges(false);
     setMinSharedTags(1);
   }, []);
 
-  /** 노드를 선택하고 해당 노드 위치로 카메라를 포커스한다. */
+  /** 검색 결과·허브 목록에서 노드를 선택하고 해당 위치로 카메라를 포커스한다. */
   const handleSelect = useCallback(
     (id) => {
       setSelectedId(id);
 
-      if (id) {
-        setShowPanel(true);
-        focusNodeInViewport(id);
+      if (!id) {
+        return;
       }
+
+      const isHiddenIsolated = !showIsolatedNodes && (displayedConnectionCountById.get(id) ?? 0) === 0;
+
+      if (isHiddenIsolated) {
+        setShowIsolatedNodes(true);
+        requestAnimationFrame(() => focusNodeInViewport(id));
+        return;
+      }
+
+      focusNodeInViewport(id);
     },
-    [focusNodeInViewport],
+    [displayedConnectionCountById, focusNodeInViewport, showIsolatedNodes],
   );
 
   /** 클릭한 노드의 게시글 상세 화면으로 이동한다. */
@@ -425,7 +453,6 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
     [canvasTheme, pan, zoom],
   );
   const leftControlsOffset = showSidebar ? 'left-[19rem]' : 'left-4';
-  const rightControlsOffset = showPanel ? 'right-[23rem]' : 'right-4';
 
   return (
     <div className="flex h-[calc(100vh-73px)] min-h-[640px] flex-col overflow-hidden border-t border-border bg-background text-foreground">
@@ -437,9 +464,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
         onToggleCanvasTheme={handleToggleCanvasTheme}
         scopedUserId={userId ?? null}
         setActiveTab={setActiveTab}
-        setShowPanel={setShowPanel}
         setShowSidebar={setShowSidebar}
-        showPanel={showPanel}
         showSidebar={showSidebar}
       />
 
@@ -457,6 +482,7 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
           >
             <GraphCanvas
               activeTab={activeTab}
+              alwaysShowLabels={alwaysShowLabels}
               canvasTheme={canvasTheme}
               edges={displayedEdges}
               hoveredId={hoveredId}
@@ -474,11 +500,17 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
               zoom={zoom}
             />
 
+            {positionedPosts.length === 0 ? (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
+                <div className="rounded-xl border border-border/80 bg-card/90 px-4 py-3 text-center text-xs font-bold text-muted-foreground shadow-sm backdrop-blur-md">
+                  표시할 노드가 없습니다. 필터에서 고립 노드 표시를 켜거나 연결 조건을 완화해 보세요.
+                </div>
+              </div>
+            ) : null}
+
             {showLegend ? <GraphLegend canvasTheme={canvasTheme} offsetLeftClass={leftControlsOffset} /> : null}
 
-            <div
-              className={`absolute ${rightControlsOffset} bottom-6 z-20 flex flex-col gap-1.5 transition-[right] duration-200`}
-            >
+            <div className="absolute right-4 bottom-6 z-20 flex flex-col gap-1.5">
               <CanvasButton
                 label="확대"
                 onClick={() => {
@@ -526,19 +558,26 @@ export default function GraphViewPage({ categoryId, loadGraph, minScore, postId,
 
           {showSidebar ? (
             <FilterSidebar
+              alwaysShowLabels={alwaysShowLabels}
+              connectionCountById={displayedConnectionCountById}
               hasExplicitEdges={hasExplicitEdges}
               minSharedTags={minSharedTags}
+              onSelectPost={handleSelect}
+              posts={scopedPosts}
               resetFilters={resetFilters}
+              selectedId={selectedId}
+              setAlwaysShowLabels={setAlwaysShowLabels}
               setMinSharedTags={setMinSharedTags}
               setShowExplicitEdges={setShowExplicitEdges}
+              setShowIsolatedNodes={setShowIsolatedNodes}
               setShowTagEdges={setShowTagEdges}
               showExplicitEdges={showExplicitEdges}
+              showIsolatedNodes={showIsolatedNodes}
               showTagEdges={showTagEdges}
               stats={filterStats}
+              topHubPosts={topHubPosts}
             />
           ) : null}
-
-          {showPanel ? <PostListPanel onSelect={handleSelect} posts={scopedPosts} selectedId={selectedId} /> : null}
         </div>
       )}
     </div>
