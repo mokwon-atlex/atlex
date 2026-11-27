@@ -75,9 +75,15 @@ export const EditModeUpdatesExistingPost = {
     await waitFor(() => expect(titleInput).toHaveValue(existingPost.title));
     await expect(getSpy).toHaveBeenCalledWith(`/posts/${EXISTING_POST_ID}`);
 
-    // 제목을 수정한 뒤 제출한다.
+    // 제목을 수정한 뒤 로고를 클릭하면 임시 저장 여부 확인 모달이 열려야 한다.
     await userEvent.clear(titleInput);
     await userEvent.type(titleInput, '수정된 게시글 제목');
+
+    await userEvent.click(canvas.getByRole('button', { name: postEditorCopy.logoLabel }));
+    const body = within(document.body);
+    await expect(await body.findByText('작성 중인 글이 있습니다')).toBeVisible();
+    await expect(body.getByRole('button', { name: '임시 저장 후 나가기' })).toBeVisible();
+    await userEvent.click(body.getByRole('button', { name: '계속 작성' }));
 
     // 제목 섹션에는 태그 입력창이 노출되지 않고, 발행 설정 모달 안에서만 노출되어야 한다.
     await expect(canvas.queryByLabelText('태그')).toBeNull();
@@ -86,7 +92,6 @@ export const EditModeUpdatesExistingPost = {
     await userEvent.click(publishButton);
 
     // 발행 설정 모달이 열리면 태그 입력창을 확인한 뒤 '수정 저장'을 눌러 최종 수정 요청을 보낸다.
-    const body = within(document.body);
     await expect(await body.findByLabelText('태그')).toBeVisible();
     const confirmButton = await body.findByRole('button', { name: '수정 저장' });
     await userEvent.click(confirmButton);
