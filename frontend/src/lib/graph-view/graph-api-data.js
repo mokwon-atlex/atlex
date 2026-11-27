@@ -271,9 +271,7 @@ function computeCoreAndOuterRingLayout(posts, edges, { compact = false } = {}) {
     coreRadius = compact ? 42 : 68;
     maxExtent = graphNodeRadius(degrees[onlyIndex]);
   } else if (connectedIndices.length > 1) {
-    const sortedConnected = [...connectedIndices].sort(
-      (left, right) => degrees[right] - degrees[left] || left - right,
-    );
+    const sortedConnected = [...connectedIndices].sort((left, right) => degrees[right] - degrees[left] || left - right);
     const localIndexByGlobal = new Map(sortedConnected.map((globalIndex, localIndex) => [globalIndex, localIndex]));
     const coreNodes = sortedConnected.map((globalIndex, localIndex) => {
       const angle = localIndex * GOLDEN_ANGLE;
@@ -320,12 +318,9 @@ function computeCoreAndOuterRingLayout(posts, edges, { compact = false } = {}) {
   if (isolatedIndices.length > 0) {
     const rawIsolatedRadius = (isolatedIndices.length * minArcSpacing) / (Math.PI * 2);
     const allIsolatedRadius = clamp(rawIsolatedRadius, compact ? 56 : 112, compact ? 120 : 210);
-    let currentRadius =
-      connectedIndices.length > 0
-        ? Math.max(coreRadius + (compact ? 48 : 74), compact ? 88 : 178)
-        : isolatedIndices.length === 1
-          ? 0
-          : allIsolatedRadius;
+    const connectedOuterRadius = Math.max(coreRadius + (compact ? 48 : 74), compact ? 88 : 178);
+    const fallbackIsolatedRadius = isolatedIndices.length === 1 ? 0 : allIsolatedRadius;
+    let currentRadius = connectedIndices.length > 0 ? connectedOuterRadius : fallbackIsolatedRadius;
     let cursor = 0;
     let ringIndex = 0;
 
