@@ -3,6 +3,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import PostEditorContentSection from '@/components/domain/post-editor/layout/PostEditorContentSection';
 import { postEditorCopy } from '@/data/post-editor/post-editor-copy';
+import { getAiTokenExhaustedMessage, isAiTokenExhaustedError } from '@/hooks/post-editor/post-editor-ai-suggestion';
 import usePostEditorRichText from '@/hooks/post-editor/post-editor-rich-text';
 import { editorExtensions } from '@/lib/post-editor/rich-text-extensions';
 import { matchSlashCommandTrigger, shouldShowSlashCommand } from '@/lib/post-editor/rich-text-slash-command-extension';
@@ -52,6 +53,9 @@ async function verifySingleExtensionRegistration() {
   await expect(isApplePlatform('Win32')).toBe(false);
   await expect(getToolbarShortcutLabel('볼드', true)).toBe('⌘+B');
   await expect(getToolbarShortcutLabel('볼드', false)).toBe('Ctrl+B');
+  await expect(isAiTokenExhaustedError({ status: 429, code: 'TOO_MANY_AI_REQUESTS' })).toBe(true);
+  await expect(isAiTokenExhaustedError({ status: 500 })).toBe(false);
+  await expect(getAiTokenExhaustedMessage(0)).toContain('AI 토큰이 없습니다');
 }
 
 /** @type { import('@storybook/nextjs-vite').Meta } */
