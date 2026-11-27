@@ -55,29 +55,50 @@ export function toGraphViewData(graph, { groupByCategory = false } = {}) {
   });
 
   const postIds = new Set(postDrafts.map((post) => post.id));
-  const mappedEdges = edges.flatMap((edge, index) => {
+  const mergedEdgesByPair = new Map();
+
+  // 양방향(A→B, B→A)으로 응답된 키워드 간선은 하나의 무방향 연결로 병합해 연결 수 중복 집계를 방지한다.
+  edges.forEach((edge) => {
     const from = String(edge.sourcePostId);
     const to = String(edge.targetPostId);
 
     if (!postIds.has(from) || !postIds.has(to) || from === to) {
-      return [];
+      return;
     }
 
+    const pairKey = [from, to].sort((left, right) => left.localeCompare(right, 'en', { numeric: true })).join(':');
     const sharedTags = normalizeTags(edge.sharedKeywords);
+    const score = Number(edge.score) || 0;
+    const existing = mergedEdgesByPair.get(pairKey);
 
-    return [
-      {
-        id: `${from}-${to}-${index}`,
+    if (!existing) {
+      mergedEdgesByPair.set(pairKey, {
         from,
-        to,
-        strength: Math.min(3, Math.max(1, sharedTags.length)),
-        sharedTags,
-        primaryTag: sharedTags[0] ?? null,
-        score: Number(edge.score) || 0,
         isExplicit: false,
-      },
-    ];
+        score,
+        sharedTags,
+        to,
+      });
+      return;
+    }
+
+    mergedEdgesByPair.set(pairKey, {
+      ...existing,
+      score: Math.max(existing.score, score),
+      sharedTags: [...new Set([...existing.sharedTags, ...sharedTags])],
+    });
   });
+
+  const mappedEdges = [...mergedEdgesByPair.values()].map((edge, index) => ({
+    id: `${edge.from}-${edge.to}-${index}`,
+    from: edge.from,
+    to: edge.to,
+    strength: Math.min(3, Math.max(1, edge.sharedTags.length)),
+    sharedTags: edge.sharedTags,
+    primaryTag: edge.sharedTags[0] ?? null,
+    score: edge.score,
+    isExplicit: edge.isExplicit,
+  }));
 
   const { layoutMeta, positions } = computeGraphLayout(postDrafts, mappedEdges, { groupByCategory });
   const posts = postDrafts.map((post, index) => ({

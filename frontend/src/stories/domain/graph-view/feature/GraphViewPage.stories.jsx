@@ -56,6 +56,12 @@ const graphFixture = {
       score: 0.82,
       sharedKeywords: ['UX'],
     },
+    {
+      sourcePostId: 102,
+      targetPostId: 101,
+      score: 0.64,
+      sharedKeywords: ['UX', '정보 구조'],
+    },
   ],
 };
 
@@ -105,7 +111,13 @@ export const Default = {
     const centerY = SVG_H / 2;
 
     await expect(graphData.posts).toHaveLength(3);
-    await expect(graphData.edges[0]).toMatchObject({ from: '101', sharedTags: ['UX'], to: '102' });
+    await expect(graphData.edges).toHaveLength(1);
+    await expect(graphData.edges[0]).toMatchObject({
+      from: '101',
+      score: 0.82,
+      sharedTags: ['UX', '정보 구조'],
+      to: '102',
+    });
     await expect(splitNodeTitle('123456789012345678901')).toEqual(['1234567', '890123…']);
     await expect(graphNodeRadius(6)).toBeGreaterThan(graphNodeRadius(1));
     await expect(edgeWidth({ score: 0.9 })).toBeGreaterThan(edgeWidth({ score: 0.2 }));
@@ -136,6 +148,7 @@ export const Default = {
 
     await expect(firstNode).toHaveAttribute('tabindex', '0');
     await expect(graphEdge).not.toBeNull();
+    await expect(canvasElement.querySelectorAll('[data-graph-edge]')).toHaveLength(1);
     await expect(graphSvg).toHaveAttribute('data-canvas-theme', 'dark');
     await expect(canvas.queryByRole('button', { name: '배치 재정렬' })).toBeNull();
     await expect(canvas.queryByRole('button', { name: '포스트 목록' })).toBeNull();
