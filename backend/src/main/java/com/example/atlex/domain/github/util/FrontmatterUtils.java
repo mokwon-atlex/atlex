@@ -13,12 +13,11 @@ import java.util.regex.Pattern;
 public final class FrontmatterUtils {
 
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-    private static final Pattern IMG_TAG_PATTERN =
-        Pattern.compile("<img\\b[^>]*>", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SRC_ATTR_PATTERN =
-        Pattern.compile("src=[\"']([^\"']*)[\"']", Pattern.CASE_INSENSITIVE);
-    private static final Pattern ALT_ATTR_PATTERN =
-        Pattern.compile("alt=[\"']([^\"']*)[\"']", Pattern.CASE_INSENSITIVE);
+    private static final Pattern IMG_TAG_PATTERN = Pattern.compile("<img\\b[^>]*>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SRC_ATTR_PATTERN = Pattern.compile("src=[\"']([^\"']*)[\"']",
+        Pattern.CASE_INSENSITIVE);
+    private static final Pattern ALT_ATTR_PATTERN = Pattern.compile("alt=[\"']([^\"']*)[\"']",
+        Pattern.CASE_INSENSITIVE);
 
     private FrontmatterUtils() {}
 

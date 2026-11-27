@@ -71,32 +71,26 @@ export function createBlockContent(text) {
 }
 
 /**
- * 문서가 텍스트나 특수 블록 없이 순수 빈 기본 문단(`<p></p>`) 1개로만 이루어져 있는지 판별한다.
+ * 문서가 텍스트나 특수 블록 없이 순수 빈 문단들(`<p></p>`)로만 이루어져 있는지 판별한다.
  * 인용문·리드 문단·캡션·제목·코드 블록·표·토글·구분선 등이 하나라도 시작되면 글자를 치기 전이라도
  * placeholder를 숨기기 위해 false를 반환한다.
+ * 반면 기본 문단만으로 이루어져 있고 모든 문단에 글자가 없다면(엔터나 서식 해제로 빈 문단이 여러 개 생겨도)
+ * placeholder를 유지하기 위해 true를 반환한다.
  *
  * @param {import('@tiptap/pm/model').Node | null | undefined} doc ProseMirror 문서 노드
- * @returns {boolean} 초기 빈 문단 상태 여부
+ * @returns {boolean} 순수 빈 기본 문단 상태 여부
  */
 export function isPlainEmptyDocument(doc) {
   if (!doc) {
     return true;
   }
 
-  // 최상위 블록이 2개 이상이면 빈 줄이 여러 개 있거나 블록이 추가된 상태이므로 placeholder 숨김
-  if (doc.childCount !== 1) {
-    return false;
-  }
+  let nonParagraphOrHasContent = false;
+  doc.forEach((child) => {
+    if (child.type?.name !== 'paragraph' || child.content.size > 0) {
+      nonParagraphOrHasContent = true;
+    }
+  });
 
-  const firstChild = doc.firstChild;
-  if (!firstChild) {
-    return true;
-  }
-
-  // 기본 paragraph 가 아니거나(blockquote, heading, leadParagraph, captionParagraph 등) 내용이 있으면 false
-  if (firstChild.type?.name !== 'paragraph' || firstChild.content.size > 0) {
-    return false;
-  }
-
-  return true;
+  return !nonParagraphOrHasContent;
 }
