@@ -105,4 +105,24 @@ class FrontmatterUtilsTest {
             .count();
         assertThat(boundaryCount).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("본문 내의 HTML img 태그를 마크다운 이미지 문법으로 변환한다")
+    void buildMarkdownConvertsHtmlImagesToMarkdownSyntax() {
+        // given
+        User user = User.builder().userId("tester").build();
+        Post post = Post.builder()
+            .user(user)
+            .title("이미지 포함 게시글")
+            .content("<p>설명 텍스트</p><img src=\"/api/v1/files/sample.png\" alt=\"캡처 화면.png\"><p>끝</p>")
+            .isPublic(true)
+            .build();
+
+        // when
+        String markdown = FrontmatterUtils.buildMarkdown(post, List.of());
+
+        // then
+        assertThat(markdown).contains("![캡처 화면.png](/api/v1/files/sample.png)");
+        assertThat(markdown).doesNotContain("<img");
+    }
 }
