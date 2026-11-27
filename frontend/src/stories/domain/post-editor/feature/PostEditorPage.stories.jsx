@@ -81,9 +81,10 @@ export const EditModeUpdatesExistingPost = {
 
     await userEvent.click(canvas.getByRole('button', { name: postEditorCopy.logoLabel }));
     const body = within(document.body);
-    await expect(await body.findByText('작성 중인 글이 있습니다')).toBeVisible();
-    await expect(body.getByRole('button', { name: '임시 저장 후 나가기' })).toBeVisible();
+    await waitFor(() => expect(body.getByText('작성 중인 글이 있습니다')).toBeVisible());
+    await waitFor(() => expect(body.getByRole('button', { name: '임시 저장 후 나가기' })).toBeVisible());
     await userEvent.click(body.getByRole('button', { name: '계속 작성' }));
+    await waitFor(() => expect(body.queryByText('작성 중인 글이 있습니다')).toBeNull());
 
     // 제목 섹션에는 태그 입력창이 노출되지 않고, 발행 설정 모달 안에서만 노출되어야 한다.
     await expect(canvas.queryByLabelText('태그')).toBeNull();
@@ -92,7 +93,7 @@ export const EditModeUpdatesExistingPost = {
     await userEvent.click(publishButton);
 
     // 발행 설정 모달이 열리면 태그 입력창을 확인한 뒤 '수정 저장'을 눌러 최종 수정 요청을 보낸다.
-    await expect(await body.findByLabelText('태그')).toBeVisible();
+    await waitFor(() => expect(body.getByLabelText('태그')).toBeVisible());
     const confirmButton = await body.findByRole('button', { name: '수정 저장' });
     await userEvent.click(confirmButton);
 
